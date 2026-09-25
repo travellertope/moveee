@@ -1079,7 +1079,10 @@ class Culture_Post_Types {
      * Register all custom post types.
      */
     public static function register_post_types() {
-        // Event CPT – nested under Culture Community menu.
+        // Event CPT – nested under the Moveee Events top-level menu
+        // (September 2026 — was Culture Community; ticketing/RSVP-related
+        // CPTs belong alongside Ticket Sales/Event RSVPs, see the
+        // "WP Admin menu structure" note in CLAUDE.md).
         register_post_type( 'culture_event', array(
             'labels' => array(
                 'name'               => __( 'Community Events', 'culture-community' ),
@@ -1094,7 +1097,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-ticket-sales',
             'menu_icon'           => 'dashicons-calendar-alt',
             // 'custom-fields' is required for WordPress core to expose the
             // `meta` property on this post type's REST schema at all — see
@@ -1113,7 +1116,9 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureEvents',
         ) );
 
-        // Culture Directory CPT – wiki-like entries for people, places, movements, etc.
+        // Culture Directory CPT – wiki-like entries for people, places, movements,
+        // etc. – nested under the Moveee Content top-level menu (September 2026;
+        // was Culture Community).
         register_post_type( 'culture_directory', array(
             'labels' => array(
                 'name'               => __( 'Community Directory', 'culture-community' ),
@@ -1129,7 +1134,7 @@ class Culture_Post_Types {
             'public'              => true,
             'show_ui'             => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-content-manager',
             'menu_icon'           => 'dashicons-book-alt',
             // See culture_event's own 'supports' comment above — required
             // for register_post_meta() on this type to actually reach REST.
@@ -1143,7 +1148,10 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureDirectories',
         ) );
 
-        // Newsletter / Cultural Digest CPT – nested under Culture Community menu.
+        // Newsletter / Cultural Digest CPT — nested under the Moveee
+        // Newsletters top-level menu (September 2026; was Culture Community
+        // — moved alongside GetMeLit/Culture Drop below since all three are
+        // newsletter content types, not general community content).
         register_post_type( 'culture_newsletter', array(
             'labels' => array(
                 'name'               => __( 'Newsletters', 'culture-community' ),
@@ -1158,7 +1166,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-subscribers',
             'menu_icon'           => 'dashicons-email-alt',
             // See culture_event's own 'supports' comment above — required
             // for register_post_meta() on this type to actually reach REST.
@@ -1235,7 +1243,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-subscribers',
             'menu_icon'           => 'dashicons-email-alt',
             // See culture_event's own 'supports' comment above — required
             // for register_post_meta() on this type to actually reach REST.
@@ -1262,7 +1270,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-subscribers',
             'menu_icon'           => 'dashicons-email-alt',
             // See culture_event's own 'supports' comment above — required
             // for register_post_meta() on this type to actually reach REST.
@@ -1297,7 +1305,8 @@ class Culture_Post_Types {
             ) );
         }
 
-        // Quote CPT – nested under Culture Community menu.
+        // Quote CPT – nested under the Moveee Content top-level menu
+        // (September 2026; was Culture Community).
         register_post_type( 'culture_quote', array(
             'labels' => array(
                 'name'               => __( 'Quotes', 'culture-community' ),
@@ -1312,7 +1321,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-content-manager',
             'menu_icon'           => 'dashicons-format-quote',
             'supports'            => array( 'title', 'editor' ),
             'rewrite'             => array( 'slug' => 'quotes' ),
@@ -1324,8 +1333,9 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureQuotes',
         ) );
 
-        // Journey CPT – curated cultural journeys.
-        // Community Post CPT — member-submitted posts in the Connect feed.
+        // Community Post CPT — member-submitted posts in the Connect feed,
+        // nested under the Moveee Content top-level menu (September 2026;
+        // was Culture Community).
         register_post_type( 'culture_post', array(
             'labels' => array(
                 'name'               => __( 'Community Posts', 'culture-community' ),
@@ -1340,7 +1350,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => false,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-content-manager',
             'menu_icon'           => 'dashicons-groups',
             'supports'            => array( 'title', 'editor', 'custom-fields', 'comments' ),
             'rewrite'             => array( 'slug' => 'community' ),
@@ -1349,6 +1359,8 @@ class Culture_Post_Types {
             'capability_type'     => 'post',
         ) );
 
+        // Journey CPT – curated cultural journeys, nested under the Moveee
+        // Content top-level menu (September 2026; was Culture Community).
         register_post_type( 'culture_journey', array(
             'labels' => array(
                 'name'               => __( 'Journeys', 'culture-community' ),
@@ -1363,7 +1375,7 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-community',
+            'show_in_menu'        => 'culture-content-manager',
             'menu_icon'           => 'dashicons-palmtree',
             'supports'            => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
             'rewrite'             => array( 'slug' => 'journeys' ),

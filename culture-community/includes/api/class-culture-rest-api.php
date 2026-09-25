@@ -231,6 +231,44 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Magic-code sign-in — verifies a code, finds-or-creates an account,
+        // subscribes it to a newsletter list, returns the same profile shape
+        // as /login. See class-culture-magic-otp.php.
+        register_rest_route( 'culture/v1', '/magic-otp/request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_magic_otp_request' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/magic-otp/verify', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_magic_otp_verify' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'code' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'list' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_title',
+                ),
+            ),
+        ) );
+
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -2806,6 +2844,23 @@ class Culture_REST_API {
             return $result;
         }
         return rest_ensure_response( array_merge( array( 'success' => true ), $result ) );
+    }
+
+    public static function handle_magic_otp_request( $request ) {
+        $result = Culture_Magic_OTP::request_otp( $request->get_param( 'email' ) );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    public static function handle_magic_otp_verify( $request ) {
+        $list = $request->get_param( 'list' ) ?: 'getmelit';
+        $user = Culture_Magic_OTP::verify_otp( $request->get_param( 'email' ), $request->get_param( 'code' ), $list );
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+        return rest_ensure_response( self::user_profile( $user ) );
     }
 
     public static function handle_preview_resolve( $request ) {

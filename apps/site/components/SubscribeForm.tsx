@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 interface SubscribeFormProps {
   placeholder?: string;
@@ -12,6 +13,50 @@ interface SubscribeFormProps {
   segment?: string;
 }
 
+type Step = "email" | "code" | "success";
+
+const smallTextStyle: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: "9px",
+  letterSpacing: ".1em",
+  color: "var(--mute, #7a6f5c)",
+  marginTop: "6px",
+};
+
+const errorTextStyle: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: "9px",
+  letterSpacing: ".1em",
+  color: "var(--ochre)",
+  marginTop: "6px",
+};
+
+const linkButtonStyle: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  font: "inherit",
+  color: "var(--ochre)",
+  textDecoration: "underline",
+  cursor: "pointer",
+};
+
+/**
+ * Every "enter your email" subscribe widget on the site — homepage, footers,
+ * article/piece newsletter breaks, the Shop email band — renders through
+ * this one component. It's no longer a plain "add this email to a list"
+ * form: subscribing now goes through the magic-code sign-in flow (see
+ * class-culture-magic-otp.php) — a code is emailed, entering it both
+ * subscribes the address to $list and signs the visitor into Moveee, new
+ * account or existing one alike. Same two-step shape as
+ * components/LiterarySubscribeForm.tsx (that one is a full-page variant
+ * with its own locked copy; this one stays a drop-in input+button pair so
+ * every existing call site's surrounding layout is untouched).
+ *
+ * `segment` is accepted for backward compatibility with existing call
+ * sites but currently unused — the magic-OTP request endpoint has no
+ * per-region segment concept.
+ */
 export default function SubscribeForm({
   placeholder = "your@email.com",
   buttonLabel = "Subscribe →",
@@ -19,34 +64,109 @@ export default function SubscribeForm({
   inputClassName = "",
   successMessage = "You're in. First issue arrives Tuesday.",
   list = "culture-drop",
-  segment = "",
 }: SubscribeFormProps) {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<Step>("email");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleRequestCode(e: React.SyntheticEvent) {
     e.preventDefault();
-    if (!email) return;
-    setStatus("loading");
+    if (!email || busy) return;
+    setBusy(true);
+    setError("");
     try {
-      const res = await fetch("/api/newsletter/subscribe", {
+      const res = await fetch("/api/newsletter/magic-otp/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, list, segment }),
+        body: JSON.stringify({ email }),
       });
       if (res.ok) {
-        setStatus("success");
-        setEmail("");
+        setStep("code");
       } else {
-        setStatus("error");
+        setError("Couldn't send a code — try again.");
       }
     } catch {
-      setStatus("error");
+      setError("Couldn't send a code — try again.");
+    } finally {
+      setBusy(false);
     }
   }
 
-  if (status === "success") {
-    return <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ochre)" }}>{successMessage}</p>;
+  async function handleVerifyCode(e: React.SyntheticEvent) {
+    e.preventDefault();
+    if (!code || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const result = await signIn("credentials", {
+        otpEmail: email,
+        otpCode: code,
+        otpList: list,
+        redirect: false,
+      });
+      if (!result || result.error) {
+        setError("That code didn't work — try again.");
+        return;
+      }
+      setStep("success");
+    } catch {
+      setError("Couldn't reach the server — try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (step === "success") {
+    return (
+      <p
+        style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: "10px",
+          letterSpacing: ".12em",
+          textTransform: "uppercase",
+          color: "var(--ochre)",
+        }}
+      >
+        {successMessage}
+      </p>
+    );
+  }
+
+  if (step === "code") {
+    return (
+      <>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Enter your code"
+          required
+          disabled={busy}
+          className={inputClassName}
+        />
+        <button type="button" onClick={handleVerifyCode} disabled={busy} className={buttonClassName}>
+          {busy ? "Confirming…" : "Confirm →"}
+        </button>
+        <p style={smallTextStyle}>
+          Code sent to {email}.{" "}
+          <button
+            type="button"
+            style={linkButtonStyle}
+            onClick={() => {
+              setStep("email");
+              setCode("");
+              setError("");
+            }}
+          >
+            Use a different email
+          </button>
+        </p>
+        {error && <p style={errorTextStyle}>{error}</p>}
+      </>
+    );
   }
 
   return (
@@ -57,22 +177,13 @@ export default function SubscribeForm({
         onChange={(e) => setEmail(e.target.value)}
         placeholder={placeholder}
         required
-        disabled={status === "loading"}
+        disabled={busy}
         className={inputClassName}
       />
-      <button
-        type="submit"
-        onClick={handleSubmit}
-        disabled={status === "loading"}
-        className={buttonClassName}
-      >
-        {status === "loading" ? "Subscribing..." : buttonLabel}
+      <button type="button" onClick={handleRequestCode} disabled={busy} className={buttonClassName}>
+        {busy ? "Sending…" : buttonLabel}
       </button>
-      {status === "error" && (
-        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", letterSpacing: ".1em", color: "var(--ochre)", marginTop: "6px" }}>
-          Something went wrong — try again.
-        </p>
-      )}
+      {error && <p style={errorTextStyle}>{error}</p>}
     </>
   );
 }

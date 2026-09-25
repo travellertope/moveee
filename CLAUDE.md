@@ -402,9 +402,10 @@ its label) changed — so no `admin.php?page=...` link/bookmark anywhere in the
 codebase or in anyone's browser needed updating.
 
 - **Moveee Community** (slug `culture-community`, was labelled "Culture
-  Community") — Settings (the default/anchor page), Analytics, Directory
-  Tools, Redirect Manager, Email Templates, Pro Memberships. Registered in
-  `class-culture-settings.php`.
+  Community") — Settings (the default/anchor page), Analytics, Redirect
+  Manager, Email Templates, Pro Memberships. Registered in
+  `class-culture-settings.php`. **Directory Tools moved out to Moveee
+  Content in September 2026** (see below) — don't look for it here anymore.
 - **Moveee Newsletters** (anchor slug `culture-subscribers` — Subscribers
   is both the top-level page and a submenu of itself, the standard WP
   "duplicate the anchor slug as the first submenu with its own label" pattern)
@@ -416,10 +417,41 @@ codebase or in anyone's browser needed updating.
   "manage an email list" concern). Registered in `class-culture-subscribers.php`
   (top-level `add_menu_page()` + the anchor submenu); every other page in this
   group just changed its `add_submenu_page()` parent from `culture-community`
-  to `culture-subscribers`.
+  to `culture-subscribers`. **The three newsletter CPTs — Newsletters
+  (`culture_newsletter`), GetMeLit (`getmelit`), Culture Drop (`culture_drop`)
+  — were moved here too (September 2026)**: they're native CPT edit/list
+  screens (`register_post_type()`'s `show_in_menu` pointing at
+  `culture-subscribers`), not custom admin pages, but they're newsletter
+  content types, not general community content, so they belong in this group
+  per the "pick a parent by kind" rule below.
 - **Moveee Events** (anchor slug `culture-ticket-sales`, same pattern) —
-  Ticket Sales, Event RSVPs (`culture-rsvp-manager`). Registered in
+  Ticket Sales, Event RSVPs (`culture-rsvp-manager`), and — since September
+  2026 — the Community Events CPT (`culture_event`, native CPT screens, was
+  Culture Community; ticketing/RSVP-related, so it belongs here per the
+  "pick a parent by kind" rule below). Registered in
   `class-culture-tickets-admin.php`.
+- **Moveee Content** (anchor slug `culture-content-manager`, same pattern,
+  added September 2026) — a catch-all for general content CPTs that don't
+  belong under any of the other top-level menus: Directory
+  (`culture_directory`), Quotes (`culture_quote`), Community Posts
+  (`culture_post`), Journeys (`culture_journey` — all four native CPT
+  screens, `show_in_menu` pointing at `culture-content-manager`, all were
+  under Culture Community), plus **Directory Tools** (`culture-directory-tools`,
+  moved from Culture Community — it manages the Directory CPT's seeder/image
+  tools, so it belongs alongside Directory itself). Registered in the new
+  `class-culture-content-admin.php` (top-level `add_menu_page()` + the anchor
+  submenu, a plain landing page linking out to each CPT's list screen — there
+  was never a real admin page for these CPTs before, just their native WP
+  list/edit screens, so this class only registers the menu shell). Directory
+  Tools' `enqueue_assets()` hook-suffix check was updated to
+  `culture-content-manager_page_culture-directory-tools` — see the hook-suffix
+  gotcha note below.
+  **Whether Quotes (`culture_quote`) is still worth keeping as a separate
+  content type** — now that quotes render natively inline in the unified
+  feed (see "Quotes feed merge" elsewhere in this file) — is an open product
+  question, not yet decided; it was moved here for menu-organization
+  purposes only, independent of that decision. If quotes are ever fully
+  retired into community posts, this menu entry is what to remove.
 - **Moveee Literary** (anchor slug `culture-literary-submissions`, same
   pattern) — just Literary Submissions (the submissions manager + its
   Waivers tab) today; registered in `class-culture-literary-submissions.php`.
@@ -463,12 +495,14 @@ the exact same string needs updating if any of those three ever move.**
 **If you add a new admin page to this plugin**, pick a parent by kind:
 newsletter/subscriber/list/campaign-related → `culture-subscribers`;
 ticketing/RSVP-related → `culture-ticket-sales`; Literary-related →
-`culture-literary-submissions`; anything else → `culture-community`. Only add
-another top-level menu if a new feature area grows to several pages of its
-own (the actual bar has turned out to be lower than "3+" — Literary got its
-own top-level with just one page, since the user wanted it broken out
-regardless of page count) — check with the user rather than assuming a
-single new page should just join `culture-community` by default.
+`culture-literary-submissions`; general content (Directory/Quotes/Community
+Posts/Journeys and anything in that vein) → `culture-content-manager`;
+anything else → `culture-community`. Only add another top-level menu if a
+new feature area grows to several pages of its own (the actual bar has
+turned out to be lower than "3+" — Literary got its own top-level with just
+one page, since the user wanted it broken out regardless of page count) —
+check with the user rather than assuming a single new page should just join
+`culture-community` by default.
 
 ### Sending
 Each `culture_newsletter` post has two pieces of post meta:
@@ -530,6 +564,79 @@ colour-coded badges: indigo = Culture Drop, green = GetMeLit.
 `wp_culture_nl_opens` and `wp_culture_nl_clicks` DB tables.
 List and segment labels defined as class constants `LIST_LABELS` and
 `SEGMENT_LABELS`.
+
+### Subscribers admin page — bulk actions, date filter, per-page (September 2026)
+
+`class-culture-subscribers.php`'s Subscriber List table gained three things,
+all server-side (nothing client-only/decorative):
+
+- **Date-range filter** — `date_from`/`date_to` GET params (`YYYY-MM-DD`,
+  validated via regex), threaded into `Culture_Subscribers_DB::all()`
+  alongside the pre-existing search/list_id filters, matched against
+  `s.created_at` (`>= {date_from} 00:00:00`, `<= {date_to} 23:59:59`,
+  inclusive). Rendered as a pair of `<input type="date">` fields in the
+  filter form, with a "Reset filters" link shown whenever any filter
+  (search/list/date) is active.
+- **Adjustable per-page** — a `per_page` `<select>` (25/50/100/200, default
+  50), validated server-side against that exact allowlist, also threaded
+  into `all()`.
+- **Bulk actions** — the whole table (toolbar + rows) is wrapped in one
+  `<form method="post" action="admin-post.php">` (`action=
+  culture_bulk_action_subscribers`, nonce `culture_bulk_subscribers`) with a
+  leading checkbox column (`subscriber_ids[]`), a select-all header
+  checkbox, and a `bulk_action` `<select>` — "Remove selected" (`delete`) or
+  "Add to list…"/"Remove from list…" per real list (`add_to_list_{id}` /
+  `remove_from_list_{id}`, populated from `Culture_Newsletter_Lists::get_all()`).
+  `handle_bulk_action()` (new, `admin_post_culture_bulk_action_subscribers`)
+  applies the action to the selected IDs and redirects back to the exact
+  filtered/paginated view it was invoked from (via hidden `ret_*` fields —
+  search/list/date/per_page/paged, echoed back into the redirect URL).
+  Two new thin wrapper methods on `Culture_Subscribers_DB` —
+  `add_subscriber_to_list_id( $subscriber_id, $list_id )` /
+  `remove_subscriber_from_list_id( $subscriber_id, $list_id )` — give the
+  bulk handler an ID-based way to change list membership (the pre-existing
+  `add_to_list_slug()`/`remove_from_list_slug()` are email+slug-based, built
+  for the REST/mobile-API write paths, not an admin page operating on
+  numeric IDs already in hand).
+  **The per-row single "Remove" action changed from a `<form>` to a plain
+  nonced GET `<a>` link** (`wp_nonce_url()`, `handle_delete()` now reads
+  `$_REQUEST['subscriber_email']` instead of `$_POST[...]`) — a `<form>`
+  cannot nest inside another `<form>`, and once the whole table became one
+  outer bulk-actions form, the old per-row form would have been invalid
+  HTML. If you ever need a similarly per-row destructive single-item action
+  inside a bulk-actions table again, use this same nonced-GET-link pattern,
+  not a nested form.
+
+### Campaigns "Send to" — searchable multi-select (September 2026)
+
+The one-off Campaigns compose form's "Send to" control (`class-culture-
+campaigns-admin.php`) used to render one checkbox per list — fine at a
+handful of lists, but stopped scaling once the list registry grew past a
+couple dozen entries (Hub auto-provisioning alone adds one list per Hub, see
+"Hub → newsletter list auto-provisioning" above). Replaced with a
+type-to-filter searchable multi-select: `render_list_multiselect()` renders
+a real `<select multiple name="list_ids[]">` (the actual form field/source
+of truth — this is what makes it degrade to a plain native multi-select box
+with JS disabled, never hidden by PHP) wrapped in a small combobox UI
+(`data-culture-ms` / `data-culture-ms-input` / `data-culture-ms-dropdown` /
+`data-culture-ms-tags`) that vanilla JS (`multiselect_js()`, no jQuery UI or
+select2 dependency, inlined via `wp_add_inline_script('jquery-core', ...)`
+— attached to that handle purely because it's reliably always-enqueued in
+wp-admin, not because the JS itself uses jQuery) progressively enhances
+into a type-ahead filter with removable tag pills, toggling the underlying
+`<option>`'s `selected` state on click/Enter. CSS is `multiselect_css()`,
+inlined via `wp_add_inline_style('wp-admin', ...)`. Both are only enqueued
+on the Campaigns page itself (`maybe_enqueue_editor()`'s existing hook-suffix
+check, `culture-subscribers_page_culture-campaigns`) — same file, same hook,
+extended rather than duplicated. **If another admin page in this plugin ever
+needs the same "checkbox-per-item doesn't scale" fix, reuse
+`render_list_multiselect()`'s pattern (or factor it out into a shared
+static helper) rather than hand-rolling a third checkbox/dropdown
+convention** — this is the second time a list-selection UI has needed this
+treatment (the first was the Subscriber bulk-actions "Add to list…"
+dropdown above, which stayed a plain `<select>`+`<optgroup>` since dropdown
+menus scale fine for a flat picklist — the multi-select-with-many-items case
+is what specifically needed the searchable-combobox treatment).
 
 ---
 
@@ -614,6 +721,74 @@ Fixed:
   effectively the same content as the global hub (every issue falls into the "empty segment = all
   regions" bucket). That's expected, not a bug — the plumbing is now in place for region-targeted
   content going forward.
+
+## Magic-code sign-in + subscribe — every `<SubscribeForm>` on the site (September 2026)
+
+Every "enter your email" subscribe widget site-wide — homepage `JoinSection`, `LiteraryFooter`/
+`CommonsFooter`, `CultureDropBand`, the Lifestyle Shop email band, Literary/Commons piece
+newsletter breaks — no longer just adds the email to a list. Subscribing now goes through a
+magic-code sign-in: a 6-digit code is emailed, and entering it both subscribes the address to the
+given list **and** signs the visitor into Moveee (a new Citizen account is created if the email has
+none, or the existing account is signed into if it does) — one action does both. Built first for
+the new **`/literary/subscribe`** landing page (the destination `LiteraryMasthead.tsx`'s "Get
+Updates" ribbon link and "Subscribe" pill now point at, replacing the generic `/newsletter` hub),
+then generalized to every other subscribe surface on the site per explicit user follow-up.
+
+**Backend**: `culture-community/includes/core/class-culture-magic-otp.php`
+(`Culture_Magic_OTP`) — `request_otp($email)` (rate-limited 3/10min, 6-digit code, `wp_hash()`'d in
+a transient, 10-minute TTL, mirrors `Culture_Literary_Access`'s OTP mechanics exactly) and
+`verify_otp($email, $code, $list_slug)` (max 5 wrong attempts, single-use, then finds-or-creates a
+real WP account — same shape as `Culture_Google_Auth::find_or_create_user()` — and subscribes the
+email via `Culture_Subscribers_DB::subscribe()`). Deliberately a **separate class** from
+`Culture_Literary_Access`, even though the OTP mechanics are identical in shape — that class's
+`verify_code()` issues a signed *content-access* token and never touches a real account; this one
+always creates/updates a real WP user and returns a full profile instead of a token. New REST
+routes (public): `POST /culture/v1/magic-otp/request`, `POST /culture/v1/magic-otp/verify` (returns
+the same `user_profile()` shape `/login` and `/login-google` already return). Email:
+`Culture_Emails::send_magic_otp_email()` — deliberately generic copy, not Literary-specific, since
+every subscribe surface now uses it.
+
+**NextAuth wiring**: the shared `CredentialsProvider` in `packages/shared/lib/auth.ts` gained a
+third `authorize()` branch (alongside username/password and the passkey-token exchange) — when
+`credentials.otpEmail`/`otpCode` are present, it calls `/culture/v1/magic-otp/verify` directly and
+maps the response the same way the password branch does. **`apps/site` needed its own
+`app/api/auth/[...nextauth]/route.ts` for this to work** — it never had one before (it only ever
+called `getServerSession()`, which just decodes the shared `.themoveee.com` session cookie and
+needs no local route), but `next-auth/react`'s `signIn()` posts to the *current* app's own origin,
+so a visitor entering a code on `themoveee.com` needs a real handler there to land on. Same shared
+`authOptions`, so the resulting session works on both apps immediately (shared cookie domain).
+
+**Frontend**: `packages/shared/components/SubscribeForm.tsx` (mirrored, per the existing
+convention, into the unused-but-kept-in-sync `apps/site/components/SubscribeForm.tsx` copy) is now
+a two-step widget — email+button → code+button, same input/button slot and props (`placeholder`/
+`buttonLabel`/`buttonClassName`/`inputClassName`/`successMessage`/`list`) as before, so all 9
+existing call sites needed zero changes. Step 1 POSTs to the new
+`apps/site/app/api/newsletter/magic-otp/request/route.ts` proxy; step 2 calls
+`signIn("credentials", { otpEmail, otpCode, otpList: list, redirect: false })` directly — no
+verify proxy route needed, `authorize()` talks to WordPress itself. `segment` stays in the props
+interface for backward compatibility but is unused — the magic-OTP endpoint has no per-region
+segment concept. **The pre-existing `/api/newsletter/subscribe` route and
+`NewsletterPreferences.tsx` (the member-settings list-toggle page) are untouched** — those serve an
+already-authenticated member managing their own subscriptions, a different flow from an anonymous
+visitor subscribing for the first time.
+
+`components/LiterarySubscribeForm.tsx` is a separate, full-page variant (locked copy + the same
+two-step flow) built for `/literary/subscribe` specifically — it renders inside `.lit-submit-wrap`/
+reuses `.lit-form-*` classes from `literary.css` rather than the compact inline pair the generic
+`SubscribeForm` uses, since it's a dedicated landing page, not a footer widget. Both call the same
+`/api/newsletter/magic-otp/request` proxy and the same `signIn()` verify path — no duplicated
+backend logic between them.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+other pass in this file (no `node_modules` installed this session either, so `tsc --noEmit`
+couldn't run). Verified via `php -l` on every touched/new PHP file and brace/paren-balance checks
+on every touched/new TS/TSX file. This also needs the plugin redeployed (manual zip+upload — no new
+dbDelta table, so no `CULTURE_VERSION` bump, only the plugin header version bump) before
+`/culture/v1/magic-otp/*` exists in production, and `apps/site` needs its own `NEXTAUTH_SECRET`/
+`NEXTAUTH_URL` env vars confirmed set on Vercel for the new `[...nextauth]` route to work there.
+Re-check the full email → code → account-created-or-signed-in → subscribed round trip, on both a
+brand-new email and an existing member's email, in a real environment before considering this fully
+closed.
 
 ## The Moveee Literary (`/literary`, added September 2026)
 

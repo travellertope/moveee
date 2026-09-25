@@ -29,6 +29,7 @@ class Culture_Subscribers {
         add_action( 'admin_post_culture_nl_auto_subscribe',    array( __CLASS__, 'handle_auto_subscribe_toggle' ) );
         add_action( 'admin_post_culture_bulk_import_emails',   array( __CLASS__, 'handle_bulk_import' ) );
         add_action( 'admin_post_culture_edit_subscriber',      array( __CLASS__, 'handle_edit' ) );
+        add_action( 'admin_post_culture_bulk_action_subscribers', array( __CLASS__, 'handle_bulk_action' ) );
 
         // Auto-subscribe new registrations if the option is enabled.
         if ( get_option( 'culture_nl_auto_subscribe', '0' ) === '1' ) {
@@ -84,7 +85,24 @@ class Culture_Subscribers {
         $search = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
         $filter_list_id = absint( $_GET['list_id'] ?? 0 );
 
-        $result      = Culture_Subscribers_DB::all( array( 'page' => $page, 'per_page' => 50, 'search' => $search, 'list_id' => $filter_list_id ) );
+        // Date-joined range filter (Y-m-d, inclusive) and an adjustable
+        // per-page count, both new alongside search/list.
+        $date_from     = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $_GET['date_from'] ?? '' ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
+        $date_to       = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $_GET['date_to'] ?? '' ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
+        $per_page_opts = array( 25, 50, 100, 200 );
+        $per_page      = absint( $_GET['per_page'] ?? 50 );
+        if ( ! in_array( $per_page, $per_page_opts, true ) ) {
+            $per_page = 50;
+        }
+
+        $result      = Culture_Subscribers_DB::all( array(
+            'page'      => $page,
+            'per_page'  => $per_page,
+            'search'    => $search,
+            'list_id'   => $filter_list_id,
+            'date_from' => $date_from,
+            'date_to'   => $date_to,
+        ) );
         $subscribers = $result['subscribers'];
         $total_pages = $result['perPage'] > 0 ? (int) ceil( $result['total'] / $result['perPage'] ) : 1;
 
@@ -102,6 +120,24 @@ class Culture_Subscribers {
             $notice = __( 'Settings saved.', 'culture-community' );
         } elseif ( isset( $_GET['sub_saved'] ) && '1' === $_GET['sub_saved'] ) {
             $notice = __( 'Subscriber updated.', 'culture-community' );
+        } elseif ( isset( $_GET['bulk_deleted'] ) ) {
+            $n      = absint( $_GET['bulk_deleted'] );
+            $notice = sprintf(
+                _n( '%s subscriber removed.', '%s subscribers removed.', $n, 'culture-community' ),
+                number_format( $n )
+            );
+        } elseif ( isset( $_GET['bulk_added'] ) ) {
+            $n      = absint( $_GET['bulk_added'] );
+            $notice = sprintf(
+                _n( '%s subscriber added to the list.', '%s subscribers added to the list.', $n, 'culture-community' ),
+                number_format( $n )
+            );
+        } elseif ( isset( $_GET['bulk_removed'] ) ) {
+            $n      = absint( $_GET['bulk_removed'] );
+            $notice = sprintf(
+                _n( '%s subscriber removed from the list.', '%s subscribers removed from the list.', $n, 'culture-community' ),
+                number_format( $n )
+            );
         }
 
         // ── INLINE EDIT FORM ─────────────────────────────────────────────────
@@ -318,9 +354,9 @@ class Culture_Subscribers {
             <?php /* ── SUBSCRIBER LIST ── */ ?>
             <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;"><?php esc_html_e( 'Subscriber List', 'culture-community' ); ?></h2>
 
-            <form method="get" style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+            <form method="get" style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
                 <input type="hidden" name="page" value="culture-subscribers">
-                <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search email or name…', 'culture-community' ); ?>" style="min-width:240px;">
+                <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search email or name…', 'culture-community' ); ?>" style="min-width:220px;">
                 <select name="list_id">
                     <option value="0"><?php esc_html_e( 'All lists', 'culture-community' ); ?></option>
                     <?php foreach ( $all_lists as $list ) : ?>
@@ -329,72 +365,154 @@ class Culture_Subscribers {
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#646970;">
+                    <?php esc_html_e( 'Joined', 'culture-community' ); ?>
+                    <input type="date" name="date_from" value="<?php echo esc_attr( $date_from ); ?>" style="font-size:12px;">
+                    <?php esc_html_e( '–', 'culture-community' ); ?>
+                    <input type="date" name="date_to" value="<?php echo esc_attr( $date_to ); ?>" style="font-size:12px;">
+                </label>
+                <select name="per_page">
+                    <?php foreach ( $per_page_opts as $opt ) : ?>
+                        <option value="<?php echo esc_attr( $opt ); ?>" <?php selected( $per_page, $opt ); ?>>
+                            <?php echo esc_html( sprintf( __( '%d per page', 'culture-community' ), $opt ) ); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
                 <button type="submit" class="button"><?php esc_html_e( 'Filter', 'culture-community' ); ?></button>
+                <?php if ( $search || $filter_list_id || $date_from || $date_to || 50 !== $per_page ) : ?>
+                    <a href="<?php echo esc_url( add_query_arg( 'page', 'culture-subscribers', admin_url( 'admin.php' ) ) ); ?>" class="button-link" style="font-size:12px;">
+                        <?php esc_html_e( 'Reset filters', 'culture-community' ); ?>
+                    </a>
+                <?php endif; ?>
             </form>
 
             <?php if ( empty( $subscribers ) ) : ?>
                 <p style="color:#646970;"><?php esc_html_e( 'No subscribers found.', 'culture-community' ); ?></p>
             <?php else : ?>
-                <table class="wp-list-table widefat fixed striped">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="width:220px;"><?php esc_html_e( 'Email Address', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:150px;"><?php esc_html_e( 'Name', 'culture-community' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:120px;"><?php esc_html_e( 'Joined', 'culture-community' ); ?></th>
-                            <th scope="col" style="width:130px;"><?php esc_html_e( 'Actions', 'culture-community' ); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ( $subscribers as $sub ) : ?>
-                            <?php
-                            $date = $sub['createdAt'] ? date_i18n( get_option( 'date_format' ), strtotime( $sub['createdAt'] ) ) : '';
-                            $is_editing = ( strtolower( trim( $sub['email'] ) ) === strtolower( $editing_email ) );
-                            ?>
-                            <tr<?php echo $is_editing ? ' style="background:#fffbe6;"' : ''; ?>>
-                                <td><strong><?php echo esc_html( $sub['email'] ); ?></strong></td>
-                                <td><?php echo esc_html( $sub['name'] ); ?></td>
-                                <td>
-                                    <?php if ( ! empty( $sub['lists'] ) ) : ?>
-                                        <?php foreach ( $sub['lists'] as $slug ) : ?>
-                                            <?php $list = Culture_Newsletter_Lists::get_by_slug( $slug ); ?>
-                                            <span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.05em;margin:1px;background:<?php echo $list && 'region' === $list['type'] ? '#fef3c7' : '#e0e7ff'; ?>;color:<?php echo $list && 'region' === $list['type'] ? '#92400e' : '#3730a3'; ?>;">
-                                                <?php echo esc_html( $list ? $list['name'] : $slug ); ?>
-                                            </span>
-                                        <?php endforeach; ?>
-                                    <?php else : ?>
-                                        <span style="font-size:11px;color:#aaa;">—</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="font-size:12px;color:#646970;"><?php echo esc_html( $date ); ?></td>
-                                <td>
-                                    <div style="display:flex;gap:6px;align-items:center;">
-                                        <a
-                                            href="<?php echo esc_url( add_query_arg( array(
-                                                'page'       => 'culture-subscribers',
-                                                'sub_action' => 'edit',
-                                                'sub_email'  => rawurlencode( $sub['email'] ),
-                                            ), admin_url( 'admin.php' ) ) ); ?>#edit-subscriber"
-                                            class="button button-small"
-                                        ><?php esc_html_e( 'Edit', 'culture-community' ); ?></a>
-                                        <form
-                                            method="post"
-                                            action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-                                            onsubmit="return confirm('<?php echo esc_js( sprintf( __( 'Remove %s?', 'culture-community' ), $sub['email'] ) ); ?>')"
-                                        >
-                                            <input type="hidden" name="action" value="culture_delete_subscriber">
-                                            <input type="hidden" name="subscriber_email" value="<?php echo esc_attr( $sub['email'] ); ?>">
-                                            <?php wp_nonce_field( 'culture_delete_subscriber' ); ?>
-                                            <button type="submit" class="button button-small button-link-delete">
-                                                <?php esc_html_e( 'Remove', 'culture-community' ); ?>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="culture-subscribers-bulk-form">
+                    <input type="hidden" name="action" value="culture_bulk_action_subscribers">
+                    <?php wp_nonce_field( 'culture_bulk_subscribers' ); ?>
+                    <?php // Preserve the current filtered/paginated view so the redirect after a bulk action lands back on it. ?>
+                    <input type="hidden" name="ret_s" value="<?php echo esc_attr( $search ); ?>">
+                    <input type="hidden" name="ret_list_id" value="<?php echo esc_attr( $filter_list_id ); ?>">
+                    <input type="hidden" name="ret_date_from" value="<?php echo esc_attr( $date_from ); ?>">
+                    <input type="hidden" name="ret_date_to" value="<?php echo esc_attr( $date_to ); ?>">
+                    <input type="hidden" name="ret_per_page" value="<?php echo esc_attr( $per_page ); ?>">
+                    <input type="hidden" name="ret_paged" value="<?php echo esc_attr( $page ); ?>">
+
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                        <select name="bulk_action" id="culture-subscribers-bulk-action">
+                            <option value=""><?php esc_html_e( 'Bulk actions', 'culture-community' ); ?></option>
+                            <option value="delete"><?php esc_html_e( 'Remove selected', 'culture-community' ); ?></option>
+                            <?php if ( $all_lists ) : ?>
+                                <optgroup label="<?php esc_attr_e( 'Add to list…', 'culture-community' ); ?>">
+                                    <?php foreach ( $all_lists as $list ) : ?>
+                                        <option value="add_to_list_<?php echo esc_attr( $list['id'] ); ?>">
+                                            <?php echo esc_html( $list['name'] ); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                                <optgroup label="<?php esc_attr_e( 'Remove from list…', 'culture-community' ); ?>">
+                                    <?php foreach ( $all_lists as $list ) : ?>
+                                        <option value="remove_from_list_<?php echo esc_attr( $list['id'] ); ?>">
+                                            <?php echo esc_html( $list['name'] ); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php endif; ?>
+                        </select>
+                        <button
+                            type="submit"
+                            class="button"
+                            onclick="var a=document.getElementById('culture-subscribers-bulk-action').value,n=document.querySelectorAll('input[name=\'subscriber_ids[]\']:checked').length;if(!a){alert('<?php echo esc_js( __( 'Choose a bulk action first.', 'culture-community' ) ); ?>');return false;}if(!n){alert('<?php echo esc_js( __( 'Select at least one subscriber first.', 'culture-community' ) ); ?>');return false;}return a==='delete'?confirm('<?php echo esc_js( __( 'Remove the selected subscribers? This cannot be undone.', 'culture-community' ) ); ?>'):true;"
+                        ><?php esc_html_e( 'Apply', 'culture-community' ); ?></button>
+                        <span style="font-size:12px;color:#646970;" id="culture-subscribers-selected-count"></span>
+                    </div>
+
+                    <table class="wp-list-table widefat fixed striped">
+                        <thead>
+                            <tr>
+                                <th scope="col" style="width:32px;">
+                                    <input type="checkbox" id="culture-subscribers-select-all">
+                                </th>
+                                <th scope="col" style="width:220px;"><?php esc_html_e( 'Email Address', 'culture-community' ); ?></th>
+                                <th scope="col" style="width:150px;"><?php esc_html_e( 'Name', 'culture-community' ); ?></th>
+                                <th scope="col"><?php esc_html_e( 'Lists', 'culture-community' ); ?></th>
+                                <th scope="col" style="width:120px;"><?php esc_html_e( 'Joined', 'culture-community' ); ?></th>
+                                <th scope="col" style="width:130px;"><?php esc_html_e( 'Actions', 'culture-community' ); ?></th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( $subscribers as $sub ) : ?>
+                                <?php
+                                $date = $sub['createdAt'] ? date_i18n( get_option( 'date_format' ), strtotime( $sub['createdAt'] ) ) : '';
+                                $is_editing = ( strtolower( trim( $sub['email'] ) ) === strtolower( $editing_email ) );
+                                ?>
+                                <tr<?php echo $is_editing ? ' style="background:#fffbe6;"' : ''; ?>>
+                                    <td>
+                                        <input type="checkbox" class="culture-subscriber-checkbox" name="subscriber_ids[]" value="<?php echo esc_attr( $sub['id'] ); ?>">
+                                    </td>
+                                    <td><strong><?php echo esc_html( $sub['email'] ); ?></strong></td>
+                                    <td><?php echo esc_html( $sub['name'] ); ?></td>
+                                    <td>
+                                        <?php if ( ! empty( $sub['lists'] ) ) : ?>
+                                            <?php foreach ( $sub['lists'] as $slug ) : ?>
+                                                <?php $list = Culture_Newsletter_Lists::get_by_slug( $slug ); ?>
+                                                <span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.05em;margin:1px;background:<?php echo $list && 'region' === $list['type'] ? '#fef3c7' : '#e0e7ff'; ?>;color:<?php echo $list && 'region' === $list['type'] ? '#92400e' : '#3730a3'; ?>;">
+                                                    <?php echo esc_html( $list ? $list['name'] : $slug ); ?>
+                                                </span>
+                                            <?php endforeach; ?>
+                                        <?php else : ?>
+                                            <span style="font-size:11px;color:#aaa;">—</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="font-size:12px;color:#646970;"><?php echo esc_html( $date ); ?></td>
+                                    <td>
+                                        <div style="display:flex;gap:6px;align-items:center;">
+                                            <a
+                                                href="<?php echo esc_url( add_query_arg( array(
+                                                    'page'       => 'culture-subscribers',
+                                                    'sub_action' => 'edit',
+                                                    'sub_email'  => rawurlencode( $sub['email'] ),
+                                                ), admin_url( 'admin.php' ) ) ); ?>#edit-subscriber"
+                                                class="button button-small"
+                                            ><?php esc_html_e( 'Edit', 'culture-community' ); ?></a>
+                                            <a
+                                                href="<?php echo esc_url( wp_nonce_url( add_query_arg( array(
+                                                    'action'           => 'culture_delete_subscriber',
+                                                    'subscriber_email' => rawurlencode( $sub['email'] ),
+                                                ), admin_url( 'admin-post.php' ) ), 'culture_delete_subscriber' ) ); ?>"
+                                                class="button button-small button-link-delete"
+                                                onclick="return confirm('<?php echo esc_js( sprintf( __( 'Remove %s?', 'culture-community' ), $sub['email'] ) ); ?>')"
+                                            ><?php esc_html_e( 'Remove', 'culture-community' ); ?></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </form>
+
+                <script>
+                (function () {
+                    var selectAll = document.getElementById('culture-subscribers-select-all');
+                    var boxes     = document.querySelectorAll('.culture-subscriber-checkbox');
+                    var countEl   = document.getElementById('culture-subscribers-selected-count');
+                    function updateCount() {
+                        var n = document.querySelectorAll('.culture-subscriber-checkbox:checked').length;
+                        if ( countEl ) {
+                            countEl.textContent = n ? n + ' <?php echo esc_js( __( 'selected', 'culture-community' ) ); ?>' : '';
+                        }
+                    }
+                    if ( selectAll ) {
+                        selectAll.addEventListener('change', function () {
+                            boxes.forEach( function ( b ) { b.checked = selectAll.checked; } );
+                            updateCount();
+                        } );
+                    }
+                    boxes.forEach( function ( b ) { b.addEventListener('change', updateCount); } );
+                })();
+                </script>
 
                 <?php if ( $total_pages > 1 ) : ?>
                 <div style="margin-top:14px;">
@@ -449,7 +567,9 @@ class Culture_Subscribers {
     }
 
     /**
-     * Handle delete subscriber POST action.
+     * Handle delete subscriber action — the per-row "Remove" link, a plain
+     * nonced GET request (not a POST form) so it can sit as a row action
+     * inside the bulk-actions table without nesting a second <form>.
      */
     public static function handle_delete() {
         check_admin_referer( 'culture_delete_subscriber' );
@@ -458,7 +578,7 @@ class Culture_Subscribers {
             wp_die( esc_html__( 'Permission denied.', 'culture-community' ) );
         }
 
-        $email = sanitize_email( $_POST['subscriber_email'] ?? '' );
+        $email = sanitize_email( wp_unslash( $_REQUEST['subscriber_email'] ?? '' ) );
         if ( $email ) {
             Culture_Subscribers_DB::delete_subscriber_by_email( $email );
         }
@@ -467,6 +587,65 @@ class Culture_Subscribers {
             'page'    => 'culture-subscribers',
             'deleted' => '1',
         ), admin_url( 'admin.php' ) ) );
+        exit;
+    }
+
+    /**
+     * Handle the Subscriber List's bulk-actions form — remove selected, or
+     * add/remove the selected subscribers to/from a list. The dropdown's
+     * value encodes both the action and, for the two list actions, the
+     * target list id (add_to_list_{id} / remove_from_list_{id}) so one
+     * <select> + one Apply button covers all three without extra JS UI.
+     * Redirects back to the exact filtered/paginated view it was submitted
+     * from, carried via the form's ret_* hidden fields.
+     */
+    public static function handle_bulk_action() {
+        check_admin_referer( 'culture_bulk_subscribers' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Permission denied.', 'culture-community' ) );
+        }
+
+        $ids    = array_values( array_filter( array_map( 'absint', (array) ( $_POST['subscriber_ids'] ?? array() ) ) ) );
+        $action = sanitize_text_field( wp_unslash( $_POST['bulk_action'] ?? '' ) );
+
+        $redirect_args = array( 'page' => 'culture-subscribers' );
+        foreach ( array( 's', 'list_id', 'date_from', 'date_to', 'per_page', 'paged' ) as $preserve ) {
+            $value = sanitize_text_field( wp_unslash( $_POST[ 'ret_' . $preserve ] ?? '' ) );
+            if ( '' !== $value ) {
+                $redirect_args[ $preserve ] = $value;
+            }
+        }
+
+        if ( $ids && $action ) {
+            if ( 'delete' === $action ) {
+                foreach ( $ids as $id ) {
+                    $sub = Culture_Subscribers_DB::get( $id );
+                    if ( $sub ) {
+                        Culture_Subscribers_DB::delete_subscriber_by_email( $sub['email'] );
+                    }
+                }
+                $redirect_args['bulk_deleted'] = count( $ids );
+            } elseif ( 0 === strpos( $action, 'add_to_list_' ) ) {
+                $list_id = absint( substr( $action, strlen( 'add_to_list_' ) ) );
+                if ( $list_id ) {
+                    foreach ( $ids as $id ) {
+                        Culture_Subscribers_DB::add_subscriber_to_list_id( $id, $list_id );
+                    }
+                    $redirect_args['bulk_added'] = count( $ids );
+                }
+            } elseif ( 0 === strpos( $action, 'remove_from_list_' ) ) {
+                $list_id = absint( substr( $action, strlen( 'remove_from_list_' ) ) );
+                if ( $list_id ) {
+                    foreach ( $ids as $id ) {
+                        Culture_Subscribers_DB::remove_subscriber_from_list_id( $id, $list_id );
+                    }
+                    $redirect_args['bulk_removed'] = count( $ids );
+                }
+            }
+        }
+
+        wp_safe_redirect( admin_url( 'admin.php?' . http_build_query( $redirect_args ) ) );
         exit;
     }
 

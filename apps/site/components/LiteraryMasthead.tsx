@@ -28,7 +28,7 @@ export default function LiteraryMasthead() {
       <div className="lit-ribbon">
         <div className="lit-ribbon-inner">
           <span>Don&rsquo;t miss new fiction, poetry, essays and translations.</span>
-          <Link href="/newsletter">Get Updates</Link>
+          <Link href="/literary/subscribe">Get Updates</Link>
         </div>
       </div>
 
@@ -51,7 +51,7 @@ export default function LiteraryMasthead() {
             <Link href="/literary/submit" className="lit-btn-pill">
               Submit
             </Link>
-            <Link href="/newsletter" className="lit-btn-pill lit-btn-pill--fill">
+            <Link href="/literary/subscribe" className="lit-btn-pill lit-btn-pill--fill">
               Subscribe
             </Link>
             <button

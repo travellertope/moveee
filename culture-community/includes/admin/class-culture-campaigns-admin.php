@@ -19,9 +19,7 @@ class Culture_Campaigns_Admin {
         add_action( 'admin_post_culture_campaign_send',   array( __CLASS__, 'handle_send' ) );
         add_action( 'admin_post_culture_campaign_test',   array( __CLASS__, 'handle_send_test' ) );
 
-        if ( function_exists( 'wp_enqueue_editor' ) ) {
-            add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_editor' ) );
-        }
+        add_action( 'admin_enqueue_scripts', array( __CLASS__, 'maybe_enqueue_editor' ) );
     }
 
     public static function maybe_enqueue_editor( $hook ) {
@@ -29,9 +27,208 @@ class Culture_Campaigns_Admin {
         // parented under the "Moveee Newsletters" top-level menu (anchor
         // slug `culture-subscribers`, see class-culture-subscribers.php),
         // not `culture-community`, since the September 2026 menu split.
-        if ( 'culture-subscribers_page_culture-campaigns' === $hook ) {
+        if ( 'culture-subscribers_page_culture-campaigns' !== $hook ) {
+            return;
+        }
+        if ( function_exists( 'wp_enqueue_editor' ) ) {
             wp_enqueue_editor();
         }
+        wp_add_inline_style( 'wp-admin', self::multiselect_css() );
+        // Attached to 'jquery-core' purely as a reliably-always-enqueued
+        // handle to hang an inline <script> off — the multiselect JS itself
+        // is plain vanilla JS with no jQuery dependency.
+        wp_enqueue_script( 'jquery' );
+        wp_add_inline_script( 'jquery-core', self::multiselect_js() );
+    }
+
+    /**
+     * CSS for the searchable multi-select "Send to" control
+     * (see render_list_multiselect()) — inlined via wp_add_inline_style
+     * rather than a separate .css file, same convention as every other
+     * hand-rolled admin page in this plugin (e.g. Culture_Directory_Tools).
+     */
+    private static function multiselect_css() {
+        return '
+            .culture-ms { position: relative; max-width: 520px; }
+            .culture-ms-select { display: none; }
+            .culture-ms-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+            .culture-ms-tags:empty { display: none; }
+            .culture-ms-tag {
+                display: inline-flex; align-items: center; gap: 6px;
+                background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 3px;
+                padding: 3px 6px 3px 10px; font-size: 12px; line-height: 1.4;
+            }
+            .culture-ms-tag-remove {
+                cursor: pointer; border: none; background: none; padding: 0 2px;
+                font-size: 14px; line-height: 1; color: #646970;
+            }
+            .culture-ms-tag-remove:hover { color: #b32d2e; }
+            .culture-ms-input {
+                width: 100%; box-sizing: border-box; padding: 6px 8px;
+                border: 1px solid #8c8f94; border-radius: 4px; font-size: 13px;
+            }
+            .culture-ms-dropdown {
+                position: absolute; z-index: 10; top: 100%; left: 0; right: 0;
+                max-height: 260px; overflow-y: auto; margin-top: 2px;
+                background: #fff; border: 1px solid #c3c4c7; border-radius: 4px;
+                box-shadow: 0 2px 6px rgba(0,0,0,.12);
+            }
+            .culture-ms-option {
+                display: flex; align-items: center; justify-content: space-between;
+                gap: 8px; padding: 7px 10px; font-size: 13px; cursor: pointer;
+            }
+            .culture-ms-option:hover, .culture-ms-option.is-active { background: #f0f6fc; }
+            .culture-ms-option.is-selected { background: #f0f0f1; }
+            .culture-ms-option-count { color: #646970; font-size: 11px; white-space: nowrap; }
+            .culture-ms-empty { padding: 10px; font-size: 12px; color: #646970; }
+        ';
+    }
+
+    /**
+     * Vanilla JS (no jQuery UI / select2 dependency) turning the plain
+     * <select multiple> from render_list_multiselect() into a type-to-filter
+     * combobox with removable tag pills — chosen since the list registry can
+     * grow into the hundreds and a checkbox-per-list layout stops scaling
+     * long before that (September 2026). The underlying <select> stays the
+     * real source of truth / form field, so nothing about how this page
+     * submits list_ids[] changed.
+     */
+    private static function multiselect_js() {
+        return '
+        (function() {
+            function init(root) {
+                var select   = root.querySelector("[data-culture-ms-select]");
+                var input    = root.querySelector("[data-culture-ms-input]");
+                var dropdown = root.querySelector("[data-culture-ms-dropdown]");
+                var tagsWrap = root.querySelector("[data-culture-ms-tags]");
+                if (!select || !input || !dropdown || !tagsWrap) return;
+
+                var options = Array.prototype.slice.call(select.options);
+                var activeIndex = -1;
+
+                function renderTags() {
+                    tagsWrap.innerHTML = "";
+                    options.forEach(function(opt) {
+                        if (!opt.selected) return;
+                        var tag = document.createElement("span");
+                        tag.className = "culture-ms-tag";
+                        var label = document.createElement("span");
+                        label.textContent = opt.textContent;
+                        var remove = document.createElement("button");
+                        remove.type = "button";
+                        remove.className = "culture-ms-tag-remove";
+                        remove.setAttribute("aria-label", "Remove");
+                        remove.textContent = "\\u00d7";
+                        remove.addEventListener("click", function() {
+                            opt.selected = false;
+                            renderTags();
+                            renderDropdown();
+                        });
+                        tag.appendChild(label);
+                        tag.appendChild(remove);
+                        tagsWrap.appendChild(tag);
+                    });
+                }
+
+                function renderDropdown() {
+                    var query = input.value.trim().toLowerCase();
+                    var visible = options.filter(function(opt) {
+                        return opt.textContent.toLowerCase().indexOf(query) !== -1;
+                    });
+                    dropdown.innerHTML = "";
+                    if (visible.length === 0) {
+                        var empty = document.createElement("div");
+                        empty.className = "culture-ms-empty";
+                        empty.textContent = "No matching lists.";
+                        dropdown.appendChild(empty);
+                        activeIndex = -1;
+                        return;
+                    }
+                    visible.forEach(function(opt, i) {
+                        var row = document.createElement("div");
+                        row.className = "culture-ms-option" + (opt.selected ? " is-selected" : "") + (i === activeIndex ? " is-active" : "");
+                        row.dataset.value = opt.value;
+                        var label = document.createElement("span");
+                        label.textContent = (opt.selected ? "\\u2713 " : "") + opt.textContent;
+                        row.appendChild(label);
+                        if (opt.dataset.count) {
+                            var count = document.createElement("span");
+                            count.className = "culture-ms-option-count";
+                            count.textContent = "(" + opt.dataset.count + ")";
+                            row.appendChild(count);
+                        }
+                        row.addEventListener("mousedown", function(e) {
+                            // mousedown (not click) so this fires before the
+                            // input\'s blur handler closes the dropdown.
+                            e.preventDefault();
+                            opt.selected = !opt.selected;
+                            renderTags();
+                            renderDropdown();
+                        });
+                        dropdown.appendChild(row);
+                    });
+                }
+
+                function openDropdown() {
+                    dropdown.hidden = false;
+                    renderDropdown();
+                }
+                function closeDropdown() {
+                    dropdown.hidden = true;
+                    activeIndex = -1;
+                }
+
+                input.addEventListener("focus", openDropdown);
+                input.addEventListener("input", openDropdown);
+                input.addEventListener("blur", function() {
+                    // Delay so a mousedown on a dropdown row (which is not a
+                    // click yet) still registers before we hide it.
+                    setTimeout(closeDropdown, 120);
+                });
+                input.addEventListener("keydown", function(e) {
+                    var rows = dropdown.querySelectorAll(".culture-ms-option");
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        if (dropdown.hidden) { openDropdown(); return; }
+                        activeIndex = Math.min(activeIndex + 1, rows.length - 1);
+                        renderDropdown();
+                    } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        activeIndex = Math.max(activeIndex - 1, 0);
+                        renderDropdown();
+                    } else if (e.key === "Enter") {
+                        if (!dropdown.hidden && activeIndex > -1) {
+                            e.preventDefault();
+                            var rows2 = dropdown.querySelectorAll(".culture-ms-option");
+                            var row = rows2[activeIndex];
+                            if (row) {
+                                var opt = options.filter(function(o) { return o.value === row.dataset.value; })[0];
+                                if (opt) {
+                                    opt.selected = !opt.selected;
+                                    renderTags();
+                                    renderDropdown();
+                                }
+                            }
+                        }
+                    } else if (e.key === "Escape") {
+                        closeDropdown();
+                    }
+                });
+
+                renderTags();
+            }
+
+            function ready(fn) {
+                if (document.readyState !== "loading") fn();
+                else document.addEventListener("DOMContentLoaded", fn);
+            }
+
+            ready(function() {
+                var roots = document.querySelectorAll("[data-culture-ms]");
+                for (var i = 0; i < roots.length; i++) init(roots[i]);
+            });
+        })();
+        ';
     }
 
     public static function register_menu() {
@@ -118,14 +315,16 @@ class Culture_Campaigns_Admin {
                         <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">
                             <?php esc_html_e( 'Send to', 'culture-community' ); ?>
                         </label>
-                        <?php foreach ( $lists as $list ) : ?>
-                            <label style="display:inline-flex;align-items:center;gap:6px;margin-right:16px;margin-bottom:6px;">
-                                <input type="checkbox" name="list_ids[]" value="<?php echo esc_attr( $list['id'] ); ?>"
-                                    <?php checked( $editing && in_array( $list['id'], $editing['listIds'], true ) ); ?>>
-                                <?php echo esc_html( $list['name'] ); ?>
-                                (<?php echo esc_html( number_format( Culture_Newsletter_Lists::subscriber_count( $list['id'] ) ) ); ?>)
-                            </label>
-                        <?php endforeach; ?>
+                        <?php
+                        // Searchable multi-select — a checkbox row per list stopped
+                        // scaling once the list registry grew past a couple dozen
+                        // entries (September 2026). Real <select multiple> underneath
+                        // (kept as the actual form field / source of truth, so this
+                        // degrades to a native multi-select with JS disabled) is
+                        // progressively enhanced by culture-ms.js below into a
+                        // type-to-filter combobox with removable tag pills.
+                        self::render_list_multiselect( $lists, $editing ? $editing['listIds'] : array() );
+                        ?>
                     </p>
 
                     <p>
@@ -222,6 +421,42 @@ class Culture_Campaigns_Admin {
                 </tbody>
             </table>
         </div>
+        <?php
+    }
+
+    /**
+     * Renders a real <select multiple> (the actual form field WordPress
+     * submits `list_ids[]` from) plus a wrapping search-and-tag UI that
+     * `culture-ms.js` progressively enhances it into. No JS library — hand
+     * rolled vanilla JS, consistent with every other admin page in this
+     * plugin. Falls back to a plain native multi-select box if JS is
+     * disabled, since the <select> itself is never hidden by PHP.
+     *
+     * @param array $lists         Full list registry (Culture_Newsletter_Lists::get_all()).
+     * @param array $selected_ids  List IDs already selected (editing an existing campaign).
+     */
+    private static function render_list_multiselect( array $lists, array $selected_ids ) {
+        ?>
+        <div class="culture-ms" data-culture-ms>
+            <div class="culture-ms-tags" data-culture-ms-tags></div>
+            <input
+                type="text"
+                class="culture-ms-input"
+                data-culture-ms-input
+                autocomplete="off"
+                placeholder="<?php esc_attr_e( 'Search lists by name…', 'culture-community' ); ?>"
+            >
+            <div class="culture-ms-dropdown" data-culture-ms-dropdown hidden></div>
+        </div>
+        <select class="culture-ms-select" name="list_ids[]" multiple data-culture-ms-select>
+            <?php foreach ( $lists as $list ) : ?>
+                <option
+                    value="<?php echo esc_attr( $list['id'] ); ?>"
+                    data-count="<?php echo esc_attr( number_format( Culture_Newsletter_Lists::subscriber_count( $list['id'] ) ) ); ?>"
+                    <?php selected( in_array( $list['id'], $selected_ids, true ) ); ?>
+                ><?php echo esc_html( $list['name'] ); ?></option>
+            <?php endforeach; ?>
+        </select>
         <?php
     }
 

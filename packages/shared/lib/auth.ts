@@ -134,6 +134,61 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        // Magic-code sign-in: an already-verified email/OTP pair (see
+        // class-culture-magic-otp.php) — WordPress re-verifies the code
+        // itself, finds-or-creates the account, subscribes it to the given
+        // list, and returns the same profile shape as the password branch.
+        if ((credentials as any)?.otpEmail && (credentials as any)?.otpCode) {
+          try {
+            const res = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: (credentials as any).otpEmail,
+                code: (credentials as any).otpCode,
+                list: (credentials as any).otpList || "getmelit",
+              }),
+              cache: "no-store",
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return {
+              id: String(data.id),
+              name: data.display_name,
+              email: data.email,
+              username: data.username,
+              phone: data.phone ?? "",
+              whatsapp: data.whatsapp ?? "",
+              gender: data.gender ?? "",
+              dateOfBirth: data.date_of_birth ?? "",
+              nationality: data.nationality ?? "",
+              countryOfResidence: data.country_of_residence ?? "",
+              city: data.city ?? "",
+              occupation: data.occupation ?? "",
+              registeredAt: data.registered_at ?? 0,
+              tier: data.tier,
+              interests: data.interests ?? [],
+              credits: data.credits ?? 0,
+              reputation: data.reputation ?? data.points ?? 0,
+              reputationTier: data.reputation_tier ?? "member",
+              dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
+              points: data.points ?? 0,
+              badges: data.badges ?? [],
+              referralCode: data.referral_code ?? "",
+              referralCount: data.referral_count ?? 0,
+              visual_downloads_today: data.visual_downloads_today ?? 0,
+              isVendor: data.is_vendor ?? false,
+              vendorSlug: data.vendor_slug ?? "",
+              avatarUrl: data.avatar_url ?? "",
+              hasPasskey: data.has_passkey ?? false,
+              passkeyCount: data.passkey_count ?? 0,
+              creditsEscrowed: data.credits_escrowed ?? 0,
+            };
+          } catch {
+            return null;
+          }
+        }
+
         if (!credentials?.username || !credentials?.password) return null;
 
         try {
