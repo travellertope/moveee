@@ -9271,6 +9271,22 @@ implementations self-manage their own play/pause state and unload/pause on unmou
 enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
 `<audio>` behavior — not treated as a bug).
 
+## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — planned, not built
+
+**Full plan (read before starting any work on this): `docs/reading-tracker-plan.md`.**
+Status: planning only, zero backend/frontend code exists yet — this is a pointer for
+whoever picks it up next, not a status report on completed work. Requested as "implement
+similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" —
+the plan doc breaks StoryGraph's feature set into what's already covered by existing
+Moveee infrastructure (Book Review's ratings/genres, `culture_directory` book entries,
+Hubs for Buddy Reads, the `AnalyticsClient.tsx` chart components for stats) versus what's
+genuinely new (a persistent per-user shelf table, community-sourced mood/pace tags on
+book directory entries, a reading-goal tracker, a stats dashboard). Six phases, build
+strictly in order — see the doc's own §8. Explicitly deferred to a later pass, not
+built in v1: page-progress tracking, format tracking, Goodreads/StoryGraph import, a
+public reading-profile page, content warnings, and mood/pace-driven recommendation
+ranking (see the doc's §0 and §9 for the full reasoning on each).
+
 ---
 
 ## Interest taxonomy (canonical slugs)
