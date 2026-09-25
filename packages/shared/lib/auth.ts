@@ -51,7 +51,7 @@ export interface CultureUser {
   city: string;
   occupation: string;
   // Membership
-  tier: "citizen" | "patron";
+  tier: "citizen" | "lit" | "patron";
   // Interests (Phase 1)
   interests: string[];
   // Gamification — Phase 2

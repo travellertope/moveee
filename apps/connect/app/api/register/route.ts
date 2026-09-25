@@ -10,7 +10,7 @@ interface RegisterBody {
   display_name?: string;
   phone?: string;
   whatsapp?: string;
-  tier?: "citizen" | "patron";
+  tier?: "citizen" | "lit" | "patron";
   referral_code?: string;
   directory_opt_in?: string;
   directory_disciplines?: string;

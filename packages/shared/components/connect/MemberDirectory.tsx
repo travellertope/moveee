@@ -13,7 +13,7 @@ interface Member {
   occupation: string;
   city: string;
   countryOfResidence: string;
-  tier: "citizen" | "patron";
+  tier: "citizen" | "lit" | "patron";
   bio?: string;
   disciplines?: string[];
   instagram?: string;
