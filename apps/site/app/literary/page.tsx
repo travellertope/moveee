@@ -134,13 +134,8 @@ export default async function LiteraryLandingPage() {
           <div className="lit-plug">
             <div className="lit-plug-cover">
               <LiteraryGenreArt slug="submissions" className="lit-plug-cover-art" />
-              <div className="lit-plug-cover-text">
-                <span className="lit-plug-cover-label">Submissions</span>
-                <span className="lit-plug-cover-title">Open</span>
-              </div>
             </div>
             <div>
-              <div className="lit-tag">Now Reading</div>
               <h3>We&rsquo;re reading fiction, poetry, essays, conversations and translation.</h3>
               <p>
                 We read on a rolling basis and publish new work continuously. Voice-driven,
