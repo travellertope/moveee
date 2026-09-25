@@ -27,6 +27,7 @@ import DirectoryDetailModal from "./DirectoryDetailModal";
 import QuoteDetailModal from "./QuoteDetailModal";
 import PulseDetailSheet from "./PulseDetailSheet";
 import { ReportSheet } from "../ui/Overlays";
+import { shareUrlFor } from "../../utils/shareUrl";
 import type { FeedItem, PollOption } from "../../types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -63,13 +64,6 @@ function starsText(n?: number): string {
   if (!n) return "—";
   const full = Math.round(n);
   return "★".repeat(Math.max(0, full)) + "☆".repeat(Math.max(0, 5 - full));
-}
-
-function shareUrlFor(item: FeedItem): string | undefined {
-  if (!item.slug) return undefined;
-  if (item.type === "pulse") return `https://web.themoveee.com/pulse/${item.slug}`;
-  if (item.type === "editorial") return `https://themoveee.com/magazine/${item.slug}`;
-  return `https://web.themoveee.com/community/${item.slug}`;
 }
 
 function stripLinkFromBody(body?: string | null, sourceUrl?: string | null): string | undefined {

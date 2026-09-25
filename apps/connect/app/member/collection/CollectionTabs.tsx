@@ -93,7 +93,7 @@ export default function CollectionTabs() {
                 Hit the ♥ on quotes or magazine articles to save them here.
               </p>
               <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
-                <Link href="/quotes" className="mem-upgrade-btn" style={{ display: "inline-block" }}>Browse Quotes</Link>
+                <Link href="/feed" className="mem-upgrade-btn" style={{ display: "inline-block" }}>Browse Feed</Link>
                 <Link href="/magazine" className="mem-field-btn" style={{ display: "inline-block" }}>Browse Magazine</Link>
               </div>
             </>
@@ -104,7 +104,7 @@ export default function CollectionTabs() {
                 Tap the 🔖 on any quote or article to add it to your reading list.
               </p>
               <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
-                <Link href="/quotes" className="mem-upgrade-btn" style={{ display: "inline-block" }}>Browse Quotes</Link>
+                <Link href="/feed" className="mem-upgrade-btn" style={{ display: "inline-block" }}>Browse Feed</Link>
                 <Link href="/magazine" className="mem-field-btn" style={{ display: "inline-block" }}>Browse Magazine</Link>
               </div>
             </>

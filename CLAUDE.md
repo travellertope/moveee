@@ -534,9 +534,23 @@ new write path against it.
 
 ### Email template
 Plain white background, no header block. Content flows directly from the
-newsletter body. Footer has unsubscribe link only. The newsletter name
-(GetMeLit / Culture Drop) is derived from `_culture_nl_list` post meta and
-used in the footer "You are receiving this because you subscribed to X" line.
+newsletter body. Footer has "Read online · Unsubscribe" as plain text links
+(no boxed button — see below). The newsletter name (GetMeLit / Culture Drop)
+is derived from `_culture_nl_list` post meta and used in the footer "You are
+receiving this because you subscribed to X" line.
+
+**"Read online" boxed button removed, folded into the footer (September 2026).**
+`build_email()` (`class-culture-newsletter-queue.php`, shared by every
+newsletter/digest send and — per "One-off email campaigns" above — reused as
+`build_campaign_email()` for Campaigns too, so this fix covers both) used to
+render a separate bordered "READ ONLINE →" button block (`.read-more`)
+between the content and the footer. Per explicit user feedback, that whole
+block (and its CSS) is gone — "Read online" is now a plain text link inside
+the footer `<p>`, right before "· Unsubscribe", same font/size/color as the
+rest of the footer copy so it reads as one flowing line rather than a
+separate CTA. Still gated on the same `$permalink && '#' !== $permalink`
+check as before — a send with no real permalink (e.g. a preview/test send)
+just shows "Unsubscribe" alone, no dangling "·".
 
 ### Archive / frontend
 `lib/wp.ts` → `getNewslettersWithFallback()` fetches all issues.
@@ -6790,6 +6804,68 @@ Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/e
 
 ---
 
+## Mobile quote-share QR code led to a 404 — wrong URL pattern for native quotes (fixed September 2026)
+
+User-reported: scanning the QR code on a shared quote's image (mobile app, `QuoteShareCard.tsx`)
+led to a 404. Root cause was a `/community/{slug}` share-URL pattern applied to the **wrong**
+content type. This codebase has two structurally distinct "quote" things:
+
+1. **Native quotes** — `culture_quote` CPT posts (editorially seeded or system-authored), surfaced
+   in the mobile feed as `FeedItem.type === "quote"`, rendered via `QuoteCard` →
+   `QuoteDetailModal.tsx`. Their real detail page is `/quotes/{databaseId}-{slug}` on
+   `web.themoveee.com` — a **compound** URL segment (`apps/connect/app/quotes/[slug]/page.tsx`
+   parses only the leading numeric id via `segment.split('-')[0]`, then does an ID-based GraphQL
+   lookup, not a slug-based one).
+2. **Composer-submitted quote posts** — real `culture_post` entries created via the composer's
+   "Update family" quote template (`_template_type = 'quote'`), surfaced as `FeedItem.type ===
+   "community"` (`item.templateType === "quote"`). Their real detail page genuinely is
+   `/community/{slug}`.
+
+`QuoteDetailModal.tsx` (and, duplicated verbatim, `PostDetailSheet.tsx`'s `TemplateQuote`) built
+the QR/share URL as `` item.slug ? `https://themoveee.com/community/${item.slug}` : ... ``
+unconditionally — correct for case 2, but wrong for case 1 on two counts: wrong page
+(`/community/[slug]` only ever queries WordPress's `community-posts` REST base, i.e. the
+`culture_post` CPT — `packages/shared/lib/community-wordpress.ts`'s `getCommunityPostBySlug()`
+has zero knowledge of `culture_quote` at all, so the lookup always comes back empty →
+`notFound()`) **and** wrong slug shape (`item.slug` on a native quote is the bare WP `post_name`,
+never the `{id}-{slug}` compound `/quotes/[slug]` expects).
+
+**The fix didn't need a new URL-construction scheme** — the PHP feed mapper already emits a
+correctly-shaped, per-type relative path on every `FeedItem.href`
+(`class-culture-mobile-api.php`'s `get_quote_feed_items()`: `'href' => '/quotes/' . $post->ID .
+'-' . $post->post_name`, vs. `get_community_feed_items()`'s `'href' => '/community/' .
+$post->post_name`) — it just wasn't being used for sharing. New shared helper
+`apps/mobile/src/utils/shareUrl.ts` (`shareUrlFor(item)`) builds off `item.href` instead of
+hand-rolling a path from `item.slug`, with domain routing (`themoveee.com` for `editorial`,
+`web.themoveee.com` for everything else). Kept as its own tiny module rather than exported from
+`FeedItemCard.tsx` — that file already imports `QuoteDetailModal.tsx`, so exporting the helper
+from there and importing it back into `QuoteDetailModal.tsx` would have created a circular
+import. `FeedItemCard.tsx`'s own local `shareUrlFor()` (previously used for the native
+`QuoteCard`'s inline share button and `FeedReactionBar`'s generic share prop — and itself missing
+a `"quote"` branch, silently falling into the same broken `/community/{slug}` fallback) was
+deleted in favor of importing this new util.
+
+**If a future share/QR/deep-link feature needs a content item's public URL, always build off
+`item.href`, never re-derive one from `item.slug` + a hardcoded path segment** — `href` is the
+one field the backend already guarantees is shaped correctly per item type; a hand-rolled
+per-caller path is exactly how this bug happened (twice, in near-identical duplicated lines).
+
+**No web-side (`apps/connect`/`packages/shared`) equivalent exists** — the QR-code-on-shared-
+image feature is mobile-only (`QuoteShareCard.tsx`); confirmed via grep that no `QRCode`/`qrcode`
+usage exists anywhere under `packages/shared/components`.
+
+Verified via a brace/paren-balance check on all four touched/new files (no `node_modules`
+installed in this sandbox, so `tsc --noEmit` couldn't run) and a grep confirming no other
+`item.slug`-based `/community/{slug}` construction elsewhere in `apps/mobile/src` is reachable
+by a native-quote `FeedItem` (the other two matches — `SavedArticlesScreen.tsx`,
+`DirectoryPostsScreen.tsx` — both only ever build this href for genuine `type: "community"`
+items, and `PostDetailScreen.tsx`'s two literal share-URL constructions are only ever reached via
+`nav.navigate("PostDetail", { item: { type: "community", ... } })` call sites, never a quote —
+left as-is to keep this fix scoped). Re-check the real request-code → scan → `/quotes/{id}-{slug}`
+round trip on a real device before considering this fully closed.
+
+---
+
 ## Quotes feed merge — synthetic system author + seeding retirement (September 2026)
 
 First step of a longer-term plan to retire the standalone `/quotes` product and make
@@ -6867,6 +6943,71 @@ none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
 `culture_quote` created via the post editor with no author picked still resolves
 sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
 Quotes" button, before considering this fully closed.
+
+## `/quotes` standalone product retired — bare permalink kept as a share/SEO target (September 2026)
+
+Second, final step of the retirement scoped in the section above — the standalone browsable
+`/quotes` product (archive, author archive, its own like/report/comment UI) is now gone. Quotes
+render natively inline in the feed on both platforms; this pass removed everything that turned
+that same content into a second, separately-browsable "site."
+
+**Removed**: `apps/connect/app/quotes/page.tsx` (archive/browse — its search input was never
+wired to anything), `apps/connect/app/quotes/author/[slug]/page.tsx` (author archive),
+`packages/shared/components/{QuotesInfiniteGrid,QuoteSubmissionModal,SubmitQuoteTrigger}.tsx` +
+`apps/connect/app/quotes.css`, the confirmed-dead `apps/site/components/QuoteSubmissionModal.tsx`
+(zero importers, predates this pass), `POST /culture/v1/quotes/like` /
+`/culture/v1/quotes/report` (`handle_like_quote`/`handle_report_quote`) and their Next.js proxies
+(`apps/connect/app/api/quotes/{like,report}/route.ts`) — this was the standalone product's own
+bespoke like/report system, entirely separate from the feed's real reaction system
+(`ReactionBar`/`/community/react`), and had no other caller. `apps/site/app/quotes/*` and
+`apps/site/app/api/quotes/report/route.ts` were already dead (redirect-shadowed by
+`proxy.ts`'s `connectPrefixes`) — deleted as pure cleanup. Links removed: `Footer.tsx`'s Explore
+column, `/member`'s `EXPLORE_LINKS` "Quotes Archive" entry, the `/quotes` sitemap entry.
+
+**Kept, deliberately**: `POST /culture/v1/quotes` (`handle_create_quote`) and its mobile mirror
+`POST /culture/v1/mobile/community/quote` (`handle_submit_quote`, a pure delegate) —
+**a scoping mistake was caught before shipping this**: these were first assumed to be reachable
+only from the retired archive's own "Submit a Quote" modal, duplicating the composer's own Quote
+tab. That was wrong. `packages/shared/components/pulse/SubmitPost.tsx` (web) posts directly to
+`/api/quotes/create` → this exact endpoint, and `apps/mobile/src/screens/community/
+NewPostScreen.tsx` posts directly to `/mobile/community/quote` → the exact same delegate. This is
+the live backend for the feed-native composer's Quote template on both platforms, not standalone-
+product-only — removing it would have broken quote creation entirely, not just retired a browsing
+UI. **If you ever need to touch quote creation again, this is the one method
+(`Culture_REST_API::handle_create_quote()`) both platforms' composers funnel into** — same
+"one implementation, two auth front doors" shape as the community RSVP / follow-system mirrors
+elsewhere in this file.
+
+**`/quotes/[slug]` still exists, rebuilt as a bare permalink, not deleted** — per an explicit
+product decision: since a quote's `href` (`/quotes/{id}-{slug}`) is the load-bearing destination
+for mobile+web share/QR codes (see the "Quote share/QR code 404" fix elsewhere in this file),
+`SearchModal`'s Quote-type search results (`apps/connect/app/api/search/route.ts`), and the
+member Collection's saved-quote links, killing the permalink outright would have broken all
+three. The rebuilt page has **no archive link, no author link, no like/bookmark/report actions,
+no "browse more" footer** — just the quote (styled to match `QuoteDetailModal.tsx`'s own look,
+so the permalink and the in-feed drawer are visually consistent), the real feed `ReactionBar`
+(`itemType="quote"`, same reaction system every other content type uses), and `QuoteComments`
+(unchanged — it already only ever depended on the shared `WpComment`/`getPostComments()` backend,
+not the archive). Nothing in the app links to this page except a quote's own `item.href` — don't
+add a "browse all quotes" link back into it.
+
+**Real, pre-existing bug fixed in the same pass**: `Culture_REST_API::saved_post_summary()`
+(backs the member Collection's "liked"/"bookmarked" lists) built a saved quote's `url` as
+`/quotes/{bare-slug}` — no numeric ID prefix — while the permalink page's `parseId()` requires
+`/quotes/{id}-{slug}` (`segment.split('-')[0]`). Every saved quote in a member's Collection would
+have 404'd once clicked. Fixed to `/quotes/{$post->ID}-{$slug}`, matching
+`get_quote_feed_items()`'s href shape exactly. `CollectionTabs.tsx`'s "Browse Quotes" empty-state
+buttons were repointed to `/feed` (where quotes are actually discoverable now), since `/quotes`
+is no longer a browsable destination.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file; this pass additionally needs the plugin redeployed (the
+`saved_post_summary()` URL-shape fix and the route-registration changes are both PHP) before
+either fix takes effect in production. Verified via `php -l` on both touched PHP files and a
+repo-wide grep confirming zero remaining imports of any deleted component/route. Re-check the
+full flow — creating a quote via each platform's composer, opening it from a shared QR code, and
+opening a saved quote from the member Collection — in a real environment before considering this
+fully closed.
 
 ---
 
@@ -9446,6 +9587,72 @@ implementations self-manage their own play/pause state and unload/pause on unmou
 enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
 `<audio>` behavior — not treated as a bug).
 
+## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phase 1 (shelves) shipped, September 2026
+
+**Full plan: `docs/reading-tracker-plan.md`.** Build order is strictly phased (§8): shelves →
+goal → mood/pace → stats dashboard → Buddy Reads prefill → gamification hook. **Only Phase 1
+(shelves) is built so far** — goal/mood-pace/stats/Buddy-Reads/gamification are all still
+planning-only; don't assume any of them exist because Phase 1 does. Requested as "implement
+similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" — the plan
+doc breaks StoryGraph's feature set into what's already covered by existing Moveee
+infrastructure (Book Review's ratings/genres, `culture_directory` book entries, Hubs for Buddy
+Reads, the `AnalyticsClient.tsx` chart components for stats) versus what's genuinely new.
+Explicitly deferred past v1 regardless of phase: page-progress tracking, format tracking,
+Goodreads/StoryGraph import, a public reading-profile page, content warnings, and
+mood/pace-driven recommendation ranking (see the doc's §0/§9).
+
+### Phase 1 — shelves (want to read / currently reading / read)
+
+**Backend**: `Culture_Reading_Tracker` (new,
+`culture-community/includes/core/class-culture-reading-tracker.php`) — single source of truth,
+same "one class, two mirrored REST surfaces" shape as `Culture_Community_RSVP`. New table
+`wp_culture_reading_shelf` (`id, user_id, directory_id, status, started_at, finished_at,
+created_at, updated_at`, `UNIQUE KEY (user_id, directory_id)` — upsert, not duplicate rows, same
+convention as `wp_culture_hub_members`/`wp_culture_follows`), wired into
+`Culture_Activator::create_tables()`; `CULTURE_VERSION` bumped `3.1.0` → `3.2.0` to trigger the
+dbDelta on next deploy (a code push alone never runs `register_activation_hook()` — see "Plugin
+DB table auto-upgrade" above). `set_shelf_status()` validates the status against
+`Culture_Reading_Tracker::STATUSES` and that `directory_id` resolves to a published
+`culture_directory` post; `started_at`/`finished_at` are **sticky** — set once on first entry
+into `currently_reading`/`read`, never overwritten by a later re-transition (e.g. finishing a
+re-read doesn't erase the original finish date). `get_user_shelf()` returns each entry's
+title/slug/thumbnail (post thumbnail or `_external_cover_url`) and author via
+`Culture_Directory::get_first_about_field()` — that method was widened from `private` to
+`public` specifically so this class could reuse it rather than re-parsing `_about_fields` itself.
+
+REST routes, mirrored exactly like every other feature in this plugin (mobile JWT vs. web
+API-key + explicit `user_id`): `POST/DELETE/GET /mobile/reading/shelf`,
+`GET /mobile/reading/shelf/counts` (`class-culture-mobile-api.php`) and
+`POST/DELETE/GET /reading/shelf`, `GET /reading/shelf/counts` (`class-culture-rest-api.php`).
+
+**Web** (`apps/connect`): `/member/reading` (new `AccountNav` entry, "📚 Reading Tracker",
+between Portfolio and Collection — added immediately, not left as a "no nav path to it" gap the
+way Portfolio/Collection once were, per that section's own documented lesson). `page.tsx` is the
+standard `.acct-page`/`.acct-wrap`/`AccountNav` server shell (modeled on `/member/wallet`);
+`ReadingTrackerClient.tsx` owns the three-tab (`.wal-tabs`, reused verbatim) shelf switcher, a
+`.rt-grid` of `.rt-card` book cards (per-card shelf-move `<select>` + remove button), and an
+"Add a Book" modal wrapping the shared `DirectorySearch` composer component
+(`typeFilter="book"`, `aboutFieldLabel="Author"`, `externalSource="google_books"` — same
+dedup-by-external-id mechanism Book Review already uses, no new search/creation endpoint
+needed). Two new proxy routes, `app/api/reading/shelf/route.ts` (GET/POST/DELETE) and
+`app/api/reading/shelf/counts/route.ts` — both resolve `user_id` from
+`getServerSession(authOptions)` server-side and never trust a client-supplied one, per the plan
+doc's own privacy ground rule (§7). New `.rt-*` CSS appended to `member.css`.
+
+**Mobile** (`apps/mobile`): `ReadingTrackerScreen.tsx` (`screens/member/`), registered in both
+`ConnectStack` and `MemberStack` (same dual-registration every other member screen gets) and
+added to `useNav.ts`'s `AppParamList`. Same shelf-tabs/grid/add-book-modal shape as web, calling
+`${MOBILE_API}/reading/shelf*` via `api.get/post/delete`. Uses the mobile `DirectorySearch`
+component (`components/composer/DirectorySearch.tsx` — note its prop names differ slightly from
+the web version: `onSelect`/`selected`, not `onChange`/`value`, and its `DirectoryEntry` has no
+`slug` field). Linked from `MemberDashboardScreen.tsx`'s `QUICK_LINKS` ("📚 Reading Tracker").
+
+**Not built yet** (later phases, do not start without explicit direction): a reading goal
+tracker, mood/pace tags on book directory entries, the stats dashboard, Buddy Reads prefill from
+a Hub, and the gamification hook (credits/reputation for shelf activity). None of Phase 1's
+tables/endpoints/components should need to change to support these — they're additive per the
+plan doc's own phase breakdown.
+
 ---
 
 ## Interest taxonomy (canonical slugs)
@@ -10013,6 +10220,30 @@ whether the failure happened somewhere that *doesn't* route through `api/client.
 (e.g. `react-native-iap`/passkey native module errors, a thrown error inside a
 component's own render) — those still need an explicit `Sentry.captureException` call
 added at the point of failure, this fix only covers the HTTP layer.
+
+**Correction (September 2026): "the expected 401-triggers-logout path... is normal, not
+something to page on" was too broad.** User-reported: picking a Google Books/Spotify/TMDB
+search result in the community composer (`DirectorySearch.tsx`'s `handleSelectExternal()` →
+`/directory/quick-create`) was force-logging users out. Investigation found the
+*previously known* cause of exactly this symptom (a March/earlier fix, "Fix Book Review
+composer kicking users to login on select" — collapsing transient upstream failures into a
+blanket 401) was already fixed and already live in the code for weeks, yet the bug was
+still being reported — meaning either a genuinely different, still-undiagnosed cause, or a
+real (if surprising) session invalidation. **Either way, there was no way to tell which**,
+because a 401 that fires `_onUnauthorized()` (i.e., one that actually force-logs someone
+out) was — by this section's own prior guidance — deliberately excluded from
+`captureException`, so it left literally no discoverable trace in Sentry. Fixed:
+`request()` now calls `Sentry.captureMessage()` (not `captureException` — still not treated
+as a crash-level bug) specifically in the branch where a 401 is about to fire
+`_onUnauthorized()`, including the URL/method and the response's `code` field. **Every
+route a mobile client hits that can 401 should return a distinguishing `code` field in its
+JSON error body** (e.g. `no_token` vs. `wp_401`/the upstream WP_Error's own `code`) — see
+`apps/site/app/api/directory/quick-create/route.ts`'s two 401 branches for the pattern —
+otherwise this new Sentry message can only say "a 401 happened here," not why, which is the
+exact gap being closed. **If a 401-triggered logout is ever reported again, search Sentry
+for `Auto-logout triggered:`** — that message now names the exact endpoint and code every
+time this fires, instead of the silent-by-design gap this section used to document as
+correct behavior.
 
 ---
 

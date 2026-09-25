@@ -15,6 +15,7 @@ import type { ColorPalette } from "../../theme";
 import type { FeedItem } from "../../types";
 import QuoteShareCard from "../quotes/QuoteShareCard";
 import { useScoreCardShare } from "../../features/games/useScoreCardShare";
+import { shareUrlFor } from "../../utils/shareUrl";
 
 interface Props {
   visible: boolean;
@@ -30,7 +31,7 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
   const [bookmarked, setBookmarked] = useState(false);
   const { cardRef, share: shareCard } = useScoreCardShare();
 
-  const shareUrl = item.slug ? `https://themoveee.com/community/${item.slug}` : "https://web.themoveee.com/quotes";
+  const shareUrl = shareUrlFor(item) ?? "https://web.themoveee.com/quotes";
   const sharingReason = item.quoteSharingReason || undefined;
 
   const handleAuthorPress = () => {

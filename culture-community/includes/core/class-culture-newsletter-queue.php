@@ -556,8 +556,6 @@ class Culture_Newsletter_Queue {
   .content a { color:#8b6f47; }
   .content img { max-width:100%; height:auto; display:block; margin:24px 0; }
   .content hr { border:none; border-top:1px solid #e8e0d4; margin:32px 0; }
-  .read-more { display:block; margin:32px 0 8px; }
-  .read-more a { display:inline-block; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:#14110d; text-decoration:none; border:1px solid #14110d; padding:10px 24px; }
   .footer { padding:12px 16px 18px; border-top:1px solid #e8e0d4; font-family:-apple-system,BlinkMacSystemFont,'Courier New',monospace; font-size:10px; letter-spacing:.1em; color:#a09080; }
   .footer a { color:#7a6f5c; text-decoration:none; }
 </style>
@@ -570,16 +568,12 @@ class Culture_Newsletter_Queue {
     echo $content;
     ?>
   </div>
-  <?php if ( $permalink && '#' !== $permalink ) : ?>
-  <div class="read-more">
-    <a href="<?php echo esc_url( $permalink ); ?>">
-      Read online &rarr;
-    </a>
-  </div>
-  <?php endif; ?>
   <div class="footer">
     <p>
       You are receiving this because you subscribed to <?php echo esc_html( $nl_label ); ?>.<br>
+      <?php if ( $permalink && '#' !== $permalink ) : ?>
+      <a href="<?php echo esc_url( $permalink ); ?>">Read online</a> &middot;
+      <?php endif; ?>
       <a href="<?php echo esc_url( $unsub_url ); ?>">Unsubscribe</a>
     </p>
   </div>
