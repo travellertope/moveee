@@ -9,6 +9,7 @@ import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
+import BookMoodPace from "./BookMoodPace";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -451,6 +452,14 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                   <span className="dir-wiki-infobox-value">{infobox[key]}</span>
                 </div>
               ) : null
+            )}
+
+            {/* Mood/pace (books only) — Phase 3, see docs/reading-tracker-plan.md §1.3/§3.4 */}
+            {typeSlug === "book" && entry.databaseId && (
+              <>
+                <div className="dir-wiki-infobox-divider" />
+                <BookMoodPace directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+              </>
             )}
 
             {/* External links */}

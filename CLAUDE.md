@@ -9708,11 +9708,78 @@ edit/summary toggle, same "read" transition re-triggers `loadGoal()`.
 **No badge/reward tied to hitting 100% in v1** — per the plan's explicit scope note; if that's
 ever wanted, it belongs with the later gamification-hook phase, not bolted onto this one.
 
-**Not built yet** (later phases, do not start without explicit direction): mood/pace tags on
-book directory entries, the stats dashboard, Buddy Reads prefill from a Hub, and the
-gamification hook (credits/reputation for shelf activity). None of Phase 1/2's
-tables/endpoints/components should need to change to support these — they're additive per the
-plan doc's own phase breakdown.
+### Phase 3 — mood/pace tags (community-sourced, per §1.3/§3.4/§7)
+
+Extends `Culture_Reading_Tracker` (same file as Phases 1–2) with a fixed 12-tag mood vocabulary
+(`MOOD_TAGS` — StoryGraph's own published set: dark/emotional/funny/reflective/adventurous/
+mysterious/hopeful/tense/sad/informative/lighthearted/inspiring) plus a slow/medium/fast pace —
+both live on the **directory entry**, not the shelf row, and are community-aggregated (mode of
+every signed-in member's own vote), the same "many individual signals → one displayed value"
+pattern `_average_rating` already uses. **Per the plan doc's §7 rule, this 12-tag list is fixed
+— never let it grow ad hoc** (an admin-configurable free list defeats the point: a 40-tag
+vocabulary produces mostly-empty aggregates per book).
+
+**Backend**: new table `wp_culture_book_mood_votes` (`directory_id, user_id, moods JSON, pace`,
+`UNIQUE KEY (directory_id, user_id)` — one vote per person per book, upsert on re-vote), wired
+into `Culture_Activator::create_tables()` via the same `create_table()` method Phases 1–2 already
+use; `CULTURE_VERSION` bumped `3.3.0` → `3.4.0` to trigger it on next deploy (plugin header also
+bumped `2.6.4` → `2.6.5`, same redeploy-confirmation convention as every other version-bump entry
+in this file). `vote_mood_pace()` validates the target is a real, published `book`-type directory
+entry (`has_term('book', 'culture_dir_type', $post)` — `culture_dir_type` is a taxonomy, not
+postmeta, don't reach for `get_post_meta()` here) and every submitted mood against `MOOD_TAGS`
+before storing, then calls `recompute_book_mood_pace()` — a small per-book aggregation query (mode
+for moods, top 5 by count with zero-vote tags dropped; majority for pace, ties broken toward
+`medium` per the plan doc) that writes `_book_moods`/`_book_pace` postmeta directly. Same "small
+per-book vote count, cheap to recompute on every vote" reasoning the plan doc already gives for
+not denormalizing this into a running counter — don't reach for a cached aggregate table if this
+ever needs revisiting.
+
+**REST routes**: `POST /mobile/reading/mood-vote` (JWT) / `POST /reading/mood-vote` (API key +
+explicit `user_id`) mirror every other Reading Tracker write. **The read side is deliberately the
+one exception to this feature's "everything scoped to the caller's own user_id" privacy model**
+(see the plan doc's own callout in §7/§1.3) — `GET /mobile/reading/mood-pace` /
+`GET /reading/mood-pace` are public (`__return_true`), since the aggregated moods/pace are a
+community-visible property of the book, exactly like `_average_rating` already is. A `user_id`
+(mobile: `get_current_user_id()`, always attached if a JWT is present; web: only appended by the
+proxy route when a session exists) is accepted purely to also return that viewer's own current
+vote (`myVote`), so the frontend can show "edit your vote" instead of the initial prompt — never
+to reveal anyone else's vote, no other-user read path exists here.
+
+**Frontend — book-only, both platforms**: rendered inside the book's own `culture_directory`
+detail page (web: `apps/connect/app/directory/[slug]/BookMoodPace.tsx`, inserted into the
+existing infobox column right after the per-type infobox fields, gated on `typeSlug === "book"`;
+mobile: `components/community/BookMoodPace.tsx`, inserted into `DirectoryDetailScreen.tsx` as its
+own "Mood & Pace" `aboutCard`-styled block, gated on `entry.entryType === "book"`) — **not** the
+Reading Tracker screen itself, since mood/pace is a property of the book, not of a user's shelf.
+Aggregate chips always render (public data, no auth needed); the voting prompt/form only renders
+for a signed-in visitor, and flips from "How would you describe this book? →" to "Edit your mood/
+pace vote →" once `myVote` comes back non-null. Chips use `flex-wrap`, never horizontal scroll,
+per this file's own standing "composer selection-chip rows wrap, they don't scroll" convention.
+Shared vocabulary constants live in `packages/shared/lib/reading-tracker.ts` (web) and
+`apps/mobile/src/features/community/readingTracker.ts` (mobile, since RN can't import
+`packages/shared`) — both mirror `Culture_Reading_Tracker::MOOD_TAGS` by hand; **keep all three
+in sync if this list ever changes**, same caveat this file already documents for
+`TEMPLATE_REP_GATE`/the notification icon maps.
+
+**Deliberately not built in this pass** (per the plan doc's own §3.1 item 1, a *Phase 1* gap that
+was never actually shipped, not a Phase 3 scope item): a "+ Add to Shelf" segmented control on
+the book's own directory-entry page — Phase 1 only ever shipped the Reading Tracker screen's own
+"+ Add a Book" modal as the one entry point for shelving. If that directory-page shortcut is ever
+wanted, it's a small, independent addition to `set_shelf_status()`'s existing REST surface, not
+something this Phase 3 pass touched.
+
+**Not built yet** (later phases, do not start without explicit direction): the stats dashboard,
+Buddy Reads prefill from a Hub, and the gamification hook (credits/reputation for shelf/mood
+activity). None of Phases 1–3's tables/endpoints/components should need to change to support
+these — they're additive per the plan doc's own phase breakdown.
+
+Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+credentials gap as every other pass in this file; this feature additionally needs the plugin
+redeployed (manual zip+upload, see "Plugin DB table auto-upgrade" above) before the new table and
+routes exist in production. Verified via `php -l` on every touched PHP file and a brace/paren
+balance check on every touched/new TS/TSX file (no `node_modules` installed this session, so
+`tsc --noEmit` couldn't run). Re-check the full vote → aggregate → re-vote round trip, on both
+platforms, against a real book entry, in a real environment before considering this closed.
 
 ---
 

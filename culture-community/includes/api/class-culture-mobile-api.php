@@ -382,6 +382,29 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Mood/pace tags (Phase 3 — see docs/reading-tracker-plan.md §1.3/§3.4).
+        register_rest_route( 'culture/v1', '/mobile/reading/mood-vote', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_mood_vote' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'moods'        => array( 'type' => 'array' ),
+                'pace'         => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+        // Public read (aggregate moods/pace is a public property of the book,
+        // same as _average_rating) — auth optional, only used to also return
+        // the caller's own current vote when present.
+        register_rest_route( 'culture/v1', '/mobile/reading/mood-pace', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_mood_pace_get' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2182,6 +2205,28 @@ class Culture_Mobile_API {
             return $result;
         }
         return rest_ensure_response( $result );
+    }
+
+    /* ——————————————————————————————————————
+     *  Mood/pace tags (Phase 3)
+     * —————————————————————————————————————— */
+
+    public static function handle_reading_mood_vote( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $moods        = (array) $request->get_param( 'moods' );
+        $pace         = (string) $request->get_param( 'pace' );
+        $result       = Culture_Reading_Tracker::vote_mood_pace( $user_id, $directory_id, $moods, $pace );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_mood_pace_get( $request ) {
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $user_id      = get_current_user_id();
+        return rest_ensure_response( Culture_Reading_Tracker::get_book_mood_pace( $directory_id, $user_id ) );
     }
 
     /* ——————————————————————————————————————
