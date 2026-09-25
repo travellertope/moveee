@@ -651,6 +651,100 @@
 .lit-submit-card a { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 600; color: var(--lit-oxblood); text-decoration: none; }
 .lit-submit-card a:hover { text-decoration: underline; }
 
+/* ── MEMBERSHIP PRICING TABLE (/literary/subscribe) ── */
+.lit-pricing-intro { margin-top: 56px; }
+.lit-pricing-intro h2 {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--lit-ink);
+  margin: 0 0 6px;
+}
+.lit-pricing-intro p {
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--lit-mute);
+  margin: 0;
+}
+.lit-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--lit-rule);
+  border: 1px solid var(--lit-rule);
+  margin-top: 20px;
+}
+@media (max-width: 620px) { .lit-pricing-grid { grid-template-columns: 1fr; } }
+.lit-pricing-card {
+  background: var(--lit-ivory);
+  padding: 28px 26px 26px;
+  display: flex;
+  flex-direction: column;
+}
+.lit-pricing-card--lit { background: var(--lit-parchment); border-top: 3px solid var(--lit-oxblood); }
+.lit-pricing-card-eyebrow {
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lit-oxblood);
+}
+.lit-pricing-card-name {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 21px;
+  color: var(--lit-ink);
+  margin: 6px 0 12px;
+}
+.lit-pricing-card-price {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-size: 28px;
+  color: var(--lit-ink);
+  line-height: 1.15;
+}
+.lit-pricing-card-price span {
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 13px;
+  color: var(--lit-mute);
+  margin-left: 4px;
+}
+.lit-pricing-card-cycle {
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 12.5px;
+  color: var(--lit-mute);
+  margin-top: 4px;
+}
+.lit-pricing-card-perks {
+  list-style: none;
+  margin: 20px 0 24px;
+  padding: 0;
+  flex: 1;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--lit-ink);
+}
+.lit-pricing-card-perks li { position: relative; padding-left: 22px; margin-bottom: 12px; }
+.lit-pricing-card-perks li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--lit-mute);
+}
+.lit-pricing-card--lit .lit-pricing-card-perks li::before { content: "✓"; color: var(--lit-oxblood); }
+.lit-pricing-card-perks li em {
+  display: block;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-style: normal;
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  color: var(--lit-mute);
+  margin-top: 2px;
+}
+.lit-pricing-card .lit-btn-pill { display: inline-block; text-align: center; }
+
 /* ── SUBMISSION FORM (/literary/submit/form) ── */
 .lit-form { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; }
 .lit-form-field { display: flex; flex-direction: column; gap: 8px; }
