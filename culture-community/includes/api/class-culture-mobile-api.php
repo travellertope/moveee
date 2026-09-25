@@ -405,6 +405,16 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Stats dashboard (Phase 4 — see docs/reading-tracker-plan.md §2/§4).
+        register_rest_route( 'culture/v1', '/mobile/reading/stats', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_stats_get' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'year' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2227,6 +2237,12 @@ class Culture_Mobile_API {
         $directory_id = (int) $request->get_param( 'directory_id' );
         $user_id      = get_current_user_id();
         return rest_ensure_response( Culture_Reading_Tracker::get_book_mood_pace( $directory_id, $user_id ) );
+    }
+
+    public static function handle_reading_stats_get( $request ) {
+        $user_id = get_current_user_id();
+        $year    = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_reading_stats( $user_id, $year ) );
     }
 
     /* ——————————————————————————————————————

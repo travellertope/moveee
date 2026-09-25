@@ -53,3 +53,16 @@ export interface BookMoodPace {
   pace: Pace | null;
   myVote: { moods: string[]; pace: Pace } | null;
 }
+
+// Phase 4 stats dashboard — see docs/reading-tracker-plan.md §2/§4. Shape
+// mirrors Culture_Reading_Tracker::get_reading_stats()'s response verbatim
+// and the web copy in packages/shared/lib/reading-tracker.ts.
+export interface ReadingStats {
+  year: number;
+  books_read: number;
+  pace_breakdown: Record<Pace, number>;
+  mood_breakdown: Record<string, number>;
+  rating_distribution: Record<string, number>;
+  top_genres: { genre: string; count: number }[];
+  books_per_month: { month: string; count: number }[];
+}

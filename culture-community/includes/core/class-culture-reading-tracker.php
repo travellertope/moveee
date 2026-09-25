@@ -12,9 +12,12 @@
  * culture_directory entry — a fixed 12-tag vocabulary (MOOD_TAGS below,
  * StoryGraph's own published set, never admin-configurable per the plan
  * doc's explicit "do not let this grow ad hoc" rule) plus a slow/medium/fast
- * pace, aggregated by mode across every member's vote for that book. Stats
- * dashboard, Buddy Reads prefill, and the gamification hook are still later
- * phases and are not implemented here yet.
+ * pace, aggregated by mode across every member's vote for that book. This
+ * pass adds Phase 4 (§2/§4): the stats dashboard's `get_reading_stats()`
+ * aggregation — a pure per-user raw-SQL read, never a WP_Query loop, per
+ * CLAUDE.md's "Raw SQL REST endpoints" convention. Buddy Reads prefill and
+ * the gamification hook are still later phases and are not implemented
+ * here yet.
  *
  * Single source of truth for both REST surfaces (mobile JWT + web API-key),
  * same mirrored-endpoint convention as Culture_Community_RSVP/Culture_Follows.
@@ -467,5 +470,143 @@ class Culture_Reading_Tracker {
         }
 
         return $result;
+    }
+
+    /**
+     * Phase 4 stats dashboard — see docs/reading-tracker-plan.md §2/§4.
+     * A pure per-user aggregation read, raw SQL throughout per CLAUDE.md's
+     * "Raw SQL REST endpoints" convention (never a WP_Query loop over posts
+     * for this kind of query). Rating distribution and top genres are
+     * sourced from the user's own Book Review posts (culture_post,
+     * _template_type = 'book-review') linked via _linked_directory_id to a
+     * book that's on this user's "read" shelf for the given year — per the
+     * plan doc's §1.4 "reuse, not new" rule, rating/genres already live on
+     * the review, this never duplicates them onto the shelf row itself.
+     *
+     * @return array Shape documented in the plan doc §2 "GET stats response shape".
+     */
+    public static function get_reading_stats( int $user_id, int $year ) : array {
+        global $wpdb;
+        $shelf_table = self::table();
+
+        // Directory IDs + finish dates for every book this user finished in $year.
+        $read_rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT directory_id, finished_at FROM {$shelf_table}
+             WHERE user_id = %d AND status = 'read' AND YEAR(finished_at) = %d",
+            $user_id, $year
+        ), ARRAY_A );
+
+        $books_read      = count( $read_rows );
+        $directory_ids   = array_map( 'intval', wp_list_pluck( $read_rows, 'directory_id' ) );
+        $books_per_month = array();
+        for ( $m = 1; $m <= 12; $m++ ) {
+            $key = sprintf( '%04d-%02d', $year, $m );
+            $books_per_month[ $key ] = 0;
+        }
+        foreach ( $read_rows as $row ) {
+            if ( empty( $row['finished_at'] ) ) {
+                continue;
+            }
+            $key = substr( $row['finished_at'], 0, 7 ); // "YYYY-MM"
+            if ( isset( $books_per_month[ $key ] ) ) {
+                $books_per_month[ $key ]++;
+            }
+        }
+        $books_per_month_list = array();
+        foreach ( $books_per_month as $month => $count ) {
+            $books_per_month_list[] = array( 'month' => $month, 'count' => $count );
+        }
+
+        $pace_breakdown = array( 'slow' => 0, 'medium' => 0, 'fast' => 0 );
+        $mood_breakdown = array_fill_keys( self::MOOD_TAGS, 0 );
+        $rating_distribution = array( '1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0 );
+        $genre_counts = array();
+
+        if ( ! empty( $directory_ids ) ) {
+            $ids_in = implode( ',', array_map( 'absint', $directory_ids ) );
+
+            // Pace + moods live on the directory post itself (_book_pace/_book_moods),
+            // already-aggregated community values — see get_book_mood_pace() above.
+            $meta_rows = $wpdb->get_results(
+                "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta}
+                 WHERE post_id IN ({$ids_in}) AND meta_key IN ('_book_pace', '_book_moods')"
+            );
+            foreach ( $meta_rows as $row ) {
+                if ( '_book_pace' === $row->meta_key && isset( $pace_breakdown[ $row->meta_value ] ) ) {
+                    $pace_breakdown[ $row->meta_value ]++;
+                } elseif ( '_book_moods' === $row->meta_key ) {
+                    $moods = json_decode( (string) $row->meta_value, true );
+                    if ( is_array( $moods ) ) {
+                        foreach ( $moods as $mood ) {
+                            if ( isset( $mood_breakdown[ $mood ] ) ) {
+                                $mood_breakdown[ $mood ]++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Rating + genres come from this user's own Book Review posts linked
+            // to one of these directory entries — a raw postmeta join, not a
+            // WP_Query loop, per the "Raw SQL REST endpoints" convention.
+            $review_rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT p.ID,
+                        MAX(CASE WHEN pm_link.meta_key = '_linked_directory_id' THEN pm_link.meta_value END) AS directory_id,
+                        MAX(CASE WHEN pm_rating.meta_key = '_book_overall_rating' THEN pm_rating.meta_value END) AS rating,
+                        MAX(CASE WHEN pm_genres.meta_key = '_book_genres' THEN pm_genres.meta_value END) AS genres
+                 FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm_template ON pm_template.post_id = p.ID AND pm_template.meta_key = '_template_type' AND pm_template.meta_value = 'book-review'
+                 INNER JOIN {$wpdb->postmeta} pm_link ON pm_link.post_id = p.ID AND pm_link.meta_key = '_linked_directory_id' AND pm_link.meta_value IN ({$ids_in})
+                 LEFT JOIN {$wpdb->postmeta} pm_rating ON pm_rating.post_id = p.ID AND pm_rating.meta_key = '_book_overall_rating'
+                 LEFT JOIN {$wpdb->postmeta} pm_genres ON pm_genres.post_id = p.ID AND pm_genres.meta_key = '_book_genres'
+                 WHERE p.post_author = %d AND p.post_type = 'culture_post' AND p.post_status = 'publish'
+                 GROUP BY p.ID",
+                $user_id
+            ), ARRAY_A );
+
+            foreach ( $review_rows as $row ) {
+                $rating = (int) $row['rating'];
+                if ( $rating >= 1 && $rating <= 5 ) {
+                    $rating_distribution[ (string) $rating ]++;
+                }
+                $genres = json_decode( (string) $row['genres'], true );
+                if ( is_array( $genres ) ) {
+                    foreach ( $genres as $genre ) {
+                        $genre = sanitize_text_field( $genre );
+                        if ( '' === $genre ) {
+                            continue;
+                        }
+                        $genre_counts[ $genre ] = ( $genre_counts[ $genre ] ?? 0 ) + 1;
+                    }
+                }
+            }
+        }
+
+        // Mood breakdown as a sparse, sorted list (nonzero only) rather than
+        // the full fixed-12 map — the frontend renders "one row per mood with
+        // a nonzero count, sorted descending" per the plan doc §4.
+        arsort( $mood_breakdown );
+        $mood_breakdown_sparse = array();
+        foreach ( $mood_breakdown as $mood => $count ) {
+            if ( $count > 0 ) {
+                $mood_breakdown_sparse[ $mood ] = $count;
+            }
+        }
+
+        arsort( $genre_counts );
+        $top_genres = array();
+        foreach ( array_slice( $genre_counts, 0, 5, true ) as $genre => $count ) {
+            $top_genres[] = array( 'genre' => $genre, 'count' => $count );
+        }
+
+        return array(
+            'year'               => $year,
+            'books_read'         => $books_read,
+            'pace_breakdown'     => $pace_breakdown,
+            'mood_breakdown'     => $mood_breakdown_sparse,
+            'rating_distribution'=> $rating_distribution,
+            'top_genres'         => $top_genres,
+            'books_per_month'    => $books_per_month_list,
+        );
     }
 }

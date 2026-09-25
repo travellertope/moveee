@@ -1563,6 +1563,18 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Reading Tracker stats dashboard (web — API key, explicit user_id
+        // param). Mirrors /mobile/reading/stats in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/reading/stats', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_stats_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'year'    => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
@@ -2207,6 +2219,12 @@ class Culture_REST_API {
         $directory_id = (int) $request->get_param( 'directory_id' );
         $user_id      = (int) $request->get_param( 'user_id' );
         return rest_ensure_response( Culture_Reading_Tracker::get_book_mood_pace( $directory_id, $user_id ) );
+    }
+
+    public static function handle_reading_stats_get( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $year    = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_reading_stats( $user_id, $year ) );
     }
 
     public static function handle_community_event_rsvp( $request ) {
