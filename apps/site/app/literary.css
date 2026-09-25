@@ -698,7 +698,10 @@
 }
 .lit-piece-nlbreak-inner h3 { font-family: var(--font-lit-italic), Georgia, serif; font-weight: 500; font-style: italic; font-size: 27px; color: var(--lit-ink); }
 .lit-piece-nlbreak-inner p { font-family: var(--font-lit-body), Georgia, serif; font-size: 15.5px; color: var(--lit-mute); margin: 8px 0 0; max-width: 44ch; }
-.lit-piece-nlbreak-form { display: flex; flex-shrink: 0; border: 1px solid var(--lit-ink); }
+/* Same SubscribeForm flex-sibling gotcha as .lit-nl-form above — the
+   trailing helper/error <p> needs its own full-width row, not the border
+   pill's cramped remaining space. */
+.lit-piece-nlbreak-form { display: flex; flex-wrap: wrap; flex-shrink: 0; border: 1px solid var(--lit-ink); }
 .lit-piece-nlbreak-form input {
   flex: 1; background: transparent; border: 0; padding: 13px 14px; min-width: 220px;
   font-family: var(--font-lit-body), Georgia, serif; font-size: 15px; color: var(--lit-ink);
@@ -709,6 +712,7 @@
   font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 }
 .lit-piece-nlbreak-form button:hover { background: var(--lit-oxblood-deep); }
+.lit-piece-nlbreak-form p { flex: 0 0 100%; max-width: 100%; padding: 0 14px 10px; }
 
 /* ── SUBMISSIONS PAGE ── */
 .lit-submit-wrap { max-width: 720px; margin: 0 auto; padding: clamp(48px, 6vw, 72px) 32px clamp(72px, 9vw, 112px); }
@@ -983,7 +987,14 @@
 .lit-foot-links { display: flex; flex-direction: column; gap: 9px; font-family: var(--font-lit-body), Georgia, serif; font-size: 15px; }
 .lit-foot-links a { color: rgba(245, 239, 228, 0.82); }
 .lit-foot-links a:hover { color: var(--lit-ivory); text-decoration: underline; }
-.lit-nl-form { display: flex; margin-top: 20px; max-width: 320px; }
+/* SubscribeForm.tsx renders its "code sent to…"/error line as a plain
+   sibling of the input+button, not wrapped in its own row — on a
+   display:flex container that reads as a third flex item fighting the
+   input(flex:1) for space, which squeezed and clipped that text against
+   the button (see CLAUDE.md's SubscribeForm gotcha). flex-wrap + a
+   full-width rule for any trailing text node fixes it without touching
+   the component, since input/button still fit the first row on their own. */
+.lit-nl-form { display: flex; flex-wrap: wrap; margin-top: 20px; max-width: 320px; }
 .lit-nl-input {
   flex: 1; background: transparent; border: 1px solid rgba(245, 239, 228, 0.3); border-right: 0; padding: 10px 12px; color: var(--lit-ivory);
   font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
@@ -994,6 +1005,7 @@
   font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 }
 .lit-nl-btn:hover { background: var(--lit-oxblood-deep); }
+.lit-nl-form p { flex: 0 0 100%; max-width: 100%; }
 .lit-foot-bottom {
   border-top: 1px solid rgba(245, 239, 228, 0.14); padding-top: 20px; padding-bottom: 20px;
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;

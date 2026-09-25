@@ -366,7 +366,7 @@ async function PiecePage({ slug }: { slug: string }) {
         <div className="lit-wrap lit-piece-nlbreak-inner">
           <div>
             <h3>Enjoyed this piece?</h3>
-            <p>Get new fiction, poetry, essays and translation the moment we publish it — no charge, no clutter.</p>
+            <p>Get new fiction, poetry, essays and translation the moment we publish it.</p>
           </div>
           <div className="lit-piece-nlbreak-form">
             <SubscribeForm
