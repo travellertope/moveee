@@ -1321,7 +1321,17 @@ class Culture_Post_Types {
             ),
             'public'              => true,
             'has_archive'         => true,
-            'show_in_menu'        => 'culture-content-manager',
+            // No longer a sidebar entry under Moveee Content (September 2026)
+            // — the standalone /quotes archive, author pages, and submission
+            // UI were all removed from the site (see CLAUDE.md "Quotes feed
+            // merge" — quotes are feed-native now), so there's no longer a
+            // browsing surface pointing editors at this CPT day-to-day.
+            // 'show_ui' stays true (default), so `edit.php?post_type=
+            // culture_quote` still works directly for manual quote creation
+            // via the Bulk Quote Importer or the post editor — only the menu
+            // entry is gone, same "hide the native screen, keep it reachable"
+            // pattern already used for culture_cluster/culture_hub.
+            'show_in_menu'        => false,
             'menu_icon'           => 'dashicons-format-quote',
             'supports'            => array( 'title', 'editor' ),
             'rewrite'             => array( 'slug' => 'quotes' ),
@@ -1344,7 +1354,7 @@ class Culture_Post_Types {
                 'add_new_item'       => __( 'Add New Community Post', 'culture-community' ),
                 'edit_item'          => __( 'Edit Community Post', 'culture-community' ),
                 'view_item'          => __( 'View Community Post', 'culture-community' ),
-                'all_items'          => __( 'All Community Posts', 'culture-community' ),
+                'all_items'          => __( 'Feed Posts', 'culture-community' ),
                 'search_items'       => __( 'Search Community Posts', 'culture-community' ),
                 'not_found'          => __( 'No community posts found', 'culture-community' ),
             ),

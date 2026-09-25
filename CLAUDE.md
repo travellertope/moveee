@@ -433,25 +433,40 @@ codebase or in anyone's browser needed updating.
 - **Moveee Content** (anchor slug `culture-content-manager`, same pattern,
   added September 2026) — a catch-all for general content CPTs that don't
   belong under any of the other top-level menus: Directory
-  (`culture_directory`), Quotes (`culture_quote`), Community Posts
-  (`culture_post`), Journeys (`culture_journey` — all four native CPT
-  screens, `show_in_menu` pointing at `culture-content-manager`, all were
-  under Culture Community), plus **Directory Tools** (`culture-directory-tools`,
-  moved from Culture Community — it manages the Directory CPT's seeder/image
-  tools, so it belongs alongside Directory itself). Registered in the new
-  `class-culture-content-admin.php` (top-level `add_menu_page()` + the anchor
-  submenu, a plain landing page linking out to each CPT's list screen — there
-  was never a real admin page for these CPTs before, just their native WP
-  list/edit screens, so this class only registers the menu shell). Directory
-  Tools' `enqueue_assets()` hook-suffix check was updated to
-  `culture-content-manager_page_culture-directory-tools` — see the hook-suffix
-  gotcha note below.
-  **Whether Quotes (`culture_quote`) is still worth keeping as a separate
-  content type** — now that quotes render natively inline in the unified
-  feed (see "Quotes feed merge" elsewhere in this file) — is an open product
-  question, not yet decided; it was moved here for menu-organization
-  purposes only, independent of that decision. If quotes are ever fully
-  retired into community posts, this menu entry is what to remove.
+  (`culture_directory`), Feed Posts (`culture_post`, sidebar label renamed
+  from "All Community Posts" — see below), Journeys (`culture_journey` — all
+  native CPT screens, `show_in_menu` pointing at `culture-content-manager`,
+  all were under Culture Community), plus **Directory Tools**
+  (`culture-directory-tools`, moved from Culture Community — it manages the
+  Directory CPT's seeder/image tools, so it belongs alongside Directory
+  itself). Registered in the new `class-culture-content-admin.php` (top-level
+  `add_menu_page()` + the anchor submenu, a plain landing page linking out to
+  each CPT's list screen — there was never a real admin page for these CPTs
+  before, just their native WP list/edit screens, so this class only
+  registers the menu shell). Directory Tools' `enqueue_assets()` hook-suffix
+  check was updated to `culture-content-manager_page_culture-directory-tools`
+  — see the hook-suffix gotcha note below.
+  **Quotes (`culture_quote`) removed from the sidebar entirely (September
+  2026, follow-up to the same-month "Quotes feed merge")** — the previous
+  entry here flagged this as an open question ("if quotes are ever fully
+  retired into community posts, this menu entry is what to remove"); the
+  same pass that removed the standalone `/quotes` archive/author pages and
+  submission UI from the site (see "Quotes feed merge" elsewhere in this
+  file) made the sidebar entry pointless, since there's no longer a browsing
+  surface that points an editor at individual quote management day-to-day.
+  `culture_quote` itself is **not** deleted or hidden from the DB/REST/
+  GraphQL layer — it's still what backs quote cards in the unified feed and
+  `/quotes/[slug]` single pages — only `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` (same "hide the native screen, keep it
+  reachable by direct URL" pattern already used for `culture_cluster`/
+  `culture_hub`). The Moveee Content landing page keeps one plain link to
+  `edit.php?post_type=culture_quote` for when a quote genuinely needs manual
+  editing (the Bulk Quote Importer CSV panel on Directory Tools is still the
+  normal way to add quotes in bulk — see "Quotes feed merge" for what's
+  automated vs. manual). **"Community Posts" CPT's `all_items` label renamed
+  to "Feed Posts"** (was "All Community Posts") — copy-only, the CPT's own
+  `name`/`singular_name`/slug/REST base (`community-posts`) and everything
+  else about it are unchanged.
 - **Moveee Literary** (anchor slug `culture-literary-submissions`, same
   pattern) — just Literary Submissions (the submissions manager + its
   Waivers tab) today; registered in `class-culture-literary-submissions.php`.
