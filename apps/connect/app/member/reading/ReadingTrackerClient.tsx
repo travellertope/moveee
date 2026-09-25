@@ -33,6 +33,12 @@ interface DirectoryResult {
   city?: string;
 }
 
+interface Goal {
+  year: number;
+  targetBooks: number | null;
+  booksRead: number;
+}
+
 export default function ReadingTrackerClient() {
   const [tab, setTab] = useState<ShelfStatus>("want_to_read");
   const [counts, setCounts] = useState<Record<ShelfStatus, number>>({
@@ -44,6 +50,9 @@ export default function ReadingTrackerClient() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addingBook, setAddingBook] = useState<DirectoryResult | null>(null);
+  const [goal, setGoal] = useState<Goal | null>(null);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState("");
 
   const loadCounts = useCallback(async () => {
     try {
@@ -51,6 +60,27 @@ export default function ReadingTrackerClient() {
       if (res.ok) setCounts(await res.json());
     } catch {}
   }, []);
+
+  const loadGoal = useCallback(async () => {
+    try {
+      const res = await fetch("/api/reading/goal");
+      if (res.ok) setGoal(await res.json());
+    } catch {}
+  }, []);
+
+  async function saveGoal() {
+    const target = parseInt(goalInput, 10);
+    if (!target || target < 1) return;
+    try {
+      const res = await fetch("/api/reading/goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target_books: target }),
+      });
+      if (res.ok) setGoal(await res.json());
+    } catch {}
+    setEditingGoal(false);
+  }
 
   const loadShelf = useCallback(async (status: ShelfStatus) => {
     setLoading(true);
@@ -66,7 +96,8 @@ export default function ReadingTrackerClient() {
 
   useEffect(() => {
     loadCounts();
-  }, [loadCounts]);
+    loadGoal();
+  }, [loadCounts, loadGoal]);
 
   useEffect(() => {
     loadShelf(tab);
@@ -85,6 +116,7 @@ export default function ReadingTrackerClient() {
       });
     } catch {}
     loadCounts();
+    if (status === "read") loadGoal();
     if (status === tab) loadShelf(tab);
   }
 
@@ -118,6 +150,50 @@ export default function ReadingTrackerClient() {
       <button type="button" className="rt-add-btn" onClick={() => setShowAddModal(true)}>
         + Add a Book
       </button>
+
+      {goal && (
+        <div className="rt-goal-card">
+          {editingGoal || goal.targetBooks === null ? (
+            <div className="rt-goal-edit">
+              <label className="rt-goal-label" htmlFor="rt-goal-input">
+                Set your {goal.year} reading goal
+              </label>
+              <div className="rt-goal-edit-row">
+                <input
+                  id="rt-goal-input"
+                  type="number"
+                  min={1}
+                  className="rt-goal-input"
+                  placeholder="e.g. 24"
+                  defaultValue={goal.targetBooks ?? ""}
+                  onChange={(ev) => setGoalInput(ev.target.value)}
+                  onKeyDown={(ev) => ev.key === "Enter" && saveGoal()}
+                />
+                <button type="button" className="rt-goal-save" onClick={saveGoal}>
+                  Save
+                </button>
+                {goal.targetBooks !== null && (
+                  <button type="button" className="rt-goal-cancel" onClick={() => setEditingGoal(false)}>
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button type="button" className="rt-goal-summary" onClick={() => setEditingGoal(true)}>
+              <span className="rt-goal-text">
+                {goal.booksRead} of {goal.targetBooks} books this year
+              </span>
+              <span className="rt-goal-bar">
+                <span
+                  className="rt-goal-bar-fill"
+                  style={{ width: `${Math.min(100, (goal.booksRead / goal.targetBooks) * 100)}%` }}
+                />
+              </span>
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="wal-tabs">
         {TABS.map((t) => (

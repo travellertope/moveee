@@ -363,6 +363,25 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Reading goal (Phase 2 — see docs/reading-tracker-plan.md §1.2/§3.3).
+        register_rest_route( 'culture/v1', '/mobile/reading/goal', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_goal_get' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'year' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/reading/goal', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_goal_set' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'year'          => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'target_books'  => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2142,6 +2161,27 @@ class Culture_Mobile_API {
     public static function handle_reading_shelf_counts( $request ) {
         $user_id = get_current_user_id();
         return rest_ensure_response( Culture_Reading_Tracker::get_shelf_counts( $user_id ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Reading goal (Phase 2)
+     * —————————————————————————————————————— */
+
+    public static function handle_reading_goal_get( $request ) {
+        $user_id = get_current_user_id();
+        $year    = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_goal( $user_id, $year ) );
+    }
+
+    public static function handle_reading_goal_set( $request ) {
+        $user_id      = get_current_user_id();
+        $year         = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
+        $target_books = (int) $request->get_param( 'target_books' );
+        $result       = Culture_Reading_Tracker::set_goal( $user_id, $year, $target_books );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
     }
 
     /* ——————————————————————————————————————
