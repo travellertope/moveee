@@ -1,6 +1,6 @@
-import { Bricolage_Grotesque } from "next/font/google";
 import ShopHeader from "@/components/ShopHeader";
 import ShopFooter from "@/components/ShopFooter";
+import { bricolage } from "@/lib/lifestyle-font";
 import "../lifestyle/shop-chrome.css";
 
 // /makers now shares the exact same standalone chrome as /lifestyle — the
@@ -13,15 +13,13 @@ import "../lifestyle/shop-chrome.css";
 // the ONLY place /makers' header/footer are mounted — the sitewide
 // Header.tsx returns null on every /makers path and ConditionalFooter.tsx
 // excludes /makers entirely, so nothing from the rest of the site's chrome
-// ever renders here. Bricolage Grotesque is loaded again here (rather than
-// reused from the lifestyle layout) since Next.js font loaders are scoped
-// per call site, not shared across layouts.
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["500", "700", "800"],
-  variable: "--font-lfs-display",
-  display: "swap",
-});
+// ever renders here. Bricolage Grotesque is imported from lib/lifestyle-font.ts
+// (fixed September 2026 — it used to call `Bricolage_Grotesque(...)` again
+// here, byte-identical to app/lifestyle/layout.tsx's own call; Turbopack
+// hashes a next/font/google call's config to generate its internal font
+// asset, so two identical calls in different files collide and one of them
+// fails the production build with "next/font/google queries have exactly
+// one entry" — a single shared call, imported by both layouts, is the fix).
 
 export default function MakersLayout({ children }: { children: React.ReactNode }) {
   return (

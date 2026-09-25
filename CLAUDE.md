@@ -3164,6 +3164,29 @@ Not visually verified in a browser — no `node_modules` installed this session.
 paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
 `makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
 
+**Production build failure, fixed same month — duplicate `next/font/google` call broke the
+Vercel build.** A real production deploy failed at `next build` (Turbopack) with `Module not
+found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'` /
+`next/font/google queries have exactly one entry`, traced to `app/makers/layout.tsx`. Root
+cause: `app/lifestyle/layout.tsx` and `app/makers/layout.tsx` each called
+`Bricolage_Grotesque({ subsets: ["latin"], weight: ["500","700","800"], variable:
+"--font-lfs-display", display: "swap" })` — **byte-identical arguments, in two separate files**
+— per the "Bricolage Grotesque is loaded again here ... since Next.js font loaders are scoped
+per call site" reasoning this section originally gave for `/makers`. That reasoning was wrong:
+Turbopack (Next.js 16) hashes a `next/font/google` call's config to name its generated internal
+font asset, so two identical calls in different files collide on the same hash and only one of
+them resolves at build time — the other fails exactly this way. **Fixed** by extracting the call
+into a single shared module, `apps/site/lib/lifestyle-font.ts` (exports `bricolage`), imported by
+both `app/lifestyle/layout.tsx` and `app/makers/layout.tsx` instead of each calling
+`Bricolage_Grotesque(...)` itself. **If a third route ever needs this font, import it from
+`lib/lifestyle-font.ts` — never add a third duplicate call site**, and more generally: never call
+`next/font/google` with the same exact config in two different files in this codebase; factor it
+into a shared module instead. Verified via a brace/paren-balance check on all three files (no
+`node_modules` installed this session, so `next build`/`tsc` couldn't reproduce the Turbopack
+error directly) and confirming the `@/lib/*` tsconfig alias resolves the new module correctly
+(no colliding `packages/shared/lib/lifestyle-font.ts`). Re-check the next Vercel production
+build actually goes green before considering this fully closed.
+
 ### Email-capture + Moveee Pro bands tightened (September 2026)
 
 Mockup-first (Artifact, before/after comparison at real content/widths) — both bands sat far
