@@ -2914,6 +2914,14 @@ select.mem-field-input { cursor: pointer; }
   padding: 16px 20px;
   margin-bottom: 20px;
 }
+.rt-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
 .rt-add-btn {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -2925,9 +2933,24 @@ select.mem-field-input { cursor: pointer; }
   border-radius: var(--radius-lg);
   padding: 10px 18px;
   cursor: pointer;
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 .rt-add-btn:hover { background: var(--ochre); }
+.rt-stats-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--ochre);
+  text-decoration: none;
+}
+.rt-stats-link:hover { text-decoration: underline; }
+.rt-stats-back {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ochre);
+  text-decoration: none;
+}
+.rt-stats-back:hover { text-decoration: underline; }
 
 .rt-goal-card {
   background: var(--paper);
@@ -3136,3 +3159,139 @@ select.mem-field-input { cursor: pointer; }
   cursor: pointer;
 }
 .rt-modal-close:hover { color: var(--ink); }
+
+/* ── Reading Tracker stats dashboard (Phase 4 — docs/reading-tracker-plan.md §4) ── */
+.rts-month-grid {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  padding-top: 8px;
+}
+.rts-month-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.rts-month-bar-track {
+  width: 100%;
+  max-width: 22px;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+.rts-month-bar-fill {
+  width: 100%;
+  background: var(--ochre);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  min-height: 0;
+  transition: height .3s ease;
+}
+.rts-month-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: var(--mute);
+  margin-top: 4px;
+}
+.rts-month-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-top: 2px;
+}
+
+.rts-pace-bar {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--paper-deep, #f2f2f2);
+}
+.rts-pace-seg { height: 100%; }
+.rts-pace-seg--slow { background: #7a9cc6; }
+.rts-pace-seg--medium { background: var(--ochre); }
+.rts-pace-seg--fast { background: #c67a4a; }
+.rts-pace-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.rts-pace-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+}
+.rts-pace-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.rts-pace-dot--slow { background: #7a9cc6; }
+.rts-pace-dot--medium { background: var(--ochre); }
+.rts-pace-dot--fast { background: #c67a4a; }
+
+.rts-bar-rows { display: flex; flex-direction: column; gap: 10px; }
+.rts-bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+}
+.rts-bar-row-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--ink);
+}
+.rts-bar-row-track {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--paper-deep, #f2f2f2);
+  overflow: hidden;
+}
+.rts-bar-row-fill {
+  height: 100%;
+  background: var(--ochre);
+  border-radius: var(--radius-full);
+  transition: width .3s ease;
+}
+.rts-bar-row-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+  text-align: right;
+}
+
+.rts-genre-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.rts-genre-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.rts-genre-row:last-child { border-bottom: none; }
+.rts-genre-rank {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+  width: 18px;
+  flex-shrink: 0;
+}
+.rts-genre-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  flex: 1;
+}
+.rts-genre-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+}

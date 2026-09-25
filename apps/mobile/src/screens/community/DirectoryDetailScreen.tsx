@@ -22,6 +22,7 @@ import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import { api, CULTURE_API } from "../../api/client";
 import { openInApp } from "../../utils/openInApp";
 import { decodeHtml } from "../../utils/decodeHtml";
+import BookMoodPace from "../../components/community/BookMoodPace";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -593,6 +594,14 @@ export default function DirectoryDetailScreen() {
                 <Text style={styles.aboutVal}>{field.value}</Text>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* ── Mood/pace (books only) — Phase 3, docs/reading-tracker-plan.md §1.3/§3.4 ── */}
+        {entry.entryType === "book" && (
+          <View style={[styles.aboutCard, { paddingBottom: 8 }]}>
+            <Text style={styles.aboutLabel}>Mood &amp; Pace</Text>
+            <BookMoodPace directoryId={entry.id} />
           </View>
         )}
 

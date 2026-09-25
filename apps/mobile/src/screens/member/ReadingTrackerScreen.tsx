@@ -11,6 +11,7 @@ import { useColors } from "../../hooks/useColors";
 import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import DirectorySearch, { DirectoryEntry } from "../../components/composer/DirectorySearch";
 import type { ColorPalette } from "../../theme";
+import { MOOD_LABELS, PACE_LABELS, type Pace, type ReadingStats } from "../../features/community/readingTracker";
 
 type ShelfStatus = "want_to_read" | "currently_reading" | "read";
 
@@ -19,6 +20,18 @@ const TABS: { key: ShelfStatus; label: string }[] = [
   { key: "currently_reading", label: "Reading" },
   { key: "read", label: "Read" },
 ];
+
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Phase 4 stats colors — kept local to this file rather than the theme,
+// since they're specific to the pace-breakdown segmented bar and don't need
+// to be a reusable design-system token. "medium" reuses the real ochre
+// accent color (c.ochre) at render time, not a hardcoded hex.
+function paceColor(pace: Pace, c: ColorPalette): string {
+  if (pace === "slow") return "#7a9cc6";
+  if (pace === "fast") return "#c67a4a";
+  return c.ochre;
+}
 
 interface ShelfEntry {
   directoryId: number;
@@ -63,6 +76,8 @@ export default function ReadingTrackerScreen() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState("");
+  const [stats, setStats] = useState<ReadingStats | null>(null);
+  const [statsExpanded, setStatsExpanded] = useState(false);
 
   const loadCounts = useCallback(() => {
     api.get<Record<ShelfStatus, number>>(`${MOBILE_API}/reading/shelf/counts`)
@@ -73,6 +88,12 @@ export default function ReadingTrackerScreen() {
   const loadGoal = useCallback(() => {
     api.get<Goal>(`${MOBILE_API}/reading/goal`)
       .then(setGoal)
+      .catch(() => {});
+  }, []);
+
+  const loadStats = useCallback(() => {
+    api.get<ReadingStats>(`${MOBILE_API}/reading/stats`)
+      .then(setStats)
       .catch(() => {});
   }, []);
 
@@ -93,7 +114,7 @@ export default function ReadingTrackerScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { loadCounts(); loadGoal(); }, [loadCounts, loadGoal]);
+  useEffect(() => { loadCounts(); loadGoal(); loadStats(); }, [loadCounts, loadGoal, loadStats]);
   useEffect(() => { loadShelf(tab); }, [tab, loadShelf]);
 
   function moveShelf(directoryId: number, status: ShelfStatus) {
@@ -102,7 +123,7 @@ export default function ReadingTrackerScreen() {
       .catch(() => {})
       .finally(() => {
         loadCounts();
-        if (status === "read") loadGoal();
+        if (status === "read") { loadGoal(); loadStats(); }
         if (status === tab) loadShelf(tab);
       });
   }
@@ -181,6 +202,118 @@ export default function ReadingTrackerScreen() {
                 />
               </View>
             </TouchableOpacity>
+          )}
+        </View>
+      ) : null}
+
+      {stats ? (
+        <View style={styles.statsCard}>
+          <TouchableOpacity style={styles.statsHeaderRow} onPress={() => setStatsExpanded((v) => !v)}>
+            <View>
+              <Text style={styles.statsTitle}>Your Year in Books</Text>
+              <Text style={styles.statsCount}>{stats.books_read} book{stats.books_read === 1 ? "" : "s"} finished in {stats.year}</Text>
+            </View>
+            <Ionicons name={statsExpanded ? "chevron-up" : "chevron-down"} size={20} color={c.mute} />
+          </TouchableOpacity>
+
+          {statsExpanded && (
+            <ScrollView style={styles.statsBody} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+              {/* Books per month */}
+              <Text style={styles.statsSectionLabel}>Books Per Month</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.monthScroll}>
+                {stats.books_per_month.map((m) => {
+                  const maxMonth = Math.max(1, ...stats.books_per_month.map((x) => x.count));
+                  const label = MONTH_LABELS[parseInt(m.month.slice(5, 7), 10) - 1] ?? m.month;
+                  return (
+                    <View key={m.month} style={styles.monthCol}>
+                      <View style={styles.monthBarTrack}>
+                        <View style={[styles.monthBarFill, { height: `${m.count === 0 ? 0 : Math.max(8, (m.count / maxMonth) * 100)}%` }]} />
+                      </View>
+                      <Text style={styles.monthCount}>{m.count}</Text>
+                      <Text style={styles.monthLabel}>{label}</Text>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Pace */}
+              {Object.values(stats.pace_breakdown).some((v) => v > 0) && (
+                <>
+                  <Text style={styles.statsSectionLabel}>Pace</Text>
+                  <View style={styles.paceBar}>
+                    {(Object.keys(stats.pace_breakdown) as Pace[]).map((pace) => {
+                      const total = Math.max(1, (Object.values(stats.pace_breakdown) as number[]).reduce((s, v) => s + v, 0));
+                      const count = stats.pace_breakdown[pace];
+                      if (count <= 0) return null;
+                      return (
+                        <View key={pace} style={{ width: `${(count / total) * 100}%`, height: "100%", backgroundColor: paceColor(pace, c) }} />
+                      );
+                    })}
+                  </View>
+                  <View style={styles.paceLegend}>
+                    {(Object.keys(stats.pace_breakdown) as Pace[]).map((pace) => (
+                      <View key={pace} style={styles.paceLegendItem}>
+                        <View style={[styles.paceDot, { backgroundColor: paceColor(pace, c) }]} />
+                        <Text style={styles.paceLegendText}>{PACE_LABELS[pace]} ({stats.pace_breakdown[pace]})</Text>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* Moods */}
+              {Object.keys(stats.mood_breakdown).length > 0 && (
+                <>
+                  <Text style={styles.statsSectionLabel}>Moods</Text>
+                  {(() => {
+                    const maxMood = Math.max(1, ...Object.values(stats.mood_breakdown));
+                    return Object.entries(stats.mood_breakdown).map(([mood, count]) => (
+                      <View key={mood} style={styles.barRow}>
+                        <Text style={styles.barRowLabel}>{MOOD_LABELS[mood as keyof typeof MOOD_LABELS] ?? mood}</Text>
+                        <View style={styles.barRowTrack}>
+                          <View style={[styles.barRowFill, { width: `${(count / maxMood) * 100}%` }]} />
+                        </View>
+                        <Text style={styles.barRowCount}>{count}</Text>
+                      </View>
+                    ));
+                  })()}
+                </>
+              )}
+
+              {/* Ratings */}
+              {Object.values(stats.rating_distribution).some((v) => v > 0) && (
+                <>
+                  <Text style={styles.statsSectionLabel}>Ratings — Your Book Reviews</Text>
+                  {[5, 4, 3, 2, 1].map((stars) => {
+                    const total = Math.max(1, (Object.values(stats.rating_distribution) as number[]).reduce((s, v) => s + v, 0));
+                    const count = stats.rating_distribution[String(stars)] ?? 0;
+                    return (
+                      <View key={stars} style={styles.barRow}>
+                        <Text style={styles.barRowLabel}>{stars} star{stars === 1 ? "" : "s"}</Text>
+                        <View style={styles.barRowTrack}>
+                          <View style={[styles.barRowFill, { width: `${(count / total) * 100}%` }]} />
+                        </View>
+                        <Text style={styles.barRowCount}>{count}</Text>
+                      </View>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Top genres */}
+              {stats.top_genres.length > 0 && (
+                <>
+                  <Text style={styles.statsSectionLabel}>Top Genres</Text>
+                  {stats.top_genres.map((g, i) => (
+                    <View key={g.genre} style={styles.genreRow}>
+                      <Text style={styles.genreRank}>{i + 1}</Text>
+                      <Text style={styles.genreName}>{g.genre}</Text>
+                      <Text style={styles.genreCount}>{g.count}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
+            </ScrollView>
           )}
         </View>
       ) : null}
@@ -306,6 +439,60 @@ function createStyles(c: ColorPalette) {
     },
     goalSaveBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
     goalCancelText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+
+    // Phase 4 — "Your Year in Books" stats section (docs/reading-tracker-plan.md §4).
+    statsCard: {
+      backgroundColor: c.paper, marginHorizontal: space[3], marginTop: space[3],
+      borderRadius: radius.xl, ...shadows.card, overflow: "hidden",
+    },
+    statsHeaderRow: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      padding: space[3],
+    },
+    statsTitle: { fontFamily: fonts.serifBold, fontSize: 15, color: c.ink },
+    statsCount: { fontFamily: fonts.mono, fontSize: 11, color: c.mute, marginTop: 2 },
+    statsBody: {
+      maxHeight: 340,
+      paddingHorizontal: space[3], paddingBottom: space[3],
+      borderTopWidth: 1, borderTopColor: c.ghost,
+    },
+    statsSectionLabel: {
+      fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.6, textTransform: "uppercase",
+      color: c.mute, marginTop: space[3], marginBottom: space[2],
+    },
+    monthScroll: { maxHeight: 110 },
+    monthCol: {
+      width: 34, alignItems: "center", justifyContent: "flex-end", height: 100, marginRight: 6,
+    },
+    monthBarTrack: { width: 18, flex: 1, justifyContent: "flex-end" },
+    monthBarFill: { width: "100%", backgroundColor: c.ochre, borderRadius: 2, minHeight: 0 },
+    monthCount: { fontFamily: fonts.mono, fontSize: 9, color: c.mute, marginTop: 3 },
+    monthLabel: { fontFamily: fonts.mono, fontSize: 8.5, color: c.mute, marginTop: 1 },
+
+    paceBar: {
+      flexDirection: "row", height: 12, borderRadius: radius.full,
+      overflow: "hidden", backgroundColor: c.paperDeep,
+    },
+    paceLegend: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginTop: 8 },
+    paceLegendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+    paceDot: { width: 8, height: 8, borderRadius: 4 },
+    paceLegendText: { fontFamily: fonts.mono, fontSize: 10.5, color: c.mute },
+
+    barRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+    barRowLabel: { fontFamily: fonts.sans, fontSize: 11.5, color: c.ink, width: 84 },
+    barRowTrack: {
+      flex: 1, height: 7, borderRadius: radius.full, backgroundColor: c.paperDeep, overflow: "hidden",
+    },
+    barRowFill: { height: "100%", backgroundColor: c.ochre, borderRadius: radius.full },
+    barRowCount: { fontFamily: fonts.mono, fontSize: 10.5, color: c.mute, width: 24, textAlign: "right" },
+
+    genreRow: {
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: c.ghost,
+    },
+    genreRank: { fontFamily: fonts.mono, fontSize: 11, color: c.mute, width: 16 },
+    genreName: { fontFamily: fonts.sans, fontSize: 12.5, color: c.ink, flex: 1 },
+    genreCount: { fontFamily: fonts.mono, fontSize: 10.5, color: c.mute },
 
     tabRow: {
       flexDirection: "row", backgroundColor: c.paper,
