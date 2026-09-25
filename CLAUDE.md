@@ -9855,6 +9855,30 @@ whether the failure happened somewhere that *doesn't* route through `api/client.
 component's own render) — those still need an explicit `Sentry.captureException` call
 added at the point of failure, this fix only covers the HTTP layer.
 
+**Correction (September 2026): "the expected 401-triggers-logout path... is normal, not
+something to page on" was too broad.** User-reported: picking a Google Books/Spotify/TMDB
+search result in the community composer (`DirectorySearch.tsx`'s `handleSelectExternal()` →
+`/directory/quick-create`) was force-logging users out. Investigation found the
+*previously known* cause of exactly this symptom (a March/earlier fix, "Fix Book Review
+composer kicking users to login on select" — collapsing transient upstream failures into a
+blanket 401) was already fixed and already live in the code for weeks, yet the bug was
+still being reported — meaning either a genuinely different, still-undiagnosed cause, or a
+real (if surprising) session invalidation. **Either way, there was no way to tell which**,
+because a 401 that fires `_onUnauthorized()` (i.e., one that actually force-logs someone
+out) was — by this section's own prior guidance — deliberately excluded from
+`captureException`, so it left literally no discoverable trace in Sentry. Fixed:
+`request()` now calls `Sentry.captureMessage()` (not `captureException` — still not treated
+as a crash-level bug) specifically in the branch where a 401 is about to fire
+`_onUnauthorized()`, including the URL/method and the response's `code` field. **Every
+route a mobile client hits that can 401 should return a distinguishing `code` field in its
+JSON error body** (e.g. `no_token` vs. `wp_401`/the upstream WP_Error's own `code`) — see
+`apps/site/app/api/directory/quick-create/route.ts`'s two 401 branches for the pattern —
+otherwise this new Sentry message can only say "a 401 happened here," not why, which is the
+exact gap being closed. **If a 401-triggered logout is ever reported again, search Sentry
+for `Auto-logout triggered:`** — that message now names the exact endpoint and code every
+time this fires, instead of the silent-by-design gap this section used to document as
+correct behavior.
+
 ---
 
 ## Passkeys (WebAuthn) — never worked on native, missing platform setup (fixed August 2026)

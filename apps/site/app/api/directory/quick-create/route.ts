@@ -18,7 +18,7 @@ function getBearerToken(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   const token = getBearerToken(req);
   if (!token) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized.", code: "no_token" }, { status: 401 });
   }
 
   const body = await req.json().catch(() => ({}));
@@ -39,7 +39,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not reach the server. Please try again." }, { status: 502 });
   }
   if (meRes.status === 401 || meRes.status === 403) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    const meBody = await meRes.json().catch(() => ({}));
+    return NextResponse.json(
+      { error: "Unauthorized.", code: meBody?.code ?? `wp_${meRes.status}` },
+      { status: 401 }
+    );
   }
   if (!meRes.ok) {
     return NextResponse.json({ error: "Could not verify your account. Please try again." }, { status: 502 });

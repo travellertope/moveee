@@ -83,14 +83,26 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   }
 
   if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    const message = err?.message ?? res.statusText;
+
     // Auto-logout on 401 so the user is sent back to login with a fresh token.
+    // This is a real, session-nuking side effect — unlike an ordinary 4xx,
+    // it deserves its own Sentry event (not just a breadcrumb) with the exact
+    // URL/error code, since "which endpoint force-logged the user out and
+    // why" is otherwise impossible to reconstruct after the fact (the local
+    // catch{} at the call site swallows the resulting ApiError silently, and
+    // reportApiFailure() below deliberately doesn't call captureException for
+    // ordinary 401s). See CLAUDE.md's "directory/quick-create fix" note —
+    // this closes the gap that fix's own comment left: the fix stopped
+    // *masking* other failures as 401, but a genuine 401 here still vanishes
+    // without a trace once _onUnauthorized() fires.
     if (res.status === 401 && auth && _onUnauthorized && !_handlingUnauthorized) {
+      Sentry.captureMessage(`Auto-logout triggered: ${method} ${url} → 401 (${err?.code ?? message})`, "warning");
       _handlingUnauthorized = true;
       _onUnauthorized();
       setTimeout(() => { _handlingUnauthorized = false; }, 5000);
     }
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    const message = err?.message ?? res.statusText;
     reportApiFailure(url, method, res.status, message);
     throw new ApiError(res.status, message);
   }
