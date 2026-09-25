@@ -262,7 +262,10 @@ class Culture_REST_API {
             ),
         ) );
 
-        // Quote creation (logged-in users).
+        // Quote creation (logged-in users) — this is the live backend for the
+        // composer's own "Quote" template (packages/shared/components/pulse/
+        // SubmitPost.tsx posts here directly), not just the retired /quotes
+        // archive's own submission modal. Keep it registered.
         register_rest_route( 'culture/v1', '/quotes', array(
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_create_quote' ),
@@ -271,27 +274,6 @@ class Culture_REST_API {
                 'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
                 'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
-            ),
-        ) );
-
-        // Quote liking (Next.js server-side).
-        register_rest_route( 'culture/v1', '/quotes/like', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_like_quote' ),
-            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
-            'args'                => array(
-                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-                'user_id'  => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
-            ),
-        ) );
-
-        // Quote reporting (Next.js server-side).
-        register_rest_route( 'culture/v1', '/quotes/report', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_report_quote' ),
-            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
-            'args'                => array(
-                'quote_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -3662,13 +3644,17 @@ class Culture_REST_API {
     }
 
     /**
-     * Handle creating a new quote.
+     * Handle creating a new quote. Backs both the web composer's Quote
+     * template (via /api/quotes/create) and the mobile composer's Quote
+     * template (via handle_submit_quote()'s delegate below) — this is real,
+     * live infrastructure, not part of the retired standalone /quotes
+     * browsing product.
      */
     public static function handle_create_quote( $request ) {
         $text    = $request->get_param( 'text' );
         $author  = $request->get_param( 'author' );
         $source  = $request->get_param( 'source' );
-        
+
         // If user_id is passed and we're authenticated via API key, use it.
         // Otherwise, fallback to the logged-in session user, and finally to
         // the synthetic "Moveee" system author (Culture_System_Author) for
@@ -3752,78 +3738,6 @@ class Culture_REST_API {
             'success' => true,
             'id'      => $post_id,
             'message' => __( 'Quote published successfully.', 'culture-community' ),
-        ) );
-    }
-
-    /**
-     * Handle liking a quote.
-     */
-    public static function handle_like_quote( $request ) {
-        $quote_id = (int) $request->get_param( 'quote_id' );
-        $user_id  = (int) $request->get_param( 'user_id' );
-
-        // Track user-specific like to prevent double-point awarding.
-        $liked_quotes = get_user_meta( $user_id, '_liked_quote_ids', true );
-        if ( ! is_array( $liked_quotes ) ) {
-            $liked_quotes = array();
-        }
-
-        $active = false;
-        $index = array_search( $quote_id, $liked_quotes );
-
-        if ( false !== $index ) {
-            unset( $liked_quotes[ $index ] );
-            $liked_quotes = array_values( $liked_quotes );
-        } else {
-            $liked_quotes[] = $quote_id;
-            $active = true;
-
-            // Award points for Liking a quote.
-            if ( class_exists( 'Culture_Gamification' ) ) {
-                Culture_Gamification::award_points( $user_id, 'quote_like' );
-            }
-        }
-
-        update_user_meta( $user_id, '_liked_quote_ids', $liked_quotes );
-
-        // Update global count.
-        $likes = (int) get_post_meta( $quote_id, '_quote_likes', true );
-        $new_likes = $active ? $likes + 1 : max( 0, $likes - 1 );
-        update_post_meta( $quote_id, '_quote_likes', $new_likes );
-
-        return rest_ensure_response( array(
-            'success' => true,
-            'active'  => $active,
-            'likes'   => $new_likes
-        ) );
-    }
-
-    /**
-     * Handle reporting a quote.
-     */
-    public static function handle_report_quote( $request ) {
-        $quote_id = (int) $request->get_param( 'quote_id' );
-
-        $quote = get_post( $quote_id );
-        if ( ! $quote || 'culture_quote' !== $quote->post_type ) {
-            return new WP_Error( 'invalid_quote', 'Quote not found.', array( 'status' => 404 ) );
-        }
-
-        // Increment reports.
-        $reports = (int) get_post_meta( $quote_id, '_quote_reports', true ) + 1;
-        update_post_meta( $quote_id, '_quote_reports', $reports );
-
-        // Hide if threshold met (e.g. 10 reports).
-        if ( $reports >= 10 ) {
-            wp_update_post( array(
-                'ID'          => $quote_id,
-                'post_status' => 'pending',
-            ) );
-        }
-
-        return rest_ensure_response( array(
-            'success' => true,
-            'message' => 'Quote reported.',
         ) );
     }
 
@@ -4705,7 +4619,9 @@ class Culture_REST_API {
 
         $slug = $post->post_name;
         if ( $is_quote ) {
-            $url = '/quotes/' . $slug;
+            // Matches get_quote_feed_items()'s href shape — the permalink
+            // page parses the leading numeric ID off this segment.
+            $url = '/quotes/' . $post->ID . '-' . $slug;
         } elseif ( $is_community ) {
             $url = '/community/' . $slug;
         } else {

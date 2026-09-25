@@ -22,7 +22,6 @@ const EXPLORE_LINKS = [
   { label: "Upcoming Events", href: "/events" },
   { label: "Magazine", href: "https://themoveee.com/magazine" },
   { label: "Discover", href: "/discover" },
-  { label: "Quotes Archive", href: "/quotes" },
 ];
 
 async function fetchLiveStats(userId: string) {

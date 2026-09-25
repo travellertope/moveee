@@ -6755,6 +6755,71 @@ none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
 sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
 Quotes" button, before considering this fully closed.
 
+## `/quotes` standalone product retired — bare permalink kept as a share/SEO target (September 2026)
+
+Second, final step of the retirement scoped in the section above — the standalone browsable
+`/quotes` product (archive, author archive, its own like/report/comment UI) is now gone. Quotes
+render natively inline in the feed on both platforms; this pass removed everything that turned
+that same content into a second, separately-browsable "site."
+
+**Removed**: `apps/connect/app/quotes/page.tsx` (archive/browse — its search input was never
+wired to anything), `apps/connect/app/quotes/author/[slug]/page.tsx` (author archive),
+`packages/shared/components/{QuotesInfiniteGrid,QuoteSubmissionModal,SubmitQuoteTrigger}.tsx` +
+`apps/connect/app/quotes.css`, the confirmed-dead `apps/site/components/QuoteSubmissionModal.tsx`
+(zero importers, predates this pass), `POST /culture/v1/quotes/like` /
+`/culture/v1/quotes/report` (`handle_like_quote`/`handle_report_quote`) and their Next.js proxies
+(`apps/connect/app/api/quotes/{like,report}/route.ts`) — this was the standalone product's own
+bespoke like/report system, entirely separate from the feed's real reaction system
+(`ReactionBar`/`/community/react`), and had no other caller. `apps/site/app/quotes/*` and
+`apps/site/app/api/quotes/report/route.ts` were already dead (redirect-shadowed by
+`proxy.ts`'s `connectPrefixes`) — deleted as pure cleanup. Links removed: `Footer.tsx`'s Explore
+column, `/member`'s `EXPLORE_LINKS` "Quotes Archive" entry, the `/quotes` sitemap entry.
+
+**Kept, deliberately**: `POST /culture/v1/quotes` (`handle_create_quote`) and its mobile mirror
+`POST /culture/v1/mobile/community/quote` (`handle_submit_quote`, a pure delegate) —
+**a scoping mistake was caught before shipping this**: these were first assumed to be reachable
+only from the retired archive's own "Submit a Quote" modal, duplicating the composer's own Quote
+tab. That was wrong. `packages/shared/components/pulse/SubmitPost.tsx` (web) posts directly to
+`/api/quotes/create` → this exact endpoint, and `apps/mobile/src/screens/community/
+NewPostScreen.tsx` posts directly to `/mobile/community/quote` → the exact same delegate. This is
+the live backend for the feed-native composer's Quote template on both platforms, not standalone-
+product-only — removing it would have broken quote creation entirely, not just retired a browsing
+UI. **If you ever need to touch quote creation again, this is the one method
+(`Culture_REST_API::handle_create_quote()`) both platforms' composers funnel into** — same
+"one implementation, two auth front doors" shape as the community RSVP / follow-system mirrors
+elsewhere in this file.
+
+**`/quotes/[slug]` still exists, rebuilt as a bare permalink, not deleted** — per an explicit
+product decision: since a quote's `href` (`/quotes/{id}-{slug}`) is the load-bearing destination
+for mobile+web share/QR codes (see the "Quote share/QR code 404" fix elsewhere in this file),
+`SearchModal`'s Quote-type search results (`apps/connect/app/api/search/route.ts`), and the
+member Collection's saved-quote links, killing the permalink outright would have broken all
+three. The rebuilt page has **no archive link, no author link, no like/bookmark/report actions,
+no "browse more" footer** — just the quote (styled to match `QuoteDetailModal.tsx`'s own look,
+so the permalink and the in-feed drawer are visually consistent), the real feed `ReactionBar`
+(`itemType="quote"`, same reaction system every other content type uses), and `QuoteComments`
+(unchanged — it already only ever depended on the shared `WpComment`/`getPostComments()` backend,
+not the archive). Nothing in the app links to this page except a quote's own `item.href` — don't
+add a "browse all quotes" link back into it.
+
+**Real, pre-existing bug fixed in the same pass**: `Culture_REST_API::saved_post_summary()`
+(backs the member Collection's "liked"/"bookmarked" lists) built a saved quote's `url` as
+`/quotes/{bare-slug}` — no numeric ID prefix — while the permalink page's `parseId()` requires
+`/quotes/{id}-{slug}` (`segment.split('-')[0]`). Every saved quote in a member's Collection would
+have 404'd once clicked. Fixed to `/quotes/{$post->ID}-{$slug}`, matching
+`get_quote_feed_items()`'s href shape exactly. `CollectionTabs.tsx`'s "Browse Quotes" empty-state
+buttons were repointed to `/feed` (where quotes are actually discoverable now), since `/quotes`
+is no longer a browsable destination.
+
+**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
+every other pass in this file; this pass additionally needs the plugin redeployed (the
+`saved_post_summary()` URL-shape fix and the route-registration changes are both PHP) before
+either fix takes effect in production. Verified via `php -l` on both touched PHP files and a
+repo-wide grep confirming zero remaining imports of any deleted component/route. Re-check the
+full flow — creating a quote via each platform's composer, opening it from a shared QR code, and
+opening a saved quote from the member Collection — in a real environment before considering this
+fully closed.
+
 ---
 
 ## Cron / scheduled jobs — split ownership between WP-Cron and cron-job.org (June 2026)
