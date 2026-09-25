@@ -1457,6 +1457,47 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Reading Tracker shelves (web — API key, explicit user_id param).
+        // Mirrors /mobile/reading/* in class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/reading/shelf', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_set' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'       => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/shelf', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_remove' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/shelf', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'  => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'   => array( 'required' => true, 'type' => 'string' ),
+                'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/shelf/counts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_counts' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
@@ -2036,6 +2077,37 @@ class Culture_REST_API {
     /* ——————————————————————————————————————
      *  Community event RSVPs (web — API key, explicit user_id)
      * —————————————————————————————————————— */
+
+    public static function handle_reading_shelf_set( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $status       = sanitize_key( $request->get_param( 'status' ) );
+        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_shelf_remove( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        Culture_Reading_Tracker::remove_from_shelf( $user_id, $directory_id );
+        return rest_ensure_response( array( 'removed' => true ) );
+    }
+
+    public static function handle_reading_shelf_get( $request ) {
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $status   = sanitize_key( $request->get_param( 'status' ) );
+        $page     = (int) $request->get_param( 'page' ) ?: 1;
+        $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
+        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page ) );
+    }
+
+    public static function handle_reading_shelf_counts( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_shelf_counts( $user_id ) );
+    }
 
     public static function handle_community_event_rsvp( $request ) {
         $user_id = (int) $request->get_param( 'user_id' );

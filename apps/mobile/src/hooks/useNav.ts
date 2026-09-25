@@ -39,6 +39,7 @@ export type AppParamList = {
   Referral: undefined;
   MyEvents: undefined;
   NewPortfolioItem: undefined;
+  ReadingTracker: undefined;
   ClusterScreen: { id: number };
   StoopHomeScreen: undefined;
   HubsScreen: undefined;

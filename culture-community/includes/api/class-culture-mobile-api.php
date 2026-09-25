@@ -328,6 +328,41 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Reading Tracker shelves (Phase 1 — see docs/reading-tracker-plan.md).
+        // Always scoped to get_current_user_id() — no other-user reads here.
+        register_rest_route( 'culture/v1', '/mobile/reading/shelf', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_set' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'status'       => array( 'required' => true, 'type' => 'string' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/reading/shelf', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_remove' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/reading/shelf', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_get' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'status'   => array( 'required' => true, 'type' => 'string' ),
+                'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/reading/shelf/counts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_shelf_counts' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2072,6 +2107,41 @@ class Culture_Mobile_API {
         update_post_meta( $post_id, '_poll_voters',  wp_json_encode( $voters ) );
 
         return rest_ensure_response( array( 'options' => $options ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Reading Tracker shelves (Phase 1)
+     * —————————————————————————————————————— */
+
+    public static function handle_reading_shelf_set( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $status       = sanitize_key( $request->get_param( 'status' ) );
+        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_shelf_remove( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        Culture_Reading_Tracker::remove_from_shelf( $user_id, $directory_id );
+        return rest_ensure_response( array( 'removed' => true ) );
+    }
+
+    public static function handle_reading_shelf_get( $request ) {
+        $user_id  = get_current_user_id();
+        $status   = sanitize_key( $request->get_param( 'status' ) );
+        $page     = (int) $request->get_param( 'page' ) ?: 1;
+        $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
+        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page ) );
+    }
+
+    public static function handle_reading_shelf_counts( $request ) {
+        $user_id = get_current_user_id();
+        return rest_ensure_response( Culture_Reading_Tracker::get_shelf_counts( $user_id ) );
     }
 
     /* ——————————————————————————————————————

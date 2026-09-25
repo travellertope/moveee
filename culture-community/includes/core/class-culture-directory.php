@@ -460,7 +460,7 @@ class Culture_Directory {
      * equivalent to "the one that matters" without the caller needing to
      * know which label a given directory type uses.
      */
-    private static function get_first_about_field( $post_id ) {
+    public static function get_first_about_field( $post_id ) {
         $raw = get_post_meta( $post_id, '_about_fields', true );
         if ( ! $raw ) {
             return '';

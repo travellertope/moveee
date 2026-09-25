@@ -203,6 +203,9 @@ class Culture_Activator {
         // Community event RSVPs table.
         Culture_Community_RSVP::create_table();
 
+        // Reading Tracker shelves table (Phase 1 — see docs/reading-tracker-plan.md).
+        Culture_Reading_Tracker::create_table();
+
         // Vendor shipping-zone ownership table (each WooCommerce shipping
         // zone is global by default; this maps a zone to the vendor who
         // created it so vendor dashboard APIs can enforce ownership).

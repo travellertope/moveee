@@ -9271,21 +9271,71 @@ implementations self-manage their own play/pause state and unload/pause on unmou
 enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
 `<audio>` behavior — not treated as a bug).
 
-## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — planned, not built
+## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phase 1 (shelves) shipped, September 2026
 
-**Full plan (read before starting any work on this): `docs/reading-tracker-plan.md`.**
-Status: planning only, zero backend/frontend code exists yet — this is a pointer for
-whoever picks it up next, not a status report on completed work. Requested as "implement
-similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" —
-the plan doc breaks StoryGraph's feature set into what's already covered by existing
-Moveee infrastructure (Book Review's ratings/genres, `culture_directory` book entries,
-Hubs for Buddy Reads, the `AnalyticsClient.tsx` chart components for stats) versus what's
-genuinely new (a persistent per-user shelf table, community-sourced mood/pace tags on
-book directory entries, a reading-goal tracker, a stats dashboard). Six phases, build
-strictly in order — see the doc's own §8. Explicitly deferred to a later pass, not
-built in v1: page-progress tracking, format tracking, Goodreads/StoryGraph import, a
-public reading-profile page, content warnings, and mood/pace-driven recommendation
-ranking (see the doc's §0 and §9 for the full reasoning on each).
+**Full plan: `docs/reading-tracker-plan.md`.** Build order is strictly phased (§8): shelves →
+goal → mood/pace → stats dashboard → Buddy Reads prefill → gamification hook. **Only Phase 1
+(shelves) is built so far** — goal/mood-pace/stats/Buddy-Reads/gamification are all still
+planning-only; don't assume any of them exist because Phase 1 does. Requested as "implement
+similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" — the plan
+doc breaks StoryGraph's feature set into what's already covered by existing Moveee
+infrastructure (Book Review's ratings/genres, `culture_directory` book entries, Hubs for Buddy
+Reads, the `AnalyticsClient.tsx` chart components for stats) versus what's genuinely new.
+Explicitly deferred past v1 regardless of phase: page-progress tracking, format tracking,
+Goodreads/StoryGraph import, a public reading-profile page, content warnings, and
+mood/pace-driven recommendation ranking (see the doc's §0/§9).
+
+### Phase 1 — shelves (want to read / currently reading / read)
+
+**Backend**: `Culture_Reading_Tracker` (new,
+`culture-community/includes/core/class-culture-reading-tracker.php`) — single source of truth,
+same "one class, two mirrored REST surfaces" shape as `Culture_Community_RSVP`. New table
+`wp_culture_reading_shelf` (`id, user_id, directory_id, status, started_at, finished_at,
+created_at, updated_at`, `UNIQUE KEY (user_id, directory_id)` — upsert, not duplicate rows, same
+convention as `wp_culture_hub_members`/`wp_culture_follows`), wired into
+`Culture_Activator::create_tables()`; `CULTURE_VERSION` bumped `3.1.0` → `3.2.0` to trigger the
+dbDelta on next deploy (a code push alone never runs `register_activation_hook()` — see "Plugin
+DB table auto-upgrade" above). `set_shelf_status()` validates the status against
+`Culture_Reading_Tracker::STATUSES` and that `directory_id` resolves to a published
+`culture_directory` post; `started_at`/`finished_at` are **sticky** — set once on first entry
+into `currently_reading`/`read`, never overwritten by a later re-transition (e.g. finishing a
+re-read doesn't erase the original finish date). `get_user_shelf()` returns each entry's
+title/slug/thumbnail (post thumbnail or `_external_cover_url`) and author via
+`Culture_Directory::get_first_about_field()` — that method was widened from `private` to
+`public` specifically so this class could reuse it rather than re-parsing `_about_fields` itself.
+
+REST routes, mirrored exactly like every other feature in this plugin (mobile JWT vs. web
+API-key + explicit `user_id`): `POST/DELETE/GET /mobile/reading/shelf`,
+`GET /mobile/reading/shelf/counts` (`class-culture-mobile-api.php`) and
+`POST/DELETE/GET /reading/shelf`, `GET /reading/shelf/counts` (`class-culture-rest-api.php`).
+
+**Web** (`apps/connect`): `/member/reading` (new `AccountNav` entry, "📚 Reading Tracker",
+between Portfolio and Collection — added immediately, not left as a "no nav path to it" gap the
+way Portfolio/Collection once were, per that section's own documented lesson). `page.tsx` is the
+standard `.acct-page`/`.acct-wrap`/`AccountNav` server shell (modeled on `/member/wallet`);
+`ReadingTrackerClient.tsx` owns the three-tab (`.wal-tabs`, reused verbatim) shelf switcher, a
+`.rt-grid` of `.rt-card` book cards (per-card shelf-move `<select>` + remove button), and an
+"Add a Book" modal wrapping the shared `DirectorySearch` composer component
+(`typeFilter="book"`, `aboutFieldLabel="Author"`, `externalSource="google_books"` — same
+dedup-by-external-id mechanism Book Review already uses, no new search/creation endpoint
+needed). Two new proxy routes, `app/api/reading/shelf/route.ts` (GET/POST/DELETE) and
+`app/api/reading/shelf/counts/route.ts` — both resolve `user_id` from
+`getServerSession(authOptions)` server-side and never trust a client-supplied one, per the plan
+doc's own privacy ground rule (§7). New `.rt-*` CSS appended to `member.css`.
+
+**Mobile** (`apps/mobile`): `ReadingTrackerScreen.tsx` (`screens/member/`), registered in both
+`ConnectStack` and `MemberStack` (same dual-registration every other member screen gets) and
+added to `useNav.ts`'s `AppParamList`. Same shelf-tabs/grid/add-book-modal shape as web, calling
+`${MOBILE_API}/reading/shelf*` via `api.get/post/delete`. Uses the mobile `DirectorySearch`
+component (`components/composer/DirectorySearch.tsx` — note its prop names differ slightly from
+the web version: `onSelect`/`selected`, not `onChange`/`value`, and its `DirectoryEntry` has no
+`slug` field). Linked from `MemberDashboardScreen.tsx`'s `QUICK_LINKS` ("📚 Reading Tracker").
+
+**Not built yet** (later phases, do not start without explicit direction): a reading goal
+tracker, mood/pace tags on book directory entries, the stats dashboard, Buddy Reads prefill from
+a Hub, and the gamification hook (credits/reputation for shelf activity). None of Phase 1's
+tables/endpoints/components should need to change to support these — they're additive per the
+plan doc's own phase breakdown.
 
 ---
 

@@ -91,6 +91,7 @@ import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
 import ReferralScreen from "../screens/member/ReferralScreen";
 import MyEventsScreen from "../screens/member/MyEventsScreen";
 import NewPortfolioItemScreen from "../screens/member/NewPortfolioItemScreen";
+import ReadingTrackerScreen from "../screens/member/ReadingTrackerScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
 import { useIsTablet } from "../hooks/useIsTablet";
 import TabletRail from "./TabletRail";
@@ -134,6 +135,7 @@ type MemberStackParams = {
   Analytics:       undefined;
   Referral:        undefined;
   MyEvents:        undefined;
+  ReadingTracker:  undefined;
 };
 
 const Tab   = createBottomTabNavigator();
@@ -176,6 +178,7 @@ function ConnectStack() {
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
       <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
+      <Stack.Screen name="ReadingTracker"  component={ReadingTrackerScreen} />
     </Stack.Navigator>
   );
 }
@@ -247,6 +250,7 @@ function MemberStack() {
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
       <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
+      <Stack.Screen name="ReadingTracker"  component={ReadingTrackerScreen} />
     </Stack.Navigator>
   );
 }
