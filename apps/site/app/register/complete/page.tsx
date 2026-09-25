@@ -17,7 +17,9 @@ function CompleteProfileForm() {
   const uid = searchParams.get("uid") || "";
   const token = searchParams.get("token") || "";
   const nextUrl = searchParams.get("next") || "";
-  const isUpgrade = searchParams.get("upgrade") === "patron";
+  const upgradeParam = searchParams.get("upgrade");
+  const isUpgrade = upgradeParam === "lit" || upgradeParam === "patron";
+  const upgradeTier: "lit" | "patron" = upgradeParam === "lit" ? "lit" : "patron";
 
   const [step, setStep] = useState<Step>(isUpgrade ? "membership" : "verify");
   const [interests, setInterests] = useState<string[]>([]);
@@ -32,7 +34,9 @@ function CompleteProfileForm() {
   const [occupation, setOccupation] = useState("");
 
   // Membership
-  const [tier, setTier] = useState<"citizen" | "patron">("citizen");
+  const [tier, setTier] = useState<"citizen" | "lit" | "patron">(
+    isUpgrade ? upgradeTier : "citizen"
+  );
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
 
@@ -78,7 +82,7 @@ function CompleteProfileForm() {
 
   async function handleUpgrade() {
     if (!session) {
-      router.push("/login?callbackUrl=/register/complete?upgrade=patron");
+      router.push(`/login?callbackUrl=/register/complete?upgrade=${upgradeTier}`);
       return;
     }
     setLoading(true);
@@ -87,7 +91,10 @@ function CompleteProfileForm() {
       const res = await fetch("/api/membership/upgrade-init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_key: `${billingCycle}_${currency.toLowerCase()}` }),
+        body: JSON.stringify({
+          plan_key: `${billingCycle}_${currency.toLowerCase()}`,
+          tier: upgradeTier,
+        }),
       });
       const data = await res.json();
       if (data.checkout_url) {
@@ -144,7 +151,7 @@ function CompleteProfileForm() {
           occupation: occupation.trim(),
           interests,
           tier,
-          plan_key: tier === "patron" ? `${billingCycle}_${currency.toLowerCase()}` : undefined,
+          plan_key: tier !== "citizen" ? `${billingCycle}_${currency.toLowerCase()}` : undefined,
         }),
       });
       const data = await res.json();
@@ -361,7 +368,9 @@ function CompleteProfileForm() {
     <div style={styles.page}>
       <div style={styles.card}>
         <p style={styles.eyebrow}>The Moveee — Culture Community</p>
-        <h1 style={styles.heading}>{isUpgrade ? "Upgrade to Moveee Pro" : "Choose your membership"}</h1>
+        <h1 style={styles.heading}>
+          {isUpgrade ? `Upgrade to Moveee ${upgradeTier === "lit" ? "Lit" : "Pro"}` : "Choose your membership"}
+        </h1>
 
         {!isUpgrade && (
           <ProgressBar labels={stepLabels} currentIdx={2} percent={100} />
@@ -370,23 +379,23 @@ function CompleteProfileForm() {
         <form onSubmit={handleMembershipSubmit} noValidate>
           <h2 style={styles.stepHeading}>Your membership tier</h2>
 
-          <div style={{ ...styles.billingToggle, opacity: tier === "patron" ? 1 : 0.5 }}>
+          <div style={{ ...styles.billingToggle, opacity: tier !== "citizen" ? 1 : 0.5 }}>
             <button
               type="button"
               onClick={() => setBillingCycle("monthly")}
               style={{ ...styles.cycleBtn, background: billingCycle === "monthly" ? "#14110d" : "transparent", color: billingCycle === "monthly" ? "#fff" : "#7a6f5c" }}
-              disabled={tier !== "patron"}
+              disabled={tier === "citizen"}
             >Monthly</button>
             <button
               type="button"
               onClick={() => setBillingCycle("yearly")}
               style={{ ...styles.cycleBtn, background: billingCycle === "yearly" ? "#14110d" : "transparent", color: billingCycle === "yearly" ? "#fff" : "#7a6f5c" }}
-              disabled={tier !== "patron"}
+              disabled={tier === "citizen"}
             >Annually</button>
             <div style={styles.savingsTag}>{currency === "NGN" ? "Save ₦9,000" : "Save $8"}</div>
           </div>
 
-          <div style={styles.tierGrid}>
+          <div style={{ ...styles.tierGrid, gridTemplateColumns: "1fr 1fr 1fr" }}>
             {(
               [
                 {
@@ -396,11 +405,18 @@ function CompleteProfileForm() {
                   perks: ["Access to free member articles", "Access to online events", "GetMeLit & Culture Drop newsletters", "Community forum & Pulse"],
                 },
                 {
+                  value: "lit" as const,
+                  label: "Moveee Lit",
+                  price: currency === "NGN" ? (billingCycle === "monthly" ? "₦1,500" : "₦15,000") : (billingCycle === "monthly" ? "$1" : "$13"),
+                  period: billingCycle === "monthly" ? "/ mo" : "/ yr",
+                  perks: ["Everything in Citizen", "Full access to The Moveee Literary"],
+                },
+                {
                   value: "patron" as const,
                   label: "Moveee Pro",
                   price: currency === "NGN" ? (billingCycle === "monthly" ? "₦4,500" : "₦45,000") : (billingCycle === "monthly" ? "$4" : "$40"),
                   period: billingCycle === "monthly" ? "/ mo" : "/ yr",
-                  perks: ["Everything in Citizen", "All patron-only articles", "10% shop discount + early access", "Cash out credits · 100 credits/day · Pro badge"],
+                  perks: ["Everything in Citizen", "All patron-only articles + The Moveee Literary", "10% shop discount + early access", "Cash out credits · 100 credits/day · Pro badge"],
                 },
               ]
             ).map(({ value, label, price, perks, ...rest }) => (
@@ -438,7 +454,7 @@ function CompleteProfileForm() {
               style={{ ...styles.btnPrimary, opacity: loading ? 0.7 : 1 }}
               disabled={loading}
             >
-              {loading ? "Please wait…" : tier === "patron" ? "Continue to payment →" : "Complete registration →"}
+              {loading ? "Please wait…" : tier !== "citizen" ? "Continue to payment →" : "Complete registration →"}
             </button>
           </div>
         </form>

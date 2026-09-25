@@ -34,6 +34,14 @@
  * than round-tripping to WordPress on every article load — see
  * apps/site/lib/literary-access.ts's verifyLiteraryToken(). No new secret.
  *
+ * Three-tier membership (September 2026, see CLAUDE.md): the token's access
+ * value can now be 'free' | 'lit' | 'pro' — 'lit' unlocks Literary-only
+ * gated content (Moveee Lit tier) but must NEVER unlock Magazine's separate
+ * patron-only gating, which still checks strictly for 'pro'. This is why
+ * 'lit' is only ever resolved when $context === 'literary' in verify_code()
+ * below — a Lit-tier reader verifying through the Magazine gate still gets
+ * plain 'free' access, exactly as before this tier existed.
+ *
  * The one-time 6-digit code itself is never stored in the clear — only its
  * wp_hash() lives in a transient, same convention as
  * Culture_Account_Deletion's token handling.
@@ -112,7 +120,7 @@ class Culture_Literary_Access {
 	 * @param string $context Which newsletter list a free verifier joins —
 	 *                         see NEWSLETTER_LIST_BY_CONTEXT. Defaults to
 	 *                         'literary' for the original caller.
-	 * @return array|WP_Error { access: 'free'|'pro', token: string }
+	 * @return array|WP_Error { access: 'free'|'lit'|'pro', token: string }
 	 */
 	public static function verify_code( $email, $code, $context = 'literary' ) {
 		$email = sanitize_email( $email );
@@ -142,10 +150,18 @@ class Culture_Literary_Access {
 		delete_transient( 'culture_lit_otp_' . $key );
 		delete_transient( $attempts_key );
 
-		$access = 'free';
+		$access  = 'free';
 		$wp_user = get_user_by( 'email', $email );
-		if ( $wp_user && 'patron' === get_user_meta( $wp_user->ID, '_culture_membership_tier', true ) ) {
-			$access = 'pro';
+		if ( $wp_user ) {
+			$member_tier = get_user_meta( $wp_user->ID, '_culture_membership_tier', true );
+			if ( 'patron' === $member_tier ) {
+				$access = 'pro';
+			} elseif ( 'lit' === $member_tier && 'literary' === $context ) {
+				// Moveee Lit only ever grants full access via the Literary
+				// context — verifying against a Magazine patron-only piece
+				// still resolves to 'free' for a Lit-tier member.
+				$access = 'lit';
+			}
 		}
 
 		if ( 'free' === $access ) {
@@ -185,7 +201,7 @@ class Culture_Literary_Access {
 		if ( null === $secret ) {
 			$secret = get_option( 'culture_api_secret', '' );
 		}
-		if ( empty( $secret ) || empty( $email ) || ! in_array( $access, array( 'free', 'pro' ), true ) ) {
+		if ( empty( $secret ) || empty( $email ) || ! in_array( $access, array( 'free', 'lit', 'pro' ), true ) ) {
 			return false;
 		}
 
@@ -230,7 +246,7 @@ class Culture_Literary_Access {
 		list( $email, $access, $expires ) = $parts;
 		$expires = absint( $expires );
 
-		if ( ! is_email( $email ) || ! in_array( $access, array( 'free', 'pro' ), true ) ) {
+		if ( ! is_email( $email ) || ! in_array( $access, array( 'free', 'lit', 'pro' ), true ) ) {
 			return new WP_Error( 'invalid_token', 'Malformed token payload.', array( 'status' => 400 ) );
 		}
 		if ( time() > $expires ) {

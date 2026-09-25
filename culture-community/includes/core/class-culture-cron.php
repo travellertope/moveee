@@ -248,8 +248,13 @@ class Culture_Cron {
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
-                    'key'   => '_culture_membership_tier',
-                    'value' => 'patron',
+                    // Covers both paid tiers — Moveee Pro ('patron') and
+                    // Moveee Lit ('lit', see CLAUDE.md's "Three-tier
+                    // membership" section) — either can have an admin-set
+                    // expiry date that needs to lapse back to Citizen.
+                    'key'     => '_culture_membership_tier',
+                    'value'   => array( 'patron', 'lit' ),
+                    'compare' => 'IN',
                 ),
                 array(
                     'key'     => '_culture_subscription_expiry',

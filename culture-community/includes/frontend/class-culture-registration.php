@@ -181,6 +181,17 @@ class Culture_Registration {
                             </div>
                         </label>
                         <label class="cr__tiercard">
+                            <input type="radio" name="tier" value="lit" />
+                            <div class="cr__tierbody">
+                                <h3><?php esc_html_e( 'Lit', 'culture-community' ); ?></h3>
+                                <span class="cr__tierprice"><?php esc_html_e( 'Paid', 'culture-community' ); ?></span>
+                                <ul>
+                                    <li><?php esc_html_e( 'Everything in Citizen, plus:', 'culture-community' ); ?></li>
+                                    <li><?php esc_html_e( 'Full access to The Moveee Literary', 'culture-community' ); ?></li>
+                                </ul>
+                            </div>
+                        </label>
+                        <label class="cr__tiercard">
                             <input type="radio" name="tier" value="patron" />
                             <div class="cr__tierbody">
                                 <h3><?php esc_html_e( 'Patron', 'culture-community' ); ?></h3>
@@ -374,7 +385,7 @@ class Culture_Registration {
             wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'culture-community' ) ) );
         }
 
-        if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
+        if ( ! in_array( $tier, array( 'citizen', 'lit', 'patron' ), true ) ) {
             $tier = 'citizen';
         }
 
@@ -387,9 +398,8 @@ class Culture_Registration {
         // Set display name.
         wp_update_user( array( 'ID' => $user_id, 'display_name' => $display_name ) );
 
-        // Set membership tier (Patron users start as citizen until payment completes).
-        $initial_tier = ( 'patron' === $tier ) ? 'citizen' : 'citizen';
-        update_user_meta( $user_id, '_culture_membership_tier', $initial_tier );
+        // Set membership tier (Lit/Patron users start as citizen until payment completes).
+        update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
 
         // Save phone number(s).
         if ( $phone ) {
@@ -418,12 +428,12 @@ class Culture_Registration {
         wp_set_current_user( $user_id );
         wp_set_auth_cookie( $user_id );
 
-        // If Patron tier selected, redirect to Paystack.
-        if ( 'patron' === $tier ) {
+        // If a paid tier (Lit or Patron) was selected, redirect to Paystack.
+        if ( in_array( $tier, array( 'lit', 'patron' ), true ) ) {
             wp_send_json_success( array(
                 'message'  => __( 'Account created! Redirecting to payment...', 'culture-community' ),
-                'redirect' => Culture_Paystack::get_checkout_url( $user_id ),
-                'tier'     => 'patron',
+                'redirect' => Culture_Paystack::get_checkout_url( $user_id, 'monthly_ngn', $tier ),
+                'tier'     => $tier,
             ) );
         }
 

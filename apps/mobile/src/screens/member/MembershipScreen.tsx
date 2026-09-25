@@ -25,6 +25,11 @@ const CITIZEN_PERKS = [
   "Culture points & badges",
 ];
 
+const LIT_PERKS = [
+  "Everything in Moveee Citizen, plus:",
+  "Full access to The Moveee Literary",
+];
+
 const PRO_PERKS = [
   "Everything in Moveee Citizen, plus:",
   "Patron-only articles & editorials",
@@ -42,6 +47,10 @@ export default function MembershipScreen() {
   const nav = useNav();
   const { user, isAuthenticated, updateUser } = useAuthStore();
   const isPro = user?.tier === "patron";
+  // Moveee Lit grants full access to The Moveee Literary only — see
+  // CLAUDE.md's "Three-tier membership" section. It never unlocks any of
+  // the Moveee Pro perks listed below.
+  const isLit = user?.tier === "lit";
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -98,6 +107,10 @@ export default function MembershipScreen() {
     openInApp("https://web.themoveee.com/register?upgrade=patron");
   };
 
+  const handleUpgradeLit = () => {
+    openInApp("https://web.themoveee.com/register?upgrade=lit");
+  };
+
   const handleJoinFree = () => {
     nav.navigate("Register");
   };
@@ -124,7 +137,7 @@ export default function MembershipScreen() {
               <Text style={styles.perkText}>{p}</Text>
             </View>
           ))}
-          {isAuthenticated && !isPro ? (
+          {isAuthenticated && !isPro && !isLit ? (
             <View style={styles.currentPlanBadge}>
               <Text style={styles.currentPlanText}>Your current plan</Text>
             </View>
@@ -133,6 +146,32 @@ export default function MembershipScreen() {
               <Text style={styles.ctaSecondaryText}>Join free →</Text>
             </TouchableOpacity>
           ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardEyebrow}>LITERARY</Text>
+          <Text style={styles.cardName}>Moveee Lit</Text>
+          <Text style={styles.proPrice}>Upgrade on the web</Text>
+          <View style={styles.divider} />
+          {LIT_PERKS.map((p) => (
+            <View key={p} style={styles.perkRow}>
+              <Ionicons name="checkmark" size={15} color={c.mute} />
+              <Text style={styles.perkText}>{p}</Text>
+            </View>
+          ))}
+          {isLit ? (
+            <View style={styles.currentPlanBadge}>
+              <Text style={styles.currentPlanText}>Your current plan</Text>
+            </View>
+          ) : isPro ? (
+            <View style={styles.currentPlanBadge}>
+              <Text style={styles.currentPlanText}>Included in Moveee Pro</Text>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.ctaSecondary} onPress={handleUpgradeLit}>
+              <Text style={styles.ctaSecondaryText}>Upgrade to Lit →</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={[styles.card, styles.proCard]}>

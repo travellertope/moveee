@@ -13,11 +13,13 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const referralFromUrl = searchParams.get("ref") || "";
   const nextUrl = searchParams.get("next") || "";
-  const isUpgrade = searchParams.get("upgrade") === "patron";
+  const upgradeParam = searchParams.get("upgrade");
+  const upgradeTier = upgradeParam === "lit" ? "lit" : upgradeParam === "patron" ? "patron" : "";
+  const isUpgrade = !!upgradeTier;
 
-  // Upgrade flow: already logged-in member going to Moveee Pro
+  // Upgrade flow: already logged-in member going to a paid tier (Moveee Lit or Pro)
   if (isUpgrade && session) {
-    router.replace(`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`);
+    router.replace(`/register/complete?upgrade=${upgradeTier}${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`);
     return null;
   }
 
@@ -184,7 +186,7 @@ function RegisterForm() {
           <Link href="/login" style={styles.link}>Sign in</Link>
         </p>
         <p style={{ fontSize: 13, color: "#7a6f5c", marginTop: 8, marginBottom: 0, textAlign: "center" }}>
-          Want Moveee Pro?{" "}
+          Want Moveee Lit or Pro?{" "}
           <Link
             href={`/register/complete?upgrade=patron${nextUrl ? "&next=" + encodeURIComponent(nextUrl) : ""}`}
             style={styles.link}

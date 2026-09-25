@@ -9,7 +9,7 @@ import "../../feed/feed.css";
 export const metadata: Metadata = {
   title: "Membership — Moveee",
   description:
-    "Join Moveee as a Citizen for free, or upgrade to Moveee Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
+    "Join Moveee as a Citizen for free, upgrade to Moveee Lit for full access to The Moveee Literary, or go Moveee Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
 };
 
 export default async function MembershipPage() {
@@ -17,6 +17,7 @@ export default async function MembershipPage() {
   const user = session?.user as any;
   const loggedIn = !!session;
   const isPro = user?.tier === "patron";
+  const isLit = user?.tier === "lit";
 
   return (
     <div>
@@ -75,7 +76,37 @@ export default async function MembershipPage() {
                 Become a Citizen →
               </Link>
             )}
-            {loggedIn && !isPro && (
+            {loggedIn && !isPro && !isLit && (
+              <span className="mco-tier-status">Your current membership</span>
+            )}
+            {loggedIn && (isPro || isLit) && (
+              <span className="mco-tier-status mco-tier-status--muted">
+                Included in Moveee {isPro ? "Pro" : "Lit"}
+              </span>
+            )}
+          </div>
+
+          {/* Moveee Lit */}
+          <div className="mco-tier-card">
+            <div className="mco-tier-eyebrow">Literary</div>
+            <h2 className="mco-tier-name">Moveee<br /><em>Lit</em></h2>
+            <div className="mco-tier-price">₦1,500 / mo · ₦15,000 / yr — cancel anytime</div>
+            <ul className="mco-tier-perks">
+              <li>Everything in Citizen, plus:</li>
+              <li>Full access to every piece in The Moveee Literary</li>
+              <li>No metered free-read limit</li>
+            </ul>
+            {!loggedIn && (
+              <Link href="/register?tier=lit" className="mco-tier-btn">
+                Become a Moveee Lit member →
+              </Link>
+            )}
+            {loggedIn && !isLit && !isPro && (
+              <Link href="/register?upgrade=lit" className="mco-tier-btn">
+                Upgrade to Moveee Lit →
+              </Link>
+            )}
+            {loggedIn && isLit && (
               <span className="mco-tier-status">Your current membership</span>
             )}
             {loggedIn && isPro && (
@@ -93,6 +124,7 @@ export default async function MembershipPage() {
             <ul className="mco-tier-perks">
               <li>Everything in Citizen, plus:</li>
               <li>Exclusive patron-only articles &amp; editorials</li>
+              <li>Full access to The Moveee Literary</li>
               <li>10% off in the Moveee Shop + early access to new drops</li>
               <li>Cash out your credits to your bank account</li>
               <li>100 culture credits per day (vs 50 for Citizen)</li>
@@ -127,29 +159,32 @@ export default async function MembershipPage() {
                 <tr>
                   <th>Feature</th>
                   <th>Citizen</th>
+                  <th>Moveee Lit</th>
                   <th>Moveee Pro</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["Pulse feed & community posts",                   true,     true],
-                  ["Member directory listing",                       true,     true],
-                  ["All events (online & in-person)",               true,     true],
-                  ["GetMeLit & Culture Drop newsletters",            true,     true],
-                  ["Culture points & badges",                        true,     true],
-                  ["Game plays per day",                             "1",      "5"],
-                  ["Daily culture credit cap",                       "50",     "100"],
-                  ["Cash out credits",                               false,    true],
-                  ["Poll & itinerary post templates",                false,    true],
-                  ["Patron-only articles & editorials",              false,    true],
-                  ["10% Moveee Shop discount",                       false,    true],
-                  ["Early access to new drops",                      false,    true],
-                  ["Moveee Pro badge",                              false,    true],
-                  ["Early access to new features",                   false,    true],
-                ].map(([feature, citizen, pro]) => (
+                  ["Pulse feed & community posts",                   true,     true,     true],
+                  ["Member directory listing",                       true,     true,     true],
+                  ["All events (online & in-person)",               true,     true,     true],
+                  ["GetMeLit & Culture Drop newsletters",            true,     true,     true],
+                  ["Culture points & badges",                        true,     true,     true],
+                  ["Full access to The Moveee Literary",            false,    true,     true],
+                  ["Game plays per day",                             "1",      "1",      "5"],
+                  ["Daily culture credit cap",                       "50",     "50",     "100"],
+                  ["Cash out credits",                               false,    false,    true],
+                  ["Poll & itinerary post templates",                false,    false,    true],
+                  ["Patron-only articles & editorials",              false,    false,    true],
+                  ["10% Moveee Shop discount",                       false,    false,    true],
+                  ["Early access to new drops",                      false,    false,    true],
+                  ["Moveee Pro badge",                              false,    false,    true],
+                  ["Early access to new features",                   false,    false,    true],
+                ].map(([feature, citizen, lit, pro]) => (
                   <tr key={feature as string}>
                     <td>{feature as string}</td>
                     <td>{typeof citizen === "string" ? <span className="mco-check">{citizen}</span> : citizen ? <span className="mco-check">✓</span> : <span className="mco-cross">—</span>}</td>
+                    <td>{typeof lit === "string" ? <span className="mco-check">{lit}</span> : lit ? <span className="mco-check">✓</span> : <span className="mco-cross">—</span>}</td>
                     <td>{typeof pro === "string" ? <span className="mco-check mco-check--pro">{pro}</span> : pro ? <span className="mco-check mco-check--pro">✓</span> : <span className="mco-cross">—</span>}</td>
                   </tr>
                 ))}

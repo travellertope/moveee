@@ -3,6 +3,15 @@ import { authOptions } from "@/lib/auth";
 
 import { NextRequest } from "next/server";
 
+/**
+ * apps/site's own copy of apps/connect's route of the same name — the
+ * Site A registration flow (app/register/complete/page.tsx) calls this
+ * relative path directly, and apps/site's proxy.ts explicitly excludes
+ * `/api/*` from its cross-domain redirect matcher (see its `matcher`
+ * config), so this route must exist here too rather than relying on a
+ * proxy hop to apps/connect. Kept byte-for-byte in sync with that file —
+ * same WordPress endpoint, same auth model.
+ */
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const API_SECRET = process.env.CULTURE_API_SECRET;
 

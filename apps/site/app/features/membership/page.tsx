@@ -4,13 +4,13 @@ import PatronPrice from "@/components/PatronPrice";
 import FeatureCTA from "@/components/FeatureCTA";
 
 export const metadata: Metadata = {
-  title: "Membership — Moveee Citizen vs Moveee Pro | Moveee",
+  title: "Membership — Moveee Citizen, Lit & Pro | Moveee",
   description:
-    "Moveee is free to join as a Moveee Citizen. Upgrade to Moveee Pro for exclusive stories, 10% off the Lifestyle Shop with early access, and first access to new features.",
+    "Moveee is free to join as a Moveee Citizen. Upgrade to Moveee Lit for full access to The Moveee Literary, or go Moveee Pro for exclusive stories, 10% off the Lifestyle Shop with early access, and first access to new features.",
   alternates: { canonical: "https://themoveee.com/features/membership" },
   openGraph: {
-    title: "Membership — Moveee Citizen vs Moveee Pro | Moveee",
-    description: "Compare Moveee Citizen and Moveee Pro and see what each tier unlocks.",
+    title: "Membership — Moveee Citizen, Lit & Pro | Moveee",
+    description: "Compare Moveee Citizen, Moveee Lit, and Moveee Pro and see what each tier unlocks.",
     url: "https://themoveee.com/features/membership",
     siteName: "Moveee",
     type: "website",
@@ -18,26 +18,27 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Membership — Moveee Citizen vs Moveee Pro | Moveee",
-    description: "Compare Moveee Citizen and Moveee Pro and see what each tier unlocks.",
+    title: "Membership — Moveee Citizen, Lit & Pro | Moveee",
+    description: "Compare Moveee Citizen, Moveee Lit, and Moveee Pro and see what each tier unlocks.",
   },
 };
 
 const COMPARE = [
-  { feature: "Pulse Feed & community posts", citizen: true, pro: true },
-  { feature: "Browse Discover & member directory", citizen: true, pro: true },
-  { feature: "GetMeLit & Culture Drop newsletters", citizen: true, pro: true },
-  { feature: "Literati Connect & Stoop", citizen: true, pro: true },
-  { feature: "Culture Credits & Reputation Points", citizen: "50 Cr/day cap", pro: "100 Cr/day cap" },
-  { feature: "Daily Games plays", citizen: "1/day", pro: "5/day" },
-  { feature: "Post links in the feed", citizen: false, pro: true },
-  { feature: "Poll & Itinerary post templates", citizen: false, pro: true },
-  { feature: "Create RSVP-managed events with attendee lists", citizen: false, pro: true },
-  { feature: "Cash out Culture Credits to your bank", citizen: false, pro: true },
-  { feature: "10% off the Lifestyle Shop + early access to drops", citizen: false, pro: true },
-  { feature: "Exclusive Moveee Pro patron stories", citizen: false, pro: true },
-  { feature: "Moveee Pro badge on profile & posts", citizen: false, pro: true },
-  { feature: "First access to new features", citizen: false, pro: true },
+  { feature: "Pulse Feed & community posts", citizen: true, lit: true, pro: true },
+  { feature: "Browse Discover & member directory", citizen: true, lit: true, pro: true },
+  { feature: "GetMeLit & Culture Drop newsletters", citizen: true, lit: true, pro: true },
+  { feature: "Literati Connect & Stoop", citizen: true, lit: true, pro: true },
+  { feature: "Full access to The Moveee Literary", citizen: false, lit: true, pro: true },
+  { feature: "Culture Credits & Reputation Points", citizen: "50 Cr/day cap", lit: "50 Cr/day cap", pro: "100 Cr/day cap" },
+  { feature: "Daily Games plays", citizen: "1/day", lit: "1/day", pro: "5/day" },
+  { feature: "Post links in the feed", citizen: false, lit: false, pro: true },
+  { feature: "Poll & Itinerary post templates", citizen: false, lit: false, pro: true },
+  { feature: "Create RSVP-managed events with attendee lists", citizen: false, lit: false, pro: true },
+  { feature: "Cash out Culture Credits to your bank", citizen: false, lit: false, pro: true },
+  { feature: "10% off the Lifestyle Shop + early access to drops", citizen: false, lit: false, pro: true },
+  { feature: "Exclusive Moveee Pro patron stories", citizen: false, lit: false, pro: true },
+  { feature: "Moveee Pro badge on profile & posts", citizen: false, lit: false, pro: true },
+  { feature: "First access to new features", citizen: false, lit: false, pro: true },
 ];
 
 export default function MembershipPage() {
@@ -56,14 +57,14 @@ export default function MembershipPage() {
             </h1>
             <p className="fp-subhead">
               Every member gets the full Moveee experience for free as a Moveee Citizen.
-              Moveee Pro adds more — at the shop, in the feed, and at the front of the line
-              for what's new.
+              Moveee Lit unlocks The Moveee Literary in full. Moveee Pro adds more — at
+              the shop, in the feed, and at the front of the line for what's new.
             </p>
             <div className="fp-hero-cta">
               <Link href="/register" className="mz-btn-primary">Join free</Link>
               <Link href="/register?tier=patron" className="mz-btn-secondary">Upgrade to Pro</Link>
             </div>
-            <p className="fp-trust">No card required for Citizen · Cancel Pro anytime</p>
+            <p className="fp-trust">No card required for Citizen · Cancel Lit or Pro anytime</p>
           </div>
         </div>
       </section>
@@ -71,7 +72,7 @@ export default function MembershipPage() {
       {/* ===== TIER CARDS ===== */}
       <section className="fp-section">
         <div className="fp-section-inner">
-          <div className="fp-grid fp-grid--2col">
+          <div className="fp-grid fp-grid--2col" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
             <div className="fp-card">
               <div className="fp-card-title">Moveee Citizen</div>
               <p className="fp-card-body" style={{ fontWeight: 700, color: "var(--mz-success, #2f6b3c)" }}>Free, forever</p>
@@ -81,6 +82,15 @@ export default function MembershipPage() {
                 Earn Culture Credits and Reputation Points from day one.
               </p>
               <Link href="/register" className="mz-btn-ghost">Join free</Link>
+            </div>
+            <div className="fp-card">
+              <div className="fp-card-title">Moveee Lit</div>
+              <p className="fp-card-body" style={{ fontWeight: 700, color: "var(--mz-gold, #b38238)" }}>From ₦1,500/mo · $1/mo</p>
+              <p className="fp-card-body">
+                Everything in Citizen, plus unmetered, full access to every piece in
+                The Moveee Literary — fiction, poetry, essays, conversations, and translation.
+              </p>
+              <Link href="/register?tier=lit" className="mz-btn-ghost">Upgrade to Lit</Link>
             </div>
             <div
               className="fp-card fp-card--dark"
@@ -117,6 +127,7 @@ export default function MembershipPage() {
                 <tr style={{ borderBottom: "2px solid var(--mz-ink, #14110d)" }}>
                   <th style={{ textAlign: "left", padding: "12px 8px", fontSize: 14 }}>Feature</th>
                   <th style={{ textAlign: "center", padding: "12px 8px", fontSize: 14 }}>Citizen</th>
+                  <th style={{ textAlign: "center", padding: "12px 8px", fontSize: 14, color: "var(--mz-gold, #b38238)" }}>Lit</th>
                   <th style={{ textAlign: "center", padding: "12px 8px", fontSize: 14, color: "var(--mz-gold, #b38238)" }}>Pro</th>
                 </tr>
               </thead>
@@ -126,6 +137,9 @@ export default function MembershipPage() {
                     <td style={{ padding: "10px 8px", fontSize: 14 }}>{row.feature}</td>
                     <td style={{ textAlign: "center", padding: "10px 8px" }}>
                       {typeof row.citizen === "string" ? row.citizen : row.citizen ? "✓" : "—"}
+                    </td>
+                    <td style={{ textAlign: "center", padding: "10px 8px", color: "var(--mz-gold, #b38238)" }}>
+                      {typeof row.lit === "string" ? row.lit : row.lit ? "✓" : "—"}
                     </td>
                     <td style={{ textAlign: "center", padding: "10px 8px", color: "var(--mz-gold, #b38238)" }}>
                       {typeof row.pro === "string" ? row.pro : row.pro ? "✓" : "—"}

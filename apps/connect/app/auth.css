@@ -297,7 +297,8 @@
   margin-left: 4px;
 }
 
-.auth-tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+.auth-tier-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+@media (max-width: 640px) { .auth-tier-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .auth-tier-grid { grid-template-columns: 1fr; } }
 .auth-tier-card {
   cursor: pointer;

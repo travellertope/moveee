@@ -31,14 +31,22 @@ class Culture_Paystack {
     }
 
     /**
-     * Get the plan code based on cycle and currency.
+     * Get the plan code based on cycle, currency, and tier.
+     *
+     * $tier === 'patron' keeps the pre-existing option-key shape
+     * (culture_paystack_plan_{cycle}_{currency}) so nothing needs
+     * re-configuring for the tier this plugin has always supported;
+     * 'lit' (Moveee Lit — see CLAUDE.md's "Three-tier membership" section)
+     * reads a parallel, tier-suffixed key instead.
      *
      * @param string $cycle 'monthly' or 'yearly'.
      * @param string $currency 'NGN' or 'USD'.
+     * @param string $tier 'patron' or 'lit'.
      * @return string
      */
-    private static function get_plan_code( $cycle = 'monthly', $currency = 'NGN' ) {
-        $key = 'culture_paystack_plan_' . strtolower( $cycle ) . '_' . strtolower( $currency );
+    private static function get_plan_code( $cycle = 'monthly', $currency = 'NGN', $tier = 'patron' ) {
+        $suffix = ( 'patron' === $tier ) ? '' : '_' . strtolower( $tier );
+        $key    = 'culture_paystack_plan_' . strtolower( $cycle ) . '_' . strtolower( $currency ) . $suffix;
         return get_option( $key, '' );
     }
 
@@ -47,30 +55,41 @@ class Culture_Paystack {
      *
      * @param string $cycle
      * @param string $currency
+     * @param string $tier 'patron' or 'lit'.
      * @return int
      */
-    private static function get_amount_lowest( $cycle = 'monthly', $currency = 'NGN' ) {
-        $key      = 'culture_paystack_amount_' . strtolower( $cycle ) . '_' . strtolower( $currency );
+    private static function get_amount_lowest( $cycle = 'monthly', $currency = 'NGN', $tier = 'patron' ) {
+        $suffix   = ( 'patron' === $tier ) ? '' : '_' . strtolower( $tier );
+        $key      = 'culture_paystack_amount_' . strtolower( $cycle ) . '_' . strtolower( $currency ) . $suffix;
         $fallback = ( 'yearly' === $cycle ) ? 45000 : 4500;
         if ( 'USD' === strtoupper( $currency ) ) {
             $fallback = ( 'yearly' === $cycle ) ? 40 : 4;
+        }
+        if ( 'lit' === $tier ) {
+            // Lit defaults to roughly a third of Patron's price — Literary-only
+            // access is a narrower slice of the site than full Pro. Configure
+            // real fallback-overriding values in WP Admin → Culture Community
+            // → Payment once real pricing is decided.
+            $fallback = (int) round( $fallback / 3 );
         }
         $amount = (int) get_option( $key, $fallback );
         return $amount * 100;
     }
 
     /**
-     * Generate checkout URL for upgrading to Patron.
+     * Generate checkout URL for upgrading to a paid tier ('patron' or 'lit').
      *
      * @param int    $user_id
      * @param string $plan_key e.g. 'monthly_ngn'
+     * @param string $tier 'patron' or 'lit'.
      * @return string
      */
-    public static function get_checkout_url( $user_id, $plan_key = 'monthly_ngn' ) {
+    public static function get_checkout_url( $user_id, $plan_key = 'monthly_ngn', $tier = 'patron' ) {
         return add_query_arg( array(
             'culture_action' => 'paystack_checkout',
             'user_id'        => $user_id,
             'plan_key'       => $plan_key,
+            'tier'           => in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron',
             'token'          => self::get_checkout_token( $user_id ),
         ), home_url( '/' ) );
     }
@@ -79,12 +98,13 @@ class Culture_Paystack {
      * Re-usable internal logic to initialize a Paystack session and return the direct URL.
      * Prevents headless users from being bounced through the CMS.
      */
-    public static function init_checkout_session( $user_id, $plan_key = 'monthly_ngn' ) {
+    public static function init_checkout_session( $user_id, $plan_key = 'monthly_ngn', $tier = 'patron' ) {
         $user = get_userdata( $user_id );
         if ( ! $user ) {
             return new WP_Error( 'not_found', 'User not found.' );
         }
 
+        $tier     = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
         $parts    = explode( '_', $plan_key );
         $cycle    = $parts[0] ?? 'monthly';
         $currency = strtoupper( $parts[1] ?? 'NGN' );
@@ -92,15 +112,21 @@ class Culture_Paystack {
         $frontend_url = get_option( 'culture_frontend_url', home_url( '/' ) );
         $callback_url = add_query_arg( 'culture_upgraded', '1', $frontend_url );
 
+        // Remember which tier this checkout is for — the webhook/callback
+        // that completes the payment has no other way to know (see
+        // handle_payment_callback()/handle_subscription_create()).
+        update_user_meta( $user_id, '_culture_pending_tier', $tier );
+
         $response = self::api_request( 'POST', '/transaction/initialize', array(
             'email'        => $user->user_email,
-            'amount'       => self::get_amount_lowest( $cycle, $currency ),
+            'amount'       => self::get_amount_lowest( $cycle, $currency, $tier ),
             'currency'     => $currency,
-            'plan'         => self::get_plan_code( $cycle, $currency ),
+            'plan'         => self::get_plan_code( $cycle, $currency, $tier ),
             'callback_url' => $callback_url,
             'metadata'     => array(
                 'user_id'    => $user_id,
                 'plan_key'   => $plan_key,
+                'tier'       => $tier,
                 'custom_fields' => array(
                     array(
                         'display_name'  => 'WordPress User ID',
@@ -163,19 +189,23 @@ class Culture_Paystack {
         }
 
         $plan_key = isset( $_GET['plan_key'] ) ? sanitize_key( $_GET['plan_key'] ) : 'monthly_ngn';
+        $tier     = isset( $_GET['tier'] ) && in_array( $_GET['tier'], array( 'patron', 'lit' ), true ) ? $_GET['tier'] : 'patron';
         $parts    = explode( '_', $plan_key );
         $cycle    = $parts[0] ?? 'monthly';
         $currency = strtoupper( $parts[1] ?? 'NGN' );
 
+        update_user_meta( $user_id, '_culture_pending_tier', $tier );
+
         $response = self::api_request( 'POST', '/transaction/initialize', array(
             'email'        => $user->user_email,
-            'amount'       => self::get_amount_lowest( $cycle, $currency ),
+            'amount'       => self::get_amount_lowest( $cycle, $currency, $tier ),
             'currency'     => $currency,
-            'plan'         => self::get_plan_code( $cycle, $currency ),
+            'plan'         => self::get_plan_code( $cycle, $currency, $tier ),
             'callback_url' => add_query_arg( 'culture_paystack_callback', '1', home_url( '/' ) ),
             'metadata'     => array(
                 'user_id'    => $user_id,
                 'plan_key'   => $plan_key,
+                'tier'       => $tier,
                 'custom_fields' => array(
                     array(
                         'display_name'  => 'WordPress User ID',
@@ -213,19 +243,23 @@ class Culture_Paystack {
         $user    = wp_get_current_user();
 
         $plan_key = isset( $_POST['plan_key'] ) ? sanitize_key( $_POST['plan_key'] ) : 'monthly_ngn';
+        $tier     = isset( $_POST['tier'] ) && in_array( $_POST['tier'], array( 'patron', 'lit' ), true ) ? $_POST['tier'] : 'patron';
         $parts    = explode( '_', $plan_key );
         $cycle    = $parts[0] ?? 'monthly';
         $currency = strtoupper( $parts[1] ?? 'NGN' );
 
+        update_user_meta( $user_id, '_culture_pending_tier', $tier );
+
         $response = self::api_request( 'POST', '/transaction/initialize', array(
             'email'        => $user->user_email,
-            'amount'       => self::get_amount_lowest( $cycle, $currency ),
+            'amount'       => self::get_amount_lowest( $cycle, $currency, $tier ),
             'currency'     => $currency,
-            'plan'         => self::get_plan_code( $cycle, $currency ),
+            'plan'         => self::get_plan_code( $cycle, $currency, $tier ),
             'callback_url' => add_query_arg( 'culture_paystack_callback', '1', home_url( '/' ) ),
             'metadata'     => array(
                 'user_id'    => $user_id,
                 'plan_key'   => $plan_key,
+                'tier'       => $tier,
                 'custom_fields' => array(
                     array(
                         'display_name'  => 'WordPress User ID',
@@ -279,8 +313,12 @@ class Culture_Paystack {
             $user_id  = $metadata['user_id'] ?? 0;
 
             if ( $user_id ) {
-                update_user_meta( $user_id, '_culture_membership_tier', 'patron' );
+                $tier = $metadata['tier'] ?? ( get_user_meta( $user_id, '_culture_pending_tier', true ) ?: 'patron' );
+                $tier = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
+
+                update_user_meta( $user_id, '_culture_membership_tier', $tier );
                 update_user_meta( $user_id, '_culture_paystack_customer_code', $response['data']['customer']['customer_code'] ?? '' );
+                delete_user_meta( $user_id, '_culture_pending_tier' );
 
                 wp_safe_redirect( add_query_arg( 'culture_upgraded', '1', home_url( '/' ) ) );
                 exit;
@@ -347,9 +385,16 @@ class Culture_Paystack {
             return;
         }
 
-        update_user_meta( $user_id, '_culture_membership_tier', 'patron' );
+        // subscription.create carries no metadata of our own — recover which
+        // tier this subscription is for from the pending-tier flag set at
+        // checkout time (see init_checkout_session()/process_checkout_action()).
+        $tier = get_user_meta( $user_id, '_culture_pending_tier', true ) ?: 'patron';
+        $tier = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
+
+        update_user_meta( $user_id, '_culture_membership_tier', $tier );
         update_user_meta( $user_id, '_culture_subscription_code', $subscription_code );
         update_user_meta( $user_id, '_culture_subscription_status', 'active' );
+        delete_user_meta( $user_id, '_culture_pending_tier' );
 
         do_action( 'culture_payment_completed', $user_id, $data );
     }

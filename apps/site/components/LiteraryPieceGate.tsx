@@ -70,7 +70,10 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "That code didn't work.");
 
-      if (mode === "pro" && json.access !== "pro") {
+      // "lit" (Moveee Lit) grants the same full-access outcome as "pro"
+      // (Moveee Pro) for anything gated under The Moveee Literary — see
+      // CLAUDE.md's "Three-tier membership" section.
+      if (mode === "pro" && json.access !== "pro" && json.access !== "lit") {
         setStage("pro-needed");
         return;
       }
@@ -100,13 +103,13 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
       </div>
       {stage === "pro-needed" ? (
         <div>
-          <h3>This piece continues in Moveee Pro</h3>
+          <h3>This piece continues in Moveee Lit</h3>
           <p>
-            That email isn&rsquo;t linked to a Moveee Pro membership — you&rsquo;re on The Moveee
-            Literary Club list now, but this piece continues there.
+            That email isn&rsquo;t linked to a Moveee Lit or Moveee Pro membership — you&rsquo;re
+            on The Moveee Literary Club list now, but this piece continues there.
           </p>
-          <a className="lit-btn-pill lit-btn-pill--fill" href={`/register?tier=patron&next=/literary/${slug}`}>
-            Upgrade to Moveee Pro →
+          <a className="lit-btn-pill lit-btn-pill--fill" href={`/register?tier=lit&next=/literary/${slug}`}>
+            Upgrade to Moveee Lit →
           </a>
         </div>
       ) : stage === "otp" ? (
@@ -144,7 +147,7 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
           <p>
             {blocking
               ? mode === "pro"
-                ? "Enter your email and we'll send a code to confirm your Moveee Pro membership."
+                ? "Enter your email and we'll send a code to confirm your Moveee Lit or Pro membership."
                 : "Enter your email for a code, then continue reading — free, no charge."
               : "New fiction, poetry, essays and translation, as we publish it — enter your email for a quick code."}
           </p>

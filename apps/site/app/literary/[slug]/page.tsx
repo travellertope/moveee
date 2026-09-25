@@ -178,8 +178,15 @@ async function PiecePage({ slug }: { slug: string }) {
   const isBot = isCrawlerUserAgent(hdrs.get("user-agent"));
   const isLoggedIn = !!session?.user;
   const isPatron = session?.user?.tier === "patron";
+  // Moveee Lit grants full access to everything in this section — see
+  // CLAUDE.md's "Three-tier membership" section. It never unlocks anything
+  // outside /literary (Magazine's own patron-only gate stays strictly
+  // "patron"-only, untouched by this tier).
+  const isLit = session?.user?.tier === "lit";
   const accessLevel = getAccessLevel(post);
   const litToken = verifyLiteraryToken(cookieStore.get(LITERARY_TOKEN_COOKIE)?.value);
+  const hasLiteraryFullAccess =
+    isPatron || isLit || litToken?.access === "pro" || litToken?.access === "lit";
 
   const bodyHtml = sanitizeHtml(post.content || "");
   let visibleBodyHtml = bodyHtml;
@@ -189,8 +196,7 @@ async function PiecePage({ slug }: { slug: string }) {
 
   if (!isBot) {
     if (accessLevel === "patron-only") {
-      const proAuthorized = isPatron || litToken?.access === "pro";
-      if (!proAuthorized) {
+      if (!hasLiteraryFullAccess) {
         const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
         if (hasMore) {
           visibleBodyHtml = visibleHtml;
@@ -199,11 +205,11 @@ async function PiecePage({ slug }: { slug: string }) {
               <div className="lit-gate-eyebrow">★ Subscribe to Continue</div>
               <h3>There&rsquo;s more to read.</h3>
               <p>
-                This piece continues in the Moveee Pro archive — extended fiction, poetry, and
-                essays for members going further with The Moveee Literary.
+                This piece continues in the archive — extended fiction, poetry, and essays for
+                members going further with The Moveee Literary.
               </p>
-              <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?tier=patron">
-                Upgrade to Moveee Pro →
+              <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?upgrade=lit">
+                Upgrade to Moveee Lit →
               </Link>
             </div>
           ) : (

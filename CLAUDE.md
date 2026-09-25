@@ -817,11 +817,124 @@ language into this vertical's user-facing copy unless a real print product is co
 Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
 generic-brand-name bug documented elsewhere in this file.
 
+### Three-tier membership — Moveee Lit (September 2026)
+
+A third membership tier, **Moveee Lit** — `_culture_membership_tier` value `'lit'`, alongside the
+existing `'citizen'` (free) and `'patron'` (Moveee Pro, paid). Explicit spec from the user:
+"Moveee Lit — everything in citizen plus access to everything in Moveee Literary." This
+**reverses** the decision documented in "Literary access gating" below against a separate
+Literary tier — the user confirmed this scope directly after being shown the tradeoff (the
+two-tier boolean was baked into dozens of touchpoints across web/mobile/PHP).
+
+**The load-bearing property that made this tractable**: every gating check in this codebase —
+web, mobile, and PHP alike — is a *strict* equality/inequality against the literal string
+`'patron'` (`tier === "patron"` / `'patron' === $tier`), never a "not citizen" or ordinal
+comparison. That means introducing a third value is safe by default everywhere: any check that
+was never explicitly updated for `'lit'` still correctly treats a Lit member the same as a
+Citizen (i.e., **not** Pro) for that feature — shop discount, game-play/credit caps, cashout,
+Poll/Itinerary templates, feed-boost, Magazine's own patron-only gate, event RSVP management, etc.
+all remain Pro-only, untouched. Only the few places that needed to explicitly *grant* something
+to Lit are listed below — everything else needed zero changes.
+
+**Where Lit actually grants access — Literary only, never Magazine:**
+- `Culture_Literary_Access::verify_code()` (`culture-community/includes/core/
+  class-culture-literary-access.php`) resolves a verified email's access as `'pro'` when the
+  account's tier is `patron`, or **`'lit'`** when the tier is `lit` **and** the caller's
+  `$context === 'literary'`. A Lit-tier member verifying through the *Magazine* gate
+  (`$context === 'magazine'`) still gets plain `'free'` — this one context check is what keeps
+  Lit from ever unlocking Magazine's separate patron-only content. The signed token's `access`
+  value is now `'free' | 'lit' | 'pro'` (widened in both `make_token()`/`verify_token()` here and
+  `apps/site/lib/literary-access.ts`'s `LiteraryAccess` type) — Magazine's own check
+  (`apps/site/app/magazine/[slug]/page.tsx`, `app/api/magazine/remainder/route.ts`) still compares
+  strictly against `'pro'`, so it was never touched and can't be fooled by a `'lit'` token.
+- `apps/site/app/literary/[slug]/page.tsx`'s `PiecePage` and `app/api/literary/remainder/
+  route.ts` both compute `hasLiteraryFullAccess` (or equivalent inline) as `isPatron || isLit ||
+  litToken?.access === "pro" || litToken?.access === "lit"` — this is the only widened check on
+  either file.
+- `LiteraryPieceGate.tsx`'s `mode === "pro"` gate now unlocks on `json.access === "lit"` too, and
+  its copy/upgrade CTA leads with **Moveee Lit** (cheaper, and it's exactly what unlocks this
+  content) rather than Pro — `/register?tier=lit`, not `/register?tier=patron`.
+- **If a Lit-tier member's real WP session (not the OTP token) is what's being checked**
+  (`session.user.tier`), the same `|| isLit` / `|| tier === "lit"` pattern applies — grep
+  `apps/site/app/literary/[slug]/page.tsx` for the canonical shape if extending this further.
+
+**Payment — Paystack + Stripe, parallel to the existing Patron flow, not a new gateway:**
+- `Culture_Paystack`/`Culture_Stripe`'s `get_plan_code()`/`get_amount_lowest()`/`get_price_id()`
+  all take a `$tier` param now. `'patron'` keeps the exact pre-existing option-key shape
+  (`culture_paystack_plan_{cycle}_{currency}`, `culture_stripe_price_{cycle}_usd`) so nothing
+  needed re-configuring for Pro; `'lit'` reads a parallel `_lit`-suffixed key
+  (`culture_paystack_plan_{cycle}_{currency}_lit`, `culture_stripe_price_{cycle}_usd_lit`),
+  falling back to roughly a third of the matching Patron amount when unset. **Configure real Lit
+  prices/plan codes in WP Admin → Culture Community → Payment** — new "Moveee Lit — Nigeria
+  (NGN) Plans" and "Moveee Lit — Stripe (USD) Price IDs" sections, mirroring the existing Patron
+  fields exactly (`class-culture-settings.php`).
+- **Paystack needed a "remember which tier this checkout is for" mechanism** since its webhook
+  (`subscription.create`) carries no metadata of its own — `_culture_pending_tier` usermeta is
+  set right before every checkout is initiated (`init_checkout_session()`,
+  `process_checkout_action()`, `ajax_init_payment()`) and read back (defaulting to `'patron'` for
+  backward compatibility with any in-flight checkout that predates this change) by whichever of
+  `handle_payment_callback()`/`handle_subscription_create()` completes first, then deleted.
+  Stripe doesn't need this — its Checkout Session `metadata.tier` survives round-trip to the
+  `checkout.session.completed` webhook natively, so `upgrade_user()` just reads it back directly.
+- `POST /culture/v1/user/upgrade-init` (existing-user upgrade flow, called by
+  `apps/connect/app/api/membership/upgrade-init/route.ts` **and** its Site A twin,
+  `apps/site/app/api/membership/upgrade-init/route.ts` — the latter didn't exist before this
+  pass; Site A's own `/register/complete` page was calling a route that had never been created,
+  a real pre-existing bug this work happened to surface and fix) and `POST /culture/v1/
+  complete-profile` (new-user registration flow) both accept an optional `tier` param (`'lit'` or
+  `'patron'`, defaulting to `'patron'`) and pass it straight through to
+  `Culture_Paystack::get_checkout_url()`/`Culture_Stripe::get_checkout_url()`.
+- **Registration** (`class-culture-registration.php`'s shortcode form): the tier radio group
+  gained a Lit card between Citizen and Patron; server-side validation widened from
+  `['citizen','patron']` to `['citizen','lit','patron']`; a Lit signup redirects to Paystack
+  checkout exactly like Patron does (`Culture_Paystack::get_checkout_url($user_id,
+  'monthly_ngn', $tier)`).
+- **`apps/site/app/register/complete/page.tsx` and its `apps/connect` twin** (byte-identical
+  logic, different `auth-*`-class-based styling — keep both in sync) — the membership step's
+  tier state widened to `"citizen" | "lit" | "patron"`, a 3-card grid (Citizen/Lit/Pro,
+  `.auth-tier-grid` bumped from a 2-col to a 3-col/2-col/1-col responsive grid in
+  `apps/connect/app/auth.css`), and `?upgrade=lit` (alongside the existing `?upgrade=patron`) on
+  both `/register` and `/register/complete` pre-selects and fast-tracks straight to the
+  membership step for an already-logged-in member upgrading in place.
+
+**WP Admin — "Pro Memberships" renamed to "Paid Memberships"**
+(`class-culture-memberships.php`, same `culture-memberships` slug, unchanged URLs): the list
+query, status-count SQL, and pagination all widened from a hardcoded `meta_value = 'patron'` to
+`IN ('patron', 'lit')`; a new Tier filter tab row (All / Moveee Pro / Moveee Lit) sits above the
+existing Status tabs; the list table gained a Tier column; the Add/Edit form's tier `<select>`
+gained a Lit option; `handle_save()`'s allow-list widened to `['patron','lit','citizen']`.
+
+**Two latent bugs this surfaced and fixed, unrelated to the UI work above but load-bearing**:
+1. `Culture_Cron`'s manual-expiry sweep (`class-culture-cron.php`) queried strictly
+   `_culture_membership_tier = 'patron'` before checking whether an admin-set expiry date had
+   passed — a Lit member given a manual expiry date would never have been auto-downgraded to
+   Citizen. Widened to `IN ('patron', 'lit')`.
+2. `Culture_Emails::send_payment_receipt()` hardcoded its plan-name fallback to `"Patron
+   Membership"` whenever the payment payload didn't carry an explicit plan name (true for every
+   Paystack/Stripe flow in this codebase) — a Lit purchaser's receipt would have said "Patron
+   Membership." Fixed to read the user's just-granted tier fresh and pick the matching default.
+
+**Deliberately not built in this pass**: a native Google Play Billing SKU for Lit on Android
+(`MembershipScreen.tsx`'s Lit card always says "Upgrade on the web," same as iOS's Pro path —
+see "Google Play Billing" elsewhere in this file for why a second real Play Console subscription
+product is a human-setup step, not something code alone can do) and any live-pricing API for the
+marketing pages that display a Lit price (`apps/connect/app/connect/membership/page.tsx`,
+`apps/site/app/features/membership/page.tsx` both show a hardcoded fallback figure —
+`PatronPrice.tsx`'s own live-pricing plumbing is itself dead code today, since
+`apps/connect/app/layout.tsx` passes `initialPricing={null}` unconditionally; a Lit price display
+was made consistent with that pre-existing state, not worse than it).
+
 ### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
 
-Pro-only Literary pieces are folded into the **existing** Moveee Pro mechanism — no separate
-"Literary Club" membership tier was built, per an explicit decision against that ("fold it into
-Moveee Pro" beats a second paid tier splitting the audience). All non-logged-in readers are also
+**Superseded in part by "Three-tier membership — Moveee Lit" above.** Pro-only Literary pieces
+were originally folded into the existing Moveee Pro mechanism only — no separate tier — per an
+explicit decision against a second paid tier splitting the audience. That decision was
+**reversed** the same month: Moveee Lit now also unlocks every Pro-only Literary piece (see that
+section for the mechanics — the `pro`/`lit` access split is deliberate and Magazine-side gating is
+untouched). Everything below in this section (the metering, the OTP mechanism, the truncation)
+is unchanged; only which tiers can satisfy `accessLevel === "patron-only"` grew.
+
+All non-logged-in readers are also
 metered: a limited number of free Literary reads per rolling 30 days, enforced server-side
 (genuine truncation of the HTML that's sent, not a client-hidden soft gate), with a compact inline
 email/OTP box doing double duty as both the unlock mechanism and the list-building funnel.
@@ -2371,7 +2484,10 @@ view, a PDF renderer), assume it has this bug until proven otherwise.
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
-  All user-facing copy uses "Moveee Pro" / "Pro".
+  All user-facing copy uses "Moveee Pro" / "Pro". A third tier, `lit`
+  (Moveee Lit — full access to The Moveee Literary only, see "Three-tier
+  membership" above), joined `citizen`/`patron` in September 2026 — same
+  rule applies, never rename it either.
 - "Cultural Digest" / "The Cultural Digest" is the old name — do not use it.
   Use "GetMeLit" and "Culture Drop" specifically, or "Moveee newsletters"
   generically.

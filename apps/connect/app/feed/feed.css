@@ -404,7 +404,7 @@
   margin: 0 auto;
   padding: 72px 60px 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 24px;
 }
 .mco-tier-card {

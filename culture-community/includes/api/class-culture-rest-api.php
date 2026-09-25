@@ -3337,9 +3337,12 @@ class Culture_REST_API {
             }
         }
 
-        if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
+        if ( ! in_array( $tier, array( 'citizen', 'lit', 'patron' ), true ) ) {
             $tier = 'citizen';
         }
+        // Lit/Patron users start as citizen until payment completes — see
+        // handle_upgrade_init()/the Paystack/Stripe webhooks, which grant
+        // the real tier once the checkout below actually succeeds.
         update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
 
         // Mark email as verified and consume the token.
@@ -3367,13 +3370,13 @@ class Culture_REST_API {
             Culture_Emails::send_welcome_email( $user_id );
         }
 
-        // Patron tier — return payment checkout URL.
-        if ( 'patron' === $tier ) {
+        // Paid tier (Lit or Patron) — return payment checkout URL.
+        if ( in_array( $tier, array( 'lit', 'patron' ), true ) ) {
             $checkout_url = '';
             if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key );
+                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key, $tier );
             } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
-                $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
+                $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier );
             }
             if ( $checkout_url ) {
                 return rest_ensure_response( array(
@@ -4764,7 +4767,9 @@ class Culture_REST_API {
 
     /**
      * POST /culture/v1/user/upgrade-init
-     * Initiates a Paystack session for an existing user to upgrade to Patron.
+     * Initiates a checkout session for an existing user to upgrade to a
+     * paid tier — 'patron' (Moveee Pro) or 'lit' (Moveee Lit, see CLAUDE.md's
+     * "Three-tier membership" section).
      */
     public static function handle_upgrade_init( $request ) {
         $user_id = (int) $request->get_param( 'user_id' );
@@ -4774,18 +4779,20 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $plan_key          = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $plan_key = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $tier     = $request->get_param( 'tier' ) ?: 'patron';
+        $tier     = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
 
         $checkout_url = '';
 
         // If Paystack.
         if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
             // We'll call a new method that returns the direct authorization URL.
-            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key );
-        } 
+            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key, $tier );
+        }
         // If Stripe.
         elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
-            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
+            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier );
         }
 
         if ( is_wp_error( $checkout_url ) ) {

@@ -12,7 +12,12 @@ import crypto from "crypto";
  * page load.
  */
 
-export type LiteraryAccess = "free" | "pro";
+// "lit" (Moveee Lit — full access to The Moveee Literary only, see
+// CLAUDE.md's "Three-tier membership" section) is distinct from "pro"
+// (Moveee Pro) — a Lit-tier verification must never be mistaken for a Pro
+// one by any Magazine-side check, which is why every such check compares
+// strictly against "pro", never against this whole union.
+export type LiteraryAccess = "free" | "lit" | "pro";
 
 export interface LiteraryVerification {
   email: string;
@@ -53,7 +58,12 @@ export function verifyLiteraryToken(token: string | undefined | null): LiteraryV
   if (parts.length !== 3) return null;
   const [email, access, expiresStr] = parts;
   const expires = parseInt(expiresStr, 10);
-  if (!email || (access !== "free" && access !== "pro") || !Number.isFinite(expires)) return null;
+  if (
+    !email ||
+    (access !== "free" && access !== "lit" && access !== "pro") ||
+    !Number.isFinite(expires)
+  )
+    return null;
   if (Date.now() / 1000 > expires) return null;
 
   return { email, access: access as LiteraryAccess, expires };

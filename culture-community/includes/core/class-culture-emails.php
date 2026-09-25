@@ -334,7 +334,15 @@ class Culture_Emails {
         $amount    = isset( $transaction_data['amount'] ) ? $transaction_data['amount'] / 100 : 0;
         $currency  = $transaction_data['currency'] ?? 'NGN';
         $reference = $transaction_data['reference'] ?? '';
-        $plan_name = $transaction_data['plan']['name'] ?? __( 'Patron Membership', 'culture-community' );
+
+        // Fall back to whichever tier this payment just granted the user —
+        // 'lit' (Moveee Lit) or 'patron' (Moveee Pro), see CLAUDE.md's
+        // "Three-tier membership" section — rather than always assuming Pro.
+        $granted_tier      = get_user_meta( $user_id, '_culture_membership_tier', true );
+        $default_plan_name = ( 'lit' === $granted_tier )
+            ? __( 'Moveee Lit Membership', 'culture-community' )
+            : __( 'Patron Membership', 'culture-community' );
+        $plan_name = $transaction_data['plan']['name'] ?? $default_plan_name;
 
         $merge = array(
             '{display_name}' => esc_html( $user->display_name ),
