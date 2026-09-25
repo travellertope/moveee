@@ -28,6 +28,7 @@ import { decodeHtml } from "@/lib/decode-html";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryPieceGate from "@/components/LiteraryPieceGate";
 import LiteraryReadTracker from "@/components/LiteraryReadTracker";
+import LiteraryComments from "@/components/LiteraryComments";
 import SubscribeForm from "@/components/SubscribeForm";
 import ArticleShareFab from "@/components/ArticleShareFab";
 
@@ -308,6 +309,8 @@ async function PiecePage({ slug }: { slug: string }) {
               </div>
             </div>
           )}
+
+          <LiteraryComments postId={post.databaseId} canComment={hasLiteraryFullAccess} />
         </article>
 
         <ArticleShareFab />
