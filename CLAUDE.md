@@ -938,12 +938,25 @@ own oxblood/parchment palette rather than the sitewide tokens, per this vertical
   unmetered full access to every piece (public and exclusive alike), **commenting on stories**,
   early news/previews/event invites (especially Literati Connect), and complimentary "TML
   Originals × The Moveee Literary" merch for annual subscribers only.
-- **Known gap, not built in this pass**: "Comment on stories" is listed as copy only — **there is
-  no comment system on Literary piece pages at all** (`/literary/[slug]/page.tsx` has no
-  `ArticleComments`/equivalent mount), unlike Magazine articles, which do have one. If this is
-  ever wired up for real, gate it the same way `hasLiteraryFullAccess` already does on that page
-  (`isLit || isPatron || litToken?.access === "pro" || litToken?.access === "lit"`) rather than
-  inventing a second access check.
+- **"Comment on stories" built, same follow-up session.** New: `apps/site/components/
+  LiteraryComments.tsx` — a Literary-branded sibling of `ArticleComments.tsx`, same `/api/comments`
+  backend and `Comment` shape, but its own JSX/CSS (`.lit-comments-*` in `literary.css`, not
+  `editorial.css`'s `.ar-gate`/`.comments` families) since this section runs its own `--lit-*`
+  design tokens. Mounted at the bottom of the piece body in `app/literary/[slug]/page.tsx`
+  (`<LiteraryComments postId={post.databaseId} canComment={hasLiteraryFullAccess} />`) — gated
+  on the exact same `hasLiteraryFullAccess` check every other Literary-only feature already uses
+  (`isLit || isPatron || litToken?.access === "pro" || litToken?.access === "lit"`), confirmed
+  directly with the user rather than assumed: **Moveee Pro also gets to comment, same as every
+  other Literary-only feature** — a literal "Moveee Lit only, excluding Pro" reading was floated
+  and explicitly rejected in favor of staying consistent with the rest of this section's gating.
+  Three states: signed-in + gated tier → real composer; signed-in + ungated (Citizen) → an inline
+  upsell card ("Comments are for members" + an Upgrade-to-Lit CTA); signed-out → the same card
+  with a sign-in link added. The comment thread itself (once posted) is always visible to every
+  reader regardless of tier — only *posting* is gated, reading isn't. **Not built**: replies/likes
+  on individual comments (no such backend concept exists here either, same limitation
+  `ArticleComments.tsx` has). Not visually verified in a browser — same `NEXTAUTH_SECRET`/
+  WordPress credentials gap as every other pass in this file. Verified via a brace/paren-balance
+  check on both new/edited files.
 
 ### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
 
