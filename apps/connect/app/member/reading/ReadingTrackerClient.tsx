@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import DirectorySearch from "@/components/composer/DirectorySearch";
 
 type ShelfStatus = "want_to_read" | "currently_reading" | "read";
@@ -147,9 +148,14 @@ export default function ReadingTrackerClient() {
 
   return (
     <>
-      <button type="button" className="rt-add-btn" onClick={() => setShowAddModal(true)}>
-        + Add a Book
-      </button>
+      <div className="rt-toolbar">
+        <button type="button" className="rt-add-btn" onClick={() => setShowAddModal(true)}>
+          + Add a Book
+        </button>
+        <Link href="/member/reading/stats" className="rt-stats-link">
+          Your Year in Books →
+        </Link>
+      </div>
 
       {goal && (
         <div className="rt-goal-card">

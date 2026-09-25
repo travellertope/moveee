@@ -9782,12 +9782,13 @@ implementations self-manage their own play/pause state and unload/pause on unmou
 enforces single-playback-at-a-time across multiple cards on screen (matches web's plain
 `<audio>` behavior — not treated as a bug).
 
-## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phases 1–2 shipped, September 2026
+## Reading Tracker (StoryGraph-style shelves/mood/pace/stats) — Phases 1–4 shipped, September 2026
 
 **Full plan: `docs/reading-tracker-plan.md`.** Build order is strictly phased (§8): shelves →
 goal → mood/pace → stats dashboard → Buddy Reads prefill → gamification hook. **Phases 1
-(shelves) and 2 (reading goal) are built** — mood/pace/stats/Buddy-Reads/gamification are still
-planning-only; don't assume any of them exist because Phases 1–2 do. Requested as "implement
+(shelves), 2 (reading goal), 3 (mood/pace tags), and 4 (stats dashboard) are all built** —
+Buddy Reads prefill and the gamification hook are still planning-only; don't assume either
+exists because the first four phases do. Requested as "implement
 similar features to StoryGraph (the book-tracking app) into Moveee web and mobile" — the plan
 doc breaks StoryGraph's feature set into what's already covered by existing Moveee
 infrastructure (Book Review's ratings/genres, `culture_directory` book entries, Hubs for Buddy
@@ -9880,11 +9881,172 @@ edit/summary toggle, same "read" transition re-triggers `loadGoal()`.
 **No badge/reward tied to hitting 100% in v1** — per the plan's explicit scope note; if that's
 ever wanted, it belongs with the later gamification-hook phase, not bolted onto this one.
 
-**Not built yet** (later phases, do not start without explicit direction): mood/pace tags on
-book directory entries, the stats dashboard, Buddy Reads prefill from a Hub, and the
-gamification hook (credits/reputation for shelf activity). None of Phase 1/2's
-tables/endpoints/components should need to change to support these — they're additive per the
-plan doc's own phase breakdown.
+### Phase 3 — mood/pace tags (community-sourced, per §1.3/§3.4/§7)
+
+Extends `Culture_Reading_Tracker` (same file as Phases 1–2) with a fixed 12-tag mood vocabulary
+(`MOOD_TAGS` — StoryGraph's own published set: dark/emotional/funny/reflective/adventurous/
+mysterious/hopeful/tense/sad/informative/lighthearted/inspiring) plus a slow/medium/fast pace —
+both live on the **directory entry**, not the shelf row, and are community-aggregated (mode of
+every signed-in member's own vote), the same "many individual signals → one displayed value"
+pattern `_average_rating` already uses. **Per the plan doc's §7 rule, this 12-tag list is fixed
+— never let it grow ad hoc** (an admin-configurable free list defeats the point: a 40-tag
+vocabulary produces mostly-empty aggregates per book).
+
+**Backend**: new table `wp_culture_book_mood_votes` (`directory_id, user_id, moods JSON, pace`,
+`UNIQUE KEY (directory_id, user_id)` — one vote per person per book, upsert on re-vote), wired
+into `Culture_Activator::create_tables()` via the same `create_table()` method Phases 1–2 already
+use; `CULTURE_VERSION` bumped `3.3.0` → `3.4.0` to trigger it on next deploy (plugin header also
+bumped `2.6.4` → `2.6.5`, same redeploy-confirmation convention as every other version-bump entry
+in this file). `vote_mood_pace()` validates the target is a real, published `book`-type directory
+entry (`has_term('book', 'culture_dir_type', $post)` — `culture_dir_type` is a taxonomy, not
+postmeta, don't reach for `get_post_meta()` here) and every submitted mood against `MOOD_TAGS`
+before storing, then calls `recompute_book_mood_pace()` — a small per-book aggregation query (mode
+for moods, top 5 by count with zero-vote tags dropped; majority for pace, ties broken toward
+`medium` per the plan doc) that writes `_book_moods`/`_book_pace` postmeta directly. Same "small
+per-book vote count, cheap to recompute on every vote" reasoning the plan doc already gives for
+not denormalizing this into a running counter — don't reach for a cached aggregate table if this
+ever needs revisiting.
+
+**REST routes**: `POST /mobile/reading/mood-vote` (JWT) / `POST /reading/mood-vote` (API key +
+explicit `user_id`) mirror every other Reading Tracker write. **The read side is deliberately the
+one exception to this feature's "everything scoped to the caller's own user_id" privacy model**
+(see the plan doc's own callout in §7/§1.3) — `GET /mobile/reading/mood-pace` /
+`GET /reading/mood-pace` are public (`__return_true`), since the aggregated moods/pace are a
+community-visible property of the book, exactly like `_average_rating` already is. A `user_id`
+(mobile: `get_current_user_id()`, always attached if a JWT is present; web: only appended by the
+proxy route when a session exists) is accepted purely to also return that viewer's own current
+vote (`myVote`), so the frontend can show "edit your vote" instead of the initial prompt — never
+to reveal anyone else's vote, no other-user read path exists here.
+
+**Frontend — book-only, both platforms**: rendered inside the book's own `culture_directory`
+detail page (web: `apps/connect/app/directory/[slug]/BookMoodPace.tsx`, inserted into the
+existing infobox column right after the per-type infobox fields, gated on `typeSlug === "book"`;
+mobile: `components/community/BookMoodPace.tsx`, inserted into `DirectoryDetailScreen.tsx` as its
+own "Mood & Pace" `aboutCard`-styled block, gated on `entry.entryType === "book"`) — **not** the
+Reading Tracker screen itself, since mood/pace is a property of the book, not of a user's shelf.
+Aggregate chips always render (public data, no auth needed); the voting prompt/form only renders
+for a signed-in visitor, and flips from "How would you describe this book? →" to "Edit your mood/
+pace vote →" once `myVote` comes back non-null. Chips use `flex-wrap`, never horizontal scroll,
+per this file's own standing "composer selection-chip rows wrap, they don't scroll" convention.
+Shared vocabulary constants live in `packages/shared/lib/reading-tracker.ts` (web) and
+`apps/mobile/src/features/community/readingTracker.ts` (mobile, since RN can't import
+`packages/shared`) — both mirror `Culture_Reading_Tracker::MOOD_TAGS` by hand; **keep all three
+in sync if this list ever changes**, same caveat this file already documents for
+`TEMPLATE_REP_GATE`/the notification icon maps.
+
+**Deliberately not built in this pass** (per the plan doc's own §3.1 item 1, a *Phase 1* gap that
+was never actually shipped, not a Phase 3 scope item): a "+ Add to Shelf" segmented control on
+the book's own directory-entry page — Phase 1 only ever shipped the Reading Tracker screen's own
+"+ Add a Book" modal as the one entry point for shelving. If that directory-page shortcut is ever
+wanted, it's a small, independent addition to `set_shelf_status()`'s existing REST surface, not
+something this Phase 3 pass touched.
+
+**Not built in this Phase 3 pass** (later phases, do not start without explicit direction beyond
+what Phase 4 below now covers): Buddy Reads prefill from a Hub, and the gamification hook
+(credits/reputation for shelf/mood activity). None of Phases 1–3's tables/endpoints/components
+needed to change to support Phase 4 below — it's additive, per the plan doc's own phase breakdown.
+
+Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+credentials gap as every other pass in this file; this feature additionally needs the plugin
+redeployed (manual zip+upload, see "Plugin DB table auto-upgrade" above) before the new table and
+routes exist in production. Verified via `php -l` on every touched PHP file and a brace/paren
+balance check on every touched/new TS/TSX file (no `node_modules` installed this session, so
+`tsc --noEmit` couldn't run). Re-check the full vote → aggregate → re-vote round trip, on both
+platforms, against a real book entry, in a real environment before considering this closed.
+
+### Phase 4 — stats dashboard ("Your Year in Books", per §2/§4)
+
+Adds `Culture_Reading_Tracker::get_reading_stats( int $user_id, int $year )` — a single raw-SQL
+aggregation method, no new dbDelta table (no `CULTURE_VERSION` bump needed; only the plugin
+header `Version:` was bumped, to `2.6.6`, purely for the standard redeploy-confirmation reason
+documented in "Plugin DB table auto-upgrade" above). Returns the exact shape the plan doc's §2
+specifies (`year`, `books_read`, `pace_breakdown`, `mood_breakdown`, `rating_distribution`,
+`top_genres`, `books_per_month`) computed entirely via `$wpdb` queries — never a `WP_Query` loop,
+per CLAUDE.md's own "Raw SQL REST endpoints" convention, which this method's own docblock cites
+directly.
+
+**Where each number actually comes from, since three different sources feed one payload**:
+- `books_read`/`books_per_month` — a single query against `wp_culture_reading_shelf`
+  (`status = 'read' AND YEAR(finished_at) = $year`), bucketed by month in PHP after the fetch
+  (a fixed 12-key map, always present even for a month with zero books, so the frontend never
+  has to backfill missing months itself).
+- `pace_breakdown`/`mood_breakdown` — **not** re-derived from the vote table
+  (`wp_culture_book_mood_votes`); they read the already-community-aggregated `_book_pace`/
+  `_book_moods` postmeta (the same fields `get_book_mood_pace()` reads) off every directory
+  entry the user finished that year, via one batched `wp_postmeta` `IN (...)` query. This means
+  a user's own stats reflect the *book's* aggregate mood/pace, not what that one user personally
+  voted — a deliberate reading of the plan doc's data model, since `_book_pace`/`_book_moods`
+  are the only pace/mood values that exist per book (a user's own vote is one input into that
+  aggregate, not a separately stored "my pace for this book" value).
+- `rating_distribution`/`top_genres` — **sourced from the user's own Book Review posts** (
+  `culture_post`, `_template_type = 'book-review'`, `post_author = $user_id`), joined via
+  `_linked_directory_id` against the same set of directory IDs finished that year — one grouped
+  raw-SQL query using `MAX(CASE WHEN meta_key = '...' THEN meta_value END)` per postmeta key
+  (avoids a 1-query-per-post loop). This follows the plan doc's §1.4 "reuse, not new" rule
+  directly: rating and genres already live on the Book Review post, never duplicated onto the
+  shelf row — a shelved-but-unreviewed book contributes to `books_read`/`books_per_month`/
+  `pace_breakdown`/`mood_breakdown` but not to `rating_distribution`/`top_genres`, since there's
+  no rating/genre data to pull without a review.
+- `mood_breakdown` is returned **sparse** (nonzero moods only, sorted descending by count) rather
+  than the full fixed-12-key map `get_book_mood_pace()` would suggest — matches the plan doc §4's
+  explicit "one row per mood with a nonzero count, sorted descending" instruction. `top_genres`
+  is capped to the top 5.
+
+**REST routes**, same mirrored shape as every other phase: `GET /mobile/reading/stats` (JWT,
+`class-culture-mobile-api.php`, `year` optional) / `GET /reading/stats` (API key + explicit
+`user_id`, `class-culture-rest-api.php`).
+
+**Web**: new `apps/connect/app/api/reading/stats/route.ts` proxy (session-resolved `user_id`,
+same pattern as every other Reading Tracker route) and a new **`/member/reading/stats`** page —
+deliberately **not** added to `AccountNav.tsx` as a top-level destination; it's a sub-page of
+Reading Tracker (same "linked from its parent page, not the nav" relationship Analytics' own
+quick-links have to the Member Dashboard), reached via a new "Your Year in Books →" link added
+to `ReadingTrackerClient.tsx`'s toolbar (`.rt-toolbar`, now wrapping the pre-existing "+ Add a
+Book" button alongside it). `ReadingStatsClient.tsx` renders six sections (big books-read stat,
+books-per-month bars, a 3-segment pace bar + legend, a mood horizontal-bar list, a 5-star rating-
+distribution bar list, and a ranked top-genres list) — **deliberately does not reuse
+`AnalyticsClient.tsx`'s SVG `BarChart`/`LineChart` components directly**, despite the plan doc
+§4 naming them as the thing to reuse: every section here is a small, fixed-size breakdown (≤12
+months, 3 paces, ≤12 moods, 5 star ratings, ≤5 genres) that the codebase's existing plain-CSS
+"label / track+fill / count" bar-row pattern (the exact shape
+`apps/site/app/lifestyle/[slug]/ProductReviews.tsx`'s star-distribution chart already uses)
+renders just as well as an SVG chart, with far less code — this was a deliberate implementation
+choice, not a shortcut; the *visual pattern* being reused is `ProductReviews.tsx`'s bar rows, per
+the plan doc's own alternate framing of the same section ("same shape as `ProductReviews.tsx`'s
+existing star-distribution bar chart... reuse that exact visual pattern"). New `.rts-*` CSS
+appended to `member.css`, right after the existing Reading Tracker (`.rt-*`) block.
+
+**Mobile**: per the plan doc's explicit "not a separate screen on mobile" instruction, the whole
+stats payload renders inline on `ReadingTrackerScreen.tsx` itself, as a new collapsible "Your
+Year in Books" card between the reading-goal card and the shelf tab row — collapsed by default
+(just the books-finished count), expanding on tap to the same six sections as web. **The
+expanded body is wrapped in its own bounded `maxHeight: 340` `ScrollView`** (`nestedScrollEnabled`)
+rather than left to grow the outer screen — the screen's header/goal-card/stats-card/tab-row
+sit in a plain (non-scrolling) column above the shelf grid's own `ScrollView`, so an unbounded
+expanded stats card could in principle push the tabs and the whole shelf grid off-screen with no
+way to scroll back to them; bounding the stats body's height and giving it its own internal
+scroll avoids that regardless of how much content a given user's stats produce. `loadStats()` is
+called on mount alongside `loadCounts()`/`loadGoal()`, and again (alongside `loadGoal()`)
+whenever a book's status moves to `read`, so the count/charts stay live without a manual refresh.
+Shared `ReadingStats` type (mirrored between `packages/shared/lib/reading-tracker.ts` and
+`apps/mobile/src/features/community/readingTracker.ts`, same "no shared source of truth across
+the PHP/TS boundary or between the two TS copies" caveat as `MOOD_TAGS`/`PACES`) — keep all three
+representations (PHP, web TS, mobile TS) in sync if the response shape ever changes.
+
+**This closes the Reading Tracker feature's four core phases** — shelves, goal, mood/pace, and
+stats are all live on both platforms. Only Buddy Reads (a Hub-creation prefill, no new backend)
+and the gamification hook (credits/reputation for shelf/mood activity) remain, per the plan
+doc's own phase breakdown — do not start either without explicit direction.
+
+Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+credentials gap as every other pass in this file (this phase needs no new dbDelta table, so no
+`CULTURE_VERSION` bump/redeploy-triggered migration is required, only the plugin zip redeploy
+itself for the new PHP methods/routes to exist in production). Verified via `php -l` on every
+touched PHP file and a brace/paren balance check on every touched/new TS/TSX/CSS file (no
+`node_modules` installed this session, so `tsc --noEmit` couldn't run). Re-check the full round
+trip — finish a book, write a Book Review with a rating/genres, vote mood/pace on a couple of
+books, then confirm every one of the six stats sections reflects it correctly on both platforms —
+in a real environment before considering this fully closed.
 
 ---
 
