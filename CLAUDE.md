@@ -924,6 +924,27 @@ marketing pages that display a Lit price (`apps/connect/app/connect/membership/p
 `apps/connect/app/layout.tsx` passes `initialPricing={null}` unconditionally; a Lit price display
 was made consistent with that pre-existing state, not worse than it).
 
+**Citizen-vs-Lit pricing table added to `/literary/subscribe` (September 2026 follow-up)** —
+`apps/site/app/literary/subscribe/page.tsx` (the destination for `/literary`'s "Get Updates"
+ribbon/masthead "Subscribe" pill — see "Magic-code sign-in + subscribe" above) previously only
+offered the free GetMeLit OTP signup, with no Lit-membership upsell on the page at all. Added a
+two-card pricing table (new `.lit-pricing-*` classes in `literary.css`, styled off the section's
+own oxblood/parchment palette rather than the sitewide tokens, per this vertical's standing
+"own standalone brand identity" rule) directly above the `<LiterarySubscribeForm>`:
+- **Moveee Citizen** — free; `LITERARY_FREE_READ_LIMIT` (3, imported from `lib/literary-access.ts`
+  rather than hardcoded) free reads every 30 days; GetMeLit/Culture Drop; the rest of Moveee.
+- **Moveee Lit** — real pricing (₦1,500/mo or ₦15,000/yr, $1/mo or $13/yr — same figures already
+  shipped on `/register/complete`'s membership step, not re-derived): everything in Citizen, plus
+  unmetered full access to every piece (public and exclusive alike), **commenting on stories**,
+  early news/previews/event invites (especially Literati Connect), and complimentary "TML
+  Originals × The Moveee Literary" merch for annual subscribers only.
+- **Known gap, not built in this pass**: "Comment on stories" is listed as copy only — **there is
+  no comment system on Literary piece pages at all** (`/literary/[slug]/page.tsx` has no
+  `ArticleComments`/equivalent mount), unlike Magazine articles, which do have one. If this is
+  ever wired up for real, gate it the same way `hasLiteraryFullAccess` already does on that page
+  (`isLit || isPatron || litToken?.access === "pro" || litToken?.access === "lit"`) rather than
+  inventing a second access check.
+
 ### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
 
 **Superseded in part by "Three-tier membership — Moveee Lit" above.** Pro-only Literary pieces
