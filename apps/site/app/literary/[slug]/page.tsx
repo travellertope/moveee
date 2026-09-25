@@ -11,6 +11,7 @@ import {
   isLiteraryPost,
   literaryGenreOfPost,
   LITERARY_GENRES,
+  filterLiteraryCutoff,
 } from "@/lib/wp";
 import { getAccessLevel } from "@/lib/access";
 import {
@@ -104,7 +105,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 async function GenreArchive({ genre }: { genre: NonNullable<ReturnType<typeof getLiteraryGenre>> }) {
-  const pieces = await getLiteraryPieces(genre.tagSlug, 24);
+  const pieces = filterLiteraryCutoff(await getLiteraryPieces(genre.tagSlug, 24));
 
   return (
     <div className="lit-wrap">
@@ -242,12 +243,14 @@ async function PiecePage({ slug }: { slug: string }) {
   // instead of reserving its first pick for a sidebar teaser.
   let genrePool: any[] = [];
   if (genre) {
-    genrePool = (await getLiteraryPieces(genre.tagSlug, 8)).filter((p: any) => p.slug !== slug);
+    genrePool = filterLiteraryCutoff(await getLiteraryPieces(genre.tagSlug, 8)).filter(
+      (p: any) => p.slug !== slug
+    );
   }
   const moreFromGenre = genrePool.slice(0, 3);
 
   const usedSlugs = new Set([slug, ...moreFromGenre.map((p: any) => p.slug)].filter(Boolean));
-  const widerPool = await getLiteraryPieces(undefined, 12);
+  const widerPool = filterLiteraryCutoff(await getLiteraryPieces(undefined, 12));
   const alsoLike = widerPool.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 3);
 
   return (

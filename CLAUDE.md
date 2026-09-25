@@ -1219,6 +1219,20 @@ unillustrated flat gradient with cryptic text. Fixed:
   every other pass in this file. Verified via brace/paren-balance checks on
   `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
 
+**`LITERARY_HOMEPAGE_CUTOFF` extended to every `/literary` listing, not just the homepage, and
+moved into `wp.ts` (September 2026, follow-up).** Per explicit request, the fixed
+"nothing published before this date shows in a listing" cutoff — previously local to
+`app/literary/page.tsx` and applied only to the homepage's hero/Latest/In Translation pools —
+now also applies to a genre archive's main grid (`/literary/{genre}`) and a single piece's
+"More In {genre}"/"Also Like" grids (`app/literary/[slug]/page.tsx`). Still nothing gets
+unpublished or hidden from a direct link, search, or the sitemap — this only ever trims what a
+`getLiteraryPieces()` **listing** surfaces, on any page under this vertical. Extracted into a
+single shared export in `packages/shared/lib/wp.ts` — `LITERARY_CUTOFF` (renamed from
+`LITERARY_HOMEPAGE_CUTOFF`, since it's no longer homepage-only) plus a `filterLiteraryCutoff()`
+helper — so both files call the same constant instead of each keeping their own copy. **If this
+cutoff ever needs to move or be removed, `LITERARY_CUTOFF` in `wp.ts` is the one place to
+change it** — don't reintroduce a page-local copy.
+
 ## The Moveee Commons (`/commons`, added September 2026)
 
 A public-affairs/research vertical at `apps/site/app/commons/*` — opinions, reports, research
