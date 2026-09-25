@@ -6615,6 +6615,68 @@ Current value is `5` — safe for 2GB RAM. To increase: edit `/opt/bitnami/php/e
 
 ---
 
+## Mobile quote-share QR code led to a 404 — wrong URL pattern for native quotes (fixed September 2026)
+
+User-reported: scanning the QR code on a shared quote's image (mobile app, `QuoteShareCard.tsx`)
+led to a 404. Root cause was a `/community/{slug}` share-URL pattern applied to the **wrong**
+content type. This codebase has two structurally distinct "quote" things:
+
+1. **Native quotes** — `culture_quote` CPT posts (editorially seeded or system-authored), surfaced
+   in the mobile feed as `FeedItem.type === "quote"`, rendered via `QuoteCard` →
+   `QuoteDetailModal.tsx`. Their real detail page is `/quotes/{databaseId}-{slug}` on
+   `web.themoveee.com` — a **compound** URL segment (`apps/connect/app/quotes/[slug]/page.tsx`
+   parses only the leading numeric id via `segment.split('-')[0]`, then does an ID-based GraphQL
+   lookup, not a slug-based one).
+2. **Composer-submitted quote posts** — real `culture_post` entries created via the composer's
+   "Update family" quote template (`_template_type = 'quote'`), surfaced as `FeedItem.type ===
+   "community"` (`item.templateType === "quote"`). Their real detail page genuinely is
+   `/community/{slug}`.
+
+`QuoteDetailModal.tsx` (and, duplicated verbatim, `PostDetailSheet.tsx`'s `TemplateQuote`) built
+the QR/share URL as `` item.slug ? `https://themoveee.com/community/${item.slug}` : ... ``
+unconditionally — correct for case 2, but wrong for case 1 on two counts: wrong page
+(`/community/[slug]` only ever queries WordPress's `community-posts` REST base, i.e. the
+`culture_post` CPT — `packages/shared/lib/community-wordpress.ts`'s `getCommunityPostBySlug()`
+has zero knowledge of `culture_quote` at all, so the lookup always comes back empty →
+`notFound()`) **and** wrong slug shape (`item.slug` on a native quote is the bare WP `post_name`,
+never the `{id}-{slug}` compound `/quotes/[slug]` expects).
+
+**The fix didn't need a new URL-construction scheme** — the PHP feed mapper already emits a
+correctly-shaped, per-type relative path on every `FeedItem.href`
+(`class-culture-mobile-api.php`'s `get_quote_feed_items()`: `'href' => '/quotes/' . $post->ID .
+'-' . $post->post_name`, vs. `get_community_feed_items()`'s `'href' => '/community/' .
+$post->post_name`) — it just wasn't being used for sharing. New shared helper
+`apps/mobile/src/utils/shareUrl.ts` (`shareUrlFor(item)`) builds off `item.href` instead of
+hand-rolling a path from `item.slug`, with domain routing (`themoveee.com` for `editorial`,
+`web.themoveee.com` for everything else). Kept as its own tiny module rather than exported from
+`FeedItemCard.tsx` — that file already imports `QuoteDetailModal.tsx`, so exporting the helper
+from there and importing it back into `QuoteDetailModal.tsx` would have created a circular
+import. `FeedItemCard.tsx`'s own local `shareUrlFor()` (previously used for the native
+`QuoteCard`'s inline share button and `FeedReactionBar`'s generic share prop — and itself missing
+a `"quote"` branch, silently falling into the same broken `/community/{slug}` fallback) was
+deleted in favor of importing this new util.
+
+**If a future share/QR/deep-link feature needs a content item's public URL, always build off
+`item.href`, never re-derive one from `item.slug` + a hardcoded path segment** — `href` is the
+one field the backend already guarantees is shaped correctly per item type; a hand-rolled
+per-caller path is exactly how this bug happened (twice, in near-identical duplicated lines).
+
+**No web-side (`apps/connect`/`packages/shared`) equivalent exists** — the QR-code-on-shared-
+image feature is mobile-only (`QuoteShareCard.tsx`); confirmed via grep that no `QRCode`/`qrcode`
+usage exists anywhere under `packages/shared/components`.
+
+Verified via a brace/paren-balance check on all four touched/new files (no `node_modules`
+installed in this sandbox, so `tsc --noEmit` couldn't run) and a grep confirming no other
+`item.slug`-based `/community/{slug}` construction elsewhere in `apps/mobile/src` is reachable
+by a native-quote `FeedItem` (the other two matches — `SavedArticlesScreen.tsx`,
+`DirectoryPostsScreen.tsx` — both only ever build this href for genuine `type: "community"`
+items, and `PostDetailScreen.tsx`'s two literal share-URL constructions are only ever reached via
+`nav.navigate("PostDetail", { item: { type: "community", ... } })` call sites, never a quote —
+left as-is to keep this fix scoped). Re-check the real request-code → scan → `/quotes/{id}-{slug}`
+round trip on a real device before considering this fully closed.
+
+---
+
 ## Quotes feed merge — synthetic system author + seeding retirement (September 2026)
 
 First step of a longer-term plan to retire the standalone `/quotes` product and make
