@@ -500,9 +500,23 @@ new write path against it.
 
 ### Email template
 Plain white background, no header block. Content flows directly from the
-newsletter body. Footer has unsubscribe link only. The newsletter name
-(GetMeLit / Culture Drop) is derived from `_culture_nl_list` post meta and
-used in the footer "You are receiving this because you subscribed to X" line.
+newsletter body. Footer has "Read online · Unsubscribe" as plain text links
+(no boxed button — see below). The newsletter name (GetMeLit / Culture Drop)
+is derived from `_culture_nl_list` post meta and used in the footer "You are
+receiving this because you subscribed to X" line.
+
+**"Read online" boxed button removed, folded into the footer (September 2026).**
+`build_email()` (`class-culture-newsletter-queue.php`, shared by every
+newsletter/digest send and — per "One-off email campaigns" above — reused as
+`build_campaign_email()` for Campaigns too, so this fix covers both) used to
+render a separate bordered "READ ONLINE →" button block (`.read-more`)
+between the content and the footer. Per explicit user feedback, that whole
+block (and its CSS) is gone — "Read online" is now a plain text link inside
+the footer `<p>`, right before "· Unsubscribe", same font/size/color as the
+rest of the footer copy so it reads as one flowing line rather than a
+separate CTA. Still gated on the same `$permalink && '#' !== $permalink`
+check as before — a send with no real permalink (e.g. a preview/test send)
+just shows "Unsubscribe" alone, no dangling "·".
 
 ### Archive / frontend
 `lib/wp.ts` → `getNewslettersWithFallback()` fetches all issues.
