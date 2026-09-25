@@ -216,15 +216,19 @@ class Culture_Subscribers_DB {
 
     /**
      * Paginated list of subscribers, each with its lists[] attached, for the
-     * admin Subscribers page.
+     * admin Subscribers page. Also accepts `date_from`/`date_to` (Y-m-d
+     * strings, inclusive, filtered against `created_at`) for the Subscriber
+     * List's date-joined filter.
      */
     public static function all( $args = array() ) {
         global $wpdb;
-        $page     = max( 1, (int) ( $args['page'] ?? 1 ) );
-        $per_page = min( 200, max( 1, (int) ( $args['per_page'] ?? 50 ) ) );
-        $offset   = ( $page - 1 ) * $per_page;
-        $search   = trim( (string) ( $args['search'] ?? '' ) );
-        $list_id  = (int) ( $args['list_id'] ?? 0 );
+        $page      = max( 1, (int) ( $args['page'] ?? 1 ) );
+        $per_page  = min( 200, max( 1, (int) ( $args['per_page'] ?? 50 ) ) );
+        $offset    = ( $page - 1 ) * $per_page;
+        $search    = trim( (string) ( $args['search'] ?? '' ) );
+        $list_id   = (int) ( $args['list_id'] ?? 0 );
+        $date_from = trim( (string) ( $args['date_from'] ?? '' ) );
+        $date_to   = trim( (string) ( $args['date_to'] ?? '' ) );
 
         $subs_table  = self::subscribers_table();
         $sl_table    = self::sub_lists_table();
@@ -237,6 +241,16 @@ class Culture_Subscribers_DB {
             $like     = '%' . $wpdb->esc_like( $search ) . '%';
             $params[] = $like;
             $params[] = $like;
+        }
+
+        if ( $date_from ) {
+            $where[]  = 's.created_at >= %s';
+            $params[] = $date_from . ' 00:00:00';
+        }
+
+        if ( $date_to ) {
+            $where[]  = 's.created_at <= %s';
+            $params[] = $date_to . ' 23:59:59';
         }
 
         $join = '';
@@ -339,6 +353,25 @@ class Culture_Subscribers_DB {
             'list_id'       => $list_id,
             'subscribed_at' => current_time( 'mysql' ),
         ), array( '%d', '%d', '%s' ) );
+    }
+
+    /**
+     * Public wrappers around add_to_list_id()/a direct delete, keyed by
+     * subscriber_id + list_id rather than email + slug — used by the admin
+     * Subscribers page's bulk "Add to list" / "Remove from list" actions,
+     * which already have both ids in hand from the checkbox list + the
+     * bulk-action dropdown and shouldn't need a slug round trip.
+     */
+    public static function add_subscriber_to_list_id( $subscriber_id, $list_id ) {
+        return self::add_to_list_id( $subscriber_id, $list_id );
+    }
+
+    public static function remove_subscriber_from_list_id( $subscriber_id, $list_id ) {
+        global $wpdb;
+        return false !== $wpdb->delete( self::sub_lists_table(), array(
+            'subscriber_id' => $subscriber_id,
+            'list_id'       => $list_id,
+        ), array( '%d', '%d' ) );
     }
 
     public static function add_to_list_slug( $email, $list_slug, $create_if_missing = true ) {
