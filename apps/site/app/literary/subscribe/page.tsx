@@ -58,7 +58,7 @@ export default function LiterarySubscribePage() {
           <div className="lit-pricing-card-eyebrow">Moveee Lit</div>
           <h3 className="lit-pricing-card-name">Moveee Lit</h3>
           <div className="lit-pricing-card-price">
-            ₦1,500<span>/ mo</span>
+            ₦1,999<span>/ mo</span>
           </div>
           <div className="lit-pricing-card-cycle">or ₦15,000 / $13 billed annually · $1/mo</div>
           <ul className="lit-pricing-card-perks">

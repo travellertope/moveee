@@ -90,7 +90,7 @@ export default async function MembershipPage() {
           <div className="mco-tier-card">
             <div className="mco-tier-eyebrow">Literary</div>
             <h2 className="mco-tier-name">Moveee<br /><em>Lit</em></h2>
-            <div className="mco-tier-price">₦1,500 / mo · ₦15,000 / yr — cancel anytime</div>
+            <div className="mco-tier-price">₦1,999 / mo · ₦15,000 / yr — cancel anytime</div>
             <ul className="mco-tier-perks">
               <li>Everything in Citizen, plus:</li>
               <li>Full access to every piece in The Moveee Literary</li>

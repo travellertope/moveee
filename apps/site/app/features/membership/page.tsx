@@ -85,7 +85,7 @@ export default function MembershipPage() {
             </div>
             <div className="fp-card">
               <div className="fp-card-title">Moveee Lit</div>
-              <p className="fp-card-body" style={{ fontWeight: 700, color: "var(--mz-gold, #b38238)" }}>From ₦1,500/mo · $1/mo</p>
+              <p className="fp-card-body" style={{ fontWeight: 700, color: "var(--mz-gold, #b38238)" }}>From ₦1,999/mo · $1/mo</p>
               <p className="fp-card-body">
                 Everything in Citizen, plus unmetered, full access to every piece in
                 The Moveee Literary — fiction, poetry, essays, conversations, and translation.

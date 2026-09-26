@@ -105,7 +105,6 @@ export default function LiterarySubscribeForm() {
           <button type="submit" className="lit-form-submit" disabled={busy}>
             {busy ? "Sending…" : "Subscribe →"}
           </button>
-          <p className="lit-form-hint">Unsubscribe anytime, from any issue.</p>
         </form>
       )}
 

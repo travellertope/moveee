@@ -55,7 +55,7 @@ export default function LiteraryLitUpsellCard({ slug }: Props) {
         </li>
       </ul>
       <div className="lit-upsell-price">
-        <span className="lit-upsell-price-amount">₦1,500</span>
+        <span className="lit-upsell-price-amount">₦1,999</span>
         <span className="lit-upsell-price-cycle">/ mo</span>
       </div>
       <div className="lit-upsell-cadence">or ₦15,000 / $13 billed annually · 2 months free</div>
