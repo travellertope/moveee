@@ -1,11 +1,12 @@
 const { withProjectBuildGradle } = require("@expo/config-plugins");
 
-// EAS Android builds were failing with:
+// EAS Android builds were failing with a long series of Gradle errors of the
+// form:
 //   A problem was found with the configuration of task
-//   ':sentry_react-native:packageReleaseResources' (type 'MergeResources').
-//     Reason: Task ':sentry_react-native:packageReleaseResources' uses this
-//     output of task ':sentry-react-native:generateReleaseResValues' without
-//     declaring an explicit or implicit dependency.
+//   ':sentry_react-native:<X>'.
+//     Reason: Task ':sentry_react-native:<X>' uses this output of task
+//     ':sentry-react-native:<Y>' without declaring an explicit or implicit
+//     dependency.
 //
 // Root cause: @sentry/react-native ships both a react-native.config.js
 // (classic RN autolinking) and an expo-module.config.json (Expo Modules
@@ -16,129 +17,57 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // under two differently-sanitized names — one with underscores
 // (:sentry_react-native, from classic autolinking's name-sanitization) and
 // one with hyphens (:sentry-react-native, from Expo Modules autolinking's).
-// Both projects physically point at the same source root and therefore
-// write/read the exact same build output directory
-// (node_modules/@sentry/react-native/android/build/generated/res/...), so
-// either project's resource-packaging task can race against the other
-// project's resource-generation tasks — Gradle 8.10's stricter task
-// validation (see the "implicit_dependency" doc link in the original error)
-// now rejects this as a hard build failure instead of silently tolerating
-// the race.
+//
+// Because both projects share one physical source root, they also share ONE
+// build/ directory — so EVERY task in one project writes to a path some task
+// in the other project reads. Gradle 8.10's stricter task validation rejects
+// each such unordered pair as a hard build failure.
 //
 // This app is deliberately pinned to Expo SDK 52 (see CLAUDE.md's "Expo SDK
-// version — critical" section — react-native-passkeys 0.4.0 and other
-// pinned packages require it), so upgrading to SDK 54 to get the real fix
-// is out of scope. Instead, this declares the missing dependency directly —
-// exactly Gradle's own suggested fix #2 in the original error message
-// ("Declare an explicit dependency ... using Task#dependsOn"). Registered
-// via `gradle.projectsEvaluated` (fires once every subproject has been
-// configured) so it works regardless of project evaluation order, and
-// guarded with null-checks throughout so it's a harmless no-op if a future
-// dependency bump removes the duplicate (or renames the projects) rather
-// than failing the build outright.
+// version — critical" section — react-native-passkeys 0.4.0 and other pinned
+// packages require it), so upgrading to SDK 54 to get the real fix is out of
+// scope.
 //
-// A first version of this fix only wired the ONE consumer task named in the
-// original error (packageReleaseResources, type MergeResources). The very
-// next build hit a DIFFERENT consumer task racing the same producer output —
-// extractDeepLinksRelease (type ExtractDeepLinksTask) also reads
-// generateReleaseResValues's res/resValues directory, and Gradle validates
-// this per task-type, not per producer, so each new consumer task type is a
-// separate validation failure.
+// ---------------------------------------------------------------------------
+// WHY THIS IS A BLANKET ORDERING AND NOT A LIST OF TASK PAIRS
+// ---------------------------------------------------------------------------
+// The first eight iterations of this fix enumerated specific producer/consumer
+// task-name pairs and wired them with Task#dependsOn. Every one of those was
+// individually correct, and each got the build measurably further (342 -> 352
+// -> 440 -> 474 -> 480 -> 684 tasks executed). But the approach could never
+// terminate: since the two projects alias the WHOLE build directory, any task
+// pair that touches it races, so each fix just revealed the next pair in the
+// pipeline — resources, then compilation, then class bundling, then (the
+// eighth) shader/asset packaging, with JNI libs, art profiles and lint still
+// queued up behind that.
 //
-// A second version tried to close this class of bug for good by matching
-// EVERY task in the consumer project whose name merely contains the variant
-// string (e.g. "Release") instead of enumerating exact task names. This was
-// wrong and broke the build outright: "Release"/"Debug" also appears in
-// preReleaseBuild/preDebugBuild and in the producer tasks themselves
-// (generateReleaseResValues, generateReleaseResources) — and since the outer
-// loop runs BOTH orderings (A-as-producer/B-as-consumer and vice versa), this
-// wired B.preReleaseBuild.dependsOn(A.generateReleaseResValues) AND
-// A.preReleaseBuild.dependsOn(B.generateReleaseResValues). Combined with
-// AGP's own built-in dependency (generateReleaseResValues already depends on
-// preReleaseBuild within the same project), that closes a genuine cycle:
-// A.generateReleaseResValues -> A.preReleaseBuild -> B.generateReleaseResValues
-// -> B.preReleaseBuild -> A.generateReleaseResValues. Gradle correctly
-// refused to build with "Circular dependency between the following tasks".
+// Gradle's own error message lists three possible solutions, and the third is
+// "Declare an explicit dependency ... using Task#mustRunAfter". mustRunAfter
+// is a pure ORDERING constraint rather than a data dependency: it never forces
+// a task to run, it only fixes relative order when both tasks are already in
+// the graph. That is exactly the guarantee needed here — the two projects
+// produce identical outputs, so the only real problem is that they interleave
+// nondeterministically.
 //
-// Fixed by going back to an explicit allowlist of the exact consumer task
-// names actually observed racing the producer's output — never a task
-// starting with generate/pre, so it can never re-wire onto the producer's
-// own dependency chain and can never cycle.
+// So instead of naming task pairs, this declares ONE rule: every task in
+// :sentry_react-native runs after every task in :sentry-react-native. That
+// satisfies the validation for every pair that exists today and every pair
+// that would otherwise have surfaced in a future round.
 //
-// A third round surfaced a SECOND, deeper layer: Gradle additionally flagged
-// ':sentry-react-native:compileReleaseLibraryResources' and
-// ':sentry_react-native:parseReleaseLocalResources' as implicitly reading
-// the OTHER project's packageReleaseResources output. This is real — the
-// duplicate projects alias the same physical output directory at this layer
-// too — but it's a genuinely different producer (packageReleaseResources,
-// not generateReleaseResValues/Resources). compileLibraryResources and
-// parseLocalResources are true AGP siblings of packageResources (both only
-// depend on generateResources within their own project, never on
-// packageResources), so wiring them as consumers of the OTHER project's
-// packageResources cannot loop back into it and cannot cycle.
+// Why this cannot cycle: the ordering is strictly one-directional between two
+// disjoint task sets, and neither project declares a dependency on the other
+// (they are sibling leaf libraries; only :app depends on them, and :app is not
+// involved in this ordering). A cycle would require some task in
+// :sentry-react-native to depend on a task in :sentry_react-native, which
+// nothing creates.
 //
-// A fourth round surfaced a THIRD layer, continuing the exact same AGP
-// library-resource pipeline: ':sentry_react-native:generateReleaseRFile'
-// (type GenerateLibraryRFileTask) was flagged reading the OTHER project's
-// parseReleaseLocalResources output (R-def.txt). parseLocalResources plays
-// both roles now — a consumer in layer 2 (of packageResources) and a
-// producer in layer 3 (of generateRFile) — exactly like packageResources
-// itself plays both roles across layers 1 and 2. generateRFile is the
-// terminal step of this per-project pipeline (nothing in this codebase's
-// producer/consumer set depends on it), so this cannot loop back either.
+// Cost: the two modules are serialized rather than built in parallel. They are
+// two copies of one small library, so this is a negligible amount of wall time
+// in exchange for ending an unbounded sequence of build failures.
 //
-// A fifth round surfaced a FOURTH layer, the next and expected-final stage
-// of this same pipeline: ':sentry-react-native:compileReleaseJavaWithJavac'
-// (type JavaCompile) was flagged reading the OTHER project's
-// generateReleaseRFile output (the compiled R.jar, needed to resolve R.*
-// symbols during Java compilation). compileJavaWithJavac has nothing in
-// this codebase's producer/consumer set depending on it, so it's a further
-// terminal extension of the chain and cannot cycle. compileKotlin is added
-// alongside it pre-emptively (same relationship — Kotlin compilation also
-// needs R.jar when a module has Kotlin sources referencing resources) even
-// though this specific module currently has no compileKotlin task
-// registered; the findByName guard already makes an absent task a no-op,
-// so covering it now costs nothing and may save a sixth round-trip.
-//
-// A sixth round surfaced two MORE producers feeding the SAME fourth-layer
-// consumer set (compileJavaWithJavac/compileKotlin): javaPreCompileRelease
-// (type JavaPreCompileTask, writes annotationProcessors.json — the
-// annotation-processor classpath list) and generateReleaseBuildConfig (type
-// GenerateBuildConfig, writes the generated BuildConfig.java source dir).
-// Both are genuinely new outputs Java/Kotlin compilation reads, not a
-// repeat of the R.jar dependency already covered — so rather than add a
-// wholly separate layer (which would just re-iterate the identical
-// consumer set), they were folded directly into layer four's own
-// producerTemplates list. Neither task is a consumer anywhere in this
-// file's layers, and neither depends on compileJavaWithJavac/compileKotlin
-// in AGP's own graph (both run BEFORE compilation, per their "pre"/
-// "generate...for-compilation" naming), so this cannot introduce a cycle.
-//
-// A seventh round moved one stage further downstream still: this time
-// ':sentry_react-native:bundleLibRuntimeToDirRelease' (type
-// BundleLibraryClassesDir — bundles a library module's compiled .class
-// files into the AAR's runtime-classes directory) was flagged reading the
-// OTHER project's compileReleaseJavaWithJavac output directly. This is a
-// genuinely new, later consumer stage (bundling, not compiling), so it's
-// its own layer rather than folded into layer four — bundleLibRuntimeToDir
-// depends on compileJavaWithJavac within its own project, never the other
-// way around, so wiring it as a cross-project consumer of the sibling
-// project's compileJavaWithJavac/compileKotlin cannot cycle back into
-// those tasks. bundleLibCompileToJarRelease (the sibling task that bundles
-// compiled classes into a plain .jar rather than a directory — already
-// seen succeeding earlier in the same pipeline) was added pre-emptively
-// alongside it: same relationship to compileJavaWithJavac/compileKotlin,
-// so it's almost certainly one race away from being the eighth incident
-// if left uncovered now.
-//
-// DEPENDENCY_LAYERS below makes each layer's producer/consumer task-name
-// templates explicit and independently extensible. If a future build
-// surfaces yet another consumer task racing an existing producer, add its
-// template to that layer's consumerTemplates. If it's a new producer
-// entirely, add a new layer (or extend an existing layer's
-// producerTemplates if the consumer set is identical, as above). Never
-// widen a template back into a substring match (see the incident above for
-// exactly why that breaks).
+// If a future dependency bump removes the duplicate registration (or renames
+// either project), the findProject guards below make this whole block a
+// harmless no-op rather than a build failure.
 module.exports = function withSentryGradleTaskOrderingFix(config) {
   return withProjectBuildGradle(config, (config) => {
     const marker = "withSentryGradleTaskOrderingFix";
@@ -147,69 +76,20 @@ module.exports = function withSentryGradleTaskOrderingFix(config) {
 
 // ${marker} — see apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
 gradle.projectsEvaluated {
-    def sentryProjectPaths = [':sentry-react-native', ':sentry_react-native']
-    def variants = ['Release', 'Debug']
+    // Order is deliberate and one-directional: everything in the SECOND
+    // project runs after everything in the FIRST. Do not make this
+    // bidirectional — that would be a cycle by construction.
+    def sentryFirstPath = ':sentry-react-native'
+    def sentrySecondPath = ':sentry_react-native'
 
-    // Each layer: producerTemplates are task names that write the shared,
-    // aliased output directory; consumerTemplates are task names observed
-    // reading it without an explicit dependency. Extend, don't broaden.
-    def dependencyLayers = [
-        [
-            producerTemplates: ['generate\${variant}ResValues', 'generate\${variant}Resources'],
-            consumerTemplates: ['package\${variant}Resources', 'extractDeepLinks\${variant}'],
-        ],
-        [
-            producerTemplates: ['package\${variant}Resources'],
-            consumerTemplates: ['compile\${variant}LibraryResources', 'parse\${variant}LocalResources'],
-        ],
-        [
-            producerTemplates: ['parse\${variant}LocalResources'],
-            consumerTemplates: ['generate\${variant}RFile'],
-        ],
-        [
-            producerTemplates: [
-                'generate\${variant}RFile',
-                'javaPreCompile\${variant}',
-                'generate\${variant}BuildConfig',
-            ],
-            consumerTemplates: ['compile\${variant}JavaWithJavac', 'compile\${variant}Kotlin'],
-        ],
-        [
-            producerTemplates: ['compile\${variant}JavaWithJavac', 'compile\${variant}Kotlin'],
-            consumerTemplates: [
-                'bundleLibRuntimeToDir\${variant}',
-                'bundleLibCompileToJar\${variant}',
-            ],
-        ],
-    ]
+    def sentryFirst = findProject(sentryFirstPath)
+    def sentrySecond = findProject(sentrySecondPath)
 
-    sentryProjectPaths.each { producerPath ->
-        def producerProject = findProject(producerPath)
-        if (producerProject == null) return
-
-        sentryProjectPaths.each { consumerPath ->
-            if (consumerPath == producerPath) return
-            def consumerProject = findProject(consumerPath)
-            if (consumerProject == null) return
-
-            variants.each { variant ->
-                dependencyLayers.each { layer ->
-                    def producerTasks = layer.producerTemplates.collect { template ->
-                        producerProject.tasks.findByName(template.replace('\${variant}', variant))
-                    }.findAll { it != null }
-                    if (producerTasks.isEmpty()) return
-
-                    layer.consumerTemplates.each { template ->
-                        def consumerTaskName = template.replace('\${variant}', variant)
-                        def consumerTask = consumerProject.tasks.findByName(consumerTaskName)
-                        if (consumerTask == null) return
-
-                        producerTasks.each { producerTask ->
-                            consumerTask.dependsOn(producerTask)
-                        }
-                    }
-                }
-            }
+    if (sentryFirst != null && sentrySecond != null) {
+        sentrySecond.tasks.configureEach { secondTask ->
+            // Passing the TaskCollection resolves lazily, so tasks registered
+            // after this point are covered too.
+            secondTask.mustRunAfter(sentryFirst.tasks)
         }
     }
 }
