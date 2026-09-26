@@ -43,13 +43,29 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // extractDeepLinksRelease (type ExtractDeepLinksTask) also reads
 // generateReleaseResValues's res/resValues directory, and Gradle validates
 // this per task-type, not per producer, so each new consumer task type is a
-// separate validation failure. Rather than keep enumerating exact task names
-// one whack-a-mole round at a time, every task in the consumer project whose
-// name matches the same build variant (Release/Debug) is made to depend on
-// the producer's generateResValues/generateResources tasks for that variant
-// — broad, but harmless (a few extra ordering edges within one small,
-// mutually-duplicate pair of projects), and it closes this class of bug for
-// good instead of one task name at a time.
+// separate validation failure.
+//
+// A second version tried to close this class of bug for good by matching
+// EVERY task in the consumer project whose name merely contains the variant
+// string (e.g. "Release") instead of enumerating exact task names. This was
+// wrong and broke the build outright: "Release"/"Debug" also appears in
+// preReleaseBuild/preDebugBuild and in the producer tasks themselves
+// (generateReleaseResValues, generateReleaseResources) — and since the outer
+// loop runs BOTH orderings (A-as-producer/B-as-consumer and vice versa), this
+// wired B.preReleaseBuild.dependsOn(A.generateReleaseResValues) AND
+// A.preReleaseBuild.dependsOn(B.generateReleaseResValues). Combined with
+// AGP's own built-in dependency (generateReleaseResValues already depends on
+// preReleaseBuild within the same project), that closes a genuine cycle:
+// A.generateReleaseResValues -> A.preReleaseBuild -> B.generateReleaseResValues
+// -> B.preReleaseBuild -> A.generateReleaseResValues. Gradle correctly
+// refused to build with "Circular dependency between the following tasks".
+//
+// Fixed by going back to an explicit allowlist of the exact consumer task
+// names actually observed racing the producer's output — never a task
+// starting with generate/pre, so it can never re-wire onto the producer's
+// own dependency chain and can never cycle. Extend CONSUMER_TASK_NAMES (not
+// the matcher) if a future build surfaces another specific consumer task
+// name racing this same producer output.
 module.exports = function withSentryGradleTaskOrderingFix(config) {
   return withProjectBuildGradle(config, (config) => {
     const marker = "withSentryGradleTaskOrderingFix";
@@ -61,6 +77,7 @@ gradle.projectsEvaluated {
     def sentryProjectPaths = [':sentry-react-native', ':sentry_react-native']
     def variants = ['Release', 'Debug']
     def producerTaskSuffixes = ['ResValues', 'Resources']
+    def consumerTaskNameTemplates = ['package\${variant}Resources', 'extractDeepLinks\${variant}']
 
     sentryProjectPaths.each { producerPath ->
         def producerProject = findProject(producerPath)
@@ -77,11 +94,13 @@ gradle.projectsEvaluated {
                 }.findAll { it != null }
                 if (producerTasks.isEmpty()) return
 
-                consumerProject.tasks.matching { it.name.contains(variant) }.each { consumerTask ->
+                consumerTaskNameTemplates.each { template ->
+                    def consumerTaskName = template.replace('\${variant}', variant)
+                    def consumerTask = consumerProject.tasks.findByName(consumerTaskName)
+                    if (consumerTask == null) return
+
                     producerTasks.each { producerTask ->
-                        if (consumerTask != producerTask) {
-                            consumerTask.dependsOn(producerTask)
-                        }
+                        consumerTask.dependsOn(producerTask)
                     }
                 }
             }
