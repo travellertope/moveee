@@ -44,11 +44,10 @@ export default function LiterarySubscribePage() {
 
       <div className="lit-pricing-grid">
         <div className="lit-pricing-card">
-          <div className="lit-pricing-card-eyebrow">Moveee Citizen</div>
-          <h3 className="lit-pricing-card-name">Citizen</h3>
+          <h3 className="lit-pricing-card-name">Moveee Citizen</h3>
           <div className="lit-pricing-card-price">Free</div>
-          <div className="lit-pricing-card-cycle">Forever — no card required</div>
           <ul className="lit-pricing-card-perks">
+            <li>Forever — no card required</li>
             <li>{LITERARY_FREE_READ_LIMIT} free reads every 30 days across Fiction, Poetry, Essays, Conversations, In Translation, and Notes</li>
             <li>GetMeLit &amp; Culture Drop newsletters</li>
             <li>The rest of Moveee — Pulse Feed, Discover, Games, Stoop, and more</li>
@@ -56,7 +55,6 @@ export default function LiterarySubscribePage() {
           <LiterarySubscribeForm />
         </div>
         <div className="lit-pricing-card lit-pricing-card--lit">
-          <div className="lit-pricing-card-eyebrow">Moveee Lit</div>
           <h3 className="lit-pricing-card-name">Moveee Lit</h3>
           <ul className="lit-pricing-card-perks">
             <li>Everything in Citizen</li>
@@ -72,7 +70,7 @@ export default function LiterarySubscribePage() {
             variant="light"
             returnPath="/literary/lit-welcome"
             monthlyPrice="₦1,999"
-            yearlyPrice="₦15,000"
+            yearlyPrice="₦19,990"
           />
         </div>
       </div>

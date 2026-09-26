@@ -56,7 +56,7 @@ export default function LiteraryLitUpsellCard() {
         variant="dark"
         returnPath="/literary/lit-welcome"
         monthlyPrice="₦1,999"
-        yearlyPrice="₦15,000"
+        yearlyPrice="₦19,990"
       />
     </div>
   );

@@ -407,7 +407,7 @@ function CompleteProfileForm() {
                 {
                   value: "lit" as const,
                   label: "Moveee Lit",
-                  price: currency === "NGN" ? (billingCycle === "monthly" ? "₦1,999" : "₦15,000") : (billingCycle === "monthly" ? "$1" : "$13"),
+                  price: currency === "NGN" ? (billingCycle === "monthly" ? "₦1,999" : "₦19,990") : (billingCycle === "monthly" ? "$1" : "$13"),
                   period: billingCycle === "monthly" ? "/ mo" : "/ yr",
                   perks: ["Everything in Citizen", "Full access to The Moveee Literary"],
                 },
