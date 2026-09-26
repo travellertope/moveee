@@ -100,12 +100,28 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // registered; the findByName guard already makes an absent task a no-op,
 // so covering it now costs nothing and may save a sixth round-trip.
 //
+// A sixth round surfaced two MORE producers feeding the SAME fourth-layer
+// consumer set (compileJavaWithJavac/compileKotlin): javaPreCompileRelease
+// (type JavaPreCompileTask, writes annotationProcessors.json — the
+// annotation-processor classpath list) and generateReleaseBuildConfig (type
+// GenerateBuildConfig, writes the generated BuildConfig.java source dir).
+// Both are genuinely new outputs Java/Kotlin compilation reads, not a
+// repeat of the R.jar dependency already covered — so rather than add a
+// wholly separate layer (which would just re-iterate the identical
+// consumer set), they were folded directly into layer four's own
+// producerTemplates list. Neither task is a consumer anywhere in this
+// file's layers, and neither depends on compileJavaWithJavac/compileKotlin
+// in AGP's own graph (both run BEFORE compilation, per their "pre"/
+// "generate...for-compilation" naming), so this cannot introduce a cycle.
+//
 // DEPENDENCY_LAYERS below makes each layer's producer/consumer task-name
 // templates explicit and independently extensible. If a future build
 // surfaces yet another consumer task racing an existing producer, add its
 // template to that layer's consumerTemplates. If it's a new producer
-// entirely, add a new layer. Never widen a template back into a substring
-// match (see the incident above for exactly why that breaks).
+// entirely, add a new layer (or extend an existing layer's
+// producerTemplates if the consumer set is identical, as above). Never
+// widen a template back into a substring match (see the incident above for
+// exactly why that breaks).
 module.exports = function withSentryGradleTaskOrderingFix(config) {
   return withProjectBuildGradle(config, (config) => {
     const marker = "withSentryGradleTaskOrderingFix";
@@ -134,7 +150,11 @@ gradle.projectsEvaluated {
             consumerTemplates: ['generate\${variant}RFile'],
         ],
         [
-            producerTemplates: ['generate\${variant}RFile'],
+            producerTemplates: [
+                'generate\${variant}RFile',
+                'javaPreCompile\${variant}',
+                'generate\${variant}BuildConfig',
+            ],
             consumerTemplates: ['compile\${variant}JavaWithJavac', 'compile\${variant}Kotlin'],
         ],
     ]
