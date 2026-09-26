@@ -150,7 +150,6 @@ export default function LiteraryLitCheckout({
           <input
             type="email"
             required
-            autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email address"
