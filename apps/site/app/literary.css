@@ -451,15 +451,15 @@
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-gold); margin-bottom: 10px;
 }
 .lit-email-gate h3 {
-  font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 20px; color: var(--lit-ink); margin: 0 0 8px;
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 700; font-style: normal; font-size: 20px; color: var(--lit-ink); margin: 0 0 8px;
 }
 .lit-email-gate p {
-  font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.6; color: var(--lit-mute); margin: 0 0 18px; max-width: 46ch;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 14.5px; line-height: 1.6; color: var(--lit-mute); margin: 0 0 18px; max-width: 46ch;
 }
 .lit-email-gate-form { max-width: 380px; }
 .lit-email-gate-input {
   flex: 1; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); border-right: 0; padding: 11px 13px; color: var(--lit-ink);
-  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 14px;
 }
 .lit-email-gate-input::placeholder { color: var(--lit-mute); }
 .lit-email-gate-input--code { letter-spacing: 0.3em; font-family: var(--font-lit-meta), "Inter", sans-serif; font-weight: 700; text-align: center; }
@@ -507,7 +507,7 @@
 .lit-upsell-card > p {
   position: relative;
   margin: 0 0 20px;
-  font-family: var(--font-lit-body), Georgia, serif;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 14.5px;
   line-height: 1.6;
   color: rgba(245, 239, 228, 0.72);
@@ -532,7 +532,7 @@
 .lit-upsell-perks li { display: flex; align-items: flex-start; gap: 10px; }
 .lit-upsell-perks li svg { flex-shrink: 0; margin-top: 3px; color: var(--lit-gold); }
 .lit-upsell-perks li span {
-  font-family: var(--font-lit-body), Georgia, serif;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 14.5px;
   line-height: 1.5;
   color: rgba(245, 239, 228, 0.92);
@@ -639,7 +639,7 @@
   margin-bottom: 6px;
 }
 .lit-checkout-hint {
-  font-family: var(--font-lit-body), Georgia, serif;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--lit-mute);
@@ -648,7 +648,7 @@
 .lit-checkout-form { display: flex; margin-top: 14px; max-width: 320px; }
 .lit-checkout-input {
   flex: 1; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); border-right: 0; padding: 11px 13px; color: var(--lit-ink);
-  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 14px;
 }
 .lit-checkout-input::placeholder { color: var(--lit-mute); }
 .lit-checkout-input--code { letter-spacing: 0.3em; font-family: var(--font-lit-meta), "Inter", sans-serif; font-weight: 700; text-align: center; }
@@ -808,11 +808,11 @@
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--lit-gold); margin-bottom: 8px;
 }
 .lit-comments-gate h4 {
-  font-family: var(--font-lit-display), Georgia, serif; font-weight: 400; font-size: 19px;
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 700; font-style: normal; font-size: 19px;
   color: var(--lit-ink); margin: 0 0 8px;
 }
 .lit-comments-gate p {
-  font-family: var(--font-lit-body), Georgia, serif; font-size: 14.5px; line-height: 1.6;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 14.5px; line-height: 1.6;
   color: var(--lit-mute); margin: 0 0 16px; max-width: 52ch;
 }
 .lit-comments-gate p a { color: var(--lit-oxblood); text-decoration: underline; }
@@ -910,11 +910,11 @@
 .lit-piece-subscribe { background: var(--lit-ink); color: var(--lit-ivory); padding: 26px 24px; }
 .lit-piece-subscribe-rule { width: 34px; height: 2px; background: var(--lit-gold); margin-bottom: 16px; }
 .lit-piece-subscribe h3 {
-  font-family: var(--font-lit-italic), Georgia, serif; font-weight: 700; font-style: normal;
+  font-family: var(--font-lit-display), Georgia, serif; font-weight: 700; font-style: normal;
   font-size: 21px; line-height: 1.25;
 }
 .lit-piece-subscribe p {
-  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px; line-height: 1.6;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 14px; line-height: 1.6;
   color: rgba(245, 239, 228, 0.72); margin: 10px 0 0;
 }
 .lit-piece-subscribe .lit-nl-form { margin-top: 16px; max-width: none; }
@@ -937,8 +937,8 @@
   padding-bottom: 44px;
   display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap;
 }
-.lit-piece-nlbreak-inner h3 { font-family: var(--font-lit-italic), Georgia, serif; font-weight: 700; font-style: normal; font-size: 27px; color: var(--lit-ink); }
-.lit-piece-nlbreak-inner p { font-family: var(--font-lit-body), Georgia, serif; font-size: 15.5px; color: var(--lit-mute); margin: 8px 0 0; max-width: 44ch; }
+.lit-piece-nlbreak-inner h3 { font-family: var(--font-lit-display), Georgia, serif; font-weight: 700; font-style: normal; font-size: 27px; color: var(--lit-ink); }
+.lit-piece-nlbreak-inner p { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 15.5px; color: var(--lit-mute); margin: 8px 0 0; max-width: 44ch; }
 /* Same SubscribeForm flex-sibling gotcha as .lit-nl-form above — the
    trailing helper/error <p> needs its own full-width row, not the border
    pill's cramped remaining space. */
@@ -1029,7 +1029,8 @@
 }
 .lit-pricing-card-name {
   font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
+  font-weight: 700;
+  font-style: normal;
   font-size: 21px;
   color: var(--lit-ink);
   margin: 6px 0 12px;
@@ -1057,7 +1058,7 @@
   margin: 20px 0 24px;
   padding: 0;
   flex: 1;
-  font-family: var(--font-lit-body), Georgia, serif;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
   font-size: 14.5px;
   line-height: 1.55;
   color: var(--lit-ink);
@@ -1242,7 +1243,7 @@
 .lit-nl-form { display: flex; flex-wrap: wrap; margin-top: 20px; max-width: 320px; }
 .lit-nl-input {
   flex: 1; background: transparent; border: 1px solid rgba(245, 239, 228, 0.3); border-right: 0; padding: 10px 12px; color: var(--lit-ivory);
-  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 14px;
 }
 .lit-nl-input::placeholder { color: rgba(245, 239, 228, 0.45); }
 .lit-nl-btn {
