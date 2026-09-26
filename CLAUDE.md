@@ -11582,3 +11582,36 @@ It rewrites the **root** lockfile and prunes the other workspaces' entries out o
 apps. If you need `node_modules` locally to type-check, back up the root lockfile first and
 restore it afterwards. The mobile lockfile must still be regenerated out-of-tree per the
 process documented above; that is what EAS's `npm ci` consumes.
+
+### Do NOT let `@sentry/react-native` follow Expo SDK 57's pin — it is stale and breaks the build
+
+SDK 57's `bundledNativeModules.json` pins `@sentry/react-native: ~7.11.0` (and the long-dead
+`sentry-expo: ~7.0.0`). That pin is **wrong for this package** — 7.11.0 is *older* than the
+8.24.0 this repo already ran on SDK 52. Taking it broke the iOS JS bundle two separate ways,
+both caught by `expo export:embed` before any build credit was spent:
+
+1. **`Unable to resolve module promise/setimmediate/done`** — 7.11.0 `require()`s the `promise`
+   package at runtime but declares it nowhere (not a dep, not a peer). 8.28.0 declares it as an
+   optional peer.
+2. **`Cannot read properties of undefined (reading 'match')` in `determineDebugIdFromBundleSource`**
+   — Metro 0.84 resolves the serializer to `{ artifacts, assets }`, not `{ code, map }`. 7.11.0's
+   `extractSerializerResult` only understands `{ code, map }` and crashes. 8.28.0 returns `null`
+   for an unrecognised shape and passes the result through untouched, with a comment citing
+   upstream [getsentry/sentry-react-native#6650](https://github.com/getsentry/sentry-react-native/issues/6650)
+   — Expo's own serializer adds the debug IDs for that output.
+
+7.11.0 also ships **no `expo-module.config.json` at all**, so the Expo handler would not autolink
+— i.e. it silently undoes the reasoning behind removing the `expo.autolinking.exclude` workaround.
+8.28.0 ships the modern `android.path`/`android.name` schema that SDK 57's autolinking reads.
+
+**Pinned to `^8.28.0` deliberately. Never run `expo install --fix` / `expo-doctor --fix` and let it
+"correct" this back to `~7.11.0`** — that reintroduces all three problems at once. If expo-doctor
+flags the version as mismatched, that warning is expected and should be ignored for this package.
+
+**`promise` hoisting, worth knowing if the first error ever returns**: nothing else in the tree
+depends on `promise`, and npm's *workspace-root* install nests it at
+`node_modules/react-native/node_modules/promise`, where Sentry (at `node_modules/@sentry/react-native/`)
+cannot resolve it. The **standalone `apps/mobile/package-lock.json` that EAS's `npm ci` consumes
+hoists it to top level**, which is the layout that actually matters. To make a *local*
+`expo export:embed` check faithful to EAS, symlink it up:
+`ln -sfn "$PWD/node_modules/react-native/node_modules/promise" node_modules/promise`.
