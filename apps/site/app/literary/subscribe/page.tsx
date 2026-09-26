@@ -39,10 +39,6 @@ export default function LiterarySubscribePage() {
 
       <div className="lit-pricing-intro">
         <h2>Choose Your Membership.</h2>
-        <p>
-          Reading starts free — a quick email code is all it takes. Moveee Lit lifts the monthly
-          limit and opens the rest: full access, comments, and a look at what&rsquo;s coming next.
-        </p>
       </div>
 
       <div className="lit-pricing-grid">
