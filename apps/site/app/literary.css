@@ -335,7 +335,11 @@
   gap: 64px;
   align-items: start;
 }
-@media (max-width: 900px) { .lit-piece-layout { grid-template-columns: 1fr; gap: 40px; } }
+.lit-piece-sidebar { position: sticky; top: 24px; }
+@media (max-width: 900px) {
+  .lit-piece-layout { grid-template-columns: 1fr; gap: 40px; }
+  .lit-piece-sidebar { position: static; top: auto; }
+}
 @media (max-width: 720px) { .lit-piece-layout { padding-left: 24px; padding-right: 24px; } }
 @media (max-width: 420px) { .lit-piece-layout { padding-left: 20px; padding-right: 20px; } }
 
@@ -495,7 +499,7 @@
   margin: 0 0 10px;
   font-family: var(--font-lit-display), Georgia, serif;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   font-size: 24px;
   line-height: 1.16;
   color: var(--lit-ivory);
@@ -635,8 +639,9 @@
   margin-bottom: 6px;
 }
 .lit-checkout-hint {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 12px;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 13.5px;
+  line-height: 1.5;
   color: var(--lit-mute);
   margin: 0 0 10px;
 }
@@ -905,7 +910,7 @@
 .lit-piece-subscribe { background: var(--lit-ink); color: var(--lit-ivory); padding: 26px 24px; }
 .lit-piece-subscribe-rule { width: 34px; height: 2px; background: var(--lit-gold); margin-bottom: 16px; }
 .lit-piece-subscribe h3 {
-  font-family: var(--font-lit-italic), Georgia, serif; font-weight: 500; font-style: italic;
+  font-family: var(--font-lit-italic), Georgia, serif; font-weight: 700; font-style: normal;
   font-size: 21px; line-height: 1.25;
 }
 .lit-piece-subscribe p {
@@ -932,7 +937,7 @@
   padding-bottom: 44px;
   display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap;
 }
-.lit-piece-nlbreak-inner h3 { font-family: var(--font-lit-italic), Georgia, serif; font-weight: 500; font-style: italic; font-size: 27px; color: var(--lit-ink); }
+.lit-piece-nlbreak-inner h3 { font-family: var(--font-lit-italic), Georgia, serif; font-weight: 700; font-style: normal; font-size: 27px; color: var(--lit-ink); }
 .lit-piece-nlbreak-inner p { font-family: var(--font-lit-body), Georgia, serif; font-size: 15.5px; color: var(--lit-mute); margin: 8px 0 0; max-width: 44ch; }
 /* Same SubscribeForm flex-sibling gotcha as .lit-nl-form above — the
    trailing helper/error <p> needs its own full-width row, not the border

@@ -326,12 +326,12 @@ async function PiecePage({ slug }: { slug: string }) {
 
         <ArticleShareFab />
 
-        <aside>
+        <aside className="lit-piece-sidebar">
           <div className="lit-piece-sb-block lit-piece-sb-block--flush">
             <div className="lit-piece-subscribe">
               <div className="lit-piece-subscribe-rule" />
-              <h3>Read what we publish, as we publish it.</h3>
-              <p>New fiction, poetry, essays and translation — straight to your inbox, no charge.</p>
+              <h3>The Moveee Literary Citizen</h3>
+              <p>New fiction, poetry, essays and translation, as we publish it — enter your email for a quick code.</p>
               <div className="lit-nl-form">
                 <SubscribeForm
                   placeholder="Email address"
