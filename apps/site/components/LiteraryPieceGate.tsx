@@ -139,7 +139,7 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
               ? mode === "pro"
                 ? "Continue reading The Moveee Literary"
                 : "You've reached this month's free reading"
-              : "The Moveee Literary Citizenship"}
+              : "The Moveee Literary Citizen"}
           </h3>
           <p>
             {blocking

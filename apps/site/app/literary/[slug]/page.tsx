@@ -27,6 +27,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryPieceGate from "@/components/LiteraryPieceGate";
+import LiteraryLitUpsellCard from "@/components/LiteraryLitUpsellCard";
 import LiteraryReadTracker from "@/components/LiteraryReadTracker";
 import LiteraryComments from "@/components/LiteraryComments";
 import SubscribeForm from "@/components/SubscribeForm";
@@ -221,7 +222,12 @@ async function PiecePage({ slug }: { slug: string }) {
         if (hasMore) {
           visibleBodyHtml = visibleHtml;
           trailingBodyHtml = remainderHtml;
-          gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />;
+          gateBlock = (
+            <div className="lit-gate-upsell-row">
+              <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />
+              <LiteraryLitUpsellCard slug={slug} />
+            </div>
+          );
         }
       } else {
         const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);

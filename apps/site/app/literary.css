@@ -473,6 +473,143 @@
 .lit-gate-skip:hover, .lit-gate-resend:hover { color: var(--lit-ink); }
 .lit-gate-remainder { margin-top: 8px; }
 
+/* ── Free-gate + Moveee Lit upsell pairing ──
+   .lit-email-gate (mode="meter" blocking={false}) and .lit-upsell-card
+   render side by side inline at ~30% into a piece for anonymous readers
+   with free reads left — see literary/[slug]/page.tsx. Mocked up first
+   (Artifact SRHfajeMCc8RB12HqDhm3J), built to match. */
+.lit-gate-upsell-row {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  margin: 8px 0 32px;
+}
+.lit-gate-upsell-row .lit-email-gate { margin: 0; flex: 1; }
+@media (max-width: 720px) {
+  .lit-gate-upsell-row { flex-direction: column; }
+}
+.lit-upsell-card {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--lit-mahogany) 0%, var(--lit-ink) 58%, var(--lit-ink) 100%);
+  border: 1px solid rgba(184, 137, 66, 0.45);
+  box-shadow: 0 18px 40px rgba(22, 12, 8, 0.28);
+  padding: 30px 28px 26px;
+  display: flex;
+  flex-direction: column;
+}
+.lit-upsell-glow {
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 137, 66, 0.2), transparent 70%);
+  pointer-events: none;
+}
+.lit-upsell-card h3 {
+  position: relative;
+  margin: 0 0 10px;
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.16;
+  color: var(--lit-ivory);
+}
+.lit-upsell-card > p {
+  position: relative;
+  margin: 0 0 20px;
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(245, 239, 228, 0.72);
+  max-width: 42ch;
+}
+.lit-upsell-rule {
+  position: relative;
+  width: 34px;
+  height: 1px;
+  background: rgba(184, 137, 66, 0.5);
+  margin-bottom: 20px;
+}
+.lit-upsell-perks {
+  position: relative;
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lit-upsell-perks li { display: flex; align-items: flex-start; gap: 10px; }
+.lit-upsell-perks li svg { flex-shrink: 0; margin-top: 3px; color: var(--lit-gold); }
+.lit-upsell-perks li span {
+  font-family: var(--font-lit-body), Georgia, serif;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: rgba(245, 239, 228, 0.92);
+}
+.lit-upsell-perks li em {
+  display: inline;
+  font-style: italic;
+  color: rgba(245, 239, 228, 0.5);
+  font-size: 12.5px;
+}
+.lit-upsell-price {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lit-upsell-price-amount {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--lit-ivory);
+}
+.lit-upsell-price-cycle {
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 12px;
+  color: rgba(245, 239, 228, 0.55);
+}
+.lit-upsell-cadence {
+  position: relative;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--lit-gold);
+  margin-bottom: 22px;
+}
+.lit-upsell-cta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--lit-gold), var(--lit-umber));
+  color: var(--lit-ink);
+  padding: 13px 0;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.lit-upsell-cta:hover { filter: brightness(1.06); }
+.lit-upsell-footnote {
+  position: relative;
+  text-align: center;
+  margin-top: 12px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: rgba(245, 239, 228, 0.4);
+}
+
 /* Superseded by the floating .ar-share-fab pill below (same component
    /magazine uses) — kept here unused, per this file's usual convention,
    in case the inline row is ever wanted back. */
