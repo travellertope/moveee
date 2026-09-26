@@ -11032,11 +11032,21 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
 
 ### Expo SDK version — critical
-The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of truth.
-- `expo: ~52.0.0`, `react: 18.3.1`, `react-native: 0.76.9`
-- `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
-- `react-native-iap` must be pinned to the **exact** version `12.16.3` (not a caret range) —
-  see "react-native-iap 12.16.4 breaks the iOS native build" below.
+
+**SUPERSEDED (September 2026): the app is now on Expo SDK 57, and the SDK 52 pin described
+below is retired. See "Expo SDK 52 → 57 upgrade" at the end of this file for the current
+state — it is authoritative over every SDK-52-era claim in this section and the several that
+follow it.** Google Play rejected the 1.0.1 release on three errors (target API 34 vs 36, no
+16 KB page support, Play Billing 7 vs 8) that SDK 52 structurally could not satisfy.
+
+Current: `expo: ~57.0.0`, `react: 19.2.3`, `react-native: 0.86.3`, and the New Architecture
+is **enabled** (SDK 57's template sets `newArchEnabled=true`; SDK 52's set it to `false`).
+`react-native-passkeys` is `0.4.2` and `react-native-iap` is `^14.7.20` — **both old pins
+below are wrong now**; passkeys `0.4.2` requires `expo >=53`, and the iOS bug that forced the
+exact `12.16.3` pin does not exist in v14.
+
+The lockfile is still the source of truth, and the regeneration process below is unchanged
+and still mandatory.
 - **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
   EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
   `package.json` but not in the lockfile, it won't be installed.
@@ -11477,3 +11487,98 @@ this list — it was out of scope for "no more paper background."
 - `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
 - `fontSize`: includes `eyebrow`(9) for uppercase labels
 - `fonts`: `sans`, `sansBold`, `sansItalic`, `serif`, `serifBold`, `serifItalic`, `serifBoldItalic`, `mono`, `monoBold`, `monoItalic`. **`fontStyle: "italic"` synthesis is unreliable for custom/embedded TTF fonts on iOS** — applying it on top of a non-italic `fontFamily` (e.g. `Fraunces_400Regular`) can silently fall back to the system font's italic face instead of rendering the custom font at all. Always reference the real italic font file by name instead (`fonts.serifItalic` → `Fraunces_400Regular_Italic`). **Fixed app-wide June 2026** — every `fontFamily: fonts.serif/sans/mono(...)` + `fontStyle: "italic"` combo across the codebase (quote views, pull quotes, book-review favourite quotes, game screens, composer inputs, TOC titles, etc.) was swapped to the matching `*Italic` key. The italic weights (`Fraunces_700Bold_Italic`, `DMSans_400Regular_Italic`, `JetBrainsMono_400Regular_Italic`) are loaded in `App.tsx`'s `useFonts()` call alongside the existing weights — **if you add a new bold/regular weight to `theme.ts`'s `fonts` object, check whether an italic counterpart should be added and loaded at the same time**, since there's no synthesis fallback that looks right on iOS. Text with no explicit `fontFamily` (system default) is unaffected and can use plain `fontStyle: "italic"` safely — e.g. `react-native-render-html`'s `em`/`i`/`blockquote` tag styles in `ArticleScreen.tsx` intentionally have no custom `fontFamily`.
+
+---
+
+## Expo SDK 52 → 57 upgrade (September 2026) — authoritative over all SDK-52-era notes above
+
+Google Play rejected the 1.0.1 production release with five errors. Two were console-only
+(AD_ID declaration, no countries selected) and were fixed in Play Console. The other three —
+**target API 34 vs required 36**, **no 16 KB page support**, **Play Billing 7.0.0 vs required
+8.0.0** — were one problem: the toolchain was too old.
+
+**There was no configuration-only fix**, and this is the part worth internalising: forcing
+API 36 on SDK 52 would have made 16 KB support *mandatory* (it only applies to apps targeting
+Android 15+) while SDK 52's pinned `ndkVersion 26.1.10909125` cannot produce 16 KB-aligned
+libs — i.e. it would have shipped an app that crashes on 16 KB devices. The two are coupled.
+
+Full reasoning and the verified evidence for each claim: `docs/expo-sdk-57-upgrade.md`.
+
+### What changed
+
+- `expo ~57.0.0`, `react 19.2.3`, `react-native 0.86.3`. The dependency set was taken from
+  SDK 57's own `bundledNativeModules.json`, not hand-picked, so it matches what
+  `expo install` would choose. **`@sentry/react-native` moved to `~7.11.0`** — Expo's tested
+  pin, which is a step *back* from the 8.24.0 we had.
+- **The New Architecture is now ON.** SDK 57's template sets `newArchEnabled=true`; SDK 52's
+  set `false`. This invalidates the old note that `SentryExpoPackage` is "inert since New Arch
+  is not enabled" — that handler catches exceptions swallowed by bridgeless error handling and
+  is now genuinely load-bearing.
+- **iOS 15 is no longer supported.** SDK 57 enforces `ios.deploymentTarget >= 16.4`; below it
+  `expo config` refuses to load outright.
+- `expo-av` does not exist in SDK 57. `AudioPreviewButton.tsx` moved to `expo-audio`, whose
+  play/pause are synchronous void calls and whose `playing` is a plain property.
+
+### Three workarounds this upgrade killed — do not reintroduce them
+
+1. **`expo.autolinking.exclude` for `@sentry/react-native`** — removed, and
+   `plugins/withSentryGradleTaskOrderingFix.js` deleted with it. That whole saga existed
+   because `expo-modules-autolinking@2.0.8` ignores the `android.path`/`android.name` keys
+   Sentry declares. Verified: autolinking `57.x` reads both, so the duplicate Gradle project
+   and the missing `SentryExpoPackage` class both disappear on their own.
+2. **`plugins/withAndroidIapStoreFlavor.js`** — deleted. It injected a
+   `missingDimensionStrategy` hint because `react-native-iap` v12 shipped "amazon"/"play"
+   product flavors. v14 ships no flavors, and its own Expo plugin only adds iOS StoreKit
+   entitlements now.
+3. **The `typeRoots`/`types` hack in `apps/mobile/tsconfig.json`** — removed, along with the
+   `module`/`moduleResolution` overrides that fought SDK 57's base config (which sets
+   `moduleResolution: "bundler"` + `customConditions`). The hack stopped TS resolving the
+   monorepo root's React 19 types into a React 18 app; mobile is React 19 now, so the
+   collision is gone. **It had also started breaking resolution outright** — it pointed at
+   `apps/mobile/node_modules/@types`, which does not exist under workspace hoisting.
+
+### The type-check baseline was never real
+
+Under the old tsconfig, `tsc` bailed after 2 config errors without analysing any code. The
+"35 pre-existing errors" baseline recorded elsewhere in this file was therefore never a
+measurement. With the config repaired the true count is **37 pre-existing errors** — navigation
+param mismatches (`product`/`productId`, `article`/`slug`, `event`/`eventId`), a `fontSize
+'3xl'` that does not exist in the theme, an author `.role` that does not exist, and dead code
+in `MemberScreen.tsx`. None are upgrade fallout; none were fixed.
+
+Upgrade-caused fixes were: `StyleSheet.absoluteFillObject` → `absoluteFill` (13 sites — only
+safe because RN 0.86 turned `absoluteFill` into a plain object with the old shape; on older RN
+the same edit silently breaks every overlay), React 19's `RefObject<T | null>` variance, React
+19 removing the zero-argument `useRef` overload, and `expo-notifications` replacing
+`shouldShowAlert` with `shouldShowBanner`/`shouldShowList`.
+
+### `react-native-render-html` is abandoned and needs React 19 help — fixed in our code
+
+`6.3.4` is both our version and the newest published. It configures its render engine via
+`TRenderEngineProvider.defaultProps`, which React 19 ignores on function components, and
+`RenderHTML` spreads caller props straight into that provider without adding defaults. Left
+alone, every article and pulse body loses base typography and all user-agent styling.
+
+**`HtmlContent.tsx` re-supplies those defaults ahead of caller props.** Deliberately not
+`patch-package`: the library is abandoned so the values cannot drift, and patching
+`node_modules` is fragile under workspace hoisting and awkward on EAS. Its other three
+`defaultProps` sites were each checked and are genuinely safe to lose — `renderChildren`
+already has a `propsForChildren = empty` default parameter, and `propsFromParent` is read with
+optional chaining plus a `typeof !== 'number'` guard.
+
+### `plugins/withFmtConstevalFix.js` — verified, probably now unnecessary
+
+RN 0.86 pins fmt **12.1.0**, not the 11.0.2 it was written against. Checked against real
+12.1.0 source: the block it rewrites is unchanged so it still matches (it is *not* silently
+no-opping, and it warns if it ever stops matching). 12.1.0 also added the
+`#ifdef FMT_USE_CONSTEVAL` guard whose absence was the entire reason the simpler
+compiler-flag approach failed originally. Kept for now; **delete it and its `app.config.ts`
+entry once one real iOS build goes green on SDK 57.**
+
+### Hazard: never run `npm install` from inside `apps/mobile`
+
+It rewrites the **root** lockfile and prunes the other workspaces' entries out of it — a
+6,193-line deletion in this case, which would likely break the Vercel builds for both web
+apps. If you need `node_modules` locally to type-check, back up the root lockfile first and
+restore it afterwards. The mobile lockfile must still be regenerated out-of-tree per the
+process documented above; that is what EAS's `npm ci` consumes.

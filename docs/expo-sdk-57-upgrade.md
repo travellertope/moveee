@@ -1,4 +1,23 @@
-# Expo SDK 52 → 54 upgrade plan
+# Expo SDK 52 → 57 upgrade
+
+> **Status: dependency, type and config work complete; not yet built.**
+> Target changed from 54 to **57** during execution. The original case for 54 was that it
+> still bundles `expo-av` — but `expo-av` turned out to have exactly one importer (85 lines,
+> two API surfaces), and *both* SDKs default to `compileSdk`/`targetSdk` 36, so 54 bought no
+> extra Play runway while landing us three releases behind on the toolchain we were upgrading
+> precisely because it fell behind.
+>
+> Done: dependency set + lockfile, `expo-av` → `expo-audio`, autolinking exclude and Sentry
+> ordering plugin removed, tsconfig repaired and React 19 / RN 0.86 fallout fixed,
+> `react-native-iap` → 14.7.20 for Billing 8, `react-native-render-html` React 19 fix,
+> `withFmtConstevalFix` verified against fmt 12.1.0.
+>
+> Remaining: run an EAS build. Then delete `withFmtConstevalFix` if iOS is green, and resync
+> the root lockfile from the repo root.
+>
+> See CLAUDE.md, "Expo SDK 52 → 57 upgrade", for the durable summary. The body below is the
+> original plan, kept for its reasoning and evidence.
+
 
 **Why:** Play Console rejected the 1.0.1 production release with three errors that are all
 one problem — the toolchain is too old:
