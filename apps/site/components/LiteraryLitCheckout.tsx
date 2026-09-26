@@ -12,11 +12,12 @@ interface Props {
   /** Path (relative to the frontend root) to land on after checkout — see
    * app/literary/lit-welcome/page.tsx. */
   returnPath: string;
+  /** Geo-detected server-side (see lib/lit-currency.ts) — no manual
+   * switch, no visible currency notice. Nigeria gets NGN, everyone else
+   * gets USD. */
+  currency: Currency;
   monthlyPrice: string;
   yearlyPrice: string;
-  /** USD prices, for anyone outside Nigeria — see the manual NGN/USD
-   * switch below (mirrors register/complete's own currency toggle; there's
-   * no country field in this flow to auto-detect from). */
   monthlyPriceUsd: string;
   yearlyPriceUsd: string;
 }
@@ -33,13 +34,13 @@ interface Props {
 export default function LiteraryLitCheckout({
   variant,
   returnPath,
+  currency,
   monthlyPrice,
   yearlyPrice,
   monthlyPriceUsd,
   yearlyPriceUsd,
 }: Props) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
-  const [currency, setCurrency] = useState<Currency>("NGN");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -143,16 +144,6 @@ export default function LiteraryLitCheckout({
         <span className="lit-checkout-price-cycle">{cycle === "monthly" ? "/ mo" : "/ yr"}</span>
       </div>
       {cycle === "yearly" && <div className="lit-checkout-savings">2 months free vs. paying monthly</div>}
-      <div className="lit-checkout-currency">
-        Pricing in <strong>{currency}</strong>.{" "}
-        <button
-          type="button"
-          className="lit-checkout-currency-switch"
-          onClick={() => setCurrency((c) => (c === "NGN" ? "USD" : "NGN"))}
-        >
-          {currency === "NGN" ? "Outside Nigeria? Switch to USD" : "Switch to NGN"}
-        </button>
-      </div>
 
       {step === "email" ? (
         <form className="lit-checkout-form" onSubmit={requestCode}>

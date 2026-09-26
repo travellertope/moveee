@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import LiterarySubscribeForm from "@/components/LiterarySubscribeForm";
 import LiteraryLitCheckout from "@/components/LiteraryLitCheckout";
 import { LITERARY_FREE_READ_LIMIT } from "@/lib/literary-access";
+import { getLitCurrency } from "@/lib/lit-currency";
 
 export const metadata: Metadata = {
   title: "Subscribe | The Moveee Literary",
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
 // things at once: joins GetMeLit (see class-culture-magic-otp.php) and
 // signs the visitor into Moveee, new account or existing one alike — no
 // separate registration step.
-export default function LiterarySubscribePage() {
+export default async function LiterarySubscribePage() {
+  const currency = await getLitCurrency();
   return (
     <div className="lit-submit-wrap">
       <h1>Stay with the work.</h1>
@@ -69,6 +71,7 @@ export default function LiterarySubscribePage() {
           <LiteraryLitCheckout
             variant="light"
             returnPath="/literary/lit-welcome"
+            currency={currency}
             monthlyPrice="₦1,999"
             yearlyPrice="₦19,990"
             monthlyPriceUsd="$1"

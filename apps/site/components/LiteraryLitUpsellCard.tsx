@@ -1,4 +1,5 @@
 import LiteraryLitCheckout from "@/components/LiteraryLitCheckout";
+import { getLitCurrency } from "@/lib/lit-currency";
 
 const PERKS = [
   "Unmetered access to every piece, both free and exclusive",
@@ -12,7 +13,8 @@ const PERKS = [
  * piece for anonymous readers who still have free reads left. Design
  * mocked up first, then built to match (Artifact SRHfajeMCc8RB12HqDhm3J).
  */
-export default function LiteraryLitUpsellCard() {
+export default async function LiteraryLitUpsellCard() {
+  const currency = await getLitCurrency();
   return (
     <div className="lit-upsell-card">
       <div className="lit-upsell-glow" aria-hidden="true" />
@@ -55,6 +57,7 @@ export default function LiteraryLitUpsellCard() {
       <LiteraryLitCheckout
         variant="dark"
         returnPath="/literary/lit-welcome"
+        currency={currency}
         monthlyPrice="₦1,999"
         yearlyPrice="₦19,990"
         monthlyPriceUsd="$1"
