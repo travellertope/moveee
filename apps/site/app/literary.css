@@ -473,25 +473,16 @@
 .lit-gate-skip:hover, .lit-gate-resend:hover { color: var(--lit-ink); }
 .lit-gate-remainder { margin-top: 8px; }
 
-/* ── Free-gate + Moveee Lit upsell pairing ──
-   .lit-email-gate (mode="meter" blocking={false}) and .lit-upsell-card
-   render side by side inline at ~30% into a piece for anonymous readers
-   with free reads left — see literary/[slug]/page.tsx. Mocked up first
-   (Artifact SRHfajeMCc8RB12HqDhm3J), built to match. */
-.lit-gate-upsell-row {
-  display: flex;
-  gap: 24px;
-  align-items: stretch;
-  margin: 8px 0 32px;
-}
-.lit-gate-upsell-row .lit-email-gate { margin: 0; flex: 1; }
-@media (max-width: 720px) {
-  .lit-gate-upsell-row { flex-direction: column; }
-}
+/* ── Moveee Lit upsell card ──
+   Renders a few paragraphs after .lit-email-gate (mode="meter"
+   blocking={false}) — not fused beside it — for anonymous readers with
+   free reads left. See literary/[slug]/page.tsx's litUpsellBlock split.
+   Mocked up first (Artifact SRHfajeMCc8RB12HqDhm3J), built to match. */
 .lit-upsell-card {
   position: relative;
-  flex: 1;
   overflow: hidden;
+  max-width: 460px;
+  margin: 24px 0 32px;
   background: linear-gradient(160deg, var(--lit-mahogany) 0%, var(--lit-ink) 58%, var(--lit-ink) 100%);
   border: 1px solid rgba(184, 137, 66, 0.45);
   box-shadow: 0 18px 40px rgba(22, 12, 8, 0.28);
@@ -976,6 +967,10 @@
   margin-top: 2px;
 }
 .lit-pricing-card .lit-btn-pill { display: inline-block; text-align: center; }
+/* LiterarySubscribeForm nested in the Citizen card (subscribe page) — tighter
+   than its usual full-page spacing since it's sharing a compact card now. */
+.lit-pricing-card .lit-form { margin-top: 20px; gap: 14px; }
+.lit-pricing-card .lit-form-field { gap: 6px; }
 
 /* ── SUBMISSION FORM (/literary/submit/form) ── */
 .lit-form { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; }

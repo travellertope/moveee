@@ -184,6 +184,12 @@ async function PiecePage({ slug }: { slug: string }) {
   let trailingBodyHtml = "";
   let gateBlock: React.ReactNode = null;
   let shouldTrackRead = false;
+  // The Moveee Lit upsell — lands a few paragraphs after the free gate
+  // box, not fused beside it (see LiteraryLitUpsellCard). Only set on the
+  // non-blocking free-reads-left path below; splits trailingBodyHtml a
+  // second time so there's real body copy between the two.
+  let litUpsellBlock: React.ReactNode = null;
+  let trailingBodyHtmlAfterUpsell = "";
 
   if (!isBot) {
     if (accessLevel === "patron-only") {
@@ -221,13 +227,16 @@ async function PiecePage({ slug }: { slug: string }) {
         );
         if (hasMore) {
           visibleBodyHtml = visibleHtml;
-          trailingBodyHtml = remainderHtml;
-          gateBlock = (
-            <div className="lit-gate-upsell-row">
-              <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />
-              <LiteraryLitUpsellCard slug={slug} />
-            </div>
-          );
+          gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />;
+
+          const upsellSplit = truncateHtmlByPercent(remainderHtml, 0.25);
+          if (upsellSplit.hasMore) {
+            trailingBodyHtml = upsellSplit.visibleHtml;
+            litUpsellBlock = <LiteraryLitUpsellCard slug={slug} />;
+            trailingBodyHtmlAfterUpsell = upsellSplit.remainderHtml;
+          } else {
+            trailingBodyHtml = remainderHtml;
+          }
         }
       } else {
         const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
@@ -283,6 +292,13 @@ async function PiecePage({ slug }: { slug: string }) {
           {gateBlock}
           {trailingBodyHtml && (
             <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: trailingBodyHtml }} />
+          )}
+          {litUpsellBlock}
+          {trailingBodyHtmlAfterUpsell && (
+            <div
+              className="lit-piece-body"
+              dangerouslySetInnerHTML={{ __html: trailingBodyHtmlAfterUpsell }}
+            />
           )}
           {post.author?.node?.name && (
             <div className="lit-piece-author">

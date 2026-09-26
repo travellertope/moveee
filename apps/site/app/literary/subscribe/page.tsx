@@ -38,10 +38,10 @@ export default function LiterarySubscribePage() {
       </div>
 
       <div className="lit-pricing-intro">
-        <h2>Reading is free. Membership goes further.</h2>
+        <h2>Two ways to read.</h2>
         <p>
-          A GetMeLit code above is all it takes to read for free. Moveee Lit removes the limit
-          and opens everything else The Moveee Literary has to offer.
+          Reading starts free — a quick email code is all it takes. Moveee Lit lifts the monthly
+          limit and opens the rest: full access, comments, and a look at what&rsquo;s coming next.
         </p>
       </div>
 
@@ -56,7 +56,7 @@ export default function LiterarySubscribePage() {
             <li>GetMeLit &amp; Culture Drop newsletters</li>
             <li>The rest of Moveee — Pulse Feed, Discover, Games, Stoop, and more</li>
           </ul>
-          <a className="lit-btn-pill" href="/register">Join free</a>
+          <LiterarySubscribeForm />
         </div>
         <div className="lit-pricing-card lit-pricing-card--lit">
           <div className="lit-pricing-card-eyebrow">Moveee Lit</div>
@@ -80,8 +80,6 @@ export default function LiterarySubscribePage() {
           </a>
         </div>
       </div>
-
-      <LiterarySubscribeForm />
     </div>
   );
 }
