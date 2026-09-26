@@ -89,24 +89,23 @@ export default function LiterarySubscribeForm() {
   return (
     <>
       {step === "email" && (
-        <form className="lit-form" onSubmit={handleRequestCode}>
-          <div className="lit-form-field">
-            <label htmlFor="lit-sub-email">Email address</label>
-            <input
-              id="lit-sub-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-          {error && <p className="lit-form-error">{error}</p>}
-          <button type="submit" className="lit-form-submit" disabled={busy}>
+        <form className="lit-checkout-form" onSubmit={handleRequestCode}>
+          <input
+            id="lit-sub-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoFocus
+            placeholder="Email address"
+            className="lit-checkout-input"
+          />
+          <button type="submit" className="lit-checkout-cta" disabled={busy}>
             {busy ? "Sending…" : "Subscribe →"}
           </button>
         </form>
       )}
+      {step === "email" && error && <p className="lit-checkout-error">{error}</p>}
 
       {step === "code" && (
         <form className="lit-form" onSubmit={handleVerifyCode}>
