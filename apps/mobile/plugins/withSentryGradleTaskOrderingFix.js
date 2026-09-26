@@ -73,7 +73,7 @@ gradle.projectsEvaluated {
 
             variants.each { variant ->
                 def producerTasks = producerTaskSuffixes.collect { suffix ->
-                    producerProject.tasks.findByName("generate${variant}${suffix}")
+                    producerProject.tasks.findByName("generate\${variant}\${suffix}")
                 }.findAll { it != null }
                 if (producerTasks.isEmpty()) return
 
