@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, Platform, ActivityIndicator, Alert,
 } from "react-native";
-import type { Subscription } from "react-native-iap";
+import type { ProductSubscription } from "react-native-iap";
 import { openInApp } from "../../utils/openInApp";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
@@ -58,7 +58,7 @@ export default function MembershipScreen() {
 
   // Android: real Google Play Billing purchase flow. iOS keeps directing to
   // the web checkout (see handleUpgrade below) — StoreKit isn't wired up.
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subscriptions, setSubscriptions] = useState<ProductSubscription[]>([]);
   const [loadingSubs, setLoadingSubs] = useState(Platform.OS === "android");
   const [purchasingSku, setPurchasingSku] = useState<string | null>(null);
 
@@ -84,8 +84,8 @@ export default function MembershipScreen() {
     };
   }, []);
 
-  const handlePurchase = useCallback(async (subscription: Subscription) => {
-    setPurchasingSku(subscription.productId);
+  const handlePurchase = useCallback(async (subscription: ProductSubscription) => {
+    setPurchasingSku(subscription.id);
     try {
       await purchaseProSubscription(subscription);
       updateUser({ tier: "patron" });
@@ -99,8 +99,8 @@ export default function MembershipScreen() {
     }
   }, [updateUser]);
 
-  const monthlySub = subscriptions.find((s) => s.productId === MOVEEE_PRO_MONTHLY_SKU) ?? null;
-  const annualSub = subscriptions.find((s) => s.productId === MOVEEE_PRO_ANNUAL_SKU) ?? null;
+  const monthlySub = subscriptions.find((s) => s.id === MOVEEE_PRO_MONTHLY_SKU) ?? null;
+  const annualSub = subscriptions.find((s) => s.id === MOVEEE_PRO_ANNUAL_SKU) ?? null;
   const hasNativePlans = Platform.OS === "android" && !loadingSubs && (!!monthlySub || !!annualSub);
 
   const handleUpgrade = () => {
@@ -212,7 +212,7 @@ export default function MembershipScreen() {
                   disabled={!!purchasingSku}
                   onPress={() => handlePurchase(monthlySub)}
                 >
-                  {purchasingSku === monthlySub.productId ? (
+                  {purchasingSku === monthlySub.id ? (
                     <ActivityIndicator color={c.ink} />
                   ) : (
                     <Text style={styles.ctaProText}>
@@ -227,7 +227,7 @@ export default function MembershipScreen() {
                   disabled={!!purchasingSku}
                   onPress={() => handlePurchase(annualSub)}
                 >
-                  {purchasingSku === annualSub.productId ? (
+                  {purchasingSku === annualSub.id ? (
                     <ActivityIndicator color={c.ink} />
                   ) : (
                     <Text style={styles.ctaSecondaryText}>

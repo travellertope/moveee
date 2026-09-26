@@ -121,13 +121,10 @@ export default {
         "@react-native-google-signin/google-signin",
         { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
       ],
+      // v14 ships no Android product flavors, so the old
+      // withAndroidIapStoreFlavor missingDimensionStrategy hint is gone with
+      // it. This plugin now only adds iOS StoreKit entitlements.
       "react-native-iap",
-      // react-native-iap ships both "amazon" and "play" Android product
-      // flavors — Gradle can't resolve which one to use without this hint.
-      // Must come after the "react-native-iap" plugin above so the Gradle
-      // file it patches already has the dependency block react-native-iap's
-      // own plugin adds.
-      "./plugins/withAndroidIapStoreFlavor",
       // Patches native iOS/Android projects (dSYM/ProGuard mapping upload
       // build phases) and, when a SENTRY_AUTH_TOKEN env var is present at
       // build time (EAS Secret — never hardcoded), uploads JS source maps
