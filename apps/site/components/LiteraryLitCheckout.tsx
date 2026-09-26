@@ -196,8 +196,6 @@ export default function LiteraryLitCheckout({
           Use a different email
         </button>
       )}
-
-      <div className="lit-checkout-footnote">Cancel anytime · instant access</div>
     </div>
   );
 }
