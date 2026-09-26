@@ -161,7 +161,7 @@ function createStyles(c: ColorPalette) {
     heroImage: { width: "100%", height: 280 },
     heroImagePlaceholder: { backgroundColor: c.paperDeep },
     heroGradient: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(10,8,5,0.55)",
     },
     heroContent: { position: "absolute", bottom: 0, left: 0, right: 0, padding: space[4] },

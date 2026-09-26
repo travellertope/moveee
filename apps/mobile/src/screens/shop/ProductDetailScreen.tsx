@@ -239,7 +239,7 @@ function createColourStyles(c: ColorPalette) {
       borderRadius: 18,
     },
     swatchUnavailable: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       borderRadius: 22,
       backgroundColor: "rgba(255,255,255,0.5)",
     },

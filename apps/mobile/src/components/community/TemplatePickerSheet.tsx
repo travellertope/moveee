@@ -210,7 +210,7 @@ export default function TemplatePickerSheet({ visible, onClose, onSelect, allowe
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     backdrop: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(20,17,13,0.45)",
     },
     sheet: {

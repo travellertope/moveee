@@ -150,8 +150,8 @@ function createStyles(c: ColorPalette) {
     container:     { flex: 1, backgroundColor: c.paper },
     heroWrap:      { width: "100%", height: HERO_HEIGHT, position: "relative" },
     heroImage:     { width: "100%", height: HERO_HEIGHT },
-    heroGradient:  { ...StyleSheet.absoluteFillObject },
-    heroOverlay:   { ...StyleSheet.absoluteFillObject, justifyContent: "flex-end" },
+    heroGradient:  { ...StyleSheet.absoluteFill },
+    heroOverlay:   { ...StyleSheet.absoluteFill, justifyContent: "flex-end" },
     heroFade:      {
       position: "absolute", bottom: 0, left: 0, right: 0, height: HERO_HEIGHT * 0.4,
     },

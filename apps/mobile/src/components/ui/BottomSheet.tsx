@@ -265,7 +265,7 @@ export default BottomSheet;
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
     backdrop: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: c.ink,
     },
     sheet: {

@@ -543,7 +543,7 @@ function createStyles(c: ColorPalette) {
 
     hero: { height: 240, width: "100%", overflow: "hidden", position: "relative" },
     heroOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(10,8,5,0.68)",
     },
     heroContent: {

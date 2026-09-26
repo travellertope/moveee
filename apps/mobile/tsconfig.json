@@ -3,13 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
-    "module": "esnext",
-    "moduleResolution": "node10",
     "paths": {
       "@moveee/utils/*": ["../../packages/utils/*"]
-    },
-    "types": ["react"],
-    "typeRoots": ["./node_modules/@types"]
+    }
   },
   "include": [
     "**/*.ts",

@@ -177,7 +177,7 @@ function createStyles(c: ColorPalette) {
     heroWrap: { position: "relative" },
     hero: { width: "100%", height: 200, backgroundColor: c.paperDeep },
     heroOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(179,130,56,0.72)",
       justifyContent: "center",
       alignItems: "center",

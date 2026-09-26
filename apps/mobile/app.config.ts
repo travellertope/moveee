@@ -88,7 +88,11 @@ export default {
       [
         "expo-build-properties",
         {
-          ios: { deploymentTarget: "15.1" },
+          // SDK 57 enforces a floor of 16.4 — below that `expo config`
+          // refuses to load. This supersedes the old 15.1 value, which was
+          // set only to clear react-native-passkeys' own 15.0+ requirement.
+          // Consequence: iOS 15 devices are no longer supported.
+          ios: { deploymentTarget: "16.4" },
         },
       ],
       [

@@ -295,7 +295,7 @@ function createStyles(c: ColorPalette) {
     empty: { textAlign: "center", fontFamily: fonts.sans, color: c.mute, marginTop: 40 },
 
     overlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: "rgba(0,0,0,0.45)",
       justifyContent: "center", alignItems: "center",
     },
