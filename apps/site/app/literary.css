@@ -644,6 +644,18 @@
   color: var(--lit-oxblood);
   margin-bottom: 6px;
 }
+.lit-checkout-currency {
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11px;
+  color: var(--lit-mute);
+  margin-bottom: 4px;
+}
+.lit-checkout-currency-switch {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 600;
+  color: var(--lit-oxblood); text-decoration: underline; text-underline-offset: 2px;
+}
+.lit-checkout-currency-switch:hover { color: var(--lit-oxblood-deep); }
 .lit-checkout-form { display: flex; margin-top: 14px; max-width: 320px; }
 .lit-checkout-input {
   flex: 1; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); border-right: 0; padding: 11px 13px; color: var(--lit-ink);
@@ -679,6 +691,9 @@
 .lit-checkout--dark .lit-checkout-price-amount { color: var(--lit-ivory); }
 .lit-checkout--dark .lit-checkout-price-cycle { color: rgba(245, 239, 228, 0.55); }
 .lit-checkout--dark .lit-checkout-savings { color: var(--lit-gold); }
+.lit-checkout--dark .lit-checkout-currency { color: rgba(245, 239, 228, 0.55); }
+.lit-checkout--dark .lit-checkout-currency-switch { color: var(--lit-gold); }
+.lit-checkout--dark .lit-checkout-currency-switch:hover { color: var(--lit-ivory); }
 .lit-checkout--dark .lit-checkout-input {
   background: rgba(245, 239, 228, 0.08);
   border-color: rgba(245, 239, 228, 0.3);

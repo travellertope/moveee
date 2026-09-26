@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 
 type Step = "email" | "code";
 type Cycle = "monthly" | "yearly";
+type Currency = "NGN" | "USD";
 
 interface Props {
   variant: "dark" | "light";
@@ -13,6 +14,11 @@ interface Props {
   returnPath: string;
   monthlyPrice: string;
   yearlyPrice: string;
+  /** USD prices, for anyone outside Nigeria — see the manual NGN/USD
+   * switch below (mirrors register/complete's own currency toggle; there's
+   * no country field in this flow to auto-detect from). */
+  monthlyPriceUsd: string;
+  yearlyPriceUsd: string;
 }
 
 /**
@@ -24,8 +30,16 @@ interface Props {
  * Any remaining profile details (DOB, country, city, occupation) are
  * collected afterward on the lit-welcome page, not before payment.
  */
-export default function LiteraryLitCheckout({ variant, returnPath, monthlyPrice, yearlyPrice }: Props) {
+export default function LiteraryLitCheckout({
+  variant,
+  returnPath,
+  monthlyPrice,
+  yearlyPrice,
+  monthlyPriceUsd,
+  yearlyPriceUsd,
+}: Props) {
   const [cycle, setCycle] = useState<Cycle>("monthly");
+  const [currency, setCurrency] = useState<Currency>("NGN");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -84,7 +98,7 @@ export default function LiteraryLitCheckout({ variant, returnPath, monthlyPrice,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tier: "lit",
-          plan_key: cycle === "monthly" ? "monthly_ngn" : "yearly_ngn",
+          plan_key: `${cycle === "monthly" ? "monthly" : "yearly"}_${currency.toLowerCase()}`,
           return_path: returnPath,
         }),
       });
@@ -121,10 +135,24 @@ export default function LiteraryLitCheckout({ variant, returnPath, monthlyPrice,
       </div>
 
       <div className="lit-checkout-price">
-        <span className="lit-checkout-price-amount">{cycle === "monthly" ? monthlyPrice : yearlyPrice}</span>
+        <span className="lit-checkout-price-amount">
+          {currency === "NGN"
+            ? (cycle === "monthly" ? monthlyPrice : yearlyPrice)
+            : (cycle === "monthly" ? monthlyPriceUsd : yearlyPriceUsd)}
+        </span>
         <span className="lit-checkout-price-cycle">{cycle === "monthly" ? "/ mo" : "/ yr"}</span>
       </div>
       {cycle === "yearly" && <div className="lit-checkout-savings">2 months free vs. paying monthly</div>}
+      <div className="lit-checkout-currency">
+        Pricing in <strong>{currency}</strong>.{" "}
+        <button
+          type="button"
+          className="lit-checkout-currency-switch"
+          onClick={() => setCurrency((c) => (c === "NGN" ? "USD" : "NGN"))}
+        >
+          {currency === "NGN" ? "Outside Nigeria? Switch to USD" : "Switch to NGN"}
+        </button>
+      </div>
 
       {step === "email" ? (
         <form className="lit-checkout-form" onSubmit={requestCode}>
