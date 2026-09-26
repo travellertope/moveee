@@ -11228,6 +11228,60 @@ Not verified against a real Gradle/Android toolchain — this sandbox has none. 
 embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
 actually clears the Gradle validation error before considering it closed.
 
+**Real root cause found and fixed at source (September 2026) — everything above is a symptom, and
+the ordering plugin is now expected to be inert.** Eight rounds of ordering fixes cleared every
+`implicit_dependency` failure but then hit a real javac error,
+`package io.sentry.react.expo does not exist`, in `:expo:compileReleaseJavaWithJavac`. A theory
+that the two duplicates were not identical (that the Expo copy compiled a superset, making their
+relative order load-bearing) was tested by flipping the order — the identical error recurred, which
+disproved it and prompted actually downloading and reading the installed package instead of
+reasoning about it. `:expo:compileReleaseJavaWithJavac` had in fact **never once succeeded** in any
+build this session; the ordering work simply got far enough to reach a problem that was always
+there.
+
+What the package actually contains: `@sentry/react-native@8.24.0`'s `expo-module.config.json` is
+`{"platforms":["android"],"android":{"name":"sentry-react-native-expo","path":"android/expo-handler"}}`
+— the autolinking **3.x** schema (SDK 54+). `expo-modules-autolinking@2.0.8`, which SDK 52 pins,
+reads neither `path` nor `name`: its only config key here is `android.gradlePath`
+(`ExpoModuleConfig.androidGradlePaths()`), and its project names are derived mechanically from the
+package name plus the gradle file's directory (`convertPackageWithGradleToProjectName`), never from
+`android.name`. Both of Sentry's keys are therefore silently ignored, and it falls back to globbing
+`*/build.gradle` **one level deep** (`findGradleFilesAsync`) — which matches `android/build.gradle`
+but not `android/expo-handler/build.gradle`. So Expo links `:sentry-react-native` → `android/`, the
+exact directory classic RN autolinking already links as `:sentry_react-native`. That is the
+duplicate, and it is a schema-version mismatch, not the generic dual-autolinking bug the original
+entry above blamed.
+
+The missing class is the same misread, one step on: Expo's package-list generator scans the whole
+linked source tree, so it finds `SentryExpoPackage.java` at `android/expo-handler/src/...` (which is
+under `android/`) and writes it into the generated `ExpoModulesPackageList.java` — but the Gradle
+project rooted at `android/` compiles only `android/src`, so the class is referenced and never
+compiled.
+
+**Fix**: one key in `apps/mobile/package.json` —
+`"expo": { "autolinking": { "exclude": ["@sentry/react-native"] } }` (`exclude` is supported in
+2.0.8, confirmed in `findModules.js`). This drops the package from **Expo** autolinking only;
+classic autolinking still links `android/` and registers `RNSentryPackage`, so native Sentry crash
+reporting is unaffected. The only thing lost is `SentryExpoPackage`, whose entire job (per its own
+javadoc) is registering a `ReactNativeHostHandler` to catch native exceptions swallowed by Expo's
+**bridgeless** error handling — and this app does not enable the New Architecture, so that handler
+was inert here regardless.
+
+**This supersedes the ordering plugin.** With no duplicate project, `withSentryGradleTaskOrderingFix.js`'s
+`findProject` guards make it a no-op. It was deliberately left registered for the first build after
+this fix so only one variable changed; once a production build is green, delete it and its entry in
+`app.config.ts`'s `plugins` array. **If a duplicate `:sentry-*` project ever reappears, fix the
+autolinking registration — do not re-derive ordering rules.** The same applies to any other package
+that starts throwing `implicit_dependency` errors against itself: check whether its
+`expo-module.config.json` uses a schema key this pinned autolinking version cannot read, before
+assuming Gradle is at fault.
+
+Verified by inspecting the real published tarballs (`@sentry/react-native@8.24.0` and
+`expo-modules-autolinking@2.0.8` fetched from the npm registry) rather than by reasoning — this
+sandbox has no `node_modules` and no Android toolchain, so the Gradle side still needs a real
+`eas build --platform android --profile production` to confirm.
+
+
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
 since nothing forces it local to `apps/mobile`) has its own bundled `.d.ts` files that do

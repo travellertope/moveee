@@ -2,6 +2,12 @@
   "name": "moveee-mobile",
   "version": "1.0.0",
   "main": "index.js",
+  "expo": {
+    "autolinking": {
+      "//": "See apps/mobile/plugins/withSentryGradleTaskOrderingFix.js and CLAUDE.md. @sentry/react-native@8.24.0 declares its Expo integration with the android.path/android.name schema, which expo-modules-autolinking@2.0.8 (SDK 52) does not read. It falls back to globbing */build.gradle, matching android/build.gradle - the SAME directory classic RN autolinking already links - so the module gets registered twice under two names, and android/expo-handler (where SentryExpoPackage lives) never gets a Gradle project at all. Excluding it from EXPO autolinking only: classic autolinking still links android/ and registers RNSentryPackage, so native Sentry is unaffected.",
+      "exclude": ["@sentry/react-native"]
+    }
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

@@ -60,31 +60,47 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 //    rather than enumerated by hand.
 //
 // ---------------------------------------------------------------------------
-// THE DUPLICATES ARE NOT IDENTICAL — WHICH ONE RUNS LAST IS LOAD-BEARING
+// THE ROOT CAUSE IS NOW FIXED AT SOURCE — THIS PLUGIN SHOULD BE INERT
 // ---------------------------------------------------------------------------
-// Earlier revisions of this file assumed the two registrations were byte-
-// identical copies, which made their relative order look arbitrary. That was
-// wrong, and it cost a build to find out.
+// Everything above treats a symptom. The actual cause was found later, by
+// reading the installed package rather than reasoning about it:
 //
-// The Expo-autolinked copy (:sentry-react-native) compiles an additional source
-// set that the classic-autolinked copy (:sentry_react-native) does not — the
-// one providing io.sentry.react.expo.SentryExpoPackage. :expo's generated
-// ExpoModulesPackageList.java references that class directly.
+//   @sentry/react-native@8.24.0's expo-module.config.json declares its Expo
+//   integration as { "android": { "name": "sentry-react-native-expo",
+//   "path": "android/expo-handler" } }. That is the autolinking 3.x schema
+//   (SDK 54+). expo-modules-autolinking@2.0.8, which SDK 52 pins, reads
+//   neither `path` nor `name` — it only reads `android.gradlePath`. So both
+//   keys are silently ignored and it falls back to globbing */build.gradle
+//   one level deep, which matches android/build.gradle: the exact directory
+//   classic RN autolinking already links. Hence two Gradle projects over one
+//   source root, hence every implicit_dependency failure above.
 //
-// Since both projects write the same classes.jar, the copy that runs LAST
-// decides what ends up in it. Ordering the classic copy last produced a jar
-// without the expo package and :expo failed to compile with
-// "package io.sentry.react.expo does not exist" — not a Gradle validation
-// error, a real javac failure. Before any ordering existed at all this was a
-// coin flip that sometimes landed the right way round.
+// The same misread caused the second symptom. Expo's package-list generator
+// scans the whole linked source tree, so it finds SentryExpoPackage.java at
+// android/expo-handler/src/... and writes it into ExpoModulesPackageList.java
+// — but the Gradle project rooted at android/ compiles only android/src, so
+// the class is referenced and never compiled. That surfaced as
+// "package io.sentry.react.expo does not exist" in :expo's javac.
 //
-// So the order below is deliberate and load-bearing: the classic copy runs
-// first and the Expo copy runs last, because the Expo copy's output is a
-// superset. Do not swap these two values. (This is also the true explanation
-// for an earlier failed experiment that disabled the classic registration via
-// react-native.config.js and hit this same missing-class error — the missing
-// symbol was the real signal, and it was misread as the exclusion breaking a
-// dependency.)
+// The fix is one key in apps/mobile/package.json: expo.autolinking.exclude
+// drops @sentry/react-native from EXPO autolinking only. Classic autolinking
+// still links android/ and registers RNSentryPackage, so native Sentry is
+// unaffected; and SentryExpoPackage only exists to catch exceptions swallowed
+// by Expo's BRIDGELESS error handling, which this app does not use (the New
+// Architecture is not enabled).
+//
+// With that in place there is no duplicate project, so the findProject guards
+// below make this entire block a no-op. It is kept for now only so that the
+// build changed one variable at a time. Once a production build is green it
+// can be deleted outright, along with its entry in app.config.ts's plugins
+// array. Do not re-derive the ordering rules below from scratch if the
+// duplicate ever returns — fix the autolinking registration instead.
+//
+// (An earlier revision of this file asserted that the two duplicates were not
+// identical, that the Expo copy compiled a superset, and that their relative
+// order was therefore load-bearing. That was wrong: the order was flipped and
+// the identical missing-class error recurred, which is what prompted actually
+// opening the package. Both duplicates are the same directory.)
 //
 // Why neither rule can cycle. Half one is strictly one-directional between two
 // disjoint task sets, and neither duplicate declares a dependency on the other.
@@ -109,13 +125,11 @@ module.exports = function withSentryGradleTaskOrderingFix(config) {
 
 // ${marker} — see apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
 gradle.projectsEvaluated {
-    // Order is deliberate, one-directional, and load-bearing. Both projects
-    // write the same classes.jar, so whichever runs LAST decides its contents.
-    // The Expo copy compiles a superset (it provides
-    // io.sentry.react.expo.SentryExpoPackage, which :expo needs), so it must
-    // run last. Swapping these two values produces a jar missing that class
-    // and breaks :expo:compileReleaseJavaWithJavac. Do not make this
-    // bidirectional either — that would be a cycle by construction.
+    // Ordering between the two duplicates. Which one runs last does NOT
+    // decide what ends up in the shared jar — they are the same directory, so
+    // they compile the same classes. Only the ordering itself matters, and
+    // only while the duplicate exists at all (see the header: it should not).
+    // Do not make this bidirectional — that would be a cycle by construction.
     def sentryFirstPath = ':sentry_react-native'
     def sentrySecondPath = ':sentry-react-native'
 
