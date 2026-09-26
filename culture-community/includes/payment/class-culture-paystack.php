@@ -24,6 +24,25 @@ class Culture_Paystack {
     }
 
     /**
+     * Joins an optional return path onto the frontend base URL — used to
+     * send a checkout redirect somewhere more specific than the site root
+     * (e.g. a "payment successful, complete your profile" page) instead of
+     * the generic `?culture_upgraded=1` landing. Shared by
+     * init_checkout_session() below and Culture_Stripe::get_checkout_url().
+     *
+     * @param string $frontend_url e.g. https://themoveee.com
+     * @param string $return_path  e.g. '/lit-welcome' or '' for the root.
+     * @return string
+     */
+    public static function build_return_url( $frontend_url, $return_path = '' ) {
+        $return_path = trim( (string) $return_path );
+        if ( '' === $return_path ) {
+            return $frontend_url;
+        }
+        return rtrim( $frontend_url, '/' ) . '/' . ltrim( $return_path, '/' );
+    }
+
+    /**
      * Get the Paystack public key from settings.
      */
     public static function get_public_key() {
@@ -97,8 +116,11 @@ class Culture_Paystack {
     /**
      * Re-usable internal logic to initialize a Paystack session and return the direct URL.
      * Prevents headless users from being bounced through the CMS.
+     *
+     * @param string $return_path Optional path to land on after checkout
+     *                            instead of the site root — see build_return_url().
      */
-    public static function init_checkout_session( $user_id, $plan_key = 'monthly_ngn', $tier = 'patron' ) {
+    public static function init_checkout_session( $user_id, $plan_key = 'monthly_ngn', $tier = 'patron', $return_path = '' ) {
         $user = get_userdata( $user_id );
         if ( ! $user ) {
             return new WP_Error( 'not_found', 'User not found.' );
@@ -110,7 +132,7 @@ class Culture_Paystack {
         $currency = strtoupper( $parts[1] ?? 'NGN' );
 
         $frontend_url = get_option( 'culture_frontend_url', home_url( '/' ) );
-        $callback_url = add_query_arg( 'culture_upgraded', '1', $frontend_url );
+        $callback_url = add_query_arg( 'culture_upgraded', '1', self::build_return_url( $frontend_url, $return_path ) );
 
         // Remember which tier this checkout is for — the webhook/callback
         // that completes the payment has no other way to know (see

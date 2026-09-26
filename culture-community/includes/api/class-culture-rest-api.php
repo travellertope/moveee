@@ -4838,20 +4838,25 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $plan_key = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
-        $tier     = $request->get_param( 'tier' ) ?: 'patron';
-        $tier     = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
+        $plan_key    = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $tier        = $request->get_param( 'tier' ) ?: 'patron';
+        $tier        = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
+        // Where to land after checkout (e.g. '/lit-welcome') instead of the
+        // generic site root — always joined onto the trusted frontend URL
+        // (Culture_Paystack::build_return_url()), never used as a host of
+        // its own, so an arbitrary value here can't become an open redirect.
+        $return_path = sanitize_text_field( (string) ( $request->get_param( 'return_path' ) ?: '' ) );
 
         $checkout_url = '';
 
         // If Paystack.
         if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
             // We'll call a new method that returns the direct authorization URL.
-            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key, $tier );
+            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key, $tier, $return_path );
         }
         // If Stripe.
         elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
-            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier );
+            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier, $return_path );
         }
 
         if ( is_wp_error( $checkout_url ) ) {

@@ -1,6 +1,4 @@
-interface Props {
-  slug: string;
-}
+import LiteraryLitCheckout from "@/components/LiteraryLitCheckout";
 
 const PERKS = [
   "Unmetered access to every piece, both free and exclusive",
@@ -14,7 +12,7 @@ const PERKS = [
  * piece for anonymous readers who still have free reads left. Design
  * mocked up first, then built to match (Artifact SRHfajeMCc8RB12HqDhm3J).
  */
-export default function LiteraryLitUpsellCard({ slug }: Props) {
+export default function LiteraryLitUpsellCard() {
   return (
     <div className="lit-upsell-card">
       <div className="lit-upsell-glow" aria-hidden="true" />
@@ -54,15 +52,12 @@ export default function LiteraryLitUpsellCard({ slug }: Props) {
           </span>
         </li>
       </ul>
-      <div className="lit-upsell-price">
-        <span className="lit-upsell-price-amount">₦1,999</span>
-        <span className="lit-upsell-price-cycle">/ mo</span>
-      </div>
-      <div className="lit-upsell-cadence">or ₦15,000 / $13 billed annually · 2 months free</div>
-      <a className="lit-upsell-cta" href={`/register?tier=lit&next=/literary/${slug}`}>
-        Upgrade to Moveee Lit <span aria-hidden="true">→</span>
-      </a>
-      <div className="lit-upsell-footnote">Cancel anytime · instant access</div>
+      <LiteraryLitCheckout
+        variant="dark"
+        returnPath="/literary/lit-welcome"
+        monthlyPrice="₦1,999"
+        yearlyPrice="₦15,000"
+      />
     </div>
   );
 }

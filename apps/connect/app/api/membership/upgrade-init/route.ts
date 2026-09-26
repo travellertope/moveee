@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { plan_key, tier } = await req.json();
+    const { plan_key, tier, return_path } = await req.json();
 
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/upgrade-init`, {
       method: "POST",
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
         user_id: (session.user as any).id,
         plan_key,
         tier: tier === "lit" ? "lit" : "patron",
+        return_path: return_path || "",
       }),
     });
 

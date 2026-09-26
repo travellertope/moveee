@@ -43,9 +43,13 @@ class Culture_Stripe {
      * @param int    $user_id
      * @param string $plan_key e.g. 'monthly_usd'
      * @param string $tier 'patron' or 'lit'.
+     * @param string $return_path Optional path (e.g. '/lit-welcome') on the
+     *                            frontend to land on after checkout, instead
+     *                            of the site root — see
+     *                            Culture_Paystack::build_return_url().
      * @return string|WP_Error
      */
-    public static function get_checkout_url( $user_id, $plan_key = 'monthly_usd', $tier = 'patron' ) {
+    public static function get_checkout_url( $user_id, $plan_key = 'monthly_usd', $tier = 'patron', $return_path = '' ) {
         $tier     = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
         $cycle    = strpos( $plan_key, 'yearly' ) !== false ? 'yearly' : 'monthly';
         $price_id = self::get_price_id( $cycle, $tier );
@@ -56,12 +60,13 @@ class Culture_Stripe {
 
         $user = get_userdata( $user_id );
         $frontend_url = get_option( 'culture_frontend_url', home_url( '/' ) );
+        $return_base  = Culture_Paystack::build_return_url( $frontend_url, $return_path );
 
         $response = self::api_request( 'POST', '/checkout/sessions', array(
             'mode'                => 'subscription',
             'client_reference_id' => (string) $user_id,
-            'success_url'         => add_query_arg( 'culture_upgraded', '1', $frontend_url ),
-            'cancel_url'          => add_query_arg( 'culture_upgraded', '0', $frontend_url ),
+            'success_url'         => add_query_arg( 'culture_upgraded', '1', $return_base ),
+            'cancel_url'          => add_query_arg( 'culture_upgraded', '0', $return_base ),
             'line_items'          => array(
                 array(
                     'price'    => $price_id,

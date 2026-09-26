@@ -232,7 +232,7 @@ async function PiecePage({ slug }: { slug: string }) {
           const upsellSplit = truncateHtmlByPercent(remainderHtml, 0.25);
           if (upsellSplit.hasMore) {
             trailingBodyHtml = upsellSplit.visibleHtml;
-            litUpsellBlock = <LiteraryLitUpsellCard slug={slug} />;
+            litUpsellBlock = <LiteraryLitUpsellCard />;
             trailingBodyHtmlAfterUpsell = upsellSplit.remainderHtml;
           } else {
             trailingBodyHtml = remainderHtml;

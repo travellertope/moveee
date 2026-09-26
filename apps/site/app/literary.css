@@ -601,6 +601,117 @@
   color: rgba(245, 239, 228, 0.4);
 }
 
+/* ── Moveee Lit checkout widget (LiteraryLitCheckout.tsx) ──
+   Email → code → straight to Paystack checkout, no registration form in
+   between — see that component's own doc comment. Shared between the
+   inline upsell card (--dark, replaces the old static .lit-upsell-price/
+   -cadence/-cta/-footnote block above, now dead/unused) and the
+   /literary/subscribe pricing card (--light, replaces the old static
+   .lit-pricing-card-price/-cycle + the plain "Upgrade" link). */
+.lit-checkout { position: relative; margin-top: 4px; }
+.lit-checkout-toggle {
+  display: inline-flex;
+  border: 1px solid var(--lit-rule-strong);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+.lit-checkout-tab {
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--lit-mute);
+}
+.lit-checkout-tab--active { background: var(--lit-oxblood); color: var(--lit-ivory); }
+.lit-checkout-price { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.lit-checkout-price-amount {
+  font-family: var(--font-lit-display), Georgia, serif;
+  font-weight: 500;
+  font-size: 28px;
+  color: var(--lit-ink);
+}
+.lit-checkout-price-cycle { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12px; color: var(--lit-mute); }
+.lit-checkout-savings {
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11px;
+  color: var(--lit-oxblood);
+  margin-bottom: 6px;
+}
+.lit-checkout-form { display: flex; margin-top: 14px; max-width: 320px; }
+.lit-checkout-input {
+  flex: 1; background: var(--lit-ivory); border: 1px solid var(--lit-rule-strong); border-right: 0; padding: 11px 13px; color: var(--lit-ink);
+  font-family: var(--font-lit-body), Georgia, serif; font-size: 14px;
+}
+.lit-checkout-input::placeholder { color: var(--lit-mute); }
+.lit-checkout-input--code { letter-spacing: 0.3em; font-family: var(--font-lit-meta), "Inter", sans-serif; font-weight: 700; text-align: center; }
+.lit-checkout-cta {
+  background: var(--lit-oxblood); color: var(--lit-ivory); border: 1px solid var(--lit-oxblood); padding: 0 18px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+  cursor: pointer;
+}
+.lit-checkout-cta:hover:not(:disabled) { background: var(--lit-oxblood-deep); }
+.lit-checkout-cta:disabled { opacity: 0.6; cursor: default; }
+.lit-checkout-error { font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 12.5px; color: var(--lit-oxblood); margin: 10px 0 0; }
+.lit-checkout-linklike {
+  display: block; margin-top: 10px; background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--font-lit-meta), "Inter", sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; color: var(--lit-mute); text-decoration: underline; text-underline-offset: 3px;
+}
+.lit-checkout-linklike:hover { color: var(--lit-ink); }
+.lit-checkout-footnote {
+  margin-top: 14px;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--lit-mute);
+}
+
+/* Dark variant — inside .lit-upsell-card */
+.lit-checkout--dark .lit-checkout-toggle { border-color: rgba(184, 137, 66, 0.4); }
+.lit-checkout--dark .lit-checkout-tab { color: rgba(245, 239, 228, 0.6); }
+.lit-checkout--dark .lit-checkout-tab--active { background: linear-gradient(135deg, var(--lit-gold), var(--lit-umber)); color: var(--lit-ink); }
+.lit-checkout--dark .lit-checkout-price-amount { color: var(--lit-ivory); }
+.lit-checkout--dark .lit-checkout-price-cycle { color: rgba(245, 239, 228, 0.55); }
+.lit-checkout--dark .lit-checkout-savings { color: var(--lit-gold); }
+.lit-checkout--dark .lit-checkout-input {
+  background: rgba(245, 239, 228, 0.08);
+  border-color: rgba(245, 239, 228, 0.3);
+  color: var(--lit-ivory);
+}
+.lit-checkout--dark .lit-checkout-input::placeholder { color: rgba(245, 239, 228, 0.4); }
+.lit-checkout--dark .lit-checkout-cta {
+  background: linear-gradient(135deg, var(--lit-gold), var(--lit-umber));
+  border-color: transparent;
+  color: var(--lit-ink);
+}
+.lit-checkout--dark .lit-checkout-cta:hover:not(:disabled) { filter: brightness(1.06); }
+.lit-checkout--dark .lit-checkout-error { color: #f0a58a; }
+.lit-checkout--dark .lit-checkout-linklike { color: rgba(245, 239, 228, 0.5); }
+.lit-checkout--dark .lit-checkout-linklike:hover { color: var(--lit-ivory); }
+.lit-checkout--dark .lit-checkout-footnote { color: rgba(245, 239, 228, 0.4); text-align: center; }
+
+/* ── Payment-successful / complete-your-profile page (lit-welcome) ── */
+.lit-welcome-badge {
+  display: inline-block;
+  font-family: var(--font-lit-meta), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lit-oxblood);
+  background: var(--lit-parchment);
+  border: 1px solid var(--lit-rule-strong);
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
 /* Superseded by the floating .ar-share-fab pill below (same component
    /magazine uses) — kept here unused, per this file's usual convention,
    in case the inline row is ever wanted back. */
@@ -967,16 +1078,6 @@
   margin-top: 2px;
 }
 .lit-pricing-card .lit-btn-pill { display: inline-block; text-align: center; }
-/* Matches LiterarySubscribeForm's .lit-form-submit font exactly, so the
-   two CTAs (Subscribe / Upgrade to Moveee Lit) read as one pair rather
-   than the "Upgrade" button falling back to .lit-btn-pill's plain
-   inherited body font. */
-.lit-pricing-card .lit-btn-pill--fill {
-  font-family: var(--font-lit-meta), "Inter", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
 /* LiterarySubscribeForm nested in the Citizen card (subscribe page) — tighter
    than its usual full-page spacing since it's sharing a compact card now. */
 .lit-pricing-card .lit-form { margin-top: 20px; gap: 14px; }

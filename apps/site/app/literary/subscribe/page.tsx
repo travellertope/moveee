@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LiterarySubscribeForm from "@/components/LiterarySubscribeForm";
+import LiteraryLitCheckout from "@/components/LiteraryLitCheckout";
 import { LITERARY_FREE_READ_LIMIT } from "@/lib/literary-access";
 
 export const metadata: Metadata = {
@@ -57,10 +58,6 @@ export default function LiterarySubscribePage() {
         <div className="lit-pricing-card lit-pricing-card--lit">
           <div className="lit-pricing-card-eyebrow">Moveee Lit</div>
           <h3 className="lit-pricing-card-name">Moveee Lit</h3>
-          <div className="lit-pricing-card-price">
-            ₦1,999<span>/ mo</span>
-          </div>
-          <div className="lit-pricing-card-cycle">or ₦15,000 / $13 billed annually · $1/mo</div>
           <ul className="lit-pricing-card-perks">
             <li>Everything in Citizen</li>
             <li>Unmetered, full access to every piece in The Moveee Literary — public and exclusive alike</li>
@@ -71,9 +68,12 @@ export default function LiterarySubscribePage() {
               <em>Annual subscribers only</em>
             </li>
           </ul>
-          <a className="lit-btn-pill lit-btn-pill--fill" href="/register?tier=lit&next=/literary/subscribe">
-            Upgrade to Moveee Lit →
-          </a>
+          <LiteraryLitCheckout
+            variant="light"
+            returnPath="/literary/lit-welcome"
+            monthlyPrice="₦1,999"
+            yearlyPrice="₦15,000"
+          />
         </div>
       </div>
     </div>
