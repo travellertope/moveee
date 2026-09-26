@@ -77,6 +77,16 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // packageResources), so wiring them as consumers of the OTHER project's
 // packageResources cannot loop back into it and cannot cycle.
 //
+// A fourth round surfaced a THIRD layer, continuing the exact same AGP
+// library-resource pipeline: ':sentry_react-native:generateReleaseRFile'
+// (type GenerateLibraryRFileTask) was flagged reading the OTHER project's
+// parseReleaseLocalResources output (R-def.txt). parseLocalResources plays
+// both roles now — a consumer in layer 2 (of packageResources) and a
+// producer in layer 3 (of generateRFile) — exactly like packageResources
+// itself plays both roles across layers 1 and 2. generateRFile is the
+// terminal step of this per-project pipeline (nothing in this codebase's
+// producer/consumer set depends on it), so this cannot loop back either.
+//
 // DEPENDENCY_LAYERS below makes each layer's producer/consumer task-name
 // templates explicit and independently extensible. If a future build
 // surfaces yet another consumer task racing an existing producer, add its
@@ -105,6 +115,10 @@ gradle.projectsEvaluated {
         [
             producerTemplates: ['package\${variant}Resources'],
             consumerTemplates: ['compile\${variant}LibraryResources', 'parse\${variant}LocalResources'],
+        ],
+        [
+            producerTemplates: ['parse\${variant}LocalResources'],
+            consumerTemplates: ['generate\${variant}RFile'],
         ],
     ]
 
