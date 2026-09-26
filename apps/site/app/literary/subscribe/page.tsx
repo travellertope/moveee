@@ -48,8 +48,8 @@ export default async function LiterarySubscribePage() {
         <div className="lit-pricing-card">
           <h3 className="lit-pricing-card-name">Moveee Citizen</h3>
           <div className="lit-pricing-card-price">Free</div>
+          <div className="lit-pricing-card-cycle">Forever — no card required</div>
           <ul className="lit-pricing-card-perks">
-            <li>Forever — no card required</li>
             <li>{LITERARY_FREE_READ_LIMIT} free reads every 30 days across Fiction, Poetry, Essays, Conversations, In Translation, and Notes</li>
             <li>GetMeLit &amp; Culture Drop newsletters</li>
             <li>The rest of Moveee — Pulse Feed, Discover, Games, Stoop, and more</li>
