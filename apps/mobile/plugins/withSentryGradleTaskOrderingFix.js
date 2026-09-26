@@ -114,6 +114,23 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // in AGP's own graph (both run BEFORE compilation, per their "pre"/
 // "generate...for-compilation" naming), so this cannot introduce a cycle.
 //
+// A seventh round moved one stage further downstream still: this time
+// ':sentry_react-native:bundleLibRuntimeToDirRelease' (type
+// BundleLibraryClassesDir — bundles a library module's compiled .class
+// files into the AAR's runtime-classes directory) was flagged reading the
+// OTHER project's compileReleaseJavaWithJavac output directly. This is a
+// genuinely new, later consumer stage (bundling, not compiling), so it's
+// its own layer rather than folded into layer four — bundleLibRuntimeToDir
+// depends on compileJavaWithJavac within its own project, never the other
+// way around, so wiring it as a cross-project consumer of the sibling
+// project's compileJavaWithJavac/compileKotlin cannot cycle back into
+// those tasks. bundleLibCompileToJarRelease (the sibling task that bundles
+// compiled classes into a plain .jar rather than a directory — already
+// seen succeeding earlier in the same pipeline) was added pre-emptively
+// alongside it: same relationship to compileJavaWithJavac/compileKotlin,
+// so it's almost certainly one race away from being the eighth incident
+// if left uncovered now.
+//
 // DEPENDENCY_LAYERS below makes each layer's producer/consumer task-name
 // templates explicit and independently extensible. If a future build
 // surfaces yet another consumer task racing an existing producer, add its
@@ -156,6 +173,13 @@ gradle.projectsEvaluated {
                 'generate\${variant}BuildConfig',
             ],
             consumerTemplates: ['compile\${variant}JavaWithJavac', 'compile\${variant}Kotlin'],
+        ],
+        [
+            producerTemplates: ['compile\${variant}JavaWithJavac', 'compile\${variant}Kotlin'],
+            consumerTemplates: [
+                'bundleLibRuntimeToDir\${variant}',
+                'bundleLibCompileToJar\${variant}',
+            ],
         ],
     ]
 
