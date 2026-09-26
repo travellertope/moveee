@@ -314,10 +314,6 @@
   font-size: 18px; line-height: 1.75; color: var(--comm-ink);
 }
 .comm-piece-body p { margin: 0 0 24px; }
-.comm-piece-body > p:first-of-type::first-letter {
-  float: left; font-family: var(--font-comm-display), "Newsreader", Georgia, serif; font-weight: 600;
-  font-size: 3.4em; line-height: 0.8; padding: 6px 10px 0 0; color: var(--comm-green);
-}
 .comm-piece-body h2, .comm-piece-body h3 { font-family: var(--font-comm-display), "Newsreader", Georgia, serif; font-weight: 600; color: var(--comm-ink); margin: 1.6em 0 0.6em; }
 .comm-piece-body a { color: var(--comm-green); text-decoration: underline; text-underline-offset: 3px; }
 .comm-piece-body strong { font-weight: 700; }

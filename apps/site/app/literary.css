@@ -354,16 +354,6 @@
   color: var(--lit-ink);
 }
 .lit-piece-body p { margin: 0 0 1.5em; }
-.lit-piece-body > p:first-of-type::first-letter {
-  float: left;
-  font-family: var(--font-lit-display), Georgia, serif;
-  font-weight: 400;
-  font-size: 4.3em;
-  line-height: 0.78;
-  padding-right: 10px;
-  padding-top: 4px;
-  color: var(--lit-oxblood);
-}
 .lit-piece-body h2, .lit-piece-body h3 {
   font-family: var(--font-lit-display), Georgia, serif;
   font-weight: 400;
