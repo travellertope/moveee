@@ -87,6 +87,19 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // terminal step of this per-project pipeline (nothing in this codebase's
 // producer/consumer set depends on it), so this cannot loop back either.
 //
+// A fifth round surfaced a FOURTH layer, the next and expected-final stage
+// of this same pipeline: ':sentry-react-native:compileReleaseJavaWithJavac'
+// (type JavaCompile) was flagged reading the OTHER project's
+// generateReleaseRFile output (the compiled R.jar, needed to resolve R.*
+// symbols during Java compilation). compileJavaWithJavac has nothing in
+// this codebase's producer/consumer set depending on it, so it's a further
+// terminal extension of the chain and cannot cycle. compileKotlin is added
+// alongside it pre-emptively (same relationship — Kotlin compilation also
+// needs R.jar when a module has Kotlin sources referencing resources) even
+// though this specific module currently has no compileKotlin task
+// registered; the findByName guard already makes an absent task a no-op,
+// so covering it now costs nothing and may save a sixth round-trip.
+//
 // DEPENDENCY_LAYERS below makes each layer's producer/consumer task-name
 // templates explicit and independently extensible. If a future build
 // surfaces yet another consumer task racing an existing producer, add its
@@ -119,6 +132,10 @@ gradle.projectsEvaluated {
         [
             producerTemplates: ['parse\${variant}LocalResources'],
             consumerTemplates: ['generate\${variant}RFile'],
+        ],
+        [
+            producerTemplates: ['generate\${variant}RFile'],
+            consumerTemplates: ['compile\${variant}JavaWithJavac', 'compile\${variant}Kotlin'],
         ],
     ]
 
