@@ -49,17 +49,27 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // produce identical outputs, so the only real problem is that they interleave
 // nondeterministically.
 //
-// So instead of naming task pairs, this declares ONE rule: every task in
-// :sentry_react-native runs after every task in :sentry-react-native. That
-// satisfies the validation for every pair that exists today and every pair
-// that would otherwise have surfaced in a future round.
+// So instead of naming task pairs, this declares ordering rules. There are two,
+// because the problem has two halves.
 //
-// Why this cannot cycle: the ordering is strictly one-directional between two
-// disjoint task sets, and neither project declares a dependency on the other
-// (they are sibling leaf libraries; only :app depends on them, and :app is not
-// involved in this ordering). A cycle would require some task in
-// :sentry-react-native to depend on a task in :sentry_react-native, which
-// nothing creates.
+// 1. The duplicates against each other: every task in :sentry_react-native runs
+//    after every task in :sentry-react-native.
+//
+// 2. Consumers: every project that DEPENDS on sentry runs after both copies.
+//    Half one alone left a real gap — :expo:compileReleaseJavaWithJavac reads
+//    the shared compile_library_classes_jar and started as soon as the first
+//    copy produced it, while the second copy was still rewriting that exact
+//    path. Any project depending on sentry has the same exposure, so the
+//    consumer set is derived from the project graph at configuration time
+//    rather than enumerated by hand.
+//
+// Why neither rule can cycle. Half one is strictly one-directional between two
+// disjoint task sets, and neither duplicate declares a dependency on the other.
+// Half two is self-limiting in a stronger way: a project only enters the
+// consumer set by declaring a dependency on sentry, and if sentry also depended
+// on that project Gradle would already have failed the build as a circular
+// project dependency. So the edges added here always point from a dependent to
+// its dependency, which is the direction Gradle's own graph already runs.
 //
 // Cost: the two modules are serialized rather than built in parallel. They are
 // two copies of one small library, so this is a negligible amount of wall time
@@ -90,6 +100,48 @@ gradle.projectsEvaluated {
             // Passing the TaskCollection resolves lazily, so tasks registered
             // after this point are covered too.
             secondTask.mustRunAfter(sentryFirst.tasks)
+        }
+
+        // Part two: consumers. Ordering the duplicates against each other is
+        // not enough on its own — a THIRD project that depends on sentry
+        // (:expo, :app) starts compiling as soon as the first copy's jar is
+        // ready, while the second copy is still rewriting that same path.
+        // Gradle flags that too.
+        //
+        // The consumer set is derived rather than hardcoded, and deriving it
+        // this way is what makes the ordering provably acyclic: a project only
+        // qualifies if it declares a dependency ON sentry, and Gradle would
+        // already have rejected the build as a circular project dependency if
+        // sentry also depended on it. So "consumers run after sentry" can
+        // never close a loop, no matter which projects turn up here.
+        def sentryPaths = [sentryFirstPath, sentrySecondPath] as Set
+
+        rootProject.allprojects.each { candidate ->
+            if (sentryPaths.contains(candidate.path)) return
+
+            def dependsOnSentry = false
+            try {
+                candidate.configurations.each { configuration ->
+                    configuration.dependencies.each { dependency ->
+                        if (dependency instanceof ProjectDependency
+                                && sentryPaths.contains(dependency.dependencyProject.path)) {
+                            dependsOnSentry = true
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // If a future Gradle version changes this inspection API, fall
+                // back to treating the project as a non-consumer. That degrades
+                // to the previous behaviour rather than risking a bogus
+                // ordering edge.
+                dependsOnSentry = false
+            }
+
+            if (dependsOnSentry) {
+                candidate.tasks.configureEach { consumerTask ->
+                    consumerTask.mustRunAfter(sentryFirst.tasks, sentrySecond.tasks)
+                }
+            }
         }
     }
 }
