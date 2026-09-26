@@ -331,7 +331,7 @@ async function PiecePage({ slug }: { slug: string }) {
             <div className="lit-piece-subscribe">
               <div className="lit-piece-subscribe-rule" />
               <h3>The Moveee Literary Citizen</h3>
-              <p>New fiction, poetry, essays and translation, as we publish it — enter your email for a quick code.</p>
+              <p>New fiction, poetry, essays and translation, as we publish it — enter your email to opt in.</p>
               <div className="lit-nl-form">
                 <SubscribeForm
                   placeholder="Email address"

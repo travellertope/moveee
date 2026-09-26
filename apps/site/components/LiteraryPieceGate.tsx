@@ -145,8 +145,8 @@ export default function LiteraryPieceGate({ slug, mode, blocking }: Props) {
             {blocking
               ? mode === "pro"
                 ? "Enter your email and we'll send a code to confirm your Moveee Lit or Pro membership."
-                : "Enter your email for a code, then continue reading — free, no charge."
-              : "New fiction, poetry, essays and translation, as we publish it — enter your email for a quick code."}
+                : "Enter your email to opt in, then continue reading — free, no charge."
+              : "New fiction, poetry, essays and translation, as we publish it — enter your email to opt in."}
           </p>
           <div className="lit-nl-form lit-email-gate-form">
             <input
