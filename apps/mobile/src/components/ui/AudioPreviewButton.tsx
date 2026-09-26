@@ -1,49 +1,60 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent } from "react-native";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "../../hooks/useColors";
 import { fonts, fontSize, radius, type ColorPalette } from "../../theme";
 
 /** 30s Spotify preview clip play/pause button — used on Music Review cards.
- * Mirrors packages/shared/components/pulse/AudioPreviewButton.tsx (web). */
+ * Mirrors packages/shared/components/pulse/AudioPreviewButton.tsx (web).
+ *
+ * Uses expo-audio, not expo-av: expo-av was removed in Expo SDK 57. The
+ * shapes differ — expo-audio's play/pause are synchronous void calls and
+ * `playing` is a plain property, where expo-av returned promises and a
+ * status object. Behaviour here is unchanged: tap toggles, the clip
+ * resets the button when it finishes, and the player is torn down on
+ * unmount so a card scrolling out of view can't keep audio alive. */
 export default function AudioPreviewButton({ uri }: { uri: string }) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const subRef = useRef<{ remove: () => void } | null>(null);
   const [playing, setPlaying] = useState(false);
 
+  // Keyed on uri so this covers both unmount and a card being recycled
+  // onto a different clip — a stale player must never outlive its source.
   useEffect(() => {
     return () => {
-      soundRef.current?.unloadAsync();
+      subRef.current?.remove();
+      playerRef.current?.remove();
+      subRef.current = null;
+      playerRef.current = null;
+      setPlaying(false);
     };
-  }, []);
+  }, [uri]);
 
-  const onStatusUpdate = (status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    if (status.didJustFinish) setPlaying(false);
-  };
-
-  const toggle = async (e: GestureResponderEvent) => {
+  const toggle = (e: GestureResponderEvent) => {
     e.stopPropagation();
     try {
-      if (!soundRef.current) {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri },
-          { shouldPlay: true },
-          onStatusUpdate
+      if (!playerRef.current) {
+        const player = createAudioPlayer(uri);
+        playerRef.current = player;
+        subRef.current = player.addListener(
+          "playbackStatusUpdate",
+          (status: AudioStatus) => {
+            if (!status.isLoaded) return;
+            if (status.didJustFinish) setPlaying(false);
+          }
         );
-        soundRef.current = sound;
+        player.play();
         setPlaying(true);
         return;
       }
-      const status = await soundRef.current.getStatusAsync();
-      if (!status.isLoaded) return;
-      if (status.isPlaying) {
-        await soundRef.current.pauseAsync();
+      if (playerRef.current.playing) {
+        playerRef.current.pause();
         setPlaying(false);
       } else {
-        await soundRef.current.playAsync();
+        playerRef.current.play();
         setPlaying(true);
       }
     } catch {
