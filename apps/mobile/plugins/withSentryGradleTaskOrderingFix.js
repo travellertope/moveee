@@ -45,16 +45,12 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // "Declare an explicit dependency ... using Task#mustRunAfter". mustRunAfter
 // is a pure ORDERING constraint rather than a data dependency: it never forces
 // a task to run, it only fixes relative order when both tasks are already in
-// the graph. That is exactly the guarantee needed here — the two projects
-// produce identical outputs, so the only real problem is that they interleave
-// nondeterministically.
+// the graph.
 //
 // So instead of naming task pairs, this declares ordering rules. There are two,
 // because the problem has two halves.
 //
-// 1. The duplicates against each other: every task in :sentry_react-native runs
-//    after every task in :sentry-react-native.
-//
+// 1. The duplicates against each other.
 // 2. Consumers: every project that DEPENDS on sentry runs after both copies.
 //    Half one alone left a real gap — :expo:compileReleaseJavaWithJavac reads
 //    the shared compile_library_classes_jar and started as soon as the first
@@ -62,6 +58,33 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 //    path. Any project depending on sentry has the same exposure, so the
 //    consumer set is derived from the project graph at configuration time
 //    rather than enumerated by hand.
+//
+// ---------------------------------------------------------------------------
+// THE DUPLICATES ARE NOT IDENTICAL — WHICH ONE RUNS LAST IS LOAD-BEARING
+// ---------------------------------------------------------------------------
+// Earlier revisions of this file assumed the two registrations were byte-
+// identical copies, which made their relative order look arbitrary. That was
+// wrong, and it cost a build to find out.
+//
+// The Expo-autolinked copy (:sentry-react-native) compiles an additional source
+// set that the classic-autolinked copy (:sentry_react-native) does not — the
+// one providing io.sentry.react.expo.SentryExpoPackage. :expo's generated
+// ExpoModulesPackageList.java references that class directly.
+//
+// Since both projects write the same classes.jar, the copy that runs LAST
+// decides what ends up in it. Ordering the classic copy last produced a jar
+// without the expo package and :expo failed to compile with
+// "package io.sentry.react.expo does not exist" — not a Gradle validation
+// error, a real javac failure. Before any ordering existed at all this was a
+// coin flip that sometimes landed the right way round.
+//
+// So the order below is deliberate and load-bearing: the classic copy runs
+// first and the Expo copy runs last, because the Expo copy's output is a
+// superset. Do not swap these two values. (This is also the true explanation
+// for an earlier failed experiment that disabled the classic registration via
+// react-native.config.js and hit this same missing-class error — the missing
+// symbol was the real signal, and it was misread as the exclusion breaking a
+// dependency.)
 //
 // Why neither rule can cycle. Half one is strictly one-directional between two
 // disjoint task sets, and neither duplicate declares a dependency on the other.
@@ -86,11 +109,15 @@ module.exports = function withSentryGradleTaskOrderingFix(config) {
 
 // ${marker} — see apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
 gradle.projectsEvaluated {
-    // Order is deliberate and one-directional: everything in the SECOND
-    // project runs after everything in the FIRST. Do not make this
-    // bidirectional — that would be a cycle by construction.
-    def sentryFirstPath = ':sentry-react-native'
-    def sentrySecondPath = ':sentry_react-native'
+    // Order is deliberate, one-directional, and load-bearing. Both projects
+    // write the same classes.jar, so whichever runs LAST decides its contents.
+    // The Expo copy compiles a superset (it provides
+    // io.sentry.react.expo.SentryExpoPackage, which :expo needs), so it must
+    // run last. Swapping these two values produces a jar missing that class
+    // and breaks :expo:compileReleaseJavaWithJavac. Do not make this
+    // bidirectional either — that would be a cycle by construction.
+    def sentryFirstPath = ':sentry_react-native'
+    def sentrySecondPath = ':sentry-react-native'
 
     def sentryFirst = findProject(sentryFirstPath)
     def sentrySecond = findProject(sentrySecondPath)
