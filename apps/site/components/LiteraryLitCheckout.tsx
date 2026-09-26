@@ -161,19 +161,24 @@ export default function LiteraryLitCheckout({
           </button>
         </form>
       ) : (
-        <form className="lit-checkout-form" onSubmit={verifyAndCheckout}>
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            inputMode="numeric"
-            autoFocus
-            maxLength={6}
-            placeholder="000000"
-            className="lit-checkout-input lit-checkout-input--code"
-          />
-          <button type="submit" disabled={busy || code.length < 6} className="lit-checkout-cta">
-            {busy ? "Verifying…" : "Continue to checkout →"}
-          </button>
+        <form className="lit-checkout-form-wrap" onSubmit={verifyAndCheckout}>
+          <p className="lit-checkout-hint">
+            We emailed a 6-digit code to {email} — check your inbox (and spam folder) to continue.
+          </p>
+          <div className="lit-checkout-form">
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoFocus
+              maxLength={6}
+              placeholder="000000"
+              className="lit-checkout-input lit-checkout-input--code"
+            />
+            <button type="submit" disabled={busy || code.length < 6} className="lit-checkout-cta">
+              {busy ? "Verifying…" : "Continue to checkout →"}
+            </button>
+          </div>
         </form>
       )}
 
