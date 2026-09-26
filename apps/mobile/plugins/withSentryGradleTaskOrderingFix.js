@@ -63,9 +63,26 @@ const { withProjectBuildGradle } = require("@expo/config-plugins");
 // Fixed by going back to an explicit allowlist of the exact consumer task
 // names actually observed racing the producer's output — never a task
 // starting with generate/pre, so it can never re-wire onto the producer's
-// own dependency chain and can never cycle. Extend CONSUMER_TASK_NAMES (not
-// the matcher) if a future build surfaces another specific consumer task
-// name racing this same producer output.
+// own dependency chain and can never cycle.
+//
+// A third round surfaced a SECOND, deeper layer: Gradle additionally flagged
+// ':sentry-react-native:compileReleaseLibraryResources' and
+// ':sentry_react-native:parseReleaseLocalResources' as implicitly reading
+// the OTHER project's packageReleaseResources output. This is real — the
+// duplicate projects alias the same physical output directory at this layer
+// too — but it's a genuinely different producer (packageReleaseResources,
+// not generateReleaseResValues/Resources). compileLibraryResources and
+// parseLocalResources are true AGP siblings of packageResources (both only
+// depend on generateResources within their own project, never on
+// packageResources), so wiring them as consumers of the OTHER project's
+// packageResources cannot loop back into it and cannot cycle.
+//
+// DEPENDENCY_LAYERS below makes each layer's producer/consumer task-name
+// templates explicit and independently extensible. If a future build
+// surfaces yet another consumer task racing an existing producer, add its
+// template to that layer's consumerTemplates. If it's a new producer
+// entirely, add a new layer. Never widen a template back into a substring
+// match (see the incident above for exactly why that breaks).
 module.exports = function withSentryGradleTaskOrderingFix(config) {
   return withProjectBuildGradle(config, (config) => {
     const marker = "withSentryGradleTaskOrderingFix";
@@ -76,8 +93,20 @@ module.exports = function withSentryGradleTaskOrderingFix(config) {
 gradle.projectsEvaluated {
     def sentryProjectPaths = [':sentry-react-native', ':sentry_react-native']
     def variants = ['Release', 'Debug']
-    def producerTaskSuffixes = ['ResValues', 'Resources']
-    def consumerTaskNameTemplates = ['package\${variant}Resources', 'extractDeepLinks\${variant}']
+
+    // Each layer: producerTemplates are task names that write the shared,
+    // aliased output directory; consumerTemplates are task names observed
+    // reading it without an explicit dependency. Extend, don't broaden.
+    def dependencyLayers = [
+        [
+            producerTemplates: ['generate\${variant}ResValues', 'generate\${variant}Resources'],
+            consumerTemplates: ['package\${variant}Resources', 'extractDeepLinks\${variant}'],
+        ],
+        [
+            producerTemplates: ['package\${variant}Resources'],
+            consumerTemplates: ['compile\${variant}LibraryResources', 'parse\${variant}LocalResources'],
+        ],
+    ]
 
     sentryProjectPaths.each { producerPath ->
         def producerProject = findProject(producerPath)
@@ -89,18 +118,20 @@ gradle.projectsEvaluated {
             if (consumerProject == null) return
 
             variants.each { variant ->
-                def producerTasks = producerTaskSuffixes.collect { suffix ->
-                    producerProject.tasks.findByName("generate\${variant}\${suffix}")
-                }.findAll { it != null }
-                if (producerTasks.isEmpty()) return
+                dependencyLayers.each { layer ->
+                    def producerTasks = layer.producerTemplates.collect { template ->
+                        producerProject.tasks.findByName(template.replace('\${variant}', variant))
+                    }.findAll { it != null }
+                    if (producerTasks.isEmpty()) return
 
-                consumerTaskNameTemplates.each { template ->
-                    def consumerTaskName = template.replace('\${variant}', variant)
-                    def consumerTask = consumerProject.tasks.findByName(consumerTaskName)
-                    if (consumerTask == null) return
+                    layer.consumerTemplates.each { template ->
+                        def consumerTaskName = template.replace('\${variant}', variant)
+                        def consumerTask = consumerProject.tasks.findByName(consumerTaskName)
+                        if (consumerTask == null) return
 
-                    producerTasks.each { producerTask ->
-                        consumerTask.dependsOn(producerTask)
+                        producerTasks.each { producerTask ->
+                            consumerTask.dependsOn(producerTask)
+                        }
                     }
                 }
             }
