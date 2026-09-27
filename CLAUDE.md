@@ -10345,6 +10345,63 @@ labels, and the absence of a medium dimension.
   bump) and then a real round trip: log something of each medium, review a couple of them, and
   confirm the filter, the counts and every stats section agree.
 
+### Rating without a review — the `rating` column (September 2026)
+
+Until this, a rating could only exist on a `culture_post` **review**
+(`_book_overall_rating` and its four siblings), so there was no way to say "4 stars"
+without going through the composer. The log had a cheap action (shelve it) and an
+expensive one (write a review) and nothing in between — and a member who rated
+nothing showed an empty histogram on Your Year in Culture no matter how much they
+had logged.
+
+- **`wp_culture_reading_shelf` gained `rating tinyint(4) NOT NULL DEFAULT 0` and
+  `rated_at datetime`.** `CULTURE_VERSION` bumped `3.4.0` → `3.5.0` so
+  `culture_community_maybe_upgrade()` runs the `dbDelta` (plugin header `2.6.10` →
+  `2.6.11`). **0 means unrated, not zero stars** — there is no zero-star rating
+  anywhere in this product, and the frontends rely on that distinction.
+- **`set_shelf_rating( $user_id, $directory_id, $rating )`** is the new write.
+  A rating above 0 also moves the row to `read` and stamps `finished_at` (stickily,
+  same rule the rest of this class already follows), because rating something *is*
+  the finish action in both frontends. **Clearing a rating (0) deliberately does not
+  un-read it** — those are separate statements. Rating an unshelved entry creates the
+  row; rating 0 on an unshelved entry is a no-op rather than a reason to insert an
+  empty one.
+- **`set_shelf_status()` took an optional 4th `$rating` param** so a status change and
+  a rating can land in one write. **Neither REST surface `absint`s the `rating` arg** —
+  the handler needs to tell an absent param (leave the rating alone) from an explicit
+  `0` (clear it), and `absint` collapses both. `is_valid_rating()` rejects anything
+  non-integral or outside 0–5 rather than clamping: a 7 is a caller bug, not a 5.
+- **New routes, mirrored as usual**: `POST /culture/v1/reading/rating` (API key +
+  explicit `user_id`) and `POST /culture/v1/mobile/reading/rating` (JWT), both thin
+  wrappers over the one method. Next.js proxy: `apps/connect/app/api/reading/rating/
+  route.ts`. The pre-existing shelf POST proxy needed no change — it already spreads
+  `...body`, so `rating` passes through.
+- **`get_reading_stats()`'s rating histogram was restructured from per-review to
+  per-entry.** A review's rating still wins (it has prose behind it); the shelf column
+  only fills entries with no review, which previously went uncounted entirely. This
+  also closes a latent double-count: the old loop incremented once per *review*, so two
+  reviews pointing at one entry counted twice. New fields `rated_count` and
+  `average_rating` (one decimal, `null` when nothing is rated) come out of the same
+  pass. **Top genres stay review-only** — the shelf has no genre data to fall back on.
+- **Copy that was wrong the moment this shipped, and is fixed**: both stats screens said
+  "Ratings — Your Reviews" with an empty state reading "review something you've logged to
+  see it here." Ratings no longer require a review; both now read "Your ratings" with the
+  average inline, and the empty state points at the stars.
+- **Not built**: no credits/reputation award for rating (the gamification hook is still
+  its own later phase, and paying for a one-tap action is exactly the list-stuffing
+  incentive the plan doc warns about); no half-stars; no rating history (a re-rate
+  overwrites, `rated_at` moves).
+- **Verified**: `tsc --noEmit` **exit 0** on `apps/connect` and `apps/site`, `apps/mobile`
+  held at its documented 37-error baseline with none in the touched files; `php -l` clean
+  on all four touched PHP files; CSS brace balance on `member.css` (633/633); and both new
+  pieces of logic exercised standalone in real PHP rather than reasoned about — the
+  review-wins/shelf-fallback resolution across seven fixtures (review only, shelf only,
+  both on one entry, mixed, none, out-of-range, empty year) and `is_valid_rating()` across
+  fifteen inputs including `3.0`, `"4.5"`, `true` and `[]`. **Not** tested against a live
+  WordPress: needs the plugin redeployed before the column exists, then a real round trip —
+  rate from each platform, re-tap to clear, rate something that also has a review, and
+  confirm the histogram and average agree.
+
 ---
 
 ## Interest taxonomy (canonical slugs)

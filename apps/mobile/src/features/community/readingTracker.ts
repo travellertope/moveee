@@ -128,6 +128,12 @@ export interface ShelfEntry {
   averageRating: number | null;
   medium: MediumOrOther;
   status: ShelfStatus;
+  /**
+   * This member's own rating, 0-5. 0 means unrated — there is no zero-star
+   * rating. Distinct from `averageRating`, which is the community aggregate
+   * on the entry itself. Set without writing a review via POST reading/rating.
+   */
+  rating: number;
   startedAt: string | null;
   finishedAt: string | null;
 }
@@ -155,6 +161,10 @@ export interface ReadingStats {
   pace_breakdown: Record<Pace, number>;
   mood_breakdown: Record<string, number>;
   rating_distribution: Record<string, number>;
+  /** How many logged entries carried a rating at all (review or shelf). */
+  rated_count: number;
+  /** Mean of those, to one decimal. null when nothing was rated. */
+  average_rating: number | null;
   top_genres: { genre: string; count: number; medium: MediumOrOther }[];
   /** @deprecated use `entries_logged` */
   books_read?: number;

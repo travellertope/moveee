@@ -337,6 +337,19 @@ class Culture_Mobile_API {
             'args'                => array(
                 'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'status'       => array( 'required' => true, 'type' => 'string' ),
+                // Optional: set a rating in the same write. Not absint'd, so
+                // the handler can tell "absent" from "0" (clear the rating).
+                'rating'       => array( 'required' => false, 'type' => 'integer' ),
+            ),
+        ) );
+        // Rate without authoring a review. Mirrors /reading/rating.
+        register_rest_route( 'culture/v1', '/mobile/reading/rating', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_rating_set' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'rating'       => array( 'required' => true, 'type' => 'integer' ),
             ),
         ) );
         register_rest_route( 'culture/v1', '/mobile/reading/shelf', array(
@@ -2170,7 +2183,20 @@ class Culture_Mobile_API {
         $user_id      = get_current_user_id();
         $directory_id = (int) $request->get_param( 'directory_id' );
         $status       = sanitize_key( $request->get_param( 'status' ) );
-        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status );
+        $rating       = $request->has_param( 'rating' ) ? $request->get_param( 'rating' ) : null;
+        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status, $rating );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_rating_set( $request ) {
+        $result = Culture_Reading_Tracker::set_shelf_rating(
+            get_current_user_id(),
+            (int) $request->get_param( 'directory_id' ),
+            $request->get_param( 'rating' )
+        );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
