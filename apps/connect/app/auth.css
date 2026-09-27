@@ -373,3 +373,50 @@
   padding-top: 20px;
   border-top: 1px solid var(--rule);
 }
+
+/* ── Magic-code sign-in ─────────────────────────────────────────────────────
+   The email → 6-digit-code flow /login and /register both lead with. See
+   components/MagicCodeSignIn.tsx. Everything here builds on the existing
+   .auth-* form tokens above — no new colours, only the code box's own
+   character spacing and the two secondary actions under it. */
+
+.auth-code-sent {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--mute);
+  margin: 0 0 18px;
+}
+.auth-code-sent b { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+
+/* Wide tracking + a monospace face so a 6-digit code reads as digits to
+   check off rather than a word — the one input on these pages people
+   transcribe by eye from another screen. */
+.auth-input--code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 22px;
+  letter-spacing: 0.32em;
+  text-align: center;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.auth-input--code::placeholder { letter-spacing: 0.32em; color: var(--rule); }
+
+.auth-notice {
+  font-size: 13px;
+  color: var(--success, #2d6a4f);
+  margin: 0 0 12px;
+}
+
+.auth-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+.auth-code-actions .auth-footer-btn { font-size: 13px; }
+.auth-code-actions .auth-footer-btn:disabled {
+  color: var(--mute);
+  cursor: default;
+}
+.auth-code-actions .auth-footer-btn:disabled:hover { text-decoration: none; }

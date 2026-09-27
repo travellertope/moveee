@@ -10377,6 +10377,13 @@ attempt to skip straight to code with "mockup first perhaps," and the approved m
 
 ## Registration flow (redesigned)
 
+**Partly superseded (September 2026)** — the flow below is still exactly what happens when
+someone picks "Set a username and password" on `/register`, but it is no longer the default
+path. See "Sign-in and registration — one-time codes are the default (September 2026)" below
+for what `/login` and `/register` actually lead with now, and for which of the steps below are
+still blocking (none of them are).
+
+
 New flow: 3-field quick signup → email verification → 2 post-verification steps.
 
 **Step 1 — `/register`:** Email, Username, Password only. On submit:
@@ -10406,6 +10413,83 @@ New flow: 3-field quick signup → email verification → 2 post-verification st
 - `class-culture-emails.php`: `send_verification_email($user_id, $token, $next_url)`
 
 ---
+
+## Sign-in and registration — one-time codes are the default (September 2026)
+
+Signing up used to be six screens: `/register` (email + username + password) → leave the site
+and click an emailed verification link → `/register/complete`'s three-step wizard (DOB/country/
+city/occupation → a 3-interest minimum → pick a membership tier). Almost none of it was
+load-bearing, and the tier step asked a stranger to choose a plan before they had seen
+anything. `/login` and `/register` now both lead with a 6-digit emailed code instead: enter an
+email, type the code, you are in — the same two taps whether or not the address already has an
+account.
+
+**Almost nothing new was built — the mechanism already existed and was only ever pointed at
+newsletter widgets.** `Culture_Magic_OTP` (`class-culture-magic-otp.php`) and the `otpEmail`/
+`otpCode` branch of `authorize()` in `packages/shared/lib/auth.ts` have been shipped since the
+"Magic-code sign-in + subscribe" work on Site A; `verify_otp()` already found-or-created a real
+account (auto-generating a username from the email, `citizen` tier, email marked verified). The
+work here was wiring that to the auth pages and taking the wall down behind it.
+
+- **New: `apps/connect/components/MagicCodeSignIn.tsx`** — the email → code widget both pages
+  render. Step 1 posts to the new `apps/connect/app/api/auth/magic-otp/request/route.ts` (Site
+  B's own copy of the proxy Site A already had at `app/api/newsletter/magic-otp/request`); step
+  2 calls `signIn("credentials", { otpEmail, otpCode })` directly, so there is deliberately no
+  verify proxy on either app — `authorize()` is what reaches WordPress. Includes a 30s resend
+  countdown, because WordPress rate-limits to 3 requests per 10 minutes per address and it is
+  easy to burn all three on impatient taps.
+- **`otpList` is now sent as `""` from the auth pages, and that empty value is meaningful.**
+  `handle_magic_otp_verify()` switched from `get_param('list') ?: 'getmelit'` to
+  `has_param('list') ? ... : 'getmelit'`, and `verify_otp()` skips subscribing on an empty slug
+  — signing in must never silently join anyone to a mailing list. A caller that omits the param
+  entirely still gets the GetMeLit default the subscribe widgets were built around, so
+  `SubscribeForm`/`LiterarySubscribeForm` are untouched (all three already pass a real slug).
+  **Never pass a real list slug from an auth page.**
+- **Referral attribution survives the code path**, which it would not have by default.
+  `Culture_Referrals::process_referral()` is hooked on `user_register` and reads
+  `$_COOKIE['culture_ref']` or `$_POST['culture_referral_code']` — the cookie can't work
+  headlessly (it would land on `cms.themoveee.com`, not the frontend origin) and a JSON REST
+  body never populates `$_POST`. So `verify_otp()`/`find_or_create_user()` take a `$referral`
+  param and set `$_POST['culture_referral_code']` around the `wp_create_user()` call only,
+  restoring the previous value after. `?ref=` on `/register` is threaded through as
+  `otpReferral`. **If another headless path ever needs to create an account with referral
+  credit, copy this shape — don't re-hook `user_register`.**
+- **`/register/complete` is no longer a gate.** Every field on the About step is optional (the
+  `required` attributes and the three "*" markers are gone), the interests step's 3-minimum is
+  gone, and both steps have a real "Skip for now" that completes the account as a free Citizen.
+  `handleMembershipSubmit()` was split so `submitProfile(tier)` can be called from either. The
+  membership step now opens with "Moveee Citizen is free and already selected". The
+  `?upgrade=patron|lit` entry is untouched and still goes straight to the membership step.
+- **Interests needed no new nudge** — `PulseFeed.tsx` has shown a "Personalise your feed" banner
+  to logged-in members with none set since the Overlays pass. That is now the primary place
+  interests get collected, where the payoff is visible.
+- **Stoop collects the location instead**, since it is the only surface where "near you" is
+  load-bearing. `StoopBrowser.tsx` renders a `.stoop-loc-prompt` card (CountrySelect +
+  CitySelect + save) when the viewer has no city or country on their profile and no city filter
+  set; it PATCHes the existing `/api/user/profile` and then sets the component's own `city`
+  state directly rather than waiting for the NextAuth JWT to pick the saved profile up on its
+  next refresh. Without it the page still worked, it just silently listed every Stoop
+  everywhere.
+- **Two pre-existing bugs fixed in passing**: `/register` called `router.replace()` during
+  render, *before* its `useState` calls, on the `isUpgrade && session` path — a Rules of Hooks
+  violation that changes the hook count between renders (moved into a `useEffect`); and
+  `/register` only ever read `?next=`, so the `?callbackUrl=` that Site A's `/stoop` landing
+  page sends was silently dropped. It now accepts either.
+- **Known rough edge, deliberately left**: finishing the *password* path still redirects to
+  `/login?registered=1` rather than signing you in, because that flow never holds the password
+  on the client. The code path signs you in immediately, so this only affects the secondary
+  route; closing it properly needs a token exchange and was out of scope.
+- Plugin header bumped `2.6.8` → `2.6.9` for redeploy confirmation. **No `CULTURE_VERSION`
+  bump** — no new dbDelta table. The plugin must be redeployed before `referral`/the empty-list
+  behaviour exist in production; until then an auth-page sign-in would subscribe the address to
+  GetMeLit, which is the pre-existing behaviour, not a new break.
+- **Verified**: `tsc --noEmit` clean on both `apps/connect` and `apps/site` (exit 0, not merely
+  "no new errors" — `node_modules` was present this session), `php -l` clean on all three
+  touched PHP files, CSS brace-balance on `auth.css` (96/96) and `stoop.css` (167/167), and the
+  code step rendered in real Chromium at 1280px and 390px against the real `auth.css` (no
+  horizontal overflow at either). **Not** tested end-to-end against a live WordPress — re-check
+  the full email → code → account-created → signed-in round trip, on both a brand-new address
+  and an existing member's, and a `?ref=` signup, before considering this closed.
 
 ## Google Sign-In (June 2026)
 

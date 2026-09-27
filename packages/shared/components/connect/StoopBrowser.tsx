@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { openSearchModal } from "@/lib/searchModalBus";
 import { onStoopFilters } from "@/lib/stoopFiltersBus";
+import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
 interface Cluster {
   id: number;
@@ -96,6 +97,45 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
   const [sort, setSort] = useState<"nearest_capacity" | "newest">("nearest_capacity");
   const [joiningId, setJoiningId] = useState<number | null>(null);
   const [joinError, setJoinError] = useState<{ id: number; message: string } | null>(null);
+
+  // Signing up no longer asks for a location — it's collected here instead,
+  // at the one place that genuinely needs it. Without it this page still
+  // works, it just can't scope anything to "near you", so prompt rather than
+  // quietly listing every Stoop everywhere.
+  const [locCountry, setLocCountry] = useState("");
+  const [locCity, setLocCity] = useState("");
+  const [savingLoc, setSavingLoc] = useState(false);
+  const [locError, setLocError] = useState("");
+  const needsLocation = !viewerCity && !viewerCountry && !city;
+
+  async function saveLocation() {
+    if (savingLoc) return;
+    if (!locCountry.trim() && !locCity.trim()) {
+      setLocError("Pick a country, or a city, so we know where to look.");
+      return;
+    }
+    setLocError("");
+    setSavingLoc(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country_of_residence: locCountry.trim(),
+          city: locCity.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      // Scope the page immediately off local state rather than waiting for
+      // the NextAuth JWT to pick the saved profile up on its next refresh.
+      if (locCity.trim()) setCity(locCity.trim());
+      else router.refresh();
+    } catch {
+      setLocError("Couldn't save that — try again.");
+    } finally {
+      setSavingLoc(false);
+    }
+  }
 
   useEffect(() => onStoopFilters(({ city: c }) => setCity(c)), []);
 
@@ -235,6 +275,43 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
             📍 {city}
             <button type="button" className="stoop-chip-clear" onClick={() => setCity(null)} aria-label="Clear city filter">✕</button>
           </span>
+        </div>
+      )}
+
+      {needsLocation && !myCluster && (
+        <div className="stoop-loc-prompt">
+          <div className="stoop-loc-copy">
+            <h3>Where are you?</h3>
+            <p>
+              Tell us your city and we&apos;ll show the Stoops forming near you. Only the area is
+              ever shown to other members, never your address.
+            </p>
+          </div>
+          <div className="stoop-loc-fields">
+            <CountrySelect
+              id="stoop-loc-country"
+              value={locCountry}
+              onChange={setLocCountry}
+              inputClassName="stoop-loc-input"
+              placeholder="Country"
+            />
+            <CitySelect
+              id="stoop-loc-city"
+              country={locCountry}
+              value={locCity}
+              onChange={setLocCity}
+              inputClassName="stoop-loc-input"
+            />
+            <button
+              type="button"
+              className="stoop-loc-save"
+              onClick={saveLocation}
+              disabled={savingLoc}
+            >
+              {savingLoc ? "Saving…" : "Show me Stoops"}
+            </button>
+          </div>
+          {locError && <p className="stoop-loc-error">{locError}</p>}
         </div>
       )}
 

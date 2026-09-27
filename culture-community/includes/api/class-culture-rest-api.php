@@ -266,6 +266,11 @@ class Culture_REST_API {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_title',
                 ),
+                'referral' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
             ),
         ) );
 
@@ -2914,8 +2919,18 @@ class Culture_REST_API {
     }
 
     public static function handle_magic_otp_verify( $request ) {
-        $list = $request->get_param( 'list' ) ?: 'getmelit';
-        $user = Culture_Magic_OTP::verify_otp( $request->get_param( 'email' ), $request->get_param( 'code' ), $list );
+        // An explicitly-sent empty list means "this code is a credential, not a
+        // subscription" — the /login and /register pages send that, so signing
+        // in never silently joins anyone to a mailing list. Only a caller that
+        // omits the param entirely (e.g. an older client) gets the GetMeLit
+        // default the subscribe widgets were originally built around.
+        $list = $request->has_param( 'list' ) ? (string) $request->get_param( 'list' ) : 'getmelit';
+        $user = Culture_Magic_OTP::verify_otp(
+            $request->get_param( 'email' ),
+            $request->get_param( 'code' ),
+            $list,
+            (string) $request->get_param( 'referral' )
+        );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
