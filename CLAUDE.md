@@ -9578,7 +9578,7 @@ data fetching, no session, no `dynamic` override needed.
   is `background-image: url("/stoop/<name>.jpg"), linear-gradient(...)`, so a missing file
   degrades to a plausible block of colour instead of a broken-image icon. That is what let the
   page ship before the photography existed. **Drop the real files at
-  `apps/site/public/stoop/{hero,talking,table,doorstep,door,arriving,planning,street}.jpg` and
+  `apps/site/public/stoop/{hero,talking,table,doorstep,arriving,planning,street}.jpg` and
   they appear with no code change.** Each filename is commented in `stoop.css` with the shot it
   needs. **When the real photos land, convert these to `next/image`** — a CSS background
   carries no alt text, no responsive srcset and no lazy loading, which is fine for placeholder
@@ -9591,6 +9591,22 @@ data fetching, no session, no `dynamic` override needed.
   actually do (turn up, eat and talk, make plans), not the QR/reminder mechanics. Rewards are
   one line, not a breakdown. **If you edit this page's copy, keep that register** — several
   rounds of feedback went into removing exactly that kind of language.
+- **Three follow-up changes (September 2026)**: the CTA pairs became `StoopCtas.tsx`, a client
+  island that swaps "Get Started"/"Sign in" for "Find groups near you"/"Start a group" once
+  `useSession()` resolves an authenticated visitor (same pattern as `LiteraryMasthead.tsx`,
+  reading the shared `.themoveee.com` cookie — the page itself stays static); the "A group opens
+  once four people have joined" section was removed at the user's request, leaving
+  `.stp-facts`/`.stp-fact*`/`.stp-ph--door` dead but kept, and `door.jpg` no longer needed; and
+  `.stp-two` went from `align-items: center` to `start` so a left column doesn't float
+  vertically against a taller card beside it.
+- **A real bug found in that pass, worth remembering**: `.stp-week-note`'s `margin-top` had
+  never once applied, because `.stp-page p { margin: 0 }` (0,1,1) out-specifies
+  `.stp-week-note` (0,1,0) — the note had been sitting flush against the cards since it
+  shipped. Fixed by qualifying the rule to `.stp-page .stp-week-note`. **This file sets
+  `margin: 0` on every `p` under `.stp-page`, so any new rule here that needs a margin on a
+  paragraph must carry at least two classes** — same "a more specific selector silently zeroes
+  a margin a more general rule was meant to set" class of bug already documented for the
+  article gallery/table.
 - **Verified in a real browser** (unlike most passes in this file): the real `stoop.css` plus
   the real `:root` tokens from `globals.css` were rendered in headless Chromium at 1280px and
   390px — no horizontal overflow at either width, no console errors. Also checked via a

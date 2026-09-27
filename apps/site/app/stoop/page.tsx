@@ -53,53 +53,6 @@ export default function StoopPage() {
         </section>
       </div>
 
-      {/* ── HOW A GROUP STARTS ── */}
-      <div className="stp-wrap">
-        <section className="stp-section">
-          <div className="stp-sec-head">
-            <h2>A group opens once four people have joined.</h2>
-            <p>
-              A member in your area creates a group and picks a day of the week. The group stays
-              closed until four people have joined. If four people have not joined within thirty
-              days, the group closes on its own and everyone is shown other groups nearby.
-            </p>
-          </div>
-          <div className="stp-two">
-            <span className="stp-ph stp-ph--door" role="presentation" />
-            <div className="stp-facts">
-              <div className="stp-fact">
-                <span className="stp-fact-n">4</span>
-                <span className="stp-fact-t">
-                  people needed before a group opens. Until then only the people who have joined
-                  can see it.
-                </span>
-              </div>
-              <div className="stp-fact">
-                <span className="stp-fact-n">30</span>
-                <span className="stp-fact-t">
-                  days to reach four people. After that the group closes and members are pointed
-                  to nearby ones.
-                </span>
-              </div>
-              <div className="stp-fact">
-                <span className="stp-fact-n">12</span>
-                <span className="stp-fact-t">
-                  people is the usual limit. The person hosting sets the real number, based on the
-                  space they have.
-                </span>
-              </div>
-              <div className="stp-fact">
-                <span className="stp-fact-n">1</span>
-                <span className="stp-fact-t">
-                  day a week. Every group meets on the same day, so there is nothing to arrange
-                  each time.
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
       {/* ── WHAT A WEEK LOOKS LIKE ── */}
       <section className="stp-section stp-tint">
         <div className="stp-wrap">
