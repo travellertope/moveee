@@ -12074,10 +12074,44 @@ both caught by `expo export:embed` before any build credit was spent:
 "correct" this back to `~7.11.0`** — that reintroduces all three problems at once. If expo-doctor
 flags the version as mismatched, that warning is expected and should be ignored for this package.
 
-**`promise` hoisting, worth knowing if the first error ever returns**: nothing else in the tree
-depends on `promise`, and npm's *workspace-root* install nests it at
-`node_modules/react-native/node_modules/promise`, where Sentry (at `node_modules/@sentry/react-native/`)
-cannot resolve it. The **standalone `apps/mobile/package-lock.json` that EAS's `npm ci` consumes
-hoists it to top level**, which is the layout that actually matters. To make a *local*
-`expo export:embed` check faithful to EAS, symlink it up:
-`ln -sfn "$PWD/node_modules/react-native/node_modules/promise" node_modules/promise`.
+**`promise` hoisting — FIXED September 2026, and the old note here was wrong.** This entry used
+to claim that "the standalone `apps/mobile/package-lock.json` that EAS's `npm ci` consumes hoists
+it to top level, which is the layout that actually matters," and to recommend a local symlink
+(`ln -sfn .../react-native/node_modules/promise node_modules/promise`) to make local checks
+faithful. **Both halves of that were wrong, and together they hid a real build break for weeks.**
+
+A real EAS iOS production build failed with exactly the `Unable to resolve module
+promise/setimmediate/done from .../@sentry/react-native/...` error this section describes. The
+log's first line — `npm warn config ignoring workspace config at
+/Users/expo/workingdir/build/apps/mobile/.npmrc` — plus its resolution paths (`../../node_modules`,
+i.e. the monorepo root) prove **EAS installs from the repo root as a workspace, not from the
+standalone mobile lockfile**. And the root lockfile placed `promise` at
+`node_modules/react-native/node_modules/promise`, where `@sentry/react-native` (a sibling at
+`node_modules/@sentry/react-native/`) genuinely cannot reach it. The recommended symlink made
+every local `expo export:embed` pass regardless, so the one check that would have caught this was
+neutralised by the very note telling you to run it.
+
+**The fix is a one-line dependency declaration**: `"promise": "^8.3.0"` in `apps/mobile/package.json`
+(matching React Native's own range exactly, so there is never a second copy or a version skew).
+Declaring it as a direct dependency of the workspace forces npm to hoist a single copy to the root
+`node_modules`, where both `react-native` and `@sentry/react-native` resolve it by ordinary upward
+lookup. Verified empirically, not by reasoning: with the symlink removed, `npx expo export:embed
+--eager --platform ios --dev false` reproduced the EAS error byte-for-byte; with `promise` moved to
+top level exactly as the regenerated lockfile specifies, the same command bundled 2606 modules
+cleanly.
+
+**Never reinstate the symlink.** If a local check needs a faithful tree, delete
+`node_modules/promise` if it is a symlink and let a real install place it. **And do not trust the
+standalone `apps/mobile/package-lock.json` as "the one EAS uses"** — it is still tracked and still
+regenerated out-of-tree per the process above, but the root `package-lock.json` is what a
+root-workspace EAS build actually resolves against. When a dependency-resolution bug reaches an EAS
+build, check the **root** lockfile's layout for the package first (`python3 -c "import json; pk =
+json.load(open('package-lock.json'))['packages']; print([k for k in pk if
+k.endswith('node_modules/<pkg>')])"`), not the mobile one.
+
+**Regenerating the root lockfile is safe from the repo root** (`npm install --package-lock-only`)
+— that is not the forbidden operation. The forbidden one is running `npm install` *inside*
+`apps/mobile`, which prunes the other workspaces out of the root lockfile. After regenerating,
+confirm the diff is scoped: entry count unchanged, all 8 `apps/*`/`packages/*` workspace entries
+still present. This fix's own diff was exactly one added declaration plus `promise` moving from
+nested to top level.
