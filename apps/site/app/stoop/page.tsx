@@ -1,16 +1,13 @@
+import StoopCtas from "@/components/StoopCtas";
 import "./stoop.css";
 
 // Site B owns auth — every CTA on this page leaves for web.themoveee.com.
 // Same constant/shape as Header.tsx and ShopFooter.tsx in this app.
 const CONNECT_URL = "https://web.themoveee.com";
 
-// Where the two primary CTAs land. "Get Started" is registration (the page's
-// whole job is acquisition); "Sign in" is for members who already have an
-// account and just want to get to the Stoop browser. Both carry a callbackUrl
-// so a member lands on Stoop itself rather than the generic feed.
-const STOOP_URL = `${CONNECT_URL}/connect/stoop`;
-const REGISTER_HREF = `${CONNECT_URL}/register?callbackUrl=${encodeURIComponent(STOOP_URL)}`;
-const SIGNIN_HREF = `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent(STOOP_URL)}`;
+// The two main CTA pairs are <StoopCtas />, a client island: what they should
+// say depends on whether the visitor is already signed in, and the rest of
+// this page has no reason to go dynamic for it. See that component.
 
 export const metadata = {
   // Bare "Moveee", not "Moveee Magazine" — Stoop is a platform/cross-surface
@@ -42,10 +39,7 @@ export default function StoopPage() {
                 Stoop is a small group of people who live in the same area and meet in person to
                 connect and engage with culture. It is free to join and open to all.
               </p>
-              <div className="stp-cta-row">
-                <a className="stp-btn stp-btn--primary" href={REGISTER_HREF}>Get Started</a>
-                <a className="stp-btn stp-btn--ghost" href={SIGNIN_HREF}>Sign in</a>
-              </div>
+              <StoopCtas />
               <p className="stp-hero-note">Most groups have between four and twelve people.</p>
             </div>
             <span className="stp-ph stp-ph--hero stp-hero-img" role="presentation" />
@@ -259,13 +253,10 @@ export default function StoopPage() {
             <div className="stp-close-inner">
               <h2>See which groups are near you.</h2>
               <p>
-                Join Moveee to find the groups forming in your area, or start one yourself. It
-                takes a couple of minutes and costs nothing.
+                Groups are forming in areas across the city. Find one near you, or start one
+                yourself &mdash; it costs nothing either way.
               </p>
-              <div className="stp-cta-row">
-                <a className="stp-btn stp-btn--primary" href={REGISTER_HREF}>Get Started</a>
-                <a className="stp-btn stp-btn--ghost" href={SIGNIN_HREF}>Sign in</a>
-              </div>
+              <StoopCtas />
             </div>
           </div>
         </section>
