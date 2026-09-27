@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chimamanda Ngozi Adichie — Moveee entry</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #FFFFFF; font-family: 'DM Sans', system-ui, sans-serif; }
+    a { color: #7A241C; }
+    a:hover { color: #5C1B15; }
+    button, textarea, input { font-family: inherit; }
+    ::-webkit-scrollbar { width: 0; height: 0; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #FFFFFF; color: #14110D; display: flex; flex-direction: column">
+
+  <header style="flex-shrink: 0; height: 56px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border-bottom: 1px solid #EFEAE1">
+    <a href="Book.dc.html" aria-label="Back" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 9999px; color: #14110D; text-decoration: none">
+      <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8 10 12.5"/></svg>
+    </a>
+    <div style="flex-grow: 1; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #6B6153">Culture directory</div>
+    <button type="button" aria-label="Share" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; border-radius: 9999px; cursor: pointer; color: #14110D">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.4M5.2 5.2 8 2.4l2.8 2.8"/><path d="M3.2 9.4v3.4a.8.8 0 0 0 .8.8h8a.8.8 0 0 0 .8-.8V9.4"/></svg>
+    </button>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; overflow-x: hidden">
+
+    <section style="padding: 20px 16px 4px; display: flex; flex-direction: column; gap: 10px">
+      <span style="align-self: flex-start; padding: 3px 9px; border-radius: 9999px; background: #E6F1F0; color: #0B5F62; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Person</span>
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 29px; font-weight: 700; line-height: 1.12; letter-spacing: -0.02em">Chimamanda Ngozi Adichie</h1>
+      <div style="font-size: 14px; color: #6B6153">Novelist &middot; Enugu, Nigeria</div>
+      <div style="display: flex; gap: 8px; padding-top: 4px">
+        <button type="button" onClick="{{ toggleFollow }}" style="{{ followStyle }}">{{ followLabel }}</button>
+        <button type="button" onClick="{{ openQuote }}" style="min-height: 46px; padding: 0 16px; border-radius: 9999px; border: 1px solid #DDD6CA; background: #FFFFFF; color: #14110D; font-size: 14.5px; font-weight: 700; cursor: pointer">Save a line</button>
+      </div>
+      <p style="margin: 2px 0 0; font-size: 12.5px; line-height: 1.5; color: #6B6153">A person has no shelf &mdash; you don&rsquo;t finish someone. What builds up here is what people saved from them.</p>
+    </section>
+
+    <section style="padding: 22px 16px 0">
+      <div style="display: flex; align-items: baseline; gap: 8px; padding-bottom: 4px">
+        <div style="flex-grow: 1; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153">Lines people saved</div>
+        <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: #6B6153">{{ lineCount }}</div>
+      </div>
+      <p style="margin: 0 0 11px; font-size: 12.5px; line-height: 1.45; color: #6B6153">Everything she said, whatever it came from &mdash; each line carries its own source.</p>
+
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{ lines }}" as="q" hint-placeholder-count="4">
+          <figure style="{{ q.cardStyle }}">
+            <blockquote style="{{ q.textStyle }}">{{ q.text }}</blockquote>
+            <div style="padding-top: 10px">
+              <a href="{{ q.sourceHref }}" style="{{ q.sourceStyle }}">
+                <span style="{{ q.sourceChipStyle }}">{{ q.sourceKind }}</span>
+                {{ q.sourceLabel }}
+              </a>
+            </div>
+            <figcaption style="display: flex; align-items: center; gap: 7px; padding-top: 10px">
+              <span style="{{ q.avatarStyle }}">{{ q.initial }}</span>
+              <span style="flex-grow: 1; font-size: 12.5px; color: #6B6153">{{ q.byline }}</span>
+              <span style="display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: #6B6153">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 2.4h8a.8.8 0 0 1 .8.8v10.4L8 10.6l-4.8 3V3.2a.8.8 0 0 1 .8-.8Z"/></svg>
+                {{ q.saves }}
+              </span>
+            </figcaption>
+          </figure>
+        </sc-for>
+
+        <button type="button" onClick="{{ openQuote }}" style="width: 100%; min-height: 50px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed #C9BFA8; border-radius: 12px; background: #FFFFFF; color: #7A4A12; font-size: 14.5px; font-weight: 700; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg>
+          Save a line from her
+        </button>
+        <div style="font-size: 12.5px; color: #6B6153; text-align: center; line-height: 1.45">The bracketed lines are placeholders on purpose &mdash; no invented text under a living writer&rsquo;s name.</div>
+      </div>
+    </section>
+
+    <section style="padding: 24px 0 0">
+      <div style="padding: 0 16px 11px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153">Her work in the directory</div>
+      <div style="display: flex; gap: 10px; padding: 0 16px 4px; overflow-x: auto">
+        <sc-for list="{{ works }}" as="w" hint-placeholder-count="3">
+          <a href="{{ w.href }}" style="{{ w.cardStyle }}">
+            <span style="{{ w.chipStyle }}">{{ w.kind }}</span>
+            <span style="font-family: Fraunces, Georgia, serif; font-size: 16px; font-weight: 600; line-height: 1.25; color: #14110D">{{ w.title }}</span>
+            <span style="font-size: 12.5px; color: #6B6153; line-height: 1.35">{{ w.sub }}</span>
+            <span style="margin-top: 2px; font-size: 12px; color: #6B6153">{{ w.saved }}</span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="padding: 24px 16px 28px">
+      <div style="border-top: 1px solid #EFEAE1; padding-top: 16px; display: flex; flex-direction: column; gap: 9px">
+        <div style="font-family: Fraunces, Georgia, serif; font-size: 17px; font-weight: 700">Why a line shows up twice</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B6153">A saved line can point at two things: who said it, and what it came from. Point it at both and it sits on her page <em>and</em> on the book&rsquo;s. Point it at neither and it&rsquo;s still a line &mdash; it just lives on your log alone.</p>
+      </div>
+    </section>
+  </div>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 20px; padding: 13px 15px; border-radius: 12px; background: #14110D; color: #FFFFFF; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 9px; box-shadow: 0 8px 24px rgba(20,17,13,0.22)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E8C77A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 8.4 3 3 6-6.8"/></svg>
+      {{ toast }}
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ quoteOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end">
+      <button type="button" aria-label="Close" onClick="{{ closeQuote }}" style="position: absolute; inset: 0; border: 0; background: rgba(20,17,13,0.42); cursor: pointer"></button>
+      <div style="position: relative; background: #FFFFFF; border-radius: 22px 22px 0 0; padding: 10px 16px 20px; max-height: 96%; overflow-y: auto; box-shadow: 0 -8px 32px rgba(20,17,13,0.18)">
+        <div style="width: 38px; height: 4px; border-radius: 9999px; background: #E2DCD1; margin: 0 auto 14px"></div>
+        <div style="display: flex; flex-direction: column; gap: 11px">
+          <h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 21px; font-weight: 700; letter-spacing: -0.01em">Save a line</h2>
+
+          <label for="line" style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153">The line</label>
+          <textarea id="line" rows="3" value="{{ draft }}" onChange="{{ onDraft }}" placeholder="Type or paste it here&hellip;" style="width: 100%; box-sizing: border-box; padding: 12px 13px; border: 1px solid #DDD6CA; border-radius: 10px; font-family: Fraunces, Georgia, serif; font-style: italic; font-size: 17px; line-height: 1.45; color: #14110D; resize: none"></textarea>
+
+          <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153">Who said it</div>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 10px; background: #E6F1F0">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#0B5F62" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="5.6" r="2.6"/><path d="M3.4 13.2a4.6 4.6 0 0 1 9.2 0"/></svg>
+            <span style="flex-grow: 1; font-size: 13px; color: #0B5F62; font-weight: 600">Chimamanda Ngozi Adichie</span>
+            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #0B5F62">Linked</span>
+          </div>
+
+          <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153">What it came from &middot; optional</div>
+          <div style="display: flex; gap: 6px">
+            <sc-for list="{{ typeChips }}" as="t" hint-placeholder-count="4">
+              <button type="button" onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ showSearch }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="{{ searchPlaceholder }}" style="width: 100%; box-sizing: border-box; min-height: 46px; padding: 0 13px; border: 1px solid #DDD6CA; border-radius: 10px; font-size: 14.5px; color: #14110D">
+              <sc-for list="{{ results }}" as="r" hint-placeholder-count="2">
+                <button type="button" onClick="{{ r.onPick }}" style="width: 100%; display: flex; align-items: center; gap: 9px; padding: 10px 11px; border: 1px solid #EFEAE1; border-radius: 10px; background: #FFFFFF; cursor: pointer; text-align: left">
+                  <span style="{{ r.chipStyle }}">{{ r.kind }}</span>
+                  <span style="flex-grow: 1; font-size: 14px; font-weight: 600; color: #14110D">{{ r.title }}</span>
+                  <span style="font-size: 12px; color: #6B6153">{{ r.sub }}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 12.5px; line-height: 1.45; color: #6B6153; padding: 2px 2px 0">Nothing in the directory matches. Save the line anyway &mdash; it still lands on her page.</div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ showFree }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 7px">
+              <input value="{{ freeText }}" onChange="{{ onFree }}" placeholder="e.g. TEDGlobal, 2009" style="width: 100%; box-sizing: border-box; min-height: 46px; padding: 0 13px; border: 1px solid #DDD6CA; border-radius: 10px; font-size: 14.5px; color: #14110D">
+              <div style="font-size: 12.5px; line-height: 1.45; color: #6B6153">The directory holds books, films and albums &mdash; not talks. This one saves as plain text.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasPick }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 10px; background: #F0EBF9">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#5A3E8F" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M8 2.5v11"/></svg>
+              <span style="flex-grow: 1; font-size: 13px; color: #5A3E8F; font-weight: 600">{{ pickLabel }}</span>
+              <button type="button" onClick="{{ clearPick }}" aria-label="Remove source" style="border: 0; background: none; cursor: pointer; color: #5A3E8F; font-size: 13px; font-weight: 700">Change</button>
+            </div>
+          </sc-if>
+
+          <button type="button" onClick="{{ saveLine }}" style="{{ saveStyle }}">{{ saveLabel }}</button>
+          <div style="font-size: 12.5px; color: #6B6153; text-align: center; line-height: 1.45">{{ saveNote }}</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#7A241C","options":["#7A241C","#5A3E8F","#0B5F62","#234066"],"section":"Theme"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      following: false,
+      quoteOpen: false,
+      draft: "",
+      srcType: null,
+      srcEntry: null,
+      freeText: "",
+      query: "",
+      toast: "",
+      lines: [
+        { id: "p1", text: "[ A saved line — usually one or two sentences of the real text ]", byline: "Ada O. · 4 days ago", initial: "A", bg: "#5A3E8F", saves: 31, srcKind: "book", srcLabel: "Half of a Yellow Sun", href: "Book.dc.html", placeholder: true },
+        { id: "p2", text: "[ A line from the talk — the part everyone quotes back ]", byline: "Ife M. · 2 weeks ago", initial: "I", bg: "#2F4B3C", saves: 88, srcKind: "talk", srcLabel: "TEDGlobal, 2009", href: "", placeholder: true },
+        { id: "p3", text: "[ A shorter one — half a sentence is just as common ]", byline: "Nkem D. · last month", initial: "N", bg: "#0B5F62", saves: 12, srcKind: "book", srcLabel: "Americanah", href: "", placeholder: true },
+        { id: "p4", text: "[ One with no source attached — that's allowed ]", byline: "Tomi A. · last month", initial: "T", bg: "#234066", saves: 5, srcKind: "none", srcLabel: "No source given", href: "", placeholder: true }
+      ]
+    };
+  }
+
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent || "#7A241C";
+    var s = this.state;
+
+    var KIND = {
+      book: { label: "Book",  fg: "#5A3E8F", bg: "#F0EBF9" },
+      film: { label: "Film",  fg: "#234066", bg: "#E9EFF7" },
+      song: { label: "Song",  fg: "#7A4A12", bg: "#FBF1E0" },
+      talk: { label: "Talk",  fg: "#6B6153", bg: "#F2EFE9" },
+      none: { label: "—",     fg: "#6B6153", bg: "#F2EFE9" }
+    };
+
+    function chip(kind) {
+      var k = KIND[kind] || KIND.none;
+      return "flex-shrink: 0; padding: 3px 8px; border-radius: 9999px; background: " + k.bg + "; color: " + k.fg +
+        "; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap";
+    }
+
+    var lines = s.lines.map(function (q) {
+      var linked = !!q.href;
+      return {
+        text: q.text,
+        byline: q.byline,
+        initial: q.initial,
+        saves: q.saves,
+        sourceKind: (KIND[q.srcKind] || KIND.none).label,
+        sourceLabel: q.srcLabel,
+        sourceHref: linked ? q.href : "#",
+        sourceChipStyle: chip(q.srcKind),
+        sourceStyle: "display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; text-decoration: none; color: " +
+          (linked ? accent : "#6B6153") + "; cursor: " + (linked ? "pointer" : "default"),
+        cardStyle: "margin: 0; padding: 14px; border: 1px solid " + (q.mine ? "#E4D9C6" : "#EFEAE1") + "; border-radius: 14px; background: " + (q.mine ? "#FBF6EC" : "#FFFFFF") + "; box-shadow: 0 1px 2px rgba(20,17,13,0.04)",
+        textStyle: "margin: 0; font-family: Fraunces, Georgia, serif; font-style: italic; font-size: 17px; line-height: 1.45; color: " + (q.placeholder ? "#8C8375" : "#14110D"),
+        avatarStyle: "width: 22px; height: 22px; flex-shrink: 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #FFFFFF; background: " + q.bg
+      };
+    });
+
+    var works = [
+      { title: "Half of a Yellow Sun", sub: "2006 · novel", kind: "book", saved: "18 lines saved", href: "Book.dc.html" },
+      { title: "Americanah", sub: "2013 · novel", kind: "book", saved: "9 lines saved", href: "Book.dc.html" },
+      { title: "Half of a Yellow Sun", sub: "2013 · dir. Biyi Bandele", kind: "film", saved: "2 lines saved", href: "Book.dc.html" }
+    ].map(function (w) {
+      var k = KIND[w.kind];
+      return {
+        title: w.title, sub: w.sub, saved: w.saved, href: w.href, kind: k.label,
+        chipStyle: chip(w.kind),
+        cardStyle: "flex-shrink: 0; width: 168px; padding: 12px; border: 1px solid #EFEAE1; border-radius: 12px; background: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(20,17,13,0.04)"
+      };
+    });
+
+    // Only the three media the directory actually holds get a picker.
+    // Talks have no entry type, so they fall back to freeform text.
+    var CATALOGUE = {
+      book: [
+        { title: "Half of a Yellow Sun", sub: "2006" },
+        { title: "Americanah", sub: "2013" },
+        { title: "Purple Hibiscus", sub: "2003" }
+      ],
+      film: [
+        { title: "Half of a Yellow Sun", sub: "2013" }
+      ],
+      song: []
+    };
+
+    var typeChips = [
+      { key: "book", label: "Book" },
+      { key: "film", label: "Film" },
+      { key: "song", label: "Song" },
+      { key: "talk", label: "Talk" }
+    ].map(function (t) {
+      var on = s.srcType === t.key;
+      return {
+        label: t.label,
+        style: "flex-grow: 1; min-height: 44px; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; border: 1px solid " +
+          (on ? "#14110D" : "#DDD6CA") + "; background: " + (on ? "#14110D" : "#FFFFFF") + "; color: " + (on ? "#FFFFFF" : "#14110D"),
+        onPick: function () { self.setState({ srcType: t.key, srcEntry: null, query: "", freeText: "" }); }
+      };
+    });
+
+    var searchable = s.srcType === "book" || s.srcType === "film" || s.srcType === "song";
+    var pool = searchable ? (CATALOGUE[s.srcType] || []) : [];
+    var q = s.query.trim().toLowerCase();
+    var matches = pool.filter(function (p) { return q === "" || p.title.toLowerCase().indexOf(q) >= 0; });
+    var results = matches.map(function (p, i) {
+      return {
+        title: p.title, sub: p.sub,
+        kind: KIND[s.srcType].label,
+        chipStyle: chip(s.srcType),
+        onPick: function () { self.setState({ srcEntry: { title: p.title, sub: p.sub, kind: s.srcType } }); }
+      };
+    });
+
+    var hasDraft = s.draft.trim().length > 0;
+    var hasPick = !!s.srcEntry;
+
+    return {
+      accent: accent,
+
+      following: s.following,
+      followLabel: s.following ? "Following" : "Follow",
+      followStyle: "min-height: 46px; padding: 0 20px; border-radius: 9999px; font-size: 14.5px; font-weight: 700; cursor: pointer; border: 1px solid " +
+        (s.following ? "#DDD6CA" : accent) + "; background: " + (s.following ? "#FFFFFF" : accent) + "; color: " + (s.following ? "#14110D" : "#FFFFFF"),
+      toggleFollow: function () {
+        self.setState({ following: !s.following, toast: s.following ? "" : "Following · her new lines reach your feed" });
+      },
+
+      lineCount: s.lines.length + " lines",
+      lines: lines,
+      works: works,
+
+      quoteOpen: s.quoteOpen,
+      openQuote: function () { self.setState({ quoteOpen: true, draft: "", srcType: null, srcEntry: null, query: "", freeText: "", toast: "" }); },
+      closeQuote: function () { self.setState({ quoteOpen: false }); },
+      draft: s.draft,
+      onDraft: function (e) { self.setState({ draft: e.target.value }); },
+
+      typeChips: typeChips,
+      showSearch: searchable && !hasPick,
+      searchPlaceholder: s.srcType === "song" ? "Search albums…" : (s.srcType === "film" ? "Search films…" : "Search books…"),
+      query: s.query,
+      onQuery: function (e) { self.setState({ query: e.target.value }); },
+      results: results,
+      noResults: searchable && !hasPick && results.length === 0,
+
+      showFree: s.srcType === "talk",
+      freeText: s.freeText,
+      onFree: function (e) { self.setState({ freeText: e.target.value }); },
+
+      hasPick: hasPick,
+      pickLabel: hasPick ? (s.srcEntry.title + " · " + s.srcEntry.sub) : "",
+      clearPick: function () { self.setState({ srcEntry: null, query: "" }); },
+
+      saveLabel: hasDraft ? "Save to your log" : "Type a line to save it",
+      saveNote: hasPick
+        ? "Two links: her, and the work. It shows on both pages."
+        : (s.srcType === "talk" && s.freeText.trim() ? "Linked to her. The talk saves as text, so there's no second page." : "Linked to her. Add a source and it shows on that page too."),
+      saveStyle: "width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid " + (hasDraft ? accent : "#DDD6CA") +
+        "; background: " + (hasDraft ? accent : "#F5F1EA") + "; color: " + (hasDraft ? "#FFFFFF" : "#8C8375") +
+        "; font-size: 15.5px; font-weight: 700; cursor: " + (hasDraft ? "pointer" : "default"),
+      saveLine: function () {
+        if (!hasDraft) { return; }
+        var kind = hasPick ? s.srcEntry.kind : (s.srcType === "talk" && s.freeText.trim() ? "talk" : "none");
+        var label = hasPick ? s.srcEntry.title : (s.srcType === "talk" && s.freeText.trim() ? s.freeText.trim() : "No source given");
+        var next = [{
+          id: "mine" + Date.now(), text: s.draft.trim(), byline: "You · just now", initial: "T", bg: "#7A241C",
+          saves: 1, mine: true, srcKind: kind, srcLabel: label, href: hasPick ? "Book.dc.html" : ""
+        }].concat(s.lines);
+        self.setState({
+          lines: next, quoteOpen: false, draft: "", srcType: null, srcEntry: null, query: "", freeText: "",
+          toast: hasPick ? "Line saved · on her page and on " + s.srcEntry.title : "Line saved · logged against her"
+        });
+      },
+
+      hasToast: !!s.toast,
+      toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

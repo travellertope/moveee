@@ -2641,6 +2641,19 @@ random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_setti
 surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
 location like `docs/figma-design/` or put it back under `apps/figma/`.
 
+**Artifact Design canvas mockups live in their own subfolder, not flat alongside the single-file
+ones** (added 2026-09-27, first instance: `mockups/mobile/moveee-home-log-first/`). These are a
+different artifact from every other file in `mockups/` — a multi-file canvas project (one
+`*.dc.html` per board plus a `canvas.json` board index), **not** a standalone page. Each board
+loads `./support.js` and uses `<sc-if>`/`<sc-for>` and a `class Component extends DCLogic` block,
+all supplied by the Artifact type's runtime rather than by the folder, so opening one directly in
+a browser renders a blank page — that's expected, not a broken file. Give each such project its
+own subfolder with a short `README.md` saying which board is which and that it needs the runtime;
+don't flatten the boards in among the single-file mockups, where a future session would waste time
+trying to open one. Editing one means editing the files and republishing the canvas to its
+existing Artifact URL (`Artifact` tool, `action: publish` with the same `url`) — publishing without
+that URL creates a second, disconnected canvas.
+
 **History (2026-06-24):** these folders were originally `apps/figma/designs/` (mobile) and
 `apps/figma/designs-web/` (web) — first consolidated together under `apps/figma/` from three
 separate locations, then immediately relocated again to the current top-level `mockups/mobile/`
