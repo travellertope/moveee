@@ -592,3 +592,86 @@ function moveee_redirect_taxonomies() {
     }
 }
 add_action( 'template_redirect', 'moveee_redirect_taxonomies' );
+
+/**
+ * Redirect a single WordPress post/CPT permalink (cms.themoveee.com/{slug}/)
+ * to its real Next.js frontend URL — either the public Moveee Magazine site
+ * (themoveee.com) or the Community/Connect app (web.themoveee.com),
+ * depending on the post type. Without this, a raw cms.themoveee.com link —
+ * the kind editors paste into Slack/social, or that search engines index
+ * from the un-proxied WordPress permalink — serves the bare WP theme
+ * template instead of the branded frontend.
+ *
+ * Skipped for is_preview() — Culture_Preview::maybe_redirect_preview_request()
+ * (also on template_redirect) already owns that case and sends drafts to the
+ * dedicated /api/preview flow, not the plain public URL.
+ */
+function moveee_redirect_singular() {
+    if ( ! is_singular() || is_preview() ) {
+        return;
+    }
+
+    $queried = get_queried_object();
+    if ( ! $queried instanceof WP_Post ) {
+        return;
+    }
+
+    $type = $queried->post_type;
+    $slug = $queried->post_name;
+    $id   = $queried->ID;
+
+    // Site A — Moveee Magazine (themoveee.com)
+    $frontend_url = defined( 'MOVE_FRONTEND_URL' ) ? MOVE_FRONTEND_URL : 'https://themoveee.com';
+    // Site B — Moveee Community/Connect (web.themoveee.com)
+    $connect_url = defined( 'MOVE_CONNECT_URL' ) ? MOVE_CONNECT_URL : 'https://web.themoveee.com';
+
+    $redirect_url = '';
+
+    switch ( $type ) {
+        // Site A — every one of these routes redirects further on the
+        // Next.js side (to /literary/{slug} or /commons/{slug}) when the
+        // post actually belongs there, so a plain /magazine/{slug} target
+        // here is always correct, just occasionally a one-hop redirect.
+        case 'post':
+            $redirect_url = $frontend_url . '/magazine/' . $slug;
+            break;
+        case 'product':
+            $redirect_url = $frontend_url . '/lifestyle/' . $slug;
+            break;
+        case 'culture_newsletter':
+        case 'getmelit':
+        case 'culture_drop':
+            $redirect_url = $frontend_url . '/newsletter/' . $slug;
+            break;
+        case 'culture_journey':
+            $redirect_url = $frontend_url . '/journeys/' . $slug;
+            break;
+
+        // Site B — Community/Connect
+        case 'culture_directory':
+            $redirect_url = $connect_url . '/directory/' . $slug;
+            break;
+        case 'culture_quote':
+            $redirect_url = $connect_url . '/quotes/' . $id . '-' . $slug;
+            break;
+        case 'culture_post':
+            $redirect_url = $connect_url . '/community/' . $slug;
+            break;
+        case 'culture_event':
+            $redirect_url = $connect_url . '/events/' . $slug;
+            break;
+        case 'culture_hub':
+            $redirect_url = $connect_url . '/hub/' . $slug;
+            break;
+        case 'culture_cluster':
+            // Stoop clusters route by numeric id, not slug.
+            $redirect_url = $connect_url . '/cluster/' . $id;
+            break;
+    }
+
+    if ( ! empty( $redirect_url ) ) {
+        wp_redirect( $redirect_url, 301 );
+        exit;
+    }
+}
+add_action( 'template_redirect', 'moveee_redirect_singular' );

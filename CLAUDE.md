@@ -7240,6 +7240,56 @@ fully closed.
 
 ---
 
+## Raw `cms.themoveee.com/{slug}/` links now redirect to the real frontend URL (September 2026)
+
+Visiting a WordPress permalink directly on the CMS origin (e.g. a link an editor
+pasted into Slack, or one search engines indexed from the un-proxied backend)
+used to serve the bare `culture-theme` template — unbranded, and on a headless
+setup, not the page anyone actually wants. `moveee_redirect_singular()`
+(`culture-theme/functions.php`, a sibling of the pre-existing
+`moveee_redirect_taxonomies()` right above it — same file, same
+`template_redirect` hook, same `MOVE_FRONTEND_URL`-constant-with-production-
+fallback pattern) 301-redirects any single-post request on `cms.themoveee.com`
+to its real Next.js URL, on whichever site actually owns that content type:
+
+| Post type | Redirects to |
+|---|---|
+| `post` | Site A `/magazine/{slug}` (the Next.js side itself redirects further to `/literary/{slug}` or `/commons/{slug}` when the post belongs there — see those sections above — so this is always correct, just occasionally a two-hop redirect) |
+| `product` | Site A `/lifestyle/{slug}` |
+| `culture_newsletter` / `getmelit` / `culture_drop` | Site A `/newsletter/{slug}` (all three render through the same route, see "Archive / frontend" above) |
+| `culture_journey` | Site A `/journeys/{slug}` |
+| `culture_directory` | Site B `/directory/{slug}` |
+| `culture_quote` | Site B `/quotes/{id}-{slug}` (compound slug — see "Quotes feed merge" above for why) |
+| `culture_post` | Site B `/community/{slug}` |
+| `culture_event` | Site B `/events/{slug}` |
+| `culture_hub` | Site B `/hub/{slug}` |
+| `culture_cluster` | Site B `/cluster/{id}` (Stoop clusters route by numeric id, not slug) |
+
+**Deliberately skipped**: `is_preview()` requests — `Culture_Preview::maybe_redirect_preview_request()`
+(also hooked on `template_redirect`, in the plugin) already owns that case and
+sends a draft to `/api/preview`, not the plain public URL; `moveee_redirect_singular()`
+returns early on `is_preview()` so it never fights that handler for the same
+request. Any post type with no row above (native WP `page`, `attachment`, or a
+future CPT with no frontend route yet) is left alone — same "if nothing
+matched, do nothing" behavior `moveee_redirect_taxonomies()` already has.
+
+**If a new CPT is added with a real frontend detail page, add a `case` here** —
+this is now the single place that maps a WP post type to its canonical
+frontend URL for the purpose of un-proxied CMS links; don't invent a second,
+route-specific redirect for it.
+
+Needs the theme redeployed (manual zip+upload, same as the plugin — see
+"Plugin DB table auto-upgrade" for why a code push alone isn't enough) before
+it takes effect in production — bumped `culture-theme/style.css`'s `Version:`
+header (1.0.0 → 1.0.1) for the same redeploy-confirmation reason the plugin
+header gets bumped. Not deployment-tested against a live WordPress instance —
+same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this
+file. Verified via `php -l`. Re-check a real `cms.themoveee.com/{slug}/` visit
+for at least a `post` and one Site B type in a live environment before
+considering this fully closed.
+
+---
+
 ## Cron / scheduled jobs — split ownership between WP-Cron and cron-job.org (June 2026)
 
 Two independent schedulers trigger Next.js worker routes via `Authorization:
