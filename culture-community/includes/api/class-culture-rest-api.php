@@ -1512,6 +1512,7 @@ class Culture_REST_API {
                 'status'   => array( 'required' => true, 'type' => 'string' ),
                 'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'medium'   => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
             ),
         ) );
         register_rest_route( 'culture/v1', '/reading/shelf/counts', array(
@@ -2183,7 +2184,8 @@ class Culture_REST_API {
         $status   = sanitize_key( $request->get_param( 'status' ) );
         $page     = (int) $request->get_param( 'page' ) ?: 1;
         $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
-        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page ) );
+        $medium   = sanitize_key( (string) $request->get_param( 'medium' ) );
+        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page, $medium ) );
     }
 
     public static function handle_reading_shelf_counts( $request ) {

@@ -2944,6 +2944,37 @@ select.mem-field-input { cursor: pointer; }
   text-decoration: none;
 }
 .rt-stats-link:hover { text-decoration: underline; }
+
+/* Medium filter chips (Culture Log — the log spans all five review media, not
+   just books; see Culture_Reading_Tracker::MEDIA). Same pill language as the
+   Discover/People filter chips elsewhere in this app. */
+.rt-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.rt-media--modal { margin: 4px 0 14px; }
+.rt-media-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.rt-media-chip:hover { border-color: var(--ochre); }
+.rt-media-chip--active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
 .rt-stats-back {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
@@ -3290,6 +3321,24 @@ select.mem-field-input { cursor: pointer; }
   color: var(--ink);
   flex: 1;
 }
+/* "Books only" qualifier on the Pace/Moods headings — those two breakdowns
+   are deliberately still book-scoped (StoryGraph's mood vocabulary doesn't
+   transfer to a restaurant), while every other figure on this page spans all
+   five media. */
+.rts-scope-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--mute);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-full);
+  padding: 2px 7px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.rts-genre-medium { opacity: .6; }
 .rts-genre-count {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;

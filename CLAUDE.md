@@ -10267,6 +10267,84 @@ trip — finish a book, write a Book Review with a rating/genres, vote mood/pace
 books, then confirm every one of the six stats sections reflects it correctly on both platforms —
 in a real environment before considering this fully closed.
 
+### Generalised from books to all five review media — the "Culture Log" (September 2026)
+
+**Supersedes the books-only framing everywhere above.** The tracker now covers the same five
+things the composer's `REVIEW_FAMILY` does — **book / film / music / food / place** — not just
+books. Prompted by a marketing-strategy question: the accumulating layer that creates real
+switching cost (shelves, a goal, year-end stats) only worked for one of the five things members
+actually review, so the log couldn't carry a campaign built on the review system.
+
+**No migration, no new table, no `CULTURE_VERSION` bump.** `wp_culture_reading_shelf` was
+already keyed on a plain `directory_id` with no type column, and the three status values
+(`want_to_read`/`currently_reading`/`read`) are unchanged in the DB — they were always
+medium-neutral internally. What was actually book-specific was only ever: the stats query, the
+labels, and the absence of a medium dimension.
+
+- **Medium is derived from the entry, never from the review template.** `Culture_Reading_Tracker
+  ::TYPE_MEDIA_MAP` maps a `culture_dir_type` slug to one of the five media
+  (`album`→music, `tv-series`→film, `restaurant`/`event-venue`→place, etc.); anything unmapped
+  resolves to `'other'`. **This is deliberately not driven by `_template_type`** — Place
+  (hidden-gem) reviews are composed with no `typeFilter` at all, so the template says nothing
+  reliable about what the thing is. `media_for_directory_ids()` is the batch resolver (one raw
+  taxonomy query for a whole page, never `get_the_terms()` per row).
+- **Shelf reads gained a `medium` filter**, threaded through both mirrored REST surfaces
+  (`GET /reading/shelf` and `/mobile/reading/shelf`) and validated against `MEDIA` server-side.
+  `medium_where_clause()` builds an `EXISTS`/`NOT EXISTS` fragment from class constants only —
+  `'other'` is the inverse of every mapped slug, so an untyped entry is still reachable by
+  filter rather than only visible under "All". The fragment adds no `%` placeholders, so the
+  surrounding `$wpdb->prepare()` arg count is unaffected (verified).
+- **`get_shelf_counts()` returns a `byMedium` map** alongside the pre-existing flat per-status
+  totals, which is what the filter chips' counts read.
+- **`get_reading_stats()` widened from one review template to five.** One pivoted postmeta join
+  now reads `_book_/_film_/_music_overall_rating`, `_star_rating` (place), and the three
+  `_food_rating_*` scores, plus `_book_/_film_/_music_genres` and `_cuisine_tag` (food).
+  **Food has no stored overall rating, so its three breakdown scores are averaged** — exactly
+  what the composer already does to derive an overall for book/music/film. New fields:
+  `entries_logged`, `per_month`, `medium_breakdown`, and a `medium` on each `top_genres` row.
+- **`pace_breakdown`/`mood_breakdown` stay book-only, on purpose.** The 12-tag vocabulary is
+  StoryGraph's and doesn't transfer to a restaurant or an album; both sections are now labelled
+  "Books only" in the UI. **Don't "finish the job" by widening these without a real vocabulary
+  for the other four** — that's a product decision, not a gap.
+- **Deprecated aliases are returned deliberately.** `books_read`/`books_per_month` (stats) and
+  `targetBooks`/`booksRead` (goal) still ship alongside the new names, because an
+  already-installed mobile build can't be force-updated and would otherwise render zeros. Drop
+  them once the field has turned over; read the new names in anything new.
+- **Statuses keep one set of values and vary only by label.** `STATUS_LABELS` in
+  `packages/shared/lib/reading-tracker.ts` (mirrored in the mobile copy) gives each medium its
+  own verbs — Want to Read/Reading/Read, Want to Watch/Watching/Watched, Want to Go/Going/Been,
+  etc. Tabs use the active filter's verbs (or neutral Planned/In progress/Done under "All");
+  **a card always uses its own medium's verbs, not the active filter's**.
+- **The goal stayed a single cross-medium target per year**, not one per medium — a member
+  logging 30 things across five media is the number worth showing, and five separate targets is
+  a lot of setup friction for a feature most people never configure at all. Revisit only if
+  asked.
+- **User-facing rename, copy-only** (same convention as Hidden Gem→Place / Stoop): "Reading
+  Tracker" → **Culture Log**, "Your Year in Books" → **Your Year in Culture**. The `/member/
+  reading` route, the `reading/*` REST paths, the table names and the class name are all
+  unchanged — don't rename them.
+- **A real gap this pass caught**: `apps/connect/app/api/reading/shelf/route.ts` dropped the new
+  `medium` param, which would have made the web filter silently no-op while the mobile one
+  worked. **If you add a param to a `reading/*` endpoint, check that proxy forwards it** — the
+  proxy rebuilds the query string by hand rather than passing it through.
+- **The Add modal now picks a medium first**, mapping to the right `typeFilter`/`externalSource`
+  (Google Books / TMDB / Spotify, none for food/place) via a `MEDIA_SEARCH` map duplicated
+  between the web and mobile screens. `typeFilter` is a single slug on purpose: `DirectorySearch`
+  reuses that same value as the `entry_type` it *creates* with, so a comma list would widen
+  search at the cost of creating entries with a nonsense type. Place therefore searches `place`
+  only and won't surface `restaurant`-typed entries in that modal — a narrower search is the
+  better half of that trade.
+- **Verified**: `tsc --noEmit` **exit 0** on both `apps/connect` and `apps/site`; `apps/mobile`
+  held at exactly its documented 37-error pre-existing baseline with none in the touched files;
+  `php -l` clean on all four touched PHP files; CSS brace balance on `member.css` (629/629); the
+  generated medium SQL fragments checked standalone in real PHP for every branch
+  (none/book/place/other/invalid) confirming valid SQL and a stable placeholder count; and the
+  new chip row / scope-note pills rendered in real Chromium at 1280px and 390px against the real
+  `member.css` (no horizontal overflow at either). **Not** tested against a live WordPress —
+  needs the plugin redeployed (header bumped to 2.6.10; no new table, so no `CULTURE_VERSION`
+  bump) and then a real round trip: log something of each medium, review a couple of them, and
+  confirm the filter, the counts and every stats section agree.
+
 ---
 
 ## Interest taxonomy (canonical slugs)

@@ -1,28 +1,21 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import DirectorySearch from "@/components/composer/DirectorySearch";
-
-type ShelfStatus = "want_to_read" | "currently_reading" | "read";
-
-const TABS: { key: ShelfStatus; label: string }[] = [
-  { key: "want_to_read", label: "Want to Read" },
-  { key: "currently_reading", label: "Currently Reading" },
-  { key: "read", label: "Read" },
-];
-
-interface ShelfEntry {
-  directoryId: number;
-  title: string;
-  slug: string;
-  thumbnail: string | null;
-  author: string;
-  averageRating: number | null;
-  status: ShelfStatus;
-  startedAt: string | null;
-  finishedAt: string | null;
-}
+import {
+  MEDIA,
+  MEDIUM_LABELS,
+  MEDIUM_EMOJI,
+  SHELF_STATUSES,
+  statusLabel,
+  type Medium,
+  type MediumOrOther,
+  type ShelfStatus,
+  type ShelfEntry,
+  type ShelfCounts,
+  type ReadingGoal,
+} from "@/lib/reading-tracker";
 
 interface DirectoryResult {
   id: number;
@@ -34,31 +27,70 @@ interface DirectoryResult {
   city?: string;
 }
 
-interface Goal {
-  year: number;
-  targetBooks: number | null;
-  booksRead: number;
-}
+/**
+ * How to search for / create an entry of each medium. `typeFilter` is a single
+ * slug on purpose: DirectorySearch reuses the same value as the `entry_type`
+ * it creates with, so a comma list would widen search at the cost of creating
+ * entries with a nonsense type. Place therefore searches `place` only and
+ * won't surface `restaurant`-typed entries here — a narrower search is the
+ * better half of that trade.
+ */
+const MEDIA_SEARCH: Record<
+  Medium,
+  {
+    typeFilter: string;
+    placeholder: string;
+    aboutFieldLabel?: string;
+    externalSource?: "google_books" | "spotify" | "tmdb";
+  }
+> = {
+  book: {
+    typeFilter: "book",
+    placeholder: "Search for a book…",
+    aboutFieldLabel: "Author",
+    externalSource: "google_books",
+  },
+  film: {
+    typeFilter: "film",
+    placeholder: "Search for a film or series…",
+    aboutFieldLabel: "Director",
+    externalSource: "tmdb",
+  },
+  music: {
+    typeFilter: "album",
+    placeholder: "Search for an album…",
+    aboutFieldLabel: "Artist",
+    externalSource: "spotify",
+  },
+  food: { typeFilter: "food", placeholder: "Search for a dish…" },
+  place: { typeFilter: "place", placeholder: "Search for a place…" },
+};
+
+const EMPTY_COUNTS: ShelfCounts = {
+  want_to_read: 0,
+  currently_reading: 0,
+  read: 0,
+  total: 0,
+  byMedium: {} as ShelfCounts["byMedium"],
+};
 
 export default function ReadingTrackerClient() {
   const [tab, setTab] = useState<ShelfStatus>("want_to_read");
-  const [counts, setCounts] = useState<Record<ShelfStatus, number>>({
-    want_to_read: 0,
-    currently_reading: 0,
-    read: 0,
-  });
+  const [medium, setMedium] = useState<MediumOrOther | "all">("all");
+  const [counts, setCounts] = useState<ShelfCounts>(EMPTY_COUNTS);
   const [entries, setEntries] = useState<ShelfEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addingBook, setAddingBook] = useState<DirectoryResult | null>(null);
-  const [goal, setGoal] = useState<Goal | null>(null);
+  const [addMedium, setAddMedium] = useState<Medium>("book");
+  const [adding, setAdding] = useState<DirectoryResult | null>(null);
+  const [goal, setGoal] = useState<ReadingGoal | null>(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState("");
 
   const loadCounts = useCallback(async () => {
     try {
       const res = await fetch("/api/reading/shelf/counts");
-      if (res.ok) setCounts(await res.json());
+      if (res.ok) setCounts({ ...EMPTY_COUNTS, ...(await res.json()) });
     } catch {}
   }, []);
 
@@ -83,10 +115,12 @@ export default function ReadingTrackerClient() {
     setEditingGoal(false);
   }
 
-  const loadShelf = useCallback(async (status: ShelfStatus) => {
+  const loadShelf = useCallback(async (status: ShelfStatus, med: MediumOrOther | "all") => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/reading/shelf?status=${status}`);
+      const qs = new URLSearchParams({ status });
+      if (med !== "all") qs.set("medium", med);
+      const res = await fetch(`/api/reading/shelf?${qs.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setEntries(data.entries ?? []);
@@ -101,8 +135,20 @@ export default function ReadingTrackerClient() {
   }, [loadCounts, loadGoal]);
 
   useEffect(() => {
-    loadShelf(tab);
-  }, [tab, loadShelf]);
+    loadShelf(tab, medium);
+  }, [tab, medium, loadShelf]);
+
+  // Only offer a medium chip once something is actually on that shelf —
+  // an empty "Music (0)" chip is noise, not a feature.
+  const mediumChips = useMemo(() => {
+    const present = ([...MEDIA, "other"] as MediumOrOther[]).filter(
+      (m) => (counts.byMedium?.[m]?.total ?? 0) > 0,
+    );
+    return present.length > 1 ? present : [];
+  }, [counts]);
+
+  const tabCount = (status: ShelfStatus) =>
+    medium === "all" ? counts[status] : counts.byMedium?.[medium]?.[status] ?? 0;
 
   async function moveShelf(directoryId: number, status: ShelfStatus) {
     // Optimistic: drop the card from the currently-viewed tab immediately if
@@ -118,7 +164,7 @@ export default function ReadingTrackerClient() {
     } catch {}
     loadCounts();
     if (status === "read") loadGoal();
-    if (status === tab) loadShelf(tab);
+    if (status === tab) loadShelf(tab, medium);
   }
 
   async function removeFromShelf(directoryId: number) {
@@ -129,8 +175,8 @@ export default function ReadingTrackerClient() {
     loadCounts();
   }
 
-  async function addBook(entry: DirectoryResult) {
-    setAddingBook(entry);
+  async function addEntry(entry: DirectoryResult) {
+    setAdding(entry);
     try {
       await fetch("/api/reading/shelf", {
         method: "POST",
@@ -138,31 +184,35 @@ export default function ReadingTrackerClient() {
         body: JSON.stringify({ directory_id: entry.id, status: "want_to_read" }),
       });
       setShowAddModal(false);
-      setAddingBook(null);
+      setAdding(null);
       loadCounts();
-      if (tab === "want_to_read") loadShelf("want_to_read");
+      if (tab === "want_to_read") loadShelf("want_to_read", medium);
     } catch {
-      setAddingBook(null);
+      setAdding(null);
     }
   }
+
+  const search = MEDIA_SEARCH[addMedium];
+  const target = goal?.target ?? goal?.targetBooks ?? null;
+  const logged = goal?.logged ?? goal?.booksRead ?? 0;
 
   return (
     <>
       <div className="rt-toolbar">
         <button type="button" className="rt-add-btn" onClick={() => setShowAddModal(true)}>
-          + Add a Book
+          + Add to your log
         </button>
         <Link href="/member/reading/stats" className="rt-stats-link">
-          Your Year in Books →
+          Your Year in Culture →
         </Link>
       </div>
 
       {goal && (
         <div className="rt-goal-card">
-          {editingGoal || goal.targetBooks === null ? (
+          {editingGoal || target === null ? (
             <div className="rt-goal-edit">
               <label className="rt-goal-label" htmlFor="rt-goal-input">
-                Set your {goal.year} reading goal
+                Set your {goal.year} goal
               </label>
               <div className="rt-goal-edit-row">
                 <input
@@ -171,14 +221,14 @@ export default function ReadingTrackerClient() {
                   min={1}
                   className="rt-goal-input"
                   placeholder="e.g. 24"
-                  defaultValue={goal.targetBooks ?? ""}
+                  defaultValue={target ?? ""}
                   onChange={(ev) => setGoalInput(ev.target.value)}
                   onKeyDown={(ev) => ev.key === "Enter" && saveGoal()}
                 />
                 <button type="button" className="rt-goal-save" onClick={saveGoal}>
                   Save
                 </button>
-                {goal.targetBooks !== null && (
+                {target !== null && (
                   <button type="button" className="rt-goal-cancel" onClick={() => setEditingGoal(false)}>
                     Cancel
                   </button>
@@ -188,12 +238,12 @@ export default function ReadingTrackerClient() {
           ) : (
             <button type="button" className="rt-goal-summary" onClick={() => setEditingGoal(true)}>
               <span className="rt-goal-text">
-                {goal.booksRead} of {goal.targetBooks} books this year
+                {logged} of {target} logged this year
               </span>
               <span className="rt-goal-bar">
                 <span
                   className="rt-goal-bar-fill"
-                  style={{ width: `${Math.min(100, (goal.booksRead / goal.targetBooks) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (logged / target) * 100)}%` }}
                 />
               </span>
             </button>
@@ -201,15 +251,38 @@ export default function ReadingTrackerClient() {
         </div>
       )}
 
-      <div className="wal-tabs">
-        {TABS.map((t) => (
+      {mediumChips.length > 0 && (
+        <div className="rt-media">
           <button
-            key={t.key}
             type="button"
-            className={`wal-tab${tab === t.key ? " wal-tab--active" : ""}`}
-            onClick={() => setTab(t.key)}
+            className={`rt-media-chip${medium === "all" ? " rt-media-chip--active" : ""}`}
+            onClick={() => setMedium("all")}
           >
-            {t.label} ({counts[t.key]})
+            All ({counts.total})
+          </button>
+          {mediumChips.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`rt-media-chip${medium === m ? " rt-media-chip--active" : ""}`}
+              onClick={() => setMedium(m)}
+            >
+              <span aria-hidden="true">{MEDIUM_EMOJI[m]}</span> {MEDIUM_LABELS[m]} (
+              {counts.byMedium?.[m]?.total ?? 0})
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="wal-tabs">
+        {SHELF_STATUSES.map((key) => (
+          <button
+            key={key}
+            type="button"
+            className={`wal-tab${tab === key ? " wal-tab--active" : ""}`}
+            onClick={() => setTab(key)}
+          >
+            {statusLabel(key, medium)} ({tabCount(key)})
           </button>
         ))}
       </div>
@@ -218,9 +291,9 @@ export default function ReadingTrackerClient() {
         <p className="rt-empty">Loading…</p>
       ) : entries.length === 0 ? (
         <p className="rt-empty">
-          {tab === "want_to_read" && "Nothing on your list yet — add a book to get started."}
-          {tab === "currently_reading" && "You're not currently reading anything."}
-          {tab === "read" && "No finished books yet."}
+          {tab === "want_to_read" && "Nothing on your list yet — add something to get started."}
+          {tab === "currently_reading" && "Nothing in progress right now."}
+          {tab === "read" && "Nothing logged yet."}
         </p>
       ) : (
         <div className="rt-grid">
@@ -229,7 +302,9 @@ export default function ReadingTrackerClient() {
               {e.thumbnail ? (
                 <img src={e.thumbnail} alt="" className="rt-card-cover" />
               ) : (
-                <div className="rt-card-cover rt-card-cover--placeholder">📖</div>
+                <div className="rt-card-cover rt-card-cover--placeholder">
+                  {MEDIUM_EMOJI[e.medium] ?? "✦"}
+                </div>
               )}
               <div className="rt-card-body">
                 <p className="rt-card-title">{e.title}</p>
@@ -244,9 +319,11 @@ export default function ReadingTrackerClient() {
                   value={e.status}
                   onChange={(ev) => moveShelf(e.directoryId, ev.target.value as ShelfStatus)}
                 >
-                  {TABS.map((t) => (
-                    <option key={t.key} value={t.key}>
-                      {t.label}
+                  {SHELF_STATUSES.map((key) => (
+                    <option key={key} value={key}>
+                      {/* the card's own medium, not the active filter — a card
+                          always describes itself in its own verbs */}
+                      {statusLabel(key, e.medium)}
                     </option>
                   ))}
                 </select>
@@ -262,16 +339,34 @@ export default function ReadingTrackerClient() {
       {showAddModal && (
         <div className="rt-modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="rt-modal" onClick={(ev) => ev.stopPropagation()}>
-            <h3 className="rt-modal-title">Add a book</h3>
+            <h3 className="rt-modal-title">Add to your log</h3>
+            <div className="rt-media rt-media--modal">
+              {MEDIA.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`rt-media-chip${addMedium === m ? " rt-media-chip--active" : ""}`}
+                  onClick={() => {
+                    setAddMedium(m);
+                    setAdding(null);
+                  }}
+                >
+                  <span aria-hidden="true">{MEDIUM_EMOJI[m]}</span> {MEDIUM_LABELS[m]}
+                </button>
+              ))}
+            </div>
             <DirectorySearch
-              value={addingBook}
+              // Remount on medium change so the query/results don't carry over
+              // from the previous type's search.
+              key={addMedium}
+              value={adding}
               onChange={(entry) => {
-                if (entry) addBook(entry);
+                if (entry) addEntry(entry);
               }}
-              typeFilter="book"
-              placeholder="Search for a book…"
-              aboutFieldLabel="Author"
-              externalSource="google_books"
+              typeFilter={search.typeFilter}
+              placeholder={search.placeholder}
+              aboutFieldLabel={search.aboutFieldLabel}
+              externalSource={search.externalSource}
             />
             <button type="button" className="rt-modal-close" onClick={() => setShowAddModal(false)}>
               Close

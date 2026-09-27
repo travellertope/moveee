@@ -1,8 +1,23 @@
 <?php
 /**
- * Reading Tracker — StoryGraph-style personal shelves (Want to Read /
- * Currently Reading / Read) over the existing culture_directory `book`
+ * Reading Tracker — StoryGraph-style personal shelves over culture_directory
  * entries. See docs/reading-tracker-plan.md for the full spec.
+ *
+ * Originally books-only; generalised September 2026 to cover all five review
+ * media (book / film / music / food / place — one per template in the
+ * composer's REVIEW_FAMILY). The shelf table was already keyed on a plain
+ * directory_id and needed no migration; what changed is that a medium is now
+ * derived from each entry's culture_dir_type (see TYPE_MEDIA_MAP) so shelves
+ * can be filtered and stats grouped by it, and that get_reading_stats() reads
+ * every review template's rating/genre meta rather than book-review's alone.
+ * The three internal status values are unchanged and stay deliberately
+ * medium-neutral — the *labels* vary per medium ("Want to Read" vs "Want to
+ * Watch"), in the frontends, not here.
+ *
+ * Mood/pace (Phase 3) is the one thing that did NOT generalise: its 12-tag
+ * vocabulary is StoryGraph's and does not transfer to a restaurant or an
+ * album, so it stays book-only by design. Don't "finish the job" by widening
+ * it without a real vocabulary for the other four.
  *
  * Phase 1 (shelves + counts) shipped September 2026. Phase 2 added a
  * per-year reading goal, with progress always computed live off
@@ -45,6 +60,58 @@ class Culture_Reading_Tracker {
     );
 
     const PACES = array( 'slow', 'medium', 'fast' );
+
+    /**
+     * The five media the log covers, one per review template in the composer's
+     * REVIEW_FAMILY (place / food / music / book / film — see SubmitPost.tsx).
+     * 'other' is not listed here: it is the computed fallback for a shelved
+     * entry whose culture_dir_type maps to none of these, never a value anyone
+     * picks.
+     */
+    const MEDIA = array( 'book', 'film', 'music', 'food', 'place' );
+
+    /**
+     * culture_dir_type slug -> medium. The medium is derived from the *entry*,
+     * never from the review template that happens to link to it — Place
+     * (hidden-gem) reviews are composed with no typeFilter at all, so the
+     * template is not a reliable signal of what the thing actually is.
+     *
+     * An entry carrying two mapped types (a restaurant tagged both `place` and
+     * `food`, say) resolves to whichever row the taxonomy query returns first.
+     * That is arbitrary but stable, and both answers are defensible — don't add
+     * tie-break rules here without a real case that needs them.
+     */
+    const TYPE_MEDIA_MAP = array(
+        'book'        => 'book',
+        'film'        => 'film',
+        'tv-series'   => 'film',
+        'album'       => 'music',
+        'food'        => 'food',
+        'recipe'      => 'food',
+        'place'       => 'place',
+        'restaurant'  => 'place',
+        'event-venue' => 'place',
+    );
+
+    /**
+     * Which review template's meta carries the overall rating / genre list per
+     * medium. Food is deliberately absent from both: it stores three separate
+     * breakdown ratings and no genre array (see get_reading_stats(), which
+     * averages them and reads _cuisine_tag instead), and Place stores a flat
+     * _star_rating with no genres at all.
+     */
+    const REVIEW_RATING_META = array(
+        'book-review'  => '_book_overall_rating',
+        'film-review'  => '_film_overall_rating',
+        'music-review' => '_music_overall_rating',
+        'hidden-gem'   => '_star_rating',
+    );
+
+    const REVIEW_GENRE_META = array(
+        'book-review'  => '_book_genres',
+        'film-review'  => '_film_genres',
+        'music-review' => '_music_genres',
+    );
 
     public static function table() : string {
         global $wpdb;
@@ -107,6 +174,96 @@ class Culture_Reading_Tracker {
     }
 
     /* ——————————————————————————————————————
+     *  Medium resolution
+     * —————————————————————————————————————— */
+
+    /**
+     * Batch directory_id -> medium. One raw taxonomy query for the whole set
+     * rather than get_the_terms() per row, per the "Raw SQL REST endpoints"
+     * convention — a shelf page or a year of logged entries would otherwise be
+     * N term queries.
+     *
+     * Every requested id is present in the return value; anything with no
+     * mapped culture_dir_type comes back as 'other'.
+     */
+    public static function media_for_directory_ids( array $ids ) : array {
+        global $wpdb;
+
+        $ids = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+        if ( empty( $ids ) ) {
+            return array();
+        }
+
+        $in   = implode( ',', $ids );
+        $rows = $wpdb->get_results(
+            "SELECT tr.object_id, t.slug
+             FROM {$wpdb->term_relationships} tr
+             INNER JOIN {$wpdb->term_taxonomy} tt
+                     ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'culture_dir_type'
+             INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+             WHERE tr.object_id IN ({$in})"
+        );
+
+        $out = array();
+        foreach ( $rows ?: array() as $row ) {
+            $object_id = (int) $row->object_id;
+            if ( isset( $out[ $object_id ] ) ) {
+                continue;
+            }
+            $medium = self::TYPE_MEDIA_MAP[ $row->slug ] ?? null;
+            if ( $medium ) {
+                $out[ $object_id ] = $medium;
+            }
+        }
+
+        foreach ( $ids as $id ) {
+            if ( ! isset( $out[ $id ] ) ) {
+                $out[ $id ] = 'other';
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * SQL fragment restricting a shelf query to one medium. Returns '' for an
+     * empty/unrecognised medium (i.e. no filter). 'other' is the inverse of
+     * every mapped slug, so an entry with no usable type stays reachable
+     * through a filter rather than only under "All".
+     */
+    private static function medium_where_clause( string $medium, string $alias ) : string {
+        global $wpdb;
+
+        if ( '' === $medium ) {
+            return '';
+        }
+
+        $exists_tpl = "SELECT 1 FROM {$wpdb->term_relationships} tr
+                       INNER JOIN {$wpdb->term_taxonomy} tt
+                               ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'culture_dir_type'
+                       INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+                       WHERE tr.object_id = {$alias}.directory_id AND t.slug IN (%s)";
+
+        if ( 'other' === $medium ) {
+            $all_mapped = "'" . implode( "','", array_map( 'esc_sql', array_keys( self::TYPE_MEDIA_MAP ) ) ) . "'";
+            return ' AND NOT EXISTS (' . sprintf( $exists_tpl, $all_mapped ) . ')';
+        }
+
+        $slugs = array();
+        foreach ( self::TYPE_MEDIA_MAP as $slug => $mapped ) {
+            if ( $mapped === $medium ) {
+                $slugs[] = $slug;
+            }
+        }
+        if ( empty( $slugs ) ) {
+            return '';
+        }
+
+        $in = "'" . implode( "','", array_map( 'esc_sql', $slugs ) ) . "'";
+        return ' AND EXISTS (' . sprintf( $exists_tpl, $in ) . ')';
+    }
+
+    /* ——————————————————————————————————————
      *  Core writes
      * —————————————————————————————————————— */
 
@@ -120,7 +277,7 @@ class Culture_Reading_Tracker {
 
         $post = get_post( $directory_id );
         if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
-            return new WP_Error( 'invalid_book', 'This book could not be found.', array( 'status' => 400 ) );
+            return new WP_Error( 'invalid_entry', 'That entry could not be found.', array( 'status' => 400 ) );
         }
 
         global $wpdb;
@@ -168,19 +325,47 @@ class Culture_Reading_Tracker {
      *  Reads (always scoped to the caller's own user_id)
      * —————————————————————————————————————— */
 
+    /**
+     * Flat per-status totals (the pre-existing shape every caller already
+     * reads) plus a `byMedium` map of the same totals split by medium, which
+     * is what drives the medium filter chips' counts. The whole shelf is
+     * fetched to compute that split rather than a taxonomy join per status —
+     * a personal shelf is small, and this is one query either way.
+     */
     public static function get_shelf_counts( int $user_id ) : array {
         global $wpdb;
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT status, COUNT(*) AS c FROM " . self::table() . " WHERE user_id = %d GROUP BY status",
+            "SELECT status, directory_id FROM " . self::table() . " WHERE user_id = %d",
             $user_id
         ), ARRAY_A );
+        $rows = $rows ?: array();
 
-        $counts = array_fill_keys( self::STATUSES, 0 );
-        foreach ( $rows ?: array() as $row ) {
-            if ( isset( $counts[ $row['status'] ] ) ) {
-                $counts[ $row['status'] ] = (int) $row['c'];
-            }
+        $counts    = array_fill_keys( self::STATUSES, 0 );
+        $by_medium = array();
+        foreach ( array_merge( self::MEDIA, array( 'other' ) ) as $medium ) {
+            $by_medium[ $medium ] = array_fill_keys( self::STATUSES, 0 );
+            $by_medium[ $medium ]['total'] = 0;
         }
+
+        $media = self::media_for_directory_ids( wp_list_pluck( $rows, 'directory_id' ) );
+
+        foreach ( $rows as $row ) {
+            $status = (string) $row['status'];
+            if ( ! isset( $counts[ $status ] ) ) {
+                continue;
+            }
+            $counts[ $status ]++;
+
+            $medium = $media[ (int) $row['directory_id'] ] ?? 'other';
+            if ( ! isset( $by_medium[ $medium ] ) ) {
+                $medium = 'other';
+            }
+            $by_medium[ $medium ][ $status ]++;
+            $by_medium[ $medium ]['total']++;
+        }
+
+        $counts['total']    = count( $rows );
+        $counts['byMedium'] = $by_medium;
         return $counts;
     }
 
@@ -190,7 +375,7 @@ class Culture_Reading_Tracker {
      * shelf-specific status/startedAt/finishedAt — so the frontend can reuse
      * its existing book-card component rather than a new one.
      */
-    public static function get_user_shelf( int $user_id, string $status, int $page = 1, int $per_page = 20 ) : array {
+    public static function get_user_shelf( int $user_id, string $status, int $page = 1, int $per_page = 20, string $medium = '' ) : array {
         if ( ! in_array( $status, self::STATUSES, true ) ) {
             return array( 'entries' => array(), 'total' => 0 );
         }
@@ -201,21 +386,30 @@ class Culture_Reading_Tracker {
         $per_page = min( 50, max( 1, $per_page ) );
         $offset   = ( $page - 1 ) * $per_page;
 
+        $medium = sanitize_key( $medium );
+        if ( '' !== $medium && 'other' !== $medium && ! in_array( $medium, self::MEDIA, true ) ) {
+            $medium = '';
+        }
+        // Built from class constants only, never from request data — the
+        // filter value itself is validated against self::MEDIA above before
+        // it ever reaches this clause.
+        $medium_sql = self::medium_where_clause( $medium, 's' );
+
         // Read shelf sorts newest-finished-first per the plan doc; the other
         // two sort by most-recently-touched.
-        $order_by = ( 'read' === $status ) ? 'finished_at DESC' : 'updated_at DESC';
+        $order_by = ( 'read' === $status ) ? 's.finished_at DESC' : 's.updated_at DESC';
 
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT directory_id, status, started_at, finished_at
-             FROM {$table}
-             WHERE user_id = %d AND status = %s
+            "SELECT s.directory_id, s.status, s.started_at, s.finished_at
+             FROM {$table} s
+             WHERE s.user_id = %d AND s.status = %s {$medium_sql}
              ORDER BY {$order_by}
              LIMIT %d OFFSET %d",
             $user_id, $status, $per_page, $offset
         ), ARRAY_A );
 
         $total = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND status = %s",
+            "SELECT COUNT(*) FROM {$table} s WHERE s.user_id = %d AND s.status = %s {$medium_sql}",
             $user_id, $status
         ) );
 
@@ -237,10 +431,11 @@ class Culture_Reading_Tracker {
             $posts_by_id[ $p->ID ] = $p;
         }
 
+        $media   = self::media_for_directory_ids( $ids );
         $entries = array();
         foreach ( $rows as $row ) {
             $dir_id = (int) $row['directory_id'];
-            // The book was unpublished/deleted since being shelved — skip
+            // The entry was unpublished/deleted since being shelved — skip
             // rather than render a broken card; the shelf row itself is left
             // alone (no orphan cleanup here, out of scope for v1).
             if ( ! isset( $posts_by_id[ $dir_id ] ) ) {
@@ -257,6 +452,7 @@ class Culture_Reading_Tracker {
                 'thumbnail'     => $thumb ?: null,
                 'author'        => Culture_Directory::get_first_about_field( $post->ID ),
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
+                'medium'        => $media[ $dir_id ] ?? 'other',
                 'status'        => $row['status'],
                 'startedAt'     => $row['started_at'] ?: null,
                 'finishedAt'    => $row['finished_at'] ?: null,
@@ -290,7 +486,12 @@ class Culture_Reading_Tracker {
         ) );
 
         return array(
-            'year'        => $year,
+            'year'   => $year,
+            'target' => null !== $target ? (int) $target : null,
+            'logged' => $read,
+
+            // Deprecated book-era aliases — see get_reading_stats()'s own note
+            // for why these stay for now.
             'targetBooks' => null !== $target ? (int) $target : null,
             'booksRead'   => $read,
         );
@@ -301,7 +502,7 @@ class Culture_Reading_Tracker {
      */
     public static function set_goal( int $user_id, int $year, int $target_books ) {
         if ( $target_books < 1 ) {
-            return new WP_Error( 'invalid_target', 'Goal must be at least 1 book.', array( 'status' => 400 ) );
+            return new WP_Error( 'invalid_target', 'Goal must be at least 1 entry.', array( 'status' => 400 ) );
         }
 
         global $wpdb;
@@ -489,49 +690,63 @@ class Culture_Reading_Tracker {
         global $wpdb;
         $shelf_table = self::table();
 
-        // Directory IDs + finish dates for every book this user finished in $year.
+        // Directory IDs + finish dates for everything this user logged in $year.
         $read_rows = $wpdb->get_results( $wpdb->prepare(
             "SELECT directory_id, finished_at FROM {$shelf_table}
              WHERE user_id = %d AND status = 'read' AND YEAR(finished_at) = %d",
             $user_id, $year
         ), ARRAY_A );
+        $read_rows = $read_rows ?: array();
 
-        $books_read      = count( $read_rows );
-        $directory_ids   = array_map( 'intval', wp_list_pluck( $read_rows, 'directory_id' ) );
-        $books_per_month = array();
+        $entries_logged = count( $read_rows );
+        $directory_ids  = array_map( 'intval', wp_list_pluck( $read_rows, 'directory_id' ) );
+        $media          = self::media_for_directory_ids( $directory_ids );
+
+        $per_month = array();
         for ( $m = 1; $m <= 12; $m++ ) {
-            $key = sprintf( '%04d-%02d', $year, $m );
-            $books_per_month[ $key ] = 0;
+            $per_month[ sprintf( '%04d-%02d', $year, $m ) ] = 0;
         }
+        $medium_breakdown = array_fill_keys( array_merge( self::MEDIA, array( 'other' ) ), 0 );
+
         foreach ( $read_rows as $row ) {
+            $medium = $media[ (int) $row['directory_id'] ] ?? 'other';
+            if ( isset( $medium_breakdown[ $medium ] ) ) {
+                $medium_breakdown[ $medium ]++;
+            }
             if ( empty( $row['finished_at'] ) ) {
                 continue;
             }
             $key = substr( $row['finished_at'], 0, 7 ); // "YYYY-MM"
-            if ( isset( $books_per_month[ $key ] ) ) {
-                $books_per_month[ $key ]++;
+            if ( isset( $per_month[ $key ] ) ) {
+                $per_month[ $key ]++;
             }
         }
-        $books_per_month_list = array();
-        foreach ( $books_per_month as $month => $count ) {
-            $books_per_month_list[] = array( 'month' => $month, 'count' => $count );
+
+        $per_month_list = array();
+        foreach ( $per_month as $month => $count ) {
+            $per_month_list[] = array( 'month' => $month, 'count' => $count );
         }
 
-        $pace_breakdown = array( 'slow' => 0, 'medium' => 0, 'fast' => 0 );
-        $mood_breakdown = array_fill_keys( self::MOOD_TAGS, 0 );
+        $pace_breakdown      = array( 'slow' => 0, 'medium' => 0, 'fast' => 0 );
+        $mood_breakdown      = array_fill_keys( self::MOOD_TAGS, 0 );
         $rating_distribution = array( '1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0 );
-        $genre_counts = array();
+        $genre_counts        = array();
+        $genre_media         = array();
 
         if ( ! empty( $directory_ids ) ) {
             $ids_in = implode( ',', array_map( 'absint', $directory_ids ) );
 
-            // Pace + moods live on the directory post itself (_book_pace/_book_moods),
-            // already-aggregated community values — see get_book_mood_pace() above.
+            // Pace + moods are book-only by design (the vocabulary is
+            // StoryGraph's and doesn't transfer to a restaurant or an album),
+            // so these two breakdowns stay scoped to books even though every
+            // other figure here now spans all five media. They read the
+            // already-aggregated community values on the directory post —
+            // see get_book_mood_pace().
             $meta_rows = $wpdb->get_results(
                 "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta}
                  WHERE post_id IN ({$ids_in}) AND meta_key IN ('_book_pace', '_book_moods')"
             );
-            foreach ( $meta_rows as $row ) {
+            foreach ( $meta_rows ?: array() as $row ) {
                 if ( '_book_pace' === $row->meta_key && isset( $pace_breakdown[ $row->meta_value ] ) ) {
                     $pace_breakdown[ $row->meta_value ]++;
                 } elseif ( '_book_moods' === $row->meta_key ) {
@@ -546,37 +761,96 @@ class Culture_Reading_Tracker {
                 }
             }
 
-            // Rating + genres come from this user's own Book Review posts linked
-            // to one of these directory entries — a raw postmeta join, not a
-            // WP_Query loop, per the "Raw SQL REST endpoints" convention.
+            // Ratings + genres come from this user's own reviews linked to one
+            // of these entries — all five review templates, not just
+            // book-review. One pivoted postmeta join rather than a query per
+            // template, per the "Raw SQL REST endpoints" convention.
             $review_rows = $wpdb->get_results( $wpdb->prepare(
                 "SELECT p.ID,
-                        MAX(CASE WHEN pm_link.meta_key = '_linked_directory_id' THEN pm_link.meta_value END) AS directory_id,
-                        MAX(CASE WHEN pm_rating.meta_key = '_book_overall_rating' THEN pm_rating.meta_value END) AS rating,
-                        MAX(CASE WHEN pm_genres.meta_key = '_book_genres' THEN pm_genres.meta_value END) AS genres
+                        MAX(CASE WHEN pm.meta_key = '_template_type'        THEN pm.meta_value END) AS template,
+                        MAX(CASE WHEN pm.meta_key = '_linked_directory_id'  THEN pm.meta_value END) AS directory_id,
+                        MAX(CASE WHEN pm.meta_key = '_book_overall_rating'  THEN pm.meta_value END) AS rating_book,
+                        MAX(CASE WHEN pm.meta_key = '_film_overall_rating'  THEN pm.meta_value END) AS rating_film,
+                        MAX(CASE WHEN pm.meta_key = '_music_overall_rating' THEN pm.meta_value END) AS rating_music,
+                        MAX(CASE WHEN pm.meta_key = '_star_rating'          THEN pm.meta_value END) AS rating_star,
+                        MAX(CASE WHEN pm.meta_key = '_food_rating_taste'    THEN pm.meta_value END) AS food_taste,
+                        MAX(CASE WHEN pm.meta_key = '_food_rating_value'    THEN pm.meta_value END) AS food_value,
+                        MAX(CASE WHEN pm.meta_key = '_food_rating_vibe'     THEN pm.meta_value END) AS food_vibe,
+                        MAX(CASE WHEN pm.meta_key = '_book_genres'          THEN pm.meta_value END) AS genres_book,
+                        MAX(CASE WHEN pm.meta_key = '_film_genres'          THEN pm.meta_value END) AS genres_film,
+                        MAX(CASE WHEN pm.meta_key = '_music_genres'         THEN pm.meta_value END) AS genres_music,
+                        MAX(CASE WHEN pm.meta_key = '_cuisine_tag'          THEN pm.meta_value END) AS cuisine
                  FROM {$wpdb->posts} p
-                 INNER JOIN {$wpdb->postmeta} pm_template ON pm_template.post_id = p.ID AND pm_template.meta_key = '_template_type' AND pm_template.meta_value = 'book-review'
-                 INNER JOIN {$wpdb->postmeta} pm_link ON pm_link.post_id = p.ID AND pm_link.meta_key = '_linked_directory_id' AND pm_link.meta_value IN ({$ids_in})
-                 LEFT JOIN {$wpdb->postmeta} pm_rating ON pm_rating.post_id = p.ID AND pm_rating.meta_key = '_book_overall_rating'
-                 LEFT JOIN {$wpdb->postmeta} pm_genres ON pm_genres.post_id = p.ID AND pm_genres.meta_key = '_book_genres'
+                 INNER JOIN {$wpdb->postmeta} pm_link
+                         ON pm_link.post_id = p.ID
+                        AND pm_link.meta_key = '_linked_directory_id'
+                        AND pm_link.meta_value IN ({$ids_in})
+                 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
                  WHERE p.post_author = %d AND p.post_type = 'culture_post' AND p.post_status = 'publish'
                  GROUP BY p.ID",
                 $user_id
             ), ARRAY_A );
 
-            foreach ( $review_rows as $row ) {
-                $rating = (int) $row['rating'];
+            foreach ( $review_rows ?: array() as $row ) {
+                $template = (string) $row['template'];
+                $medium   = $media[ (int) $row['directory_id'] ] ?? 'other';
+
+                // Food has no single overall rating — average its three
+                // breakdown scores, exactly as the composer already derives an
+                // overall from a breakdown for book/music/film.
+                if ( 'food-review' === $template ) {
+                    $parts = array_values( array_filter( array(
+                        (int) $row['food_taste'],
+                        (int) $row['food_value'],
+                        (int) $row['food_vibe'],
+                    ) ) );
+                    $rating = $parts ? (int) round( array_sum( $parts ) / count( $parts ) ) : 0;
+                } else {
+                    $key    = self::REVIEW_RATING_META[ $template ] ?? '';
+                    $column = array(
+                        '_book_overall_rating'  => 'rating_book',
+                        '_film_overall_rating'  => 'rating_film',
+                        '_music_overall_rating' => 'rating_music',
+                        '_star_rating'          => 'rating_star',
+                    )[ $key ] ?? '';
+                    $rating = $column ? (int) $row[ $column ] : 0;
+                }
+
                 if ( $rating >= 1 && $rating <= 5 ) {
                     $rating_distribution[ (string) $rating ]++;
                 }
-                $genres = json_decode( (string) $row['genres'], true );
-                if ( is_array( $genres ) ) {
-                    foreach ( $genres as $genre ) {
-                        $genre = sanitize_text_field( $genre );
-                        if ( '' === $genre ) {
-                            continue;
+
+                // Genres: a JSON array for book/film/music, a single cuisine
+                // string for food. Place carries neither.
+                $genres = array();
+                if ( 'food-review' === $template ) {
+                    $cuisine = sanitize_text_field( (string) $row['cuisine'] );
+                    if ( '' !== $cuisine ) {
+                        $genres[] = $cuisine;
+                    }
+                } else {
+                    $key    = self::REVIEW_GENRE_META[ $template ] ?? '';
+                    $column = array(
+                        '_book_genres'  => 'genres_book',
+                        '_film_genres'  => 'genres_film',
+                        '_music_genres' => 'genres_music',
+                    )[ $key ] ?? '';
+                    if ( $column ) {
+                        $decoded = json_decode( (string) $row[ $column ], true );
+                        if ( is_array( $decoded ) ) {
+                            $genres = $decoded;
                         }
-                        $genre_counts[ $genre ] = ( $genre_counts[ $genre ] ?? 0 ) + 1;
+                    }
+                }
+
+                foreach ( $genres as $genre ) {
+                    $genre = sanitize_text_field( $genre );
+                    if ( '' === $genre ) {
+                        continue;
+                    }
+                    $genre_counts[ $genre ] = ( $genre_counts[ $genre ] ?? 0 ) + 1;
+                    if ( ! isset( $genre_media[ $genre ] ) ) {
+                        $genre_media[ $genre ] = $medium;
                     }
                 }
             }
@@ -596,17 +870,28 @@ class Culture_Reading_Tracker {
         arsort( $genre_counts );
         $top_genres = array();
         foreach ( array_slice( $genre_counts, 0, 5, true ) as $genre => $count ) {
-            $top_genres[] = array( 'genre' => $genre, 'count' => $count );
+            $top_genres[] = array(
+                'genre'  => $genre,
+                'count'  => $count,
+                'medium' => $genre_media[ $genre ] ?? 'other',
+            );
         }
 
         return array(
-            'year'               => $year,
-            'books_read'         => $books_read,
-            'pace_breakdown'     => $pace_breakdown,
-            'mood_breakdown'     => $mood_breakdown_sparse,
-            'rating_distribution'=> $rating_distribution,
-            'top_genres'         => $top_genres,
-            'books_per_month'    => $books_per_month_list,
+            'year'                => $year,
+            'entries_logged'      => $entries_logged,
+            'medium_breakdown'    => $medium_breakdown,
+            'per_month'           => $per_month_list,
+            'pace_breakdown'      => $pace_breakdown,
+            'mood_breakdown'      => $mood_breakdown_sparse,
+            'rating_distribution' => $rating_distribution,
+            'top_genres'          => $top_genres,
+
+            // Deprecated book-era aliases. Kept so an already-installed mobile
+            // build (which can't be force-updated) keeps rendering after this
+            // widens; drop them once the field has turned over.
+            'books_read'          => $entries_logged,
+            'books_per_month'     => $per_month_list,
         );
     }
 }
