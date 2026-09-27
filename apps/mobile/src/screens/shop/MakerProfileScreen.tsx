@@ -362,10 +362,6 @@ export default function MakerProfileScreen() {
     }
   }, [maker.storySlug, navigation]);
 
-  const handleDirectory = useCallback(() => {
-    navigation.navigate("MemberDirectory");
-  }, [navigation]);
-
   // Split products into rows of 2
   const products = maker.products ?? [];
 
@@ -560,16 +556,6 @@ export default function MakerProfileScreen() {
         </View>
 
         {/* ── Contact card ── */}
-        <View style={[s.card, { marginBottom: 32 }]}>
-          <Text style={s.cardTitle}>Questions about a product?</Text>
-          <Text style={s.contactBody}>
-            Message the maker through our community directory.
-          </Text>
-          <TouchableOpacity style={s.linkRow} onPress={handleDirectory}>
-            <Ionicons name="person-outline" size={16} color={c.ochre} style={{ marginRight: 8 }} />
-            <Text style={s.linkText}>View in Directory →</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -797,11 +783,5 @@ function createStyles(c: ColorPalette) {
     },
 
     // Contact card
-    contactBody: {
-      fontFamily: fonts.sans,
-      fontSize: 13,
-      color: c.mute,
-      lineHeight: 20,
-    },
   });
 }

@@ -207,7 +207,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
       {/* Sticky header */}
       <div className="hfc-header">
         <div className="hfc-header-inner">
-          <Link href="/connect/people" className="hfc-back">← Back</Link>
+          <Link href="/connect/stoop" className="hfc-back">← Back</Link>
           <span className="hfc-step-label">Step {step} of {TOTAL_STEPS}</span>
         </div>
         <div className="hfc-progress-bar">

@@ -173,7 +173,7 @@ export default async function MemberPage() {
                   : "Join a local Stoop to meet other members near you."}
               </p>
               <Link
-                href={myCluster ? `/cluster/${myCluster.id}` : "/connect/people"}
+                href={myCluster ? `/cluster/${myCluster.id}` : "/connect/stoop"}
                 className="acct-card-link"
               >
                 {myCluster ? "View my Stoop →" : "Find your Stoop →"}
