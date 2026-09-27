@@ -3006,6 +3006,27 @@ export interface DirectoryPostsSummary {
   total_posts: number;
   average_rating: number | null;
   by_template: Record<string, number>;
+  /** Quotes attached to this entry (September 2026). Optional because an
+   * un-redeployed plugin won't send it. */
+  total_quotes?: number;
+}
+
+/**
+ * A quote attached to a directory entry — either saved FROM it (a book, film
+ * or album) or SAID BY it (a person). The endpoint unions both, so a person's
+ * entry shows everything they said regardless of source.
+ */
+export interface DirectoryQuote {
+  id: number;
+  slug: string;
+  /** Compound /quotes/{id}-{slug} permalink — a bare slug 404s there. */
+  href: string;
+  text: string;
+  author: string;
+  source: string;
+  quote_type: string;
+  saved_by: { name: string; avatar: string };
+  created_at: string;
 }
 
 export interface DirectoryPost {
@@ -3021,13 +3042,16 @@ export interface DirectoryPost {
 
 export interface DirectoryPostsResponse {
   posts: DirectoryPost[];
+  /** Optional: absent from an un-redeployed plugin's response. */
+  quotes?: DirectoryQuote[];
   summary: DirectoryPostsSummary;
 }
 
 export async function getDirectoryPosts(directoryId: number): Promise<DirectoryPostsResponse> {
   const empty: DirectoryPostsResponse = {
     posts: [],
-    summary: { total_posts: 0, average_rating: null, by_template: {} },
+    quotes: [],
+    summary: { total_posts: 0, average_rating: null, by_template: {}, total_quotes: 0 },
   };
   try {
     const res = await fetch(

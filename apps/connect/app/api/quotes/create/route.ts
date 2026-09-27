@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized. Please sign in to submit a quote." }, { status: 401 });
   }
 
-  let text, author, source, sharingReason, quoteType;
+  let text, author, source, sharingReason, quoteType, workId, authorDirId;
   try {
     const body = await req.json();
     text = body?.text?.trim();
@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
     source = body?.source?.trim();
     sharingReason = body?.sharing_reason?.trim();
     quoteType = body?.quote_type;
+    // Optional culture_directory links — the work the line came from, and
+    // the person who said it. This route destructures explicitly rather than
+    // spreading the body, so a new field is dropped unless it is named here.
+    // WordPress re-validates both against real published entries and drops
+    // anything that doesn't resolve, so these are passed through as-is.
+    workId = Number(body?.linked_directory_id) || undefined;
+    authorDirId = Number(body?.quote_author_directory_id) || undefined;
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -40,6 +47,8 @@ export async function POST(req: NextRequest) {
         source,
         sharing_reason: sharingReason,
         quote_type: quoteType,
+        linked_directory_id: workId,
+        quote_author_directory_id: authorDirId,
         user_id: parseInt((session.user as any).id)
       }),
     });

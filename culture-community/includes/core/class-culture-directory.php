@@ -970,8 +970,77 @@ class Culture_Directory {
     }
 
     /**
+     * Published quotes attached to a directory entry — either because the
+     * quote came FROM it (`_linked_directory_id`, a book/film/album) or
+     * because it was SAID BY it (`_quote_author_directory_id`, a person).
+     * Both are unioned, which is what makes a person's entry show everything
+     * they said regardless of which work it came from, while a work's entry
+     * shows the lines saved from that work.
+     *
+     * Raw SQL resolve-to-IDs rather than a two-branch OR meta_query: that
+     * pattern builds one unindexed LEFT JOIN against wp_postmeta per branch
+     * and is the exact shape that hung the culture_event endpoint for 20s+
+     * in production (see CLAUDE.md, "meta_query OR-branches ... are slow").
+     */
+    public static function quotes_for_directory_entry( int $dir_id, int $limit = 20 ) : array {
+        global $wpdb;
+
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT p.ID
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+             WHERE p.post_type = 'culture_quote'
+               AND p.post_status = 'publish'
+               AND pm.meta_key IN ('_linked_directory_id', '_quote_author_directory_id')
+               AND pm.meta_value = %d
+             ORDER BY p.post_date DESC
+             LIMIT %d",
+            $dir_id, $limit
+        ) );
+
+        if ( empty( $ids ) ) {
+            return array();
+        }
+
+        $posts = get_posts( array(
+            'post_type'      => 'culture_quote',
+            'post__in'       => array_map( 'absint', $ids ),
+            'posts_per_page' => count( $ids ),
+            'post_status'    => 'publish',
+            'orderby'        => 'post__in',
+        ) );
+
+        $quotes = array();
+        foreach ( $posts as $post ) {
+            $submitter = get_userdata( $post->post_author );
+            $authors   = get_the_terms( $post->ID, 'culture_quote_author' );
+
+            $quotes[] = array(
+                'id'         => $post->ID,
+                'slug'       => $post->post_name,
+                // The canonical compound permalink — /quotes/[slug] parses the
+                // leading numeric id, so a bare slug 404s. Same shape
+                // get_quote_feed_items() emits.
+                'href'       => '/quotes/' . $post->ID . '-' . $post->post_name,
+                'text'       => wp_strip_all_tags( $post->post_content ),
+                'author'     => ( $authors && ! is_wp_error( $authors ) && ! empty( $authors ) ) ? $authors[0]->name : '',
+                'source'     => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+                'quote_type' => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
+                'saved_by'   => array(
+                    'name'   => $submitter ? $submitter->display_name : 'Member',
+                    'avatar' => get_user_meta( $post->post_author, '_culture_avatar_url', true ) ?: get_avatar_url( $post->post_author, array( 'size' => 48 ) ),
+                ),
+                'created_at' => get_post_time( 'c', true, $post ),
+            );
+        }
+
+        return $quotes;
+    }
+
+    /**
      * Returns published community posts linked to a directory entry,
-     * plus aggregate summary (total, average rating, counts by template).
+     * plus any quotes attached to it, plus an aggregate summary (total,
+     * average rating, counts by template, quote count).
      */
     public static function handle_directory_posts( WP_REST_Request $request ) {
         $dir_id = (int) $request->get_param( 'id' );
@@ -1028,12 +1097,16 @@ class Culture_Directory {
             ? round( array_sum( $ratings ) / count( $ratings ), 1 )
             : null;
 
+        $quotes = self::quotes_for_directory_entry( $dir_id );
+
         return rest_ensure_response( array(
             'posts'   => $posts,
+            'quotes'  => $quotes,
             'summary' => array(
                 'total_posts'    => $query->found_posts,
                 'average_rating' => $avg_rating,
                 'by_template'    => $by_template,
+                'total_quotes'   => count( $quotes ),
             ),
         ) );
     }

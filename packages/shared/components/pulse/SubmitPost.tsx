@@ -203,6 +203,24 @@ const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highli
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
+/**
+ * Quote type -> the culture_dir_type its *source* resolves to, plus the
+ * external catalog to search alongside the local directory.
+ *
+ * Person and Speech are deliberately absent: for a Person quote the person is
+ * the source (already captured by the author picker below), and a Speech has
+ * no directory type to point at — both fall back to the freeform source text,
+ * which is why that input still exists.
+ */
+const QUOTE_SOURCE_TYPES: Record<
+  string,
+  { type: string; label: string; about: string; external?: "google_books" | "spotify" | "tmdb" }
+> = {
+  Book: { type: "book", label: "Which book?", about: "Author", external: "google_books" },
+  Film: { type: "film", label: "Which film?", about: "Director", external: "tmdb" },
+  Song: { type: "album", label: "Which song or album?", about: "Artist", external: "spotify" },
+};
+
 const MAX_CHARS: Record<string, number> = {
   post: 3000, "hidden-gem": 500, "food-review": 500,
   "book-review": 800,
@@ -355,6 +373,12 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   // Quote specific
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+  // Directory-backed quote links (September 2026). Before these, a quote's
+  // author was a freeform culture_quote_author taxonomy term and its source a
+  // plain string — a second, lower-quality person registry shadowing the
+  // Directory, and no way to show a line under the work it came from.
+  const [quoteAuthorEntry, setQuoteAuthorEntry] = useState<any>(null);
+  const [quoteSourceEntry, setQuoteSourceEntry] = useState<any>(null);
   const [quoteSharingReason, setQuoteSharingReason] = useState("");
   const [quoteType, setQuoteType] = useState("");
 
@@ -504,6 +528,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
     setGalleryFiles([]); setGalleryPreviews([]); setVideoUrl("");
     setFoodEntry(null); setFoodTaste(0); setFoodValue(0); setFoodVibe(0);
     setQuoteAuthor(""); setQuoteSource(""); setQuoteSharingReason(""); setQuoteType("");
+    setQuoteAuthorEntry(null); setQuoteSourceEntry(null);
     setEventTitle(""); setEventDate(""); setEventEndDate(""); setEventLocation("");
     setEventCity(""); setEventAdmission(""); setEventTicketUrl(""); setEventCategory("");
     setEventOrganiser(null);
@@ -560,7 +585,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
         if (!isPro && URL_RE.test(text)) return false;
         return text.trim().length >= 1;
       case "quote":
-        return text.trim().length >= 10 && quoteAuthor.trim().length > 0;
+        return text.trim().length >= 10 && (!!quoteAuthorEntry || quoteAuthor.trim().length > 0);
       case "hidden-gem":
         return text.trim().length >= 50 && starRating > 0 && !!directoryEntry && (!!imageFile || galleryFiles.length > 0);
       case "food-review":
@@ -667,8 +692,14 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: text.trim(),
-            author: quoteAuthor.trim(),
-            source: quoteSource.trim() || undefined,
+            // The freeform strings are still sent exactly as before — the
+            // culture_quote_author taxonomy term and _quote_source meta are
+            // unchanged, so every existing reader keeps working. The ids are
+            // additive.
+            author: (quoteAuthorEntry?.title || quoteAuthor).trim(),
+            source: (quoteSourceEntry?.title || quoteSource).trim() || undefined,
+            quote_author_directory_id: quoteAuthorEntry?.id || undefined,
+            linked_directory_id: quoteSourceEntry?.id || undefined,
             sharing_reason: quoteSharingReason.trim() || undefined,
             quote_type: quoteType || undefined,
           }),
@@ -1072,7 +1103,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                     <button
                       type="button"
                       className="composer-section-menu-item"
-                      onClick={() => { setQuoteType(""); setQuoteTypeMenuOpen(false); }}
+                      onClick={() => { setQuoteType(""); setQuoteSourceEntry(null); setQuoteTypeMenuOpen(false); }}
                     >
                       None <span className="composer-section-menu-hint">— no type</span>
                     </button>
@@ -1081,7 +1112,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
                         key={t}
                         type="button"
                         className="composer-section-menu-item"
-                        onClick={() => { setQuoteType(t); setQuoteTypeMenuOpen(false); }}
+                        onClick={() => { setQuoteType(t); setQuoteSourceEntry(null); setQuoteTypeMenuOpen(false); }}
                       >
                         {t}
                       </button>
@@ -1350,18 +1381,61 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
               </>
             )}
 
-            {/* Quote author/source */}
+            {/* Quote author — a directory picker, not freeform text. Who said
+                a line is a person the Directory already models; typing it as
+                a loose taxonomy term built a second, worse person registry
+                and meant the quote could never show on their entry page.
+                DirectorySearch creates the entry when there isn't one, and
+                dedupes when there is.
+
+                The freeform input stays underneath as the escape hatch for a
+                line with no attributable person — a proverb, something
+                overheard, "Anonymous" — which should not become a person
+                entry just to satisfy a required field. */}
             {template === "quote" && (
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                <input
-                  type="text" value={quoteAuthor} onChange={e => setQuoteAuthor(e.target.value.slice(0, 100))}
-                  placeholder="Author *" required className="composer-input" style={{ flex: 1, minWidth: "120px" }}
+              <>
+                <DirectorySearch
+                  value={quoteAuthorEntry}
+                  onChange={setQuoteAuthorEntry}
+                  typeFilter="person"
+                  placeholder="Who said it? *"
+                  aboutFieldLabel="Known for"
                 />
-                <input
-                  type="text" value={quoteSource} onChange={e => setQuoteSource(e.target.value.slice(0, 150))}
-                  placeholder="Source (optional)" className="composer-input" style={{ flex: 1, minWidth: "120px" }}
-                />
-              </div>
+                {!quoteAuthorEntry && (
+                  <input
+                    type="text"
+                    value={quoteAuthor}
+                    onChange={e => setQuoteAuthor(e.target.value.slice(0, 100))}
+                    placeholder="…or just type a name (proverb, overheard, unattributed)"
+                    className="composer-input"
+                  />
+                )}
+
+                {/* Source — only where the quote type maps to something the
+                    Directory actually holds. A Person quote's source is the
+                    person (picked above); a Speech has no directory type at
+                    all. Both fall through to the freeform input. */}
+                {QUOTE_SOURCE_TYPES[quoteType] ? (
+                  <DirectorySearch
+                    value={quoteSourceEntry}
+                    onChange={setQuoteSourceEntry}
+                    typeFilter={QUOTE_SOURCE_TYPES[quoteType].type}
+                    placeholder={QUOTE_SOURCE_TYPES[quoteType].label}
+                    aboutFieldLabel={QUOTE_SOURCE_TYPES[quoteType].about}
+                    externalSource={QUOTE_SOURCE_TYPES[quoteType].external}
+                  />
+                ) : (
+                  quoteType !== "Person" && (
+                    <input
+                      type="text"
+                      value={quoteSource}
+                      onChange={e => setQuoteSource(e.target.value.slice(0, 150))}
+                      placeholder="Source (optional)"
+                      className="composer-input"
+                    />
+                  )
+                )}
+              </>
             )}
 
             {/* Sharing reason — quote type itself moved to the top of the

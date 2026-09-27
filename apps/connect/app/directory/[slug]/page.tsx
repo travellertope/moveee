@@ -106,12 +106,14 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const [communityData, directoryEvents] = await Promise.all([
     entry.databaseId
       ? getDirectoryPosts(entry.databaseId)
-      : Promise.resolve({ posts: [], summary: { total_posts: 0, average_rating: null, by_template: {} } }),
+      : Promise.resolve({ posts: [], quotes: [], summary: { total_posts: 0, average_rating: null, by_template: {}, total_quotes: 0 } }),
     entry.databaseId
       ? getDirectoryEvents(entry.databaseId)
       : Promise.resolve([] as DirectoryEvent[]),
   ]);
   const { posts: communityPosts, summary: communitySummary } = communityData;
+  // Absent from an un-redeployed plugin's response, hence the fallback.
+  const directoryQuotes = communityData.quotes ?? [];
 
   type InfoboxField = { label: string; key: string };
   const INFOBOX_DEFS: Record<string, InfoboxField[]> = {
@@ -351,6 +353,40 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                       )}
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Lines saved from this entry — quotes linked to it, either
+              because they came from this work or because this person said
+              them. Sits alongside reviews rather than in its own tab: both
+              are "what members recorded about this thing". */}
+          {directoryQuotes.length > 0 && (
+            <div className="dir-community-section" style={{ marginTop: "2rem" }}>
+              <div className="dir-community-header">
+                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
+                  {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
+                </h2>
+                <span className="dir-community-rating-count">
+                  {directoryQuotes.length} {directoryQuotes.length === 1 ? "line" : "lines"}
+                </span>
+              </div>
+              <div className="dir-quotes">
+                {directoryQuotes.map((q) => (
+                  <figure key={q.id} className="dir-quote-card">
+                    <blockquote className="dir-quote-text">{q.text}</blockquote>
+                    <figcaption className="dir-quote-meta">
+                      {/* On a person's own page their name is the page title,
+                          so repeating it on every line is noise — show the
+                          source instead, when there is one. */}
+                      {typeSlug === "person"
+                        ? q.source && <span className="dir-quote-source">{q.source}</span>
+                        : q.author && <span className="dir-quote-source">{q.author}</span>}
+                      <span className="dir-quote-saved">Saved by {q.saved_by.name}</span>
+                      <a href={q.href} className="dir-community-read-more">Open →</a>
+                    </figcaption>
+                  </figure>
                 ))}
               </div>
             </div>

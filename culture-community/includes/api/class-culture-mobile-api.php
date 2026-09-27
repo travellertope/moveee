@@ -277,6 +277,12 @@ class Culture_Mobile_API {
                 'source'         => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
                 'sharing_reason' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ),
                 'quote_type'     => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                // Optional culture_directory links — the work the line came
+                // from, and the person who said it. handle_submit_quote is a
+                // pure delegate to Culture_REST_API::handle_create_quote, so
+                // these only need declaring here for sanitization.
+                'linked_directory_id'       => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'quote_author_directory_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -3483,6 +3489,21 @@ class Culture_Mobile_API {
         }, $query->posts );
     }
 
+    /**
+     * Slug for a linked directory entry, or '' when the id is 0 or the entry
+     * has since been unpublished — a card with a slug can link, one without
+     * falls back to plain text rather than a dead link.
+     */
+    private static function directory_slug( int $dir_id ) : string {
+        if ( ! $dir_id ) {
+            return '';
+        }
+        $post = get_post( $dir_id );
+        return ( $post && 'culture_directory' === $post->post_type && 'publish' === $post->post_status )
+            ? (string) $post->post_name
+            : '';
+    }
+
     private static function get_quote_feed_items(): array {
         $user_id       = get_current_user_id();
         $reactions_map = get_user_meta( $user_id, '_culture_post_reactions', true );
@@ -3518,6 +3539,13 @@ class Culture_Mobile_API {
                 'communityAuthorUsername' => $submitter ? $submitter->user_login : '',
                 'communityAuthorAvatar'   => get_user_meta( $submitter_id, '_culture_avatar_url', true ) ?: '',
                 'quoteType'          => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
+                // Directory links, when the quote has them. A card can turn
+                // the source/author into a real tap target instead of plain
+                // text; both are 0 for an unlinked quote.
+                'quoteWorkId'        => (int) get_post_meta( $post->ID, '_linked_directory_id', true ),
+                'quoteWorkSlug'      => self::directory_slug( (int) get_post_meta( $post->ID, '_linked_directory_id', true ) ),
+                'quoteAuthorId'      => (int) get_post_meta( $post->ID, '_quote_author_directory_id', true ),
+                'quoteAuthorSlug'    => self::directory_slug( (int) get_post_meta( $post->ID, '_quote_author_directory_id', true ) ),
                 'reactions'          => array(
                     'love' => (int) get_post_meta( $post->ID, 'reaction_love', true ),
                     'fire' => (int) get_post_meta( $post->ID, 'reaction_fire', true ),
@@ -4916,19 +4944,26 @@ class Culture_Mobile_API {
 
         // Community posts linked to this directory entry (latest 5)
         global $wpdb;
+        // The two meta keys here were '_culture_linked_directory' and
+        // '_community_template_type', neither of which is written anywhere in
+        // this codebase — the composer stores '_linked_directory_id' and
+        // '_template_type' (see handle_submit_post). So this section had
+        // never once rendered a post on mobile. Fixed September 2026 while
+        // adding quotes below; if a mobile entry screen suddenly starts
+        // showing reviews it hadn't before, this is why.
         $posts_raw = $wpdb->get_results( $wpdb->prepare(
             "SELECT p.ID, p.post_title, p.post_excerpt, p.post_author
              FROM {$wpdb->posts} p
-             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_culture_linked_directory' AND pm.meta_value = %s
+             INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_linked_directory_id' AND pm.meta_value = %d
              WHERE p.post_type = 'culture_post' AND p.post_status = 'publish'
              ORDER BY p.post_date DESC LIMIT 5",
-            (string) $pid
+            $pid
         ), ARRAY_A );
 
         $community_posts = array();
         foreach ( $posts_raw as $cp ) {
             $author      = get_userdata( (int) $cp['post_author'] );
-            $template    = get_post_meta( $cp['ID'], '_community_template_type', true ) ?: 'post';
+            $template    = get_post_meta( $cp['ID'], '_template_type', true ) ?: 'post';
             $star_rating = (float) ( get_post_meta( $cp['ID'], '_star_rating', true ) ?: 0 );
             $community_posts[] = array(
                 'id'             => (int) $cp['ID'],
@@ -4961,6 +4996,12 @@ class Culture_Mobile_API {
             'relatedEntries'   => is_array( $related_entries ) ? $related_entries : array(),
             'communityPosts'   => $community_posts,
             'communityPostCount' => $review_count,
+            // Quotes attached to this entry — saved FROM it (a work) or SAID
+            // BY it (a person). Same shared lookup the web entry page uses,
+            // so the two surfaces can never drift.
+            'quotes'           => class_exists( 'Culture_Directory' )
+                ? Culture_Directory::quotes_for_directory_entry( $pid, 10 )
+                : array(),
         ) );
     }
 

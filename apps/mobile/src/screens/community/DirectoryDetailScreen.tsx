@@ -45,6 +45,23 @@ interface DirectoryEntry {
   aboutFields: AboutField[]; entryQuote: string;
   selectedWorks: SelectedWork[]; relatedEntries: RelatedEntry[];
   communityPosts: CommunityPost[]; communityPostCount: number;
+  /** Optional — absent from an un-redeployed plugin's response. */
+  quotes?: DirectoryQuote[];
+}
+
+/** A quote attached to this entry: saved FROM it (a work) or SAID BY it (a
+ *  person). The endpoint unions both. */
+interface DirectoryQuote {
+  id: number;
+  slug: string;
+  /** Compound /quotes/{id}-{slug} permalink — a bare slug 404s. */
+  href: string;
+  text: string;
+  author: string;
+  source: string;
+  quote_type: string;
+  saved_by: { name: string; avatar: string };
+  created_at: string;
 }
 
 // WordPress taxonomy term names and post text fields come back with HTML
@@ -75,6 +92,12 @@ function decodeEntry(entry: DirectoryEntry): DirectoryEntry {
       title: decodeHtml(p.title),
       excerpt: decodeHtml(p.excerpt),
       authorName: decodeHtml(p.authorName),
+    })),
+    quotes: (entry.quotes ?? []).map((q) => ({
+      ...q,
+      text: decodeHtml(q.text),
+      author: decodeHtml(q.author),
+      source: decodeHtml(q.source),
     })),
   };
 }
@@ -263,6 +286,13 @@ function createStyles(c: ColorPalette) {
     reviewsRatingScore: { fontFamily: fonts.monoBold, fontSize: 13, color: c.ochre },
     reviewsRatingStar:  { fontSize: 12, color: c.ochre },
     reviewsRatingCount: { fontFamily: fonts.sans, fontSize: 11, color: c.ghost },
+    // Saved lines. Lighter chrome than a review card — the line is the
+    // content, so the serif italic does the work of marking it as quoted.
+    quoteCard:       { padding: 14, backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg },
+    quoteCardText:   { fontFamily: fonts.serifItalic, fontSize: 16, lineHeight: 24, color: c.ink },
+    quoteCardMeta:   { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 },
+    quoteCardSource: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink },
+    quoteCardSaved:  { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
     reviewsStarsRow: { paddingHorizontal: 16, marginBottom: 12 },
     reviewsStarsText: { fontSize: 20, color: c.ochre, lineHeight: 24 },
 
@@ -664,6 +694,37 @@ export default function DirectoryDetailScreen() {
                 </View>
               );
             })}
+          </View>
+        )}
+
+        {/* ── Lines saved from this entry ── */}
+        {(entry.quotes?.length ?? 0) > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {entry.entryType === "person" ? "Lines people saved" : "Lines saved from this"}
+              </Text>
+              <Text style={styles.reviewsRatingCount}>
+                {entry.quotes!.length} {entry.quotes!.length === 1 ? "line" : "lines"}
+              </Text>
+            </View>
+            <View style={{ gap: 10 }}>
+              {entry.quotes!.map((q) => (
+                <View key={q.id} style={styles.quoteCard}>
+                  <Text style={styles.quoteCardText}>{q.text}</Text>
+                  <View style={styles.quoteCardMeta}>
+                    {/* On a person's own page their name is the screen title,
+                        so repeating it per line is noise — show the source. */}
+                    {!!(entry.entryType === "person" ? q.source : q.author) && (
+                      <Text style={styles.quoteCardSource}>
+                        {entry.entryType === "person" ? q.source : q.author}
+                      </Text>
+                    )}
+                    <Text style={styles.quoteCardSaved}>Saved by {q.saved_by.name}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
