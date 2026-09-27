@@ -9546,6 +9546,60 @@ row — one chip for Type, one for Region, each independently clearable — mirr
 `.ppl-active-filters` exactly. The modal's own text-search fold-in (for its inline result list)
 now combines both Type and Region labels into the `category` keyword param when present.
 
+## Stoop marketing landing page (`/stoop`, Site A, September 2026)
+
+A public acquisition page for Stoop, built because Stoop is being used as the main
+entry-point pitch for joining Moveee and downloading the app. Mockup-first as usual (an
+Artifact, iterated through several rounds of copy direction before any code was written);
+`apps/site/app/stoop/page.tsx` + `stoop.css`. It is a **plain static server component** — no
+data fetching, no session, no `dynamic` override needed.
+
+- **Route registration**: `'stoop'` added to `APP_ROUTES` in `apps/site/proxy.ts`, without
+  which the bare `/stoop` path would be swallowed by the legacy-WordPress-permalink catch-all
+  and 301'd to a nonexistent `/magazine/stoop` — the same trap `'literary'` documents. It is
+  **deliberately not in `connectPrefixes`**: this is Site A's own page, and its CTAs link out
+  to `web.themoveee.com` rather than the path itself redirecting there. Also added to
+  `sitemap.ts`'s `staticPages`.
+- **CTAs**: "Get Started" → `{CONNECT_URL}/register`, "Sign in" → `{CONNECT_URL}/login`, both
+  carrying a `callbackUrl` of `/connect/stoop` so a member lands on the Stoop browser rather
+  than the generic feed. "Read about hosting" → `/cluster/create`.
+- **Every class is `stp-`-prefixed, and this is not optional.** The mockup used bare
+  `.hero`/`.btn-primary`/`.btn-ghost`/`.step`/`.wrap`, and `stoop.css` loads into `apps/site`'s
+  global cascade where several of those names already belong to other surfaces — carrying them
+  over verbatim would have silently restyled unrelated pages. Same lesson as the comment-box
+  redesign's `.btn-ghost` collision documented elsewhere in this file.
+- **Gotcha worth knowing: `apps/site`'s global `--rule` is a solid dark colour (`#2a241c`), not
+  a translucent hairline.** The mockup assumed the latter. Using `var(--rule)` for the card
+  borders here would have painted them near-black. Local `--stp-rule`/`--stp-rule-strong`/
+  `--stp-shadow`/`--stp-shadow-lift` are scoped to `.stp-page`, never `:root`, so nothing
+  leaks out of the route. **Check what `--rule` actually resolves to in the app you're in
+  before reaching for it as a border colour.**
+- **Photo slots are CSS background layers, not `<img>`/`next/image`** — each `.stp-ph--*` rule
+  is `background-image: url("/stoop/<name>.jpg"), linear-gradient(...)`, so a missing file
+  degrades to a plausible block of colour instead of a broken-image icon. That is what let the
+  page ship before the photography existed. **Drop the real files at
+  `apps/site/public/stoop/{hero,talking,table,doorstep,door,arriving,planning,street}.jpg` and
+  they appear with no code change.** Each filename is commented in `stoop.css` with the shot it
+  needs. **When the real photos land, convert these to `next/image`** — a CSS background
+  carries no alt text, no responsive srcset and no lazy loading, which is fine for placeholder
+  art and not fine long-term. There is a TODO to this effect in the file.
+- **The page clears the fixed header via `padding-top: var(--header-clear, 96px)` on
+  `.stp-page`** — the hero is light, so it deliberately does *not* carry
+  `data-header-zone="dark"`.
+- Copy is deliberately plain and non-technical, per explicit direction: no "check in", no
+  "streak", no "cluster", no "tier", no punchlines. The weekly section describes what people
+  actually do (turn up, eat and talk, make plans), not the QR/reminder mechanics. Rewards are
+  one line, not a breakdown. **If you edit this page's copy, keep that register** — several
+  rounds of feedback went into removing exactly that kind of language.
+- **Verified in a real browser** (unlike most passes in this file): the real `stoop.css` plus
+  the real `:root` tokens from `globals.css` were rendered in headless Chromium at 1280px and
+  390px — no horizontal overflow at either width, no console errors. Also checked via a
+  TypeScript syntax pass on all three touched/new files, a CSS brace/paren balance check
+  (73/73, 86/86), a JSX-vs-CSS class parity diff (zero orphans in either direction), and
+  `scripts/check-brand-language.sh` (clean). `apps/site` has no `node_modules` in this sandbox,
+  so no `next build`/full type-check was possible — re-check the live route and the outbound
+  CTAs in a real environment.
+
 ### People Near Me / member directory RETIRED — both platforms (September 2026)
 
 **The whole feature is gone.** Per an explicit product decision: Stoop and Literati Connect
