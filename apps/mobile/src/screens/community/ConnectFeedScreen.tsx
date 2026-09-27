@@ -372,13 +372,19 @@ export default function ConnectFeedScreen() {
               <Ionicons name="planet-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
-            {/* Stoop */}
+            {/* Stoop — bonfire, not a house. "home-outline" reads as
+                "go to the start of the app" in every other app's nav, and a
+                Stoop isn't necessarily someone's home anyway: the host
+                onboarding offers home / café / coworking / other as venue
+                types. A bonfire says "a small group that gathers here
+                regularly", which is what a Stoop actually is, and collides
+                with nothing else in the header. */}
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => nav.navigate("StoopHomeScreen")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="home-outline" size={22} color={c.ink} />
+              <Ionicons name="bonfire-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
             {/* People Near Me and Discover used to sit here. Removed

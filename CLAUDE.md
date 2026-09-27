@@ -10907,6 +10907,48 @@ separate, larger follow-up, not done here.
   actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
   renders identically to before) before considering this fully closed.
 
+### Stoop companion Hubs hidden from the Hubs browse page; Stoop icon changed (September 2026)
+
+Two small Stoop-facing fixes, both user-reported.
+
+**Companion Hubs no longer appear in Hub discovery.** Every Stoop cluster auto-provisions its own
+Hub on creation (`Culture_Clusters::maybe_create_companion_hub()` — named `"{Cluster} — Stoop"`,
+linked both ways via `_cluster_hub_id` / `_hub_cluster_id`), which is the right mechanism: it
+reuses the ordinary Hub join/post/feed plumbing rather than a bespoke cluster-chat feature. But
+those Hubs are a private discussion space for one small local group, not a topic community anyone
+can usefully browse into — and at one per cluster they would swamp the public directory as Stoops
+grow. `Culture_Hubs::discover()` now subtracts every post ID carrying `_hub_cluster_id` from its
+candidate set, right after the `_hub_status = active` lookup and before the category filter, using
+the same raw-SQL resolve-to-IDs shape the rest of that method already uses (never a `meta_query`
+join — see the "meta_query OR-branches are slow" note above).
+
+- **Deliberately scoped to `discover()` only.** `my_hubs()` is untouched: a member who joined
+  their Stoop's Hub still sees it in their own list, which is correct — it genuinely is one of
+  their Hubs. This is the narrower reading of "don't list Stoop hubs on the Hubs page"; if the
+  intent was to hide them from the member's own list too, that is a second, separate filter.
+- **Nothing is stranded.** The companion Hub stays reachable from its cluster page on both
+  platforms (`ClusterScreen.tsx` and `apps/connect/app/cluster/[id]/page.tsx` both render a link
+  gated on `cluster.hubId && cluster.hubSlug`). Verified before making the change.
+- Needs the plugin redeployed before it takes effect in production. No new dbDelta table, so no
+  `CULTURE_VERSION` bump. Verified via `php -l`.
+
+**Stoop's nav icon changed from `home-outline` to `bonfire-outline`** (`ConnectFeedScreen.tsx`
+header). A house glyph reads as "go to the start of the app" in every other app's navigation, so
+it competed with the nav's own semantics instead of naming the feature — and it was inaccurate
+besides: `HostOnboardingScreen.tsx` offers home / café / coworking / other as venue types, so a
+Stoop is frequently not a home at all. A bonfire reads as "a small group that gathers here
+regularly", which is what a Stoop is, and collides with nothing else in the header (Hub is
+`planet-outline`). Runner-up was `location-outline`, which leans on the area-level half of the
+idea instead — a one-word swap if that framing is ever preferred.
+
+- `MemberDashboardScreen.tsx`'s `QUICK_LINKS` still uses a 🏠 emoji for "My Stoop" / "Find your
+  Stoop". Left as-is: it sits directly beside its own text label, so it can't be misread as a
+  home button the way a bare nav icon can.
+- `HostOnboardingScreen.tsx`'s 🏠 (and the web equivalents in `CreateClusterClient.tsx` /
+  `cluster/[id]/page.tsx`) are the literal "Home" **venue type**, not Stoop branding — correct as
+  they are, don't sweep them.
+- Web is untouched — `apps/connect`'s `Header.tsx` rail already uses its own named `"stoop"` icon.
+
 ### Feed header trimmed to four targets — Discover + People Near Me moved to the account menu (September 2026)
 
 `ConnectFeedScreen.tsx`'s header row carried five 22px Ionicons plus the 34px avatar in a 390px
