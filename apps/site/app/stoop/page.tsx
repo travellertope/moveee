@@ -1,16 +1,13 @@
+import StoopCtas from "@/components/StoopCtas";
 import "./stoop.css";
 
 // Site B owns auth — every CTA on this page leaves for web.themoveee.com.
 // Same constant/shape as Header.tsx and ShopFooter.tsx in this app.
 const CONNECT_URL = "https://web.themoveee.com";
 
-// Where the two primary CTAs land. "Get Started" is registration (the page's
-// whole job is acquisition); "Sign in" is for members who already have an
-// account and just want to get to the Stoop browser. Both carry a callbackUrl
-// so a member lands on Stoop itself rather than the generic feed.
-const STOOP_URL = `${CONNECT_URL}/connect/stoop`;
-const REGISTER_HREF = `${CONNECT_URL}/register?callbackUrl=${encodeURIComponent(STOOP_URL)}`;
-const SIGNIN_HREF = `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent(STOOP_URL)}`;
+// The two main CTA pairs are <StoopCtas />, a client island: what they should
+// say depends on whether the visitor is already signed in, and the rest of
+// this page has no reason to go dynamic for it. See that component.
 
 export const metadata = {
   // Bare "Moveee", not "Moveee Magazine" — Stoop is a platform/cross-surface
@@ -42,10 +39,7 @@ export default function StoopPage() {
                 Stoop is a small group of people who live in the same area and meet in person to
                 connect and engage with culture. It is free to join and open to all.
               </p>
-              <div className="stp-cta-row">
-                <a className="stp-btn stp-btn--primary" href={REGISTER_HREF}>Get Started</a>
-                <a className="stp-btn stp-btn--ghost" href={SIGNIN_HREF}>Sign in</a>
-              </div>
+              <StoopCtas />
               <p className="stp-hero-note">Most groups have between four and twelve people.</p>
             </div>
             <span className="stp-ph stp-ph--hero stp-hero-img" role="presentation" />
@@ -55,53 +49,6 @@ export default function StoopPage() {
             <span className="stp-ph stp-ph--talking" role="presentation" />
             <span className="stp-ph stp-ph--table" role="presentation" />
             <span className="stp-ph stp-ph--doorstep" role="presentation" />
-          </div>
-        </section>
-      </div>
-
-      {/* ── HOW A GROUP STARTS ── */}
-      <div className="stp-wrap">
-        <section className="stp-section">
-          <div className="stp-sec-head">
-            <h2>A group opens once four people have joined.</h2>
-            <p>
-              A member in your area creates a group and picks a day of the week. The group stays
-              closed until four people have joined. If four people have not joined within thirty
-              days, the group closes on its own and everyone is shown other groups nearby.
-            </p>
-          </div>
-          <div className="stp-two">
-            <span className="stp-ph stp-ph--door" role="presentation" />
-            <div className="stp-facts">
-              <div className="stp-fact">
-                <span className="stp-fact-n">4</span>
-                <span className="stp-fact-t">
-                  people needed before a group opens. Until then only the people who have joined
-                  can see it.
-                </span>
-              </div>
-              <div className="stp-fact">
-                <span className="stp-fact-n">30</span>
-                <span className="stp-fact-t">
-                  days to reach four people. After that the group closes and members are pointed
-                  to nearby ones.
-                </span>
-              </div>
-              <div className="stp-fact">
-                <span className="stp-fact-n">12</span>
-                <span className="stp-fact-t">
-                  people is the usual limit. The person hosting sets the real number, based on the
-                  space they have.
-                </span>
-              </div>
-              <div className="stp-fact">
-                <span className="stp-fact-n">1</span>
-                <span className="stp-fact-t">
-                  day a week. Every group meets on the same day, so there is nothing to arrange
-                  each time.
-                </span>
-              </div>
-            </div>
           </div>
         </section>
       </div>
@@ -259,13 +206,10 @@ export default function StoopPage() {
             <div className="stp-close-inner">
               <h2>See which groups are near you.</h2>
               <p>
-                Join Moveee to find the groups forming in your area, or start one yourself. It
-                takes a couple of minutes and costs nothing.
+                Groups are forming in areas across the city. Find one near you, or start one
+                yourself &mdash; it costs nothing either way.
               </p>
-              <div className="stp-cta-row">
-                <a className="stp-btn stp-btn--primary" href={REGISTER_HREF}>Get Started</a>
-                <a className="stp-btn stp-btn--ghost" href={SIGNIN_HREF}>Sign in</a>
-              </div>
+              <StoopCtas />
             </div>
           </div>
         </section>

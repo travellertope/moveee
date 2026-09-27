@@ -148,12 +148,17 @@
 /* ── How it starts ──────────────────────────────────────────── */
 .stp-two {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: clamp(24px, 4vw, 56px); align-items: center;
+  gap: clamp(24px, 4vw, 56px); align-items: start;
 }
 .stp-two .stp-ph {
   border-radius: 16px; aspect-ratio: 5 / 4; max-width: 100%;
   box-shadow: var(--stp-shadow);
 }
+/* DEAD as of the September 2026 pass that removed the "A group opens once four
+   people have joined" section — .stp-facts/.stp-fact* and .stp-ph--door were
+   only ever used there. Kept rather than deleted, per this repo's usual
+   convention, in case that section is wanted back. /stoop/door.jpg is no
+   longer a photo the page needs. */
 .stp-facts {
   display: flex; flex-direction: column;
   border: 1px solid var(--stp-rule); border-radius: 14px;
@@ -185,8 +190,8 @@
 .stp-step .stp-ph { aspect-ratio: 16 / 10; max-width: 100%; }
 .stp-step-body { padding: 20px; display: flex; flex-direction: column; gap: 9px; }
 .stp-step-body p { font-size: 14.5px; line-height: 1.55; color: var(--ink-soft, #3a342b); }
-.stp-week-note {
-  margin-top: 26px; font-size: 15px;
+.stp-page .stp-week-note {
+  margin-top: clamp(34px, 4.5vw, 54px); font-size: 15px;
   color: var(--ink-soft, #3a342b); text-align: center;
 }
 

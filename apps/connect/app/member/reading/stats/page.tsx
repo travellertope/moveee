@@ -9,14 +9,14 @@ import "../../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Your Year in Books | Moveee" },
+  title: { absolute: "Your Year in Culture | Moveee" },
 };
 
 // Reading Tracker stats dashboard — Phase 4, see
 // docs/reading-tracker-plan.md §2/§4. Not registered in AccountNav (it's a
 // sub-page of Reading Tracker, same "linked from the parent page, not a
 // top-level account destination" relationship Analytics quick-links have to
-// the Member Dashboard) — reached via the "Your Year in Books →" link on
+// the Member Dashboard) — reached via the "Your Year in Culture →" link on
 // /member/reading itself.
 export default async function ReadingStatsPage() {
   const session = (await getServerSession(authOptions as any)) as any;
@@ -50,9 +50,9 @@ export default async function ReadingStatsPage() {
 
         <div className="acct-page-head">
           <p className="acct-page-eyebrow">Books</p>
-          <h2 className="acct-page-title">Your Year in Books</h2>
+          <h2 className="acct-page-title">Your Year in Culture</h2>
           <p className="acct-page-sub">
-            <Link href="/member/reading" className="rt-stats-back">← Back to Reading Tracker</Link>
+            <Link href="/member/reading" className="rt-stats-back">← Back to your Culture Log</Link>
           </p>
         </div>
 

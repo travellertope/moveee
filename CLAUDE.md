@@ -9578,7 +9578,7 @@ data fetching, no session, no `dynamic` override needed.
   is `background-image: url("/stoop/<name>.jpg"), linear-gradient(...)`, so a missing file
   degrades to a plausible block of colour instead of a broken-image icon. That is what let the
   page ship before the photography existed. **Drop the real files at
-  `apps/site/public/stoop/{hero,talking,table,doorstep,door,arriving,planning,street}.jpg` and
+  `apps/site/public/stoop/{hero,talking,table,doorstep,arriving,planning,street}.jpg` and
   they appear with no code change.** Each filename is commented in `stoop.css` with the shot it
   needs. **When the real photos land, convert these to `next/image`** — a CSS background
   carries no alt text, no responsive srcset and no lazy loading, which is fine for placeholder
@@ -9591,6 +9591,22 @@ data fetching, no session, no `dynamic` override needed.
   actually do (turn up, eat and talk, make plans), not the QR/reminder mechanics. Rewards are
   one line, not a breakdown. **If you edit this page's copy, keep that register** — several
   rounds of feedback went into removing exactly that kind of language.
+- **Three follow-up changes (September 2026)**: the CTA pairs became `StoopCtas.tsx`, a client
+  island that swaps "Get Started"/"Sign in" for "Find groups near you"/"Start a group" once
+  `useSession()` resolves an authenticated visitor (same pattern as `LiteraryMasthead.tsx`,
+  reading the shared `.themoveee.com` cookie — the page itself stays static); the "A group opens
+  once four people have joined" section was removed at the user's request, leaving
+  `.stp-facts`/`.stp-fact*`/`.stp-ph--door` dead but kept, and `door.jpg` no longer needed; and
+  `.stp-two` went from `align-items: center` to `start` so a left column doesn't float
+  vertically against a taller card beside it.
+- **A real bug found in that pass, worth remembering**: `.stp-week-note`'s `margin-top` had
+  never once applied, because `.stp-page p { margin: 0 }` (0,1,1) out-specifies
+  `.stp-week-note` (0,1,0) — the note had been sitting flush against the cards since it
+  shipped. Fixed by qualifying the rule to `.stp-page .stp-week-note`. **This file sets
+  `margin: 0` on every `p` under `.stp-page`, so any new rule here that needs a margin on a
+  paragraph must carry at least two classes** — same "a more specific selector silently zeroes
+  a margin a more general rule was meant to set" class of bug already documented for the
+  article gallery/table.
 - **Verified in a real browser** (unlike most passes in this file): the real `stoop.css` plus
   the real `:root` tokens from `globals.css` were rendered in headless Chromium at 1280px and
   390px — no horizontal overflow at either width, no console errors. Also checked via a
@@ -10251,6 +10267,84 @@ trip — finish a book, write a Book Review with a rating/genres, vote mood/pace
 books, then confirm every one of the six stats sections reflects it correctly on both platforms —
 in a real environment before considering this fully closed.
 
+### Generalised from books to all five review media — the "Culture Log" (September 2026)
+
+**Supersedes the books-only framing everywhere above.** The tracker now covers the same five
+things the composer's `REVIEW_FAMILY` does — **book / film / music / food / place** — not just
+books. Prompted by a marketing-strategy question: the accumulating layer that creates real
+switching cost (shelves, a goal, year-end stats) only worked for one of the five things members
+actually review, so the log couldn't carry a campaign built on the review system.
+
+**No migration, no new table, no `CULTURE_VERSION` bump.** `wp_culture_reading_shelf` was
+already keyed on a plain `directory_id` with no type column, and the three status values
+(`want_to_read`/`currently_reading`/`read`) are unchanged in the DB — they were always
+medium-neutral internally. What was actually book-specific was only ever: the stats query, the
+labels, and the absence of a medium dimension.
+
+- **Medium is derived from the entry, never from the review template.** `Culture_Reading_Tracker
+  ::TYPE_MEDIA_MAP` maps a `culture_dir_type` slug to one of the five media
+  (`album`→music, `tv-series`→film, `restaurant`/`event-venue`→place, etc.); anything unmapped
+  resolves to `'other'`. **This is deliberately not driven by `_template_type`** — Place
+  (hidden-gem) reviews are composed with no `typeFilter` at all, so the template says nothing
+  reliable about what the thing is. `media_for_directory_ids()` is the batch resolver (one raw
+  taxonomy query for a whole page, never `get_the_terms()` per row).
+- **Shelf reads gained a `medium` filter**, threaded through both mirrored REST surfaces
+  (`GET /reading/shelf` and `/mobile/reading/shelf`) and validated against `MEDIA` server-side.
+  `medium_where_clause()` builds an `EXISTS`/`NOT EXISTS` fragment from class constants only —
+  `'other'` is the inverse of every mapped slug, so an untyped entry is still reachable by
+  filter rather than only visible under "All". The fragment adds no `%` placeholders, so the
+  surrounding `$wpdb->prepare()` arg count is unaffected (verified).
+- **`get_shelf_counts()` returns a `byMedium` map** alongside the pre-existing flat per-status
+  totals, which is what the filter chips' counts read.
+- **`get_reading_stats()` widened from one review template to five.** One pivoted postmeta join
+  now reads `_book_/_film_/_music_overall_rating`, `_star_rating` (place), and the three
+  `_food_rating_*` scores, plus `_book_/_film_/_music_genres` and `_cuisine_tag` (food).
+  **Food has no stored overall rating, so its three breakdown scores are averaged** — exactly
+  what the composer already does to derive an overall for book/music/film. New fields:
+  `entries_logged`, `per_month`, `medium_breakdown`, and a `medium` on each `top_genres` row.
+- **`pace_breakdown`/`mood_breakdown` stay book-only, on purpose.** The 12-tag vocabulary is
+  StoryGraph's and doesn't transfer to a restaurant or an album; both sections are now labelled
+  "Books only" in the UI. **Don't "finish the job" by widening these without a real vocabulary
+  for the other four** — that's a product decision, not a gap.
+- **Deprecated aliases are returned deliberately.** `books_read`/`books_per_month` (stats) and
+  `targetBooks`/`booksRead` (goal) still ship alongside the new names, because an
+  already-installed mobile build can't be force-updated and would otherwise render zeros. Drop
+  them once the field has turned over; read the new names in anything new.
+- **Statuses keep one set of values and vary only by label.** `STATUS_LABELS` in
+  `packages/shared/lib/reading-tracker.ts` (mirrored in the mobile copy) gives each medium its
+  own verbs — Want to Read/Reading/Read, Want to Watch/Watching/Watched, Want to Go/Going/Been,
+  etc. Tabs use the active filter's verbs (or neutral Planned/In progress/Done under "All");
+  **a card always uses its own medium's verbs, not the active filter's**.
+- **The goal stayed a single cross-medium target per year**, not one per medium — a member
+  logging 30 things across five media is the number worth showing, and five separate targets is
+  a lot of setup friction for a feature most people never configure at all. Revisit only if
+  asked.
+- **User-facing rename, copy-only** (same convention as Hidden Gem→Place / Stoop): "Reading
+  Tracker" → **Culture Log**, "Your Year in Books" → **Your Year in Culture**. The `/member/
+  reading` route, the `reading/*` REST paths, the table names and the class name are all
+  unchanged — don't rename them.
+- **A real gap this pass caught**: `apps/connect/app/api/reading/shelf/route.ts` dropped the new
+  `medium` param, which would have made the web filter silently no-op while the mobile one
+  worked. **If you add a param to a `reading/*` endpoint, check that proxy forwards it** — the
+  proxy rebuilds the query string by hand rather than passing it through.
+- **The Add modal now picks a medium first**, mapping to the right `typeFilter`/`externalSource`
+  (Google Books / TMDB / Spotify, none for food/place) via a `MEDIA_SEARCH` map duplicated
+  between the web and mobile screens. `typeFilter` is a single slug on purpose: `DirectorySearch`
+  reuses that same value as the `entry_type` it *creates* with, so a comma list would widen
+  search at the cost of creating entries with a nonsense type. Place therefore searches `place`
+  only and won't surface `restaurant`-typed entries in that modal — a narrower search is the
+  better half of that trade.
+- **Verified**: `tsc --noEmit` **exit 0** on both `apps/connect` and `apps/site`; `apps/mobile`
+  held at exactly its documented 37-error pre-existing baseline with none in the touched files;
+  `php -l` clean on all four touched PHP files; CSS brace balance on `member.css` (629/629); the
+  generated medium SQL fragments checked standalone in real PHP for every branch
+  (none/book/place/other/invalid) confirming valid SQL and a stable placeholder count; and the
+  new chip row / scope-note pills rendered in real Chromium at 1280px and 390px against the real
+  `member.css` (no horizontal overflow at either). **Not** tested against a live WordPress —
+  needs the plugin redeployed (header bumped to 2.6.10; no new table, so no `CULTURE_VERSION`
+  bump) and then a real round trip: log something of each medium, review a couple of them, and
+  confirm the filter, the counts and every stats section agree.
+
 ---
 
 ## Interest taxonomy (canonical slugs)
@@ -10377,6 +10471,13 @@ attempt to skip straight to code with "mockup first perhaps," and the approved m
 
 ## Registration flow (redesigned)
 
+**Partly superseded (September 2026)** — the flow below is still exactly what happens when
+someone picks "Set a username and password" on `/register`, but it is no longer the default
+path. See "Sign-in and registration — one-time codes are the default (September 2026)" below
+for what `/login` and `/register` actually lead with now, and for which of the steps below are
+still blocking (none of them are).
+
+
 New flow: 3-field quick signup → email verification → 2 post-verification steps.
 
 **Step 1 — `/register`:** Email, Username, Password only. On submit:
@@ -10406,6 +10507,83 @@ New flow: 3-field quick signup → email verification → 2 post-verification st
 - `class-culture-emails.php`: `send_verification_email($user_id, $token, $next_url)`
 
 ---
+
+## Sign-in and registration — one-time codes are the default (September 2026)
+
+Signing up used to be six screens: `/register` (email + username + password) → leave the site
+and click an emailed verification link → `/register/complete`'s three-step wizard (DOB/country/
+city/occupation → a 3-interest minimum → pick a membership tier). Almost none of it was
+load-bearing, and the tier step asked a stranger to choose a plan before they had seen
+anything. `/login` and `/register` now both lead with a 6-digit emailed code instead: enter an
+email, type the code, you are in — the same two taps whether or not the address already has an
+account.
+
+**Almost nothing new was built — the mechanism already existed and was only ever pointed at
+newsletter widgets.** `Culture_Magic_OTP` (`class-culture-magic-otp.php`) and the `otpEmail`/
+`otpCode` branch of `authorize()` in `packages/shared/lib/auth.ts` have been shipped since the
+"Magic-code sign-in + subscribe" work on Site A; `verify_otp()` already found-or-created a real
+account (auto-generating a username from the email, `citizen` tier, email marked verified). The
+work here was wiring that to the auth pages and taking the wall down behind it.
+
+- **New: `apps/connect/components/MagicCodeSignIn.tsx`** — the email → code widget both pages
+  render. Step 1 posts to the new `apps/connect/app/api/auth/magic-otp/request/route.ts` (Site
+  B's own copy of the proxy Site A already had at `app/api/newsletter/magic-otp/request`); step
+  2 calls `signIn("credentials", { otpEmail, otpCode })` directly, so there is deliberately no
+  verify proxy on either app — `authorize()` is what reaches WordPress. Includes a 30s resend
+  countdown, because WordPress rate-limits to 3 requests per 10 minutes per address and it is
+  easy to burn all three on impatient taps.
+- **`otpList` is now sent as `""` from the auth pages, and that empty value is meaningful.**
+  `handle_magic_otp_verify()` switched from `get_param('list') ?: 'getmelit'` to
+  `has_param('list') ? ... : 'getmelit'`, and `verify_otp()` skips subscribing on an empty slug
+  — signing in must never silently join anyone to a mailing list. A caller that omits the param
+  entirely still gets the GetMeLit default the subscribe widgets were built around, so
+  `SubscribeForm`/`LiterarySubscribeForm` are untouched (all three already pass a real slug).
+  **Never pass a real list slug from an auth page.**
+- **Referral attribution survives the code path**, which it would not have by default.
+  `Culture_Referrals::process_referral()` is hooked on `user_register` and reads
+  `$_COOKIE['culture_ref']` or `$_POST['culture_referral_code']` — the cookie can't work
+  headlessly (it would land on `cms.themoveee.com`, not the frontend origin) and a JSON REST
+  body never populates `$_POST`. So `verify_otp()`/`find_or_create_user()` take a `$referral`
+  param and set `$_POST['culture_referral_code']` around the `wp_create_user()` call only,
+  restoring the previous value after. `?ref=` on `/register` is threaded through as
+  `otpReferral`. **If another headless path ever needs to create an account with referral
+  credit, copy this shape — don't re-hook `user_register`.**
+- **`/register/complete` is no longer a gate.** Every field on the About step is optional (the
+  `required` attributes and the three "*" markers are gone), the interests step's 3-minimum is
+  gone, and both steps have a real "Skip for now" that completes the account as a free Citizen.
+  `handleMembershipSubmit()` was split so `submitProfile(tier)` can be called from either. The
+  membership step now opens with "Moveee Citizen is free and already selected". The
+  `?upgrade=patron|lit` entry is untouched and still goes straight to the membership step.
+- **Interests needed no new nudge** — `PulseFeed.tsx` has shown a "Personalise your feed" banner
+  to logged-in members with none set since the Overlays pass. That is now the primary place
+  interests get collected, where the payoff is visible.
+- **Stoop collects the location instead**, since it is the only surface where "near you" is
+  load-bearing. `StoopBrowser.tsx` renders a `.stoop-loc-prompt` card (CountrySelect +
+  CitySelect + save) when the viewer has no city or country on their profile and no city filter
+  set; it PATCHes the existing `/api/user/profile` and then sets the component's own `city`
+  state directly rather than waiting for the NextAuth JWT to pick the saved profile up on its
+  next refresh. Without it the page still worked, it just silently listed every Stoop
+  everywhere.
+- **Two pre-existing bugs fixed in passing**: `/register` called `router.replace()` during
+  render, *before* its `useState` calls, on the `isUpgrade && session` path — a Rules of Hooks
+  violation that changes the hook count between renders (moved into a `useEffect`); and
+  `/register` only ever read `?next=`, so the `?callbackUrl=` that Site A's `/stoop` landing
+  page sends was silently dropped. It now accepts either.
+- **Known rough edge, deliberately left**: finishing the *password* path still redirects to
+  `/login?registered=1` rather than signing you in, because that flow never holds the password
+  on the client. The code path signs you in immediately, so this only affects the secondary
+  route; closing it properly needs a token exchange and was out of scope.
+- Plugin header bumped `2.6.8` → `2.6.9` for redeploy confirmation. **No `CULTURE_VERSION`
+  bump** — no new dbDelta table. The plugin must be redeployed before `referral`/the empty-list
+  behaviour exist in production; until then an auth-page sign-in would subscribe the address to
+  GetMeLit, which is the pre-existing behaviour, not a new break.
+- **Verified**: `tsc --noEmit` clean on both `apps/connect` and `apps/site` (exit 0, not merely
+  "no new errors" — `node_modules` was present this session), `php -l` clean on all three
+  touched PHP files, CSS brace-balance on `auth.css` (96/96) and `stoop.css` (167/167), and the
+  code step rendered in real Chromium at 1280px and 390px against the real `auth.css` (no
+  horizontal overflow at either). **Not** tested end-to-end against a live WordPress — re-check
+  the full email → code → account-created → signed-in round trip, on both a brand-new address
+  and an existing member's, and a `?ref=` signup, before considering this closed.
 
 ## Google Sign-In (June 2026)
 
@@ -11896,10 +12074,44 @@ both caught by `expo export:embed` before any build credit was spent:
 "correct" this back to `~7.11.0`** — that reintroduces all three problems at once. If expo-doctor
 flags the version as mismatched, that warning is expected and should be ignored for this package.
 
-**`promise` hoisting, worth knowing if the first error ever returns**: nothing else in the tree
-depends on `promise`, and npm's *workspace-root* install nests it at
-`node_modules/react-native/node_modules/promise`, where Sentry (at `node_modules/@sentry/react-native/`)
-cannot resolve it. The **standalone `apps/mobile/package-lock.json` that EAS's `npm ci` consumes
-hoists it to top level**, which is the layout that actually matters. To make a *local*
-`expo export:embed` check faithful to EAS, symlink it up:
-`ln -sfn "$PWD/node_modules/react-native/node_modules/promise" node_modules/promise`.
+**`promise` hoisting — FIXED September 2026, and the old note here was wrong.** This entry used
+to claim that "the standalone `apps/mobile/package-lock.json` that EAS's `npm ci` consumes hoists
+it to top level, which is the layout that actually matters," and to recommend a local symlink
+(`ln -sfn .../react-native/node_modules/promise node_modules/promise`) to make local checks
+faithful. **Both halves of that were wrong, and together they hid a real build break for weeks.**
+
+A real EAS iOS production build failed with exactly the `Unable to resolve module
+promise/setimmediate/done from .../@sentry/react-native/...` error this section describes. The
+log's first line — `npm warn config ignoring workspace config at
+/Users/expo/workingdir/build/apps/mobile/.npmrc` — plus its resolution paths (`../../node_modules`,
+i.e. the monorepo root) prove **EAS installs from the repo root as a workspace, not from the
+standalone mobile lockfile**. And the root lockfile placed `promise` at
+`node_modules/react-native/node_modules/promise`, where `@sentry/react-native` (a sibling at
+`node_modules/@sentry/react-native/`) genuinely cannot reach it. The recommended symlink made
+every local `expo export:embed` pass regardless, so the one check that would have caught this was
+neutralised by the very note telling you to run it.
+
+**The fix is a one-line dependency declaration**: `"promise": "^8.3.0"` in `apps/mobile/package.json`
+(matching React Native's own range exactly, so there is never a second copy or a version skew).
+Declaring it as a direct dependency of the workspace forces npm to hoist a single copy to the root
+`node_modules`, where both `react-native` and `@sentry/react-native` resolve it by ordinary upward
+lookup. Verified empirically, not by reasoning: with the symlink removed, `npx expo export:embed
+--eager --platform ios --dev false` reproduced the EAS error byte-for-byte; with `promise` moved to
+top level exactly as the regenerated lockfile specifies, the same command bundled 2606 modules
+cleanly.
+
+**Never reinstate the symlink.** If a local check needs a faithful tree, delete
+`node_modules/promise` if it is a symlink and let a real install place it. **And do not trust the
+standalone `apps/mobile/package-lock.json` as "the one EAS uses"** — it is still tracked and still
+regenerated out-of-tree per the process above, but the root `package-lock.json` is what a
+root-workspace EAS build actually resolves against. When a dependency-resolution bug reaches an EAS
+build, check the **root** lockfile's layout for the package first (`python3 -c "import json; pk =
+json.load(open('package-lock.json'))['packages']; print([k for k in pk if
+k.endswith('node_modules/<pkg>')])"`), not the mobile one.
+
+**Regenerating the root lockfile is safe from the repo root** (`npm install --package-lock-only`)
+— that is not the forbidden operation. The forbidden one is running `npm install` *inside*
+`apps/mobile`, which prunes the other workspaces out of the root lockfile. After regenerating,
+confirm the diff is scoped: entry count unchanged, all 8 `apps/*`/`packages/*` workspace entries
+still present. This fix's own diff was exactly one added declaration plus `promise` moving from
+nested to top level.

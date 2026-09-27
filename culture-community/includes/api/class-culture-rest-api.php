@@ -266,6 +266,11 @@ class Culture_REST_API {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_title',
                 ),
+                'referral' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
             ),
         ) );
 
@@ -1507,6 +1512,7 @@ class Culture_REST_API {
                 'status'   => array( 'required' => true, 'type' => 'string' ),
                 'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'medium'   => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
             ),
         ) );
         register_rest_route( 'culture/v1', '/reading/shelf/counts', array(
@@ -2178,7 +2184,8 @@ class Culture_REST_API {
         $status   = sanitize_key( $request->get_param( 'status' ) );
         $page     = (int) $request->get_param( 'page' ) ?: 1;
         $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
-        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page ) );
+        $medium   = sanitize_key( (string) $request->get_param( 'medium' ) );
+        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page, $medium ) );
     }
 
     public static function handle_reading_shelf_counts( $request ) {
@@ -2914,8 +2921,18 @@ class Culture_REST_API {
     }
 
     public static function handle_magic_otp_verify( $request ) {
-        $list = $request->get_param( 'list' ) ?: 'getmelit';
-        $user = Culture_Magic_OTP::verify_otp( $request->get_param( 'email' ), $request->get_param( 'code' ), $list );
+        // An explicitly-sent empty list means "this code is a credential, not a
+        // subscription" — the /login and /register pages send that, so signing
+        // in never silently joins anyone to a mailing list. Only a caller that
+        // omits the param entirely (e.g. an older client) gets the GetMeLit
+        // default the subscribe widgets were originally built around.
+        $list = $request->has_param( 'list' ) ? (string) $request->get_param( 'list' ) : 'getmelit';
+        $user = Culture_Magic_OTP::verify_otp(
+            $request->get_param( 'email' ),
+            $request->get_param( 'code' ),
+            $list,
+            (string) $request->get_param( 'referral' )
+        );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
