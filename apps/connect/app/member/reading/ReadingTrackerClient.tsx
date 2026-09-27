@@ -167,6 +167,34 @@ export default function ReadingTrackerClient() {
     if (status === tab) loadShelf(tab, medium);
   }
 
+  /**
+   * One tap, no review. Optimistic because a star row that waits on a round
+   * trip feels broken; the refetches below reconcile it.
+   *
+   * Tapping the star you're already on clears the rating (0) rather than
+   * re-setting it — the only way back out of a misfire.
+   */
+  async function rate(directoryId: number, current: number, next: number) {
+    const value = current === next ? 0 : next;
+    setEntries((prev) =>
+      prev.map((e) => (e.directoryId === directoryId ? { ...e, rating: value } : e)),
+    );
+    try {
+      await fetch("/api/reading/rating", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ directory_id: directoryId, rating: value }),
+      });
+    } catch {}
+    // A rating > 0 also marks the entry read server-side, so a card rated
+    // from the want-to/in-progress tab leaves that tab — refetch both.
+    if (value > 0 && tab !== "read") {
+      loadShelf(tab, medium);
+      loadGoal();
+    }
+    loadCounts();
+  }
+
   async function removeFromShelf(directoryId: number) {
     setEntries((prev) => prev.filter((e) => e.directoryId !== directoryId));
     try {
@@ -314,6 +342,26 @@ export default function ReadingTrackerClient() {
                     Finished {new Date(e.finishedAt).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
                   </p>
                 )}
+                <div
+                  className="rt-card-stars"
+                  role="group"
+                  aria-label={`Your rating for ${e.title}`}
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={
+                        n <= e.rating ? "rt-star rt-star--on" : "rt-star"
+                      }
+                      aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                      aria-pressed={n <= e.rating}
+                      onClick={() => rate(e.directoryId, e.rating, n)}
+                    >
+                      {n <= e.rating ? "★" : "☆"}
+                    </button>
+                  ))}
+                </div>
                 <select
                   className="rt-card-select"
                   value={e.status}

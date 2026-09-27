@@ -182,10 +182,17 @@ export default function ReadingStatsClient() {
 
       {/* ── Rating distribution ── */}
       <section className="acct-card" style={{ marginBottom: 20 }}>
-        <div className="an-chart-title">Ratings — Your Reviews</div>
+        <div className="an-chart-title">
+          Your ratings
+          {data.average_rating != null && (
+            <span className="rts-avg">
+              {data.average_rating.toFixed(1)} average across {data.rated_count}
+            </span>
+          )}
+        </div>
         {ratingTotal <= 0 || Object.values(data.rating_distribution).every((v) => v === 0) ? (
           <p className="rt-empty" style={{ padding: "0 0 8px" }}>
-            No ratings yet — review something you&apos;ve logged to see it here.
+            No ratings yet — tap the stars on anything you&apos;ve logged.
           </p>
         ) : (
           <div className="rts-bar-rows">

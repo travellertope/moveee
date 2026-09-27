@@ -317,6 +317,12 @@ class Culture_REST_API {
                 'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
                 'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                // Optional culture_directory links. Both are additive: the
+                // freeform `author`/`source` strings above are still written
+                // exactly as before, so every existing reader keeps working
+                // whether or not a link was supplied.
+                'linked_directory_id'      => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'quote_author_directory_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -1492,6 +1498,21 @@ class Culture_REST_API {
                 'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'status'       => array( 'required' => true, 'type' => 'string' ),
+                // Optional: set a rating in the same write. Deliberately not
+                // absint'd — the handler needs to tell "absent" from "0"
+                // (clear the rating), and absint would collapse both to 0.
+                'rating'       => array( 'required' => false, 'type' => 'integer' ),
+            ),
+        ) );
+        // Rate without authoring a review. Mirrors /mobile/reading/rating.
+        register_rest_route( 'culture/v1', '/reading/rating', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_rating_set' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'rating'       => array( 'required' => true, 'type' => 'integer' ),
             ),
         ) );
         register_rest_route( 'culture/v1', '/reading/shelf', array(
@@ -2165,7 +2186,20 @@ class Culture_REST_API {
         $user_id      = (int) $request->get_param( 'user_id' );
         $directory_id = (int) $request->get_param( 'directory_id' );
         $status       = sanitize_key( $request->get_param( 'status' ) );
-        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status );
+        $rating       = $request->has_param( 'rating' ) ? $request->get_param( 'rating' ) : null;
+        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status, $rating );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_rating_set( $request ) {
+        $result = Culture_Reading_Tracker::set_shelf_rating(
+            (int) $request->get_param( 'user_id' ),
+            (int) $request->get_param( 'directory_id' ),
+            $request->get_param( 'rating' )
+        );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
@@ -3823,6 +3857,27 @@ class Culture_REST_API {
      * live infrastructure, not part of the retired standalone /quotes
      * browsing product.
      */
+    /**
+     * A directory link is only stored when it names a real, published
+     * culture_directory entry — a stale or hostile id is dropped silently
+     * rather than failing the whole submission, since the link is an
+     * optional enrichment and the quote itself is still perfectly valid
+     * without it.
+     *
+     * @return int 0 when there is nothing valid to link.
+     */
+    private static function resolve_directory_link( $raw_id ) : int {
+        $id = absint( $raw_id );
+        if ( ! $id ) {
+            return 0;
+        }
+        $post = get_post( $id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return 0;
+        }
+        return $id;
+    }
+
     public static function handle_create_quote( $request ) {
         $text    = $request->get_param( 'text' );
         $author  = $request->get_param( 'author' );
@@ -3900,6 +3955,28 @@ class Culture_REST_API {
         $allowed_types = array( 'Person', 'Book', 'Film', 'Speech', 'Song' );
         if ( $quote_type && in_array( $quote_type, $allowed_types, true ) ) {
             update_post_meta( $post_id, '_quote_type', sanitize_text_field( $quote_type ) );
+        }
+
+        // Directory links (September 2026). A quote points at up to two
+        // things: the work it came from and the person who said it. Both are
+        // optional — a proverb, an overheard line, or a Speech-type quote
+        // (which has no culture_dir_type at all) legitimately has neither,
+        // so this is never a requirement, only an upgrade.
+        //
+        // The work reuses `_linked_directory_id`, the same key community
+        // posts use, so every reverse-lookup that already queries it keeps
+        // working. Safe because the two readers that aggregate off it —
+        // Culture_Directory::recompute_directory_aggregates() and
+        // Culture_Reading_Tracker::get_reading_stats() — both scope their
+        // query to post_type = 'culture_post', so a quote can never inflate
+        // a review count, a star average, or a rating histogram.
+        $work_id = self::resolve_directory_link( $request->get_param( 'linked_directory_id' ) );
+        if ( $work_id ) {
+            update_post_meta( $post_id, '_linked_directory_id', $work_id );
+        }
+        $author_dir_id = self::resolve_directory_link( $request->get_param( 'quote_author_directory_id' ) );
+        if ( $author_dir_id ) {
+            update_post_meta( $post_id, '_quote_author_directory_id', $author_dir_id );
         }
 
         // Award points.

@@ -3116,6 +3116,45 @@ select.mem-field-input { cursor: pointer; }
   color: var(--mute);
   margin: 0 0 8px;
 }
+/* Tap-to-rate on a shelf card. Gold reads as a rating everywhere else in
+   this codebase (.sp-rs-avg, the feed's star rows); an unset star is the
+   hollow glyph rather than a greyed gold one so the two states differ in
+   shape as well as colour. */
+/* Sits inline after the "Your ratings" chart title, so it reads as a subtitle
+   rather than competing with it. */
+.rts-avg {
+  margin-left: 8px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--mute);
+}
+
+.rt-card-stars {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 8px;
+}
+.rt-star {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--mute);
+}
+.rt-star:hover {
+  color: var(--gold);
+}
+.rt-star--on {
+  color: var(--gold);
+}
+
 .rt-card-select {
   width: 100%;
   font-family: 'JetBrains Mono', monospace;

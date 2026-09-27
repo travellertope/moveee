@@ -138,6 +138,8 @@ class Culture_Reading_Tracker {
             user_id bigint(20) NOT NULL,
             directory_id bigint(20) NOT NULL,
             status varchar(20) NOT NULL,
+            rating tinyint(4) NOT NULL DEFAULT 0,
+            rated_at datetime DEFAULT NULL,
             started_at datetime DEFAULT NULL,
             finished_at datetime DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
@@ -268,11 +270,22 @@ class Culture_Reading_Tracker {
      * —————————————————————————————————————— */
 
     /**
+     * @param int      $user_id
+     * @param int      $directory_id
+     * @param string   $status
+     * @param int|null $rating Optional 0–5 to set in the same write; null leaves
+     *                         whatever rating the row already has untouched. 0
+     *                         clears it. Out-of-range values are rejected rather
+     *                         than clamped — a 7 is a caller bug, not a 5.
      * @return array|WP_Error
      */
-    public static function set_shelf_status( int $user_id, int $directory_id, string $status ) {
+    public static function set_shelf_status( int $user_id, int $directory_id, string $status, $rating = null ) {
         if ( ! in_array( $status, self::STATUSES, true ) ) {
             return new WP_Error( 'invalid_status', 'Invalid shelf status.', array( 'status' => 400 ) );
+        }
+
+        if ( null !== $rating && ! self::is_valid_rating( $rating ) ) {
+            return new WP_Error( 'invalid_rating', 'Rating must be a whole number from 0 to 5.', array( 'status' => 400 ) );
         }
 
         $post = get_post( $directory_id );
@@ -284,11 +297,16 @@ class Culture_Reading_Tracker {
         $table    = self::table();
         $now      = current_time( 'mysql' );
         $existing = $wpdb->get_row( $wpdb->prepare(
-            "SELECT id, started_at, finished_at FROM {$table} WHERE user_id = %d AND directory_id = %d",
+            "SELECT id, rating, started_at, finished_at FROM {$table} WHERE user_id = %d AND directory_id = %d",
             $user_id, $directory_id
         ), ARRAY_A );
 
         $data = array( 'status' => $status, 'updated_at' => $now );
+
+        if ( null !== $rating ) {
+            $data['rating']   = (int) $rating;
+            $data['rated_at'] = ( (int) $rating > 0 ) ? $now : null;
+        }
         // started_at/finished_at are sticky — set once, on first transition
         // into that state, never cleared or overwritten by a later move
         // (e.g. read -> currently_reading on a re-read keeps the original
@@ -309,7 +327,88 @@ class Culture_Reading_Tracker {
             $wpdb->insert( $table, $data );
         }
 
-        return array( 'directoryId' => $directory_id, 'status' => $status );
+        $final_rating = ( null !== $rating ) ? (int) $rating : (int) ( $existing['rating'] ?? 0 );
+
+        return array( 'directoryId' => $directory_id, 'status' => $status, 'rating' => $final_rating );
+    }
+
+    /**
+     * Whole number, 0–5. 0 is "no rating", not "zero stars" — there is no
+     * zero-star rating anywhere in this product.
+     */
+    private static function is_valid_rating( $rating ) : bool {
+        if ( ! is_numeric( $rating ) || (int) $rating != $rating ) { // phpcs:ignore WordPress.PHP.StrictComparisons
+            return false;
+        }
+        $rating = (int) $rating;
+        return $rating >= 0 && $rating <= 5;
+    }
+
+    /**
+     * Rate an entry without authoring a review post.
+     *
+     * This is the whole point of the rating column: before it existed a rating
+     * could only live on a culture_post review (_book_overall_rating and
+     * friends), so there was no way to say "4 stars" without going through the
+     * composer. Reviews still win wherever both exist — see get_reading_stats(),
+     * which prefers the review's rating and only falls back to this one.
+     *
+     * A rating above 0 implies you're done with the thing, so it moves the row
+     * to `read` and stamps finished_at (stickily, same rule as
+     * set_shelf_status()) when it isn't there already. Clearing a rating (0)
+     * deliberately does NOT un-read it — those are separate statements.
+     *
+     * @return array|WP_Error
+     */
+    public static function set_shelf_rating( int $user_id, int $directory_id, $rating ) {
+        if ( ! self::is_valid_rating( $rating ) ) {
+            return new WP_Error( 'invalid_rating', 'Rating must be a whole number from 0 to 5.', array( 'status' => 400 ) );
+        }
+        $rating = (int) $rating;
+
+        $post = get_post( $directory_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return new WP_Error( 'invalid_entry', 'That entry could not be found.', array( 'status' => 400 ) );
+        }
+
+        global $wpdb;
+        $table    = self::table();
+        $now      = current_time( 'mysql' );
+        $existing = $wpdb->get_row( $wpdb->prepare(
+            "SELECT id, status, finished_at FROM {$table} WHERE user_id = %d AND directory_id = %d",
+            $user_id, $directory_id
+        ), ARRAY_A );
+
+        $data = array(
+            'rating'     => $rating,
+            'rated_at'   => $rating > 0 ? $now : null,
+            'updated_at' => $now,
+        );
+
+        if ( $rating > 0 ) {
+            $data['status'] = 'read';
+            if ( empty( $existing['finished_at'] ) ) {
+                $data['finished_at'] = $now;
+            }
+        }
+
+        if ( $existing ) {
+            $wpdb->update( $table, $data, array( 'id' => $existing['id'] ) );
+            $status = $data['status'] ?? (string) $existing['status'];
+        } else {
+            // A rating of 0 on an unshelved entry is a no-op, not a reason to
+            // create an empty row.
+            if ( 0 === $rating ) {
+                return array( 'directoryId' => $directory_id, 'status' => null, 'rating' => 0 );
+            }
+            $data['user_id']      = $user_id;
+            $data['directory_id'] = $directory_id;
+            $data['created_at']   = $now;
+            $wpdb->insert( $table, $data );
+            $status = 'read';
+        }
+
+        return array( 'directoryId' => $directory_id, 'status' => $status, 'rating' => $rating );
     }
 
     public static function remove_from_shelf( int $user_id, int $directory_id ) : bool {
@@ -400,7 +499,7 @@ class Culture_Reading_Tracker {
         $order_by = ( 'read' === $status ) ? 's.finished_at DESC' : 's.updated_at DESC';
 
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT s.directory_id, s.status, s.started_at, s.finished_at
+            "SELECT s.directory_id, s.status, s.rating, s.started_at, s.finished_at
              FROM {$table} s
              WHERE s.user_id = %d AND s.status = %s {$medium_sql}
              ORDER BY {$order_by}
@@ -454,6 +553,7 @@ class Culture_Reading_Tracker {
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
                 'medium'        => $media[ $dir_id ] ?? 'other',
                 'status'        => $row['status'],
+                'rating'        => (int) $row['rating'],
                 'startedAt'     => $row['started_at'] ?: null,
                 'finishedAt'    => $row['finished_at'] ?: null,
             );
@@ -677,12 +777,16 @@ class Culture_Reading_Tracker {
      * Phase 4 stats dashboard — see docs/reading-tracker-plan.md §2/§4.
      * A pure per-user aggregation read, raw SQL throughout per CLAUDE.md's
      * "Raw SQL REST endpoints" convention (never a WP_Query loop over posts
-     * for this kind of query). Rating distribution and top genres are
-     * sourced from the user's own Book Review posts (culture_post,
-     * _template_type = 'book-review') linked via _linked_directory_id to a
-     * book that's on this user's "read" shelf for the given year — per the
-     * plan doc's §1.4 "reuse, not new" rule, rating/genres already live on
-     * the review, this never duplicates them onto the shelf row itself.
+     * for this kind of query).
+     *
+     * Ratings have two sources and are resolved per logged entry, never per
+     * review: the user's own review post (any of the five templates, linked
+     * via _linked_directory_id) wins, and the shelf row's own `rating` column
+     * fills anything with no review behind it. Before that column existed
+     * only reviewed entries could contribute a rating at all, so a member who
+     * rated without writing anything showed an empty histogram. Top genres
+     * stay review-only — the shelf has no genre data to fall back on, per the
+     * plan doc's §1.4 "reuse, not new" rule.
      *
      * @return array Shape documented in the plan doc §2 "GET stats response shape".
      */
@@ -692,7 +796,7 @@ class Culture_Reading_Tracker {
 
         // Directory IDs + finish dates for everything this user logged in $year.
         $read_rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT directory_id, finished_at FROM {$shelf_table}
+            "SELECT directory_id, rating, finished_at FROM {$shelf_table}
              WHERE user_id = %d AND status = 'read' AND YEAR(finished_at) = %d",
             $user_id, $year
         ), ARRAY_A );
@@ -708,7 +812,13 @@ class Culture_Reading_Tracker {
         }
         $medium_breakdown = array_fill_keys( array_merge( self::MEDIA, array( 'other' ) ), 0 );
 
+        $shelf_ratings = array();
         foreach ( $read_rows as $row ) {
+            $shelf_rating = (int) $row['rating'];
+            if ( $shelf_rating >= 1 && $shelf_rating <= 5 ) {
+                $shelf_ratings[ (int) $row['directory_id'] ] = $shelf_rating;
+            }
+
             $medium = $media[ (int) $row['directory_id'] ] ?? 'other';
             if ( isset( $medium_breakdown[ $medium ] ) ) {
                 $medium_breakdown[ $medium ]++;
@@ -730,6 +840,7 @@ class Culture_Reading_Tracker {
         $pace_breakdown      = array( 'slow' => 0, 'medium' => 0, 'fast' => 0 );
         $mood_breakdown      = array_fill_keys( self::MOOD_TAGS, 0 );
         $rating_distribution = array( '1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0 );
+        $review_ratings      = array();
         $genre_counts        = array();
         $genre_media         = array();
 
@@ -817,7 +928,10 @@ class Culture_Reading_Tracker {
                 }
 
                 if ( $rating >= 1 && $rating <= 5 ) {
-                    $rating_distribution[ (string) $rating ]++;
+                    // Keyed by entry, not by review: two reviews pointing at
+                    // the same entry must not count twice, and this is also
+                    // what lets a shelf rating fill the gap below.
+                    $review_ratings[ (int) $row['directory_id'] ] = $rating;
                 }
 
                 // Genres: a JSON array for book/film/music, a single cuisine
@@ -856,6 +970,24 @@ class Culture_Reading_Tracker {
             }
         }
 
+        // One rating per logged entry, review first. The review is the richer
+        // statement (it has prose behind it), so where a member both rated on
+        // the shelf and wrote a review, the review's number is the one that
+        // counts; the shelf rating only fills entries that have no review —
+        // which, before the rating column existed, simply went uncounted.
+        $rated_total = 0;
+        $rated_sum   = 0;
+        foreach ( $directory_ids as $dir_id ) {
+            $rating = $review_ratings[ $dir_id ] ?? ( $shelf_ratings[ $dir_id ] ?? 0 );
+            if ( $rating < 1 || $rating > 5 ) {
+                continue;
+            }
+            $rating_distribution[ (string) $rating ]++;
+            $rated_total++;
+            $rated_sum += $rating;
+        }
+        $average_rating = $rated_total ? round( $rated_sum / $rated_total, 1 ) : null;
+
         // Mood breakdown as a sparse, sorted list (nonzero only) rather than
         // the full fixed-12 map — the frontend renders "one row per mood with
         // a nonzero count, sorted descending" per the plan doc §4.
@@ -885,6 +1017,8 @@ class Culture_Reading_Tracker {
             'pace_breakdown'      => $pace_breakdown,
             'mood_breakdown'      => $mood_breakdown_sparse,
             'rating_distribution' => $rating_distribution,
+            'rated_count'         => $rated_total,
+            'average_rating'      => $average_rating,
             'top_genres'          => $top_genres,
 
             // Deprecated book-era aliases. Kept so an already-installed mobile

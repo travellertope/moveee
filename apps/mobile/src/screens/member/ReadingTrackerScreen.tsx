@@ -61,6 +61,8 @@ interface ShelfEntry {
   averageRating: number | null;
   medium: MediumOrOther;
   status: ShelfStatus;
+  /** This member's own rating, 0-5. 0 means unrated. */
+  rating: number;
   startedAt: string | null;
   finishedAt: string | null;
 }
@@ -151,6 +153,25 @@ export default function ReadingTrackerScreen() {
         loadCounts();
         if (status === "read") { loadGoal(); loadStats(); }
         if (status === tab) loadShelf(tab, medium);
+      });
+  }
+
+  /**
+   * One tap, no review. Tapping the star you're already on clears the rating
+   * (0) — the only way back out of a misfire. Optimistic; the refetches
+   * reconcile. A rating > 0 also marks the entry read server-side, so a card
+   * rated from another tab leaves that tab.
+   */
+  function rate(directoryId: number, current: number, next: number) {
+    const value = current === next ? 0 : next;
+    setEntries((prev) =>
+      prev.map((e) => (e.directoryId === directoryId ? { ...e, rating: value } : e)),
+    );
+    api.post(`${MOBILE_API}/reading/rating`, { directory_id: directoryId, rating: value })
+      .catch(() => {})
+      .finally(() => {
+        loadCounts();
+        if (value > 0 && tab !== "read") { loadShelf(tab, medium); loadGoal(); loadStats(); }
       });
   }
 
@@ -340,7 +361,12 @@ export default function ReadingTrackerScreen() {
               {/* Ratings */}
               {Object.values(stats.rating_distribution).some((v) => v > 0) && (
                 <>
-                  <Text style={styles.statsSectionLabel}>Ratings — Your Reviews</Text>
+                  <Text style={styles.statsSectionLabel}>
+                    Your ratings
+                    {stats.average_rating != null
+                      ? `  ${stats.average_rating.toFixed(1)} avg across ${stats.rated_count}`
+                      : ""}
+                  </Text>
                   {[5, 4, 3, 2, 1].map((stars) => {
                     const total = Math.max(1, (Object.values(stats.rating_distribution) as number[]).reduce((s, v) => s + v, 0));
                     const count = stats.rating_distribution[String(stars)] ?? 0;
@@ -447,6 +473,21 @@ export default function ReadingTrackerScreen() {
               {tab === "read" && e.finishedAt ? (
                 <Text style={styles.cardFinished}>Finished {fmtDate(e.finishedAt)}</Text>
               ) : null}
+              <View style={styles.starRow}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    onPress={() => rate(e.directoryId, e.rating, n)}
+                    hitSlop={{ top: 6, bottom: 6, left: 3, right: 3 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Rate ${n} star${n === 1 ? "" : "s"}`}
+                  >
+                    <Text style={n <= e.rating ? styles.starOn : styles.starOff}>
+                      {n <= e.rating ? "\u2605" : "\u2606"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               <View style={styles.cardActions}>
                 {SHELF_STATUSES.filter((key) => key !== e.status).map((key) => (
                   <TouchableOpacity key={key} onPress={() => moveShelf(e.directoryId, key)}>
@@ -636,6 +677,9 @@ function createStyles(c: ColorPalette) {
     coverPlaceholderGlyph: { fontSize: 26 },
     coverPlaceholder: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
     cardTitle:  { fontFamily: fonts.serifBold, fontSize: 14, color: c.ink, lineHeight: 18 },
+    starRow:    { flexDirection: "row", gap: 2, marginTop: 6 },
+    starOn:     { fontSize: 16, color: c.gold },
+    starOff:    { fontSize: 16, color: c.mute },
     cardAuthor: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 2 },
     cardFinished: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 4 },
     cardActions: { marginTop: 8, gap: 4 },

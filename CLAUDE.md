@@ -7079,6 +7079,93 @@ deleted in favor of importing this new util.
 one field the backend already guarantees is shaped correctly per item type; a hand-rolled
 per-caller path is exactly how this bug happened (twice, in near-identical duplicated lines).
 
+## Quotes link to the Directory (September 2026)
+
+A quote used to point at nothing. Who said it was a freeform
+`culture_quote_author` **taxonomy term** — a second, lower-quality person
+registry shadowing the Directory — and where it came from was a plain
+`_quote_source` string. `_quote_type` (`Person`/`Book`/`Film`/`Speech`/`Song`)
+mapped almost exactly onto `culture_dir_type`, so someone had already reached
+for the right model and stopped one field short of the pointer. Net effect: the
+most shareable object in the app (quotes have share cards, QR codes and a
+permalink kept alive specifically so shares resolve) produced no signal, and a
+line could never appear on the entry of the book or person it belonged to.
+
+**Two links, both optional.** `_linked_directory_id` = the **work** it came
+from; `_quote_author_directory_id` = the **person** who said it. Optional is
+load-bearing, not laziness: a proverb, an overheard line and a `Speech`-type
+quote (there is no `speech` `culture_dir_type`) legitimately have neither.
+
+- **The work reuses `_linked_directory_id`, the same key community posts use**,
+  so every reverse-lookup that already queries it keeps working. Verified safe
+  before doing it: all four readers that aggregate off that key —
+  `Culture_Directory::recompute_directory_aggregates()`,
+  `handle_directory_posts()`'s meta_query, `Culture_Reading_Tracker::
+  get_reading_stats()`'s join, and the mobile entry query — scope to
+  `post_type = 'culture_post'`, so **a quote can never inflate a review count,
+  a star average or a rating histogram**. Re-check that before adding a fifth
+  reader.
+- **`Culture_Directory::quotes_for_directory_entry()`** is the one lookup, used
+  by both surfaces. It **unions** the two keys, which is what makes a person's
+  entry show everything they said regardless of source while a work's entry
+  shows lines from that work. Raw SQL resolve-to-IDs, never a two-branch OR
+  `meta_query` — that is the exact shape that hung the `culture_event` endpoint
+  for 20s+ in production.
+- **Quotes come back from the endpoint that already powers reviews**
+  (`/directory/{id}/posts` → new `quotes` array + `summary.total_quotes`), not a
+  parallel route, so the entry page needs no second fetch. Rendered under
+  reviews on both web (`.dir-quote-*` in `directory.css`) and mobile. On a
+  `person` entry the heading reads "Lines people saved" and each line shows its
+  **source**; elsewhere it reads "Lines saved from this" and shows the **author**
+  — repeating the page's own title on every row is noise.
+- **The composer's author field is a `DirectorySearch`, not a text input**
+  (`typeFilter="person"`), on both platforms. The freeform input stays
+  underneath, shown only while nothing is picked, as the escape hatch for an
+  unattributable line — "Anonymous" should not become a person entry to satisfy
+  a required field. The **source** field is a picker only where the type maps to
+  something the Directory holds (`QUOTE_SOURCE_TYPES`: Book→`book`+Google Books,
+  Film→`film`+TMDB, Song→`album`+Spotify); `Person` hides it (the person *is*
+  the source) and `Speech`/none fall back to freeform. **That map is mirrored in
+  three places** — `SubmitPost.tsx`, `NewPostScreen.tsx` and the PHP backfill —
+  same no-shared-source-of-truth caveat as every other constant trio here.
+- **The freeform strings are still written exactly as before.** The taxonomy
+  term and `_quote_source` meta are unchanged, so every existing reader (feed
+  mapper, `/quotes/[slug]`, share cards, GraphQL) keeps working whether or not a
+  link was supplied. The ids are purely additive.
+- **`apps/connect/app/api/quotes/create/route.ts` destructures the body
+  explicitly rather than spreading it**, so a new field is silently dropped
+  unless named there. It nearly was. Check that route when adding any quote field.
+- **Backfill**: `Culture_System_Author::maybe_link_quotes_to_directory()`
+  (`wp_loaded`, gated by `culture_quotes_directory_linked`) resolves existing
+  quotes' author terms and source strings against directory titles.
+  **Exact, case-insensitive match only — never fuzzy, and don't "improve" it
+  later.** A near match attributes words to the wrong person *on their own entry
+  page*: an unlinked quote is merely invisible, a mislinked one is a fabrication.
+  A title shared by two entries of the same type is skipped for the same reason.
+  Batched 300/request and resumable — the gate is only set once a pass finds
+  nothing left, so a large archive finishes over several requests instead of
+  timing out.
+
+**Pre-existing bug found and fixed in the same pass**: the mobile directory
+entry endpoint read `_culture_linked_directory` and `_community_template_type`,
+**neither of which is written anywhere in this codebase** (the composer writes
+`_linked_directory_id` and `_template_type`). That section had therefore never
+rendered a single post on mobile. If a mobile entry screen suddenly starts
+showing reviews it never had, this is why.
+
+**Verified**: `php -l` clean on all four touched PHP files; `tsc --noEmit`
+**exit 0** on `apps/connect` and `apps/site`, `apps/mobile` at its documented
+37-error baseline with none in touched files; `directory.css` brace-balanced
+(199/199); `scripts/check-brand-language.sh` shows only the four pre-existing
+Literary/comment hits, none in touched files. Both new queries were **executed
+against real tables** rather than reasoned about — the union lookup returns both
+a work-linked and an author-linked quote newest-first, and the backfill candidate
+query correctly flags partial links while excluding a fully-linked quote. **Not**
+tested against a live WordPress: needs the plugin redeployed (no new table, so no
+`CULTURE_VERSION` bump), then a real round trip — post a quote with each type,
+confirm it appears on both the person's and the work's entry pages, and check the
+backfill actually linked existing quotes rather than silently matching nothing.
+
 **No web-side (`apps/connect`/`packages/shared`) equivalent exists** — the QR-code-on-shared-
 image feature is mobile-only (`QuoteShareCard.tsx`); confirmed via grep that no `QRCode`/`qrcode`
 usage exists anywhere under `packages/shared/components`.
@@ -10344,6 +10431,63 @@ labels, and the absence of a medium dimension.
   needs the plugin redeployed (header bumped to 2.6.10; no new table, so no `CULTURE_VERSION`
   bump) and then a real round trip: log something of each medium, review a couple of them, and
   confirm the filter, the counts and every stats section agree.
+
+### Rating without a review — the `rating` column (September 2026)
+
+Until this, a rating could only exist on a `culture_post` **review**
+(`_book_overall_rating` and its four siblings), so there was no way to say "4 stars"
+without going through the composer. The log had a cheap action (shelve it) and an
+expensive one (write a review) and nothing in between — and a member who rated
+nothing showed an empty histogram on Your Year in Culture no matter how much they
+had logged.
+
+- **`wp_culture_reading_shelf` gained `rating tinyint(4) NOT NULL DEFAULT 0` and
+  `rated_at datetime`.** `CULTURE_VERSION` bumped `3.4.0` → `3.5.0` so
+  `culture_community_maybe_upgrade()` runs the `dbDelta` (plugin header `2.6.10` →
+  `2.6.11`). **0 means unrated, not zero stars** — there is no zero-star rating
+  anywhere in this product, and the frontends rely on that distinction.
+- **`set_shelf_rating( $user_id, $directory_id, $rating )`** is the new write.
+  A rating above 0 also moves the row to `read` and stamps `finished_at` (stickily,
+  same rule the rest of this class already follows), because rating something *is*
+  the finish action in both frontends. **Clearing a rating (0) deliberately does not
+  un-read it** — those are separate statements. Rating an unshelved entry creates the
+  row; rating 0 on an unshelved entry is a no-op rather than a reason to insert an
+  empty one.
+- **`set_shelf_status()` took an optional 4th `$rating` param** so a status change and
+  a rating can land in one write. **Neither REST surface `absint`s the `rating` arg** —
+  the handler needs to tell an absent param (leave the rating alone) from an explicit
+  `0` (clear it), and `absint` collapses both. `is_valid_rating()` rejects anything
+  non-integral or outside 0–5 rather than clamping: a 7 is a caller bug, not a 5.
+- **New routes, mirrored as usual**: `POST /culture/v1/reading/rating` (API key +
+  explicit `user_id`) and `POST /culture/v1/mobile/reading/rating` (JWT), both thin
+  wrappers over the one method. Next.js proxy: `apps/connect/app/api/reading/rating/
+  route.ts`. The pre-existing shelf POST proxy needed no change — it already spreads
+  `...body`, so `rating` passes through.
+- **`get_reading_stats()`'s rating histogram was restructured from per-review to
+  per-entry.** A review's rating still wins (it has prose behind it); the shelf column
+  only fills entries with no review, which previously went uncounted entirely. This
+  also closes a latent double-count: the old loop incremented once per *review*, so two
+  reviews pointing at one entry counted twice. New fields `rated_count` and
+  `average_rating` (one decimal, `null` when nothing is rated) come out of the same
+  pass. **Top genres stay review-only** — the shelf has no genre data to fall back on.
+- **Copy that was wrong the moment this shipped, and is fixed**: both stats screens said
+  "Ratings — Your Reviews" with an empty state reading "review something you've logged to
+  see it here." Ratings no longer require a review; both now read "Your ratings" with the
+  average inline, and the empty state points at the stars.
+- **Not built**: no credits/reputation award for rating (the gamification hook is still
+  its own later phase, and paying for a one-tap action is exactly the list-stuffing
+  incentive the plan doc warns about); no half-stars; no rating history (a re-rate
+  overwrites, `rated_at` moves).
+- **Verified**: `tsc --noEmit` **exit 0** on `apps/connect` and `apps/site`, `apps/mobile`
+  held at its documented 37-error baseline with none in the touched files; `php -l` clean
+  on all four touched PHP files; CSS brace balance on `member.css` (633/633); and both new
+  pieces of logic exercised standalone in real PHP rather than reasoned about — the
+  review-wins/shelf-fallback resolution across seven fixtures (review only, shelf only,
+  both on one entry, mixed, none, out-of-range, empty year) and `is_valid_rating()` across
+  fifteen inputs including `3.0`, `"4.5"`, `true` and `[]`. **Not** tested against a live
+  WordPress: needs the plugin redeployed before the column exists, then a real round trip —
+  rate from each platform, re-tap to clear, rate something that also has a review, and
+  confirm the histogram and average agree.
 
 ---
 
