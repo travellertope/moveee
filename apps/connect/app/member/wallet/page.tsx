@@ -8,7 +8,7 @@ import "../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "My Wallet | The Moveee" },
+  title: { absolute: "My Wallet | Moveee" },
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";

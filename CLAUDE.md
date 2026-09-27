@@ -10907,6 +10907,53 @@ separate, larger follow-up, not done here.
   actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
   renders identically to before) before considering this fully closed.
 
+### Site B (`apps/connect`) title-metadata sweep — doubled brand suffix + "The Moveee" (September 2026)
+
+User-reported as "why is the Hubs page title showing **Hubs · Moveee | Moveee**". That one page
+was a symptom of two bugs across 44 files — the Site B counterpart to the `apps/site` brand-suffix
+cleanup documented above, which never covered this app.
+
+**Bug 1 — the doubled suffix.** `apps/connect/app/layout.tsx` sets
+`title: { default: ..., template: "%s | Moveee" }`. Next.js applies that template to every
+descendant page's **plain** `title:` string, so any page title that already ended in the brand
+rendered it twice. 21 pages did (`"Hubs · Moveee"` → `Hubs · Moveee | Moveee`). Fixed by making
+the page title the bare page name and letting the template supply the brand.
+**The rule for this app: a plain `title:` must never contain "Moveee".** Only
+`title: { absolute: "…" }` bypasses the template, and those keep the brand themselves.
+
+- **`openGraph.title` and `twitter.title` are NOT templated** — Next.js applies `title.template`
+  only to `metadata.title`. A nested `"Name | Moveee"` in either block is correct and was
+  deliberately left alone (see `app/connect/[username]/page.tsx`, where line 72 was fixed but
+  lines 75/82 were not). Don't "fix" those to match; they'd lose the brand entirely.
+  `ShareButton.tsx`'s `navigator.share({ title })` is not metadata at all — also left alone.
+
+**Bug 2 — "The Moveee" in 30 titles.** Same banned string the `apps/site` sweep removed; that
+rule ("Never write 'The Moveee' — that string is not the brand name") was never applied here.
+Normalised to plain **Moveee**, separator standardised to `" | "`, and invented sub-brands
+collapsed per the same precedent: `Moveee Happenings`, `Moveee Community`, `Moveee Pulse` and
+`The Moveee Games` all became plain `Moveee`. Real feature names were kept as the page-name half
+(`Culture Games`, `Culture Directory`, `Vendor Dashboard`). Also fixed: `siteName` and the JSON-LD
+publisher `name` in `community/[slug]` and `pulse/[slug]`, and the root layout description.
+
+**Deliberately left alone**, matching the `apps/site` sweep's own scope (metadata only):
+- **`The Moveee Literary`** — a legitimate section proper noun, explicitly sanctioned above.
+  Not the generic-brand-name bug.
+- **`© {year} The Moveee. All Rights Reserved.`** footers (6 files) — the established legal
+  entity line, same "legal defined-term usage is out of scope" call as on Site A.
+- Body copy and AI prompts containing the phrase.
+
+Two other things fixed in passing, both caught while reading the titles: `app/feed/page.tsx` was
+titled `"Moveee — Community for Global Creatives"`, which both doubled **and** used the
+geography-emphasising "Global" the brand-language rule above warns against — now just `"Feed"`.
+And `app/pulse/categories/layout.tsx`'s `"Categories — Moveee Pulse"` became `"Pulse Categories"`
+rather than a bare `"Categories"`, which would have been meaningless in a browser tab.
+
+Not verified in a browser — `apps/connect` has no `node_modules` in this sandbox, so neither
+`tsc --noEmit` nor `next build` could run. Verified via a brace/paren-balance check on all 44
+edited files and a re-run of the audit script that found the bug (0 templated titles still
+carrying the brand, 0 titles containing "The Moveee"). Re-check a couple of real tabs after
+deploy before considering this closed.
+
 ### Stoop companion Hubs hidden from the Hubs browse page; Stoop icon changed (September 2026)
 
 Two small Stoop-facing fixes, both user-reported.

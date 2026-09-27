@@ -30,7 +30,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getCommunityPostBySlug(slug);
-  if (!post) return { title: "Post not found — Moveee" };
+  if (!post) return { title: "Post not found" };
 
   const rawText = post.content.rendered.replace(/<[^>]+>/g, "").trim();
   const title   = rawText.slice(0, 80) + (rawText.length > 80 ? "…" : "");
@@ -40,12 +40,12 @@ export async function generateMetadata({
   const image   = post.meta.community_image_url || `${SITE_URL}/og-fallback.png`;
   const url     = `${SITE_URL}/community/${post.slug}`;
   return {
-    title: `${title} — Moveee Community`,
+    title,
     description,
     authors: [{ name: author }],
     keywords: [tag].filter(Boolean),
     openGraph: {
-      title, description, url, siteName: "The Moveee",
+      title, description, url, siteName: "Moveee",
       images: [{ url: image, width: 1200, height: 630, alt: title }],
       type: "article",
       publishedTime: post.date,
@@ -115,7 +115,7 @@ export default async function CommunityPostPage({
     author: { "@type": "Person", name: author },
     publisher: {
       "@type": "Organization",
-      name: "The Moveee",
+      name: "Moveee",
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",

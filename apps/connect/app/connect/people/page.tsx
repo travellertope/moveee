@@ -6,7 +6,7 @@ import Link from "next/link";
 import "@/app/people.css";
 
 export const metadata: Metadata = {
-  title: "People Near Me — Moveee",
+  title: "People Near Me",
   description:
     "Discover creatives, entrepreneurs, professionals, and culture lovers near you in the Moveee community.",
 };

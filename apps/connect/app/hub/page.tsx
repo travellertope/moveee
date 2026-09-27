@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import HubDiscoverClient from "./HubDiscoverClient";
 import "@/app/pulse-layout.css";
 
-export const metadata = { title: "Hubs · Moveee" };
+export const metadata = { title: "Hubs" };
 export const dynamic = "force-dynamic";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
