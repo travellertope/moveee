@@ -29,7 +29,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const story = await getPulseStoryBySlug(slug);
-  if (!story) return { title: "Story not found — Moveee" };
+  if (!story) return { title: "Story not found" };
 
   const title = story.title.rendered.replace(/&[^;]+;/g, "");
   const rawDesc = story.excerpt.rendered.replace(/<[^>]+>/g, "").trim();
@@ -42,13 +42,13 @@ export async function generateMetadata({
   const url = `${SITE_URL}/pulse/${story.slug}`;
 
   return {
-    title: `${title} — Moveee Pulse`,
+    title,
     description,
     openGraph: {
       title,
       description,
       url,
-      siteName: "The Moveee",
+      siteName: "Moveee",
       images: [{ url: image, width: 1200, height: 630, alt: title }],
       type: "article",
       publishedTime: story.date,
@@ -128,7 +128,7 @@ export default async function PulseStoryPage({
     dateModified: story.modified,
     publisher: {
       "@type": "Organization",
-      name: "The Moveee",
+      name: "Moveee",
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",

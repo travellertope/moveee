@@ -9,7 +9,7 @@ import "../../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Your Year in Books | The Moveee" },
+  title: { absolute: "Your Year in Books | Moveee" },
 };
 
 // Reading Tracker stats dashboard — Phase 4, see

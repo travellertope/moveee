@@ -6,7 +6,7 @@ import ProfileEditor from "../ProfileEditor";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Profile Settings | The Moveee" },
+  title: { absolute: "Profile Settings | Moveee" },
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";

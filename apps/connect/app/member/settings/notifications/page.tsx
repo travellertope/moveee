@@ -6,7 +6,7 @@ import NotificationPreferences from "../NotificationPreferences";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Notification Preferences | The Moveee" },
+  title: { absolute: "Notification Preferences | Moveee" },
 };
 
 export default async function NotificationsSettingsPage() {

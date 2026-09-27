@@ -8,7 +8,7 @@ import "../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Reading Tracker | The Moveee" },
+  title: { absolute: "Reading Tracker | Moveee" },
 };
 
 export default async function ReadingTrackerPage() {

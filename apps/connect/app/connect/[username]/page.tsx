@@ -61,7 +61,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { username } = await params;
   const profile = await getProfile(username);
-  if (!profile) return { title: "Member not found | Moveee" };
+  if (!profile) return { title: "Member not found" };
 
   const repLabel = REP_TIER_LABELS[profile.reputation_tier] ?? "Member";
   const description = profile.bio
@@ -69,7 +69,7 @@ export async function generateMetadata(
     : `${profile.display_name}'s profile on Moveee — ${repLabel}.`;
 
   return {
-    title: `${profile.display_name} | Moveee`,
+    title: profile.display_name,
     description,
     openGraph: {
       title: `${profile.display_name} | Moveee`,

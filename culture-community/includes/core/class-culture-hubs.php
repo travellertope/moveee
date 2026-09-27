@@ -755,6 +755,25 @@ class Culture_Hubs {
             return array( 'hubs' => array(), 'total' => 0, 'page' => $page, 'perPage' => $per_page );
         }
 
+        // Every Stoop cluster auto-provisions a companion Hub for its own
+        // members (Culture_Clusters::maybe_create_companion_hub()). Those are
+        // private-by-purpose discussion spaces for one small local group, not
+        // topic communities anyone can usefully browse into, so they are
+        // excluded from this public listing — one per cluster would otherwise
+        // swamp the directory as Stoops grow. They stay fully reachable from
+        // their own cluster page, which links them via _cluster_hub_id (see
+        // ClusterScreen.tsx / app/cluster/[id] on web), and are unaffected in
+        // my_hubs() — a member still sees their Stoop's Hub among their own.
+        $cluster_hub_ids = $wpdb->get_col(
+            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_hub_cluster_id'"
+        );
+        if ( $cluster_hub_ids ) {
+            $active_ids = array_values( array_diff( $active_ids, $cluster_hub_ids ) );
+            if ( ! $active_ids ) {
+                return array( 'hubs' => array(), 'total' => 0, 'page' => $page, 'perPage' => $per_page );
+            }
+        }
+
         // Raw-SQL resolve-to-IDs, not a WP_Query meta_query join — see the
         // project's own "meta_query OR-branches are slow" note elsewhere in
         // this codebase for why.

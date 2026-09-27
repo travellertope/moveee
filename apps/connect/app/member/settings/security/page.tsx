@@ -7,7 +7,7 @@ import PasskeyManager from "../PasskeyManager";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Security Settings | The Moveee" },
+  title: { absolute: "Security Settings | Moveee" },
 };
 
 export default async function SecuritySettingsPage() {

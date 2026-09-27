@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import CreateHubClient from "./CreateHubClient";
 import "../../member.css";
 
-export const metadata = { title: "Start a Hub · Moveee" };
+export const metadata = { title: "Start a Hub" };
 
 export default async function CreateHubPage() {
   const session = (await getServerSession(authOptions as any)) as any;

@@ -10898,7 +10898,7 @@ separate, larger follow-up, not done here.
   out of scope for this pass.
 - **Not touched in this pass, still phone-only layout**: every screen besides Feed/
   Discover, and the in-screen headers some screens carry (e.g. `ConnectFeedScreen.tsx`'s
-  own Hub/Stoop/Directory/Discover/Bell/Avatar icon row) — those provide real navigation the
+  own Hub/Stoop/Bell/Avatar icon row) — those provide real navigation the
   rail doesn't cover and were deliberately left as-is rather than restructured into the rail
   itself, to keep this pass scoped to the shell + two example screens the mockup covered.
 - **Not visually verified on a real device or simulator** — this sandbox has neither. Verified
@@ -10906,6 +10906,120 @@ separate, larger follow-up, not done here.
   unrelated — see the shop-screen `productId` mismatches noted elsewhere). Re-check on an
   actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
   renders identically to before) before considering this fully closed.
+
+### Site B (`apps/connect`) title-metadata sweep — doubled brand suffix + "The Moveee" (September 2026)
+
+User-reported as "why is the Hubs page title showing **Hubs · Moveee | Moveee**". That one page
+was a symptom of two bugs across 44 files — the Site B counterpart to the `apps/site` brand-suffix
+cleanup documented above, which never covered this app.
+
+**Bug 1 — the doubled suffix.** `apps/connect/app/layout.tsx` sets
+`title: { default: ..., template: "%s | Moveee" }`. Next.js applies that template to every
+descendant page's **plain** `title:` string, so any page title that already ended in the brand
+rendered it twice. 21 pages did (`"Hubs · Moveee"` → `Hubs · Moveee | Moveee`). Fixed by making
+the page title the bare page name and letting the template supply the brand.
+**The rule for this app: a plain `title:` must never contain "Moveee".** Only
+`title: { absolute: "…" }` bypasses the template, and those keep the brand themselves.
+
+- **`openGraph.title` and `twitter.title` are NOT templated** — Next.js applies `title.template`
+  only to `metadata.title`. A nested `"Name | Moveee"` in either block is correct and was
+  deliberately left alone (see `app/connect/[username]/page.tsx`, where line 72 was fixed but
+  lines 75/82 were not). Don't "fix" those to match; they'd lose the brand entirely.
+  `ShareButton.tsx`'s `navigator.share({ title })` is not metadata at all — also left alone.
+
+**Bug 2 — "The Moveee" in 30 titles.** Same banned string the `apps/site` sweep removed; that
+rule ("Never write 'The Moveee' — that string is not the brand name") was never applied here.
+Normalised to plain **Moveee**, separator standardised to `" | "`, and invented sub-brands
+collapsed per the same precedent: `Moveee Happenings`, `Moveee Community`, `Moveee Pulse` and
+`The Moveee Games` all became plain `Moveee`. Real feature names were kept as the page-name half
+(`Culture Games`, `Culture Directory`, `Vendor Dashboard`). Also fixed: `siteName` and the JSON-LD
+publisher `name` in `community/[slug]` and `pulse/[slug]`, and the root layout description.
+
+**Deliberately left alone**, matching the `apps/site` sweep's own scope (metadata only):
+- **`The Moveee Literary`** — a legitimate section proper noun, explicitly sanctioned above.
+  Not the generic-brand-name bug.
+- **`© {year} The Moveee. All Rights Reserved.`** footers (6 files) — the established legal
+  entity line, same "legal defined-term usage is out of scope" call as on Site A.
+- Body copy and AI prompts containing the phrase.
+
+Two other things fixed in passing, both caught while reading the titles: `app/feed/page.tsx` was
+titled `"Moveee — Community for Global Creatives"`, which both doubled **and** used the
+geography-emphasising "Global" the brand-language rule above warns against — now just `"Feed"`.
+And `app/pulse/categories/layout.tsx`'s `"Categories — Moveee Pulse"` became `"Pulse Categories"`
+rather than a bare `"Categories"`, which would have been meaningless in a browser tab.
+
+Not verified in a browser — `apps/connect` has no `node_modules` in this sandbox, so neither
+`tsc --noEmit` nor `next build` could run. Verified via a brace/paren-balance check on all 44
+edited files and a re-run of the audit script that found the bug (0 templated titles still
+carrying the brand, 0 titles containing "The Moveee"). Re-check a couple of real tabs after
+deploy before considering this closed.
+
+### Stoop companion Hubs hidden from the Hubs browse page; Stoop icon changed (September 2026)
+
+Two small Stoop-facing fixes, both user-reported.
+
+**Companion Hubs no longer appear in Hub discovery.** Every Stoop cluster auto-provisions its own
+Hub on creation (`Culture_Clusters::maybe_create_companion_hub()` — named `"{Cluster} — Stoop"`,
+linked both ways via `_cluster_hub_id` / `_hub_cluster_id`), which is the right mechanism: it
+reuses the ordinary Hub join/post/feed plumbing rather than a bespoke cluster-chat feature. But
+those Hubs are a private discussion space for one small local group, not a topic community anyone
+can usefully browse into — and at one per cluster they would swamp the public directory as Stoops
+grow. `Culture_Hubs::discover()` now subtracts every post ID carrying `_hub_cluster_id` from its
+candidate set, right after the `_hub_status = active` lookup and before the category filter, using
+the same raw-SQL resolve-to-IDs shape the rest of that method already uses (never a `meta_query`
+join — see the "meta_query OR-branches are slow" note above).
+
+- **Deliberately scoped to `discover()` only.** `my_hubs()` is untouched: a member who joined
+  their Stoop's Hub still sees it in their own list, which is correct — it genuinely is one of
+  their Hubs. This is the narrower reading of "don't list Stoop hubs on the Hubs page"; if the
+  intent was to hide them from the member's own list too, that is a second, separate filter.
+- **Nothing is stranded.** The companion Hub stays reachable from its cluster page on both
+  platforms (`ClusterScreen.tsx` and `apps/connect/app/cluster/[id]/page.tsx` both render a link
+  gated on `cluster.hubId && cluster.hubSlug`). Verified before making the change.
+- Needs the plugin redeployed before it takes effect in production. No new dbDelta table, so no
+  `CULTURE_VERSION` bump. Verified via `php -l`.
+
+**Stoop's nav icon changed from `home-outline` to `bonfire-outline`** (`ConnectFeedScreen.tsx`
+header). A house glyph reads as "go to the start of the app" in every other app's navigation, so
+it competed with the nav's own semantics instead of naming the feature — and it was inaccurate
+besides: `HostOnboardingScreen.tsx` offers home / café / coworking / other as venue types, so a
+Stoop is frequently not a home at all. A bonfire reads as "a small group that gathers here
+regularly", which is what a Stoop is, and collides with nothing else in the header (Hub is
+`planet-outline`). Runner-up was `location-outline`, which leans on the area-level half of the
+idea instead — a one-word swap if that framing is ever preferred.
+
+- `MemberDashboardScreen.tsx`'s `QUICK_LINKS` still uses a 🏠 emoji for "My Stoop" / "Find your
+  Stoop". Left as-is: it sits directly beside its own text label, so it can't be misread as a
+  home button the way a bare nav icon can.
+- `HostOnboardingScreen.tsx`'s 🏠 (and the web equivalents in `CreateClusterClient.tsx` /
+  `cluster/[id]/page.tsx`) are the literal "Home" **venue type**, not Stoop branding — correct as
+  they are, don't sweep them.
+- Web is untouched — `apps/connect`'s `Header.tsx` rail already uses its own named `"stoop"` icon.
+
+### Feed header trimmed to four targets — Discover + People Near Me moved to the account menu (September 2026)
+
+`ConnectFeedScreen.tsx`'s header row carried five 22px Ionicons plus the 34px avatar in a 390px
+bar, which left roughly 4px of visual gap between tap targets (the `hitSlop` made them *usable*,
+but the row read as crowded — user-reported against a true-size mockup of the screen). Two of
+the five were removed: **People Near Me** (`MemberDirectory`) and **Discover**. The row is now
+Hub → Stoop → Bell → Avatar.
+
+Neither destination was orphaned — both were added to `MemberDashboardScreen.tsx`'s
+`QUICK_LINKS` (🧭 Discover, 👥 People Near Me, placed first, ahead of Wallet), which is the
+account menu the header's own avatar opens. **This works because `MemberDashboard` is only ever
+reached through `ConnectStack`**, where `Discover` and `MemberDirectory` are both registered —
+`MemberStack` declares neither, but it is defined and never mounted (`MainTabs` has five tabs:
+Connect/Magazine/Games/Shop/Events), so it's dead code and not a real second entry path. The
+pre-existing "Find your Stoop" quick link already relied on this same assumption by routing to
+`MemberDirectory`. **If `MemberStack` is ever actually mounted as a tab, both new links (and
+that pre-existing one) will break** — register the two routes there at the same time.
+
+Web is unaffected: `apps/connect`'s left nav rail (see "Connect app left-nav rail" above) has
+its own `RAIL_LINKS` block with plenty of room, and was deliberately left alone.
+
+Verified via `tsc --noEmit` on `apps/mobile` — 37 errors before and after, all pre-existing (see
+the SDK 57 upgrade entry for why that baseline is 37 and what's in it), so this introduced none.
+Not verified on a real device.
 
 ### Tablet support — remaining ~55 screens (August 2026, same day follow-up)
 

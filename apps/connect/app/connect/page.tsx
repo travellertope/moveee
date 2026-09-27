@@ -5,7 +5,7 @@ import "../feed/feed.css";
 import "./connect-landing.css";
 
 export const metadata: Metadata = {
-  title: "Literati Connect — Moveee",
+  title: "Literati Connect",
   description:
     "Two ways to meet the people who live for culture the way you do — Literati Connect, a monthly city-wide gathering, and Stoop, a weekly circle in your own area.",
 };

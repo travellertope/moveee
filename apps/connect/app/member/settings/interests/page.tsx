@@ -6,7 +6,7 @@ import InterestEditor from "@/components/InterestEditor";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Interests | The Moveee" },
+  title: { absolute: "Interests | Moveee" },
 };
 
 export default async function InterestsSettingsPage() {

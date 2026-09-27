@@ -372,32 +372,26 @@ export default function ConnectFeedScreen() {
               <Ionicons name="planet-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
-            {/* Stoop */}
+            {/* Stoop — bonfire, not a house. "home-outline" reads as
+                "go to the start of the app" in every other app's nav, and a
+                Stoop isn't necessarily someone's home anyway: the host
+                onboarding offers home / café / coworking / other as venue
+                types. A bonfire says "a small group that gathers here
+                regularly", which is what a Stoop actually is, and collides
+                with nothing else in the header. */}
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => nav.navigate("StoopHomeScreen")}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="home-outline" size={22} color={c.ink} />
+              <Ionicons name="bonfire-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
-            {/* Member directory */}
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => nav.navigate("MemberDirectory")}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="people-outline" size={22} color={c.ink} />
-            </TouchableOpacity>
-
-            {/* Discover */}
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => nav.navigate("Discover")}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="compass-outline" size={22} color={c.ink} />
-            </TouchableOpacity>
+            {/* People Near Me and Discover used to sit here. Removed
+                September 2026 — six targets in a 390px bar left ~4px between
+                them. Both now live in the account menu's quick links
+                (MemberDashboardScreen.tsx's QUICK_LINKS), reached via the
+                avatar to the right. */}
 
             {/* Bell */}
             <TouchableOpacity

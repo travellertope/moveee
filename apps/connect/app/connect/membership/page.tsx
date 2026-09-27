@@ -7,7 +7,7 @@ import "../../sections.css";
 import "../../feed/feed.css";
 
 export const metadata: Metadata = {
-  title: "Membership — Moveee",
+  title: "Membership",
   description:
     "Join Moveee as a Citizen for free, upgrade to Moveee Lit for full access to The Moveee Literary, or go Moveee Pro for patron-only content, 10% shop discount, credit cashout, 5 game plays per day, and more.",
 };

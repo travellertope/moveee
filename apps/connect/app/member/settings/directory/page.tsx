@@ -6,7 +6,7 @@ import DirectoryProfile from "../DirectoryProfile";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Directory Settings | The Moveee" },
+  title: { absolute: "Directory Settings | Moveee" },
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";

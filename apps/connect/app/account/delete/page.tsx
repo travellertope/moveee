@@ -11,7 +11,7 @@ import DeleteAccountClient from "./DeleteAccountClient";
 // visitor still needs to be able to reach this page and see how to proceed
 // (log in, or contact support), not get bounced.
 export const metadata: Metadata = {
-  title: "Delete your account | Moveee",
+  title: "Delete your account",
   robots: { index: false, follow: false },
 };
 

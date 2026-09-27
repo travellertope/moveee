@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     default: "Moveee — Connect to Culture",
     template: "%s | Moveee",
   },
-  description: "Discover events, creative people, and cultural experiences. The Moveee community — open to everyone.",
+  description: "Discover events, creative people, and cultural experiences. A community open to everyone.",
   openGraph: {
     type: "website",
     locale: "en_US",
