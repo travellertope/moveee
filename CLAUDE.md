@@ -10898,7 +10898,7 @@ separate, larger follow-up, not done here.
   out of scope for this pass.
 - **Not touched in this pass, still phone-only layout**: every screen besides Feed/
   Discover, and the in-screen headers some screens carry (e.g. `ConnectFeedScreen.tsx`'s
-  own Hub/Stoop/Directory/Discover/Bell/Avatar icon row) — those provide real navigation the
+  own Hub/Stoop/Bell/Avatar icon row) — those provide real navigation the
   rail doesn't cover and were deliberately left as-is rather than restructured into the rail
   itself, to keep this pass scoped to the shell + two example screens the mockup covered.
 - **Not visually verified on a real device or simulator** — this sandbox has neither. Verified
@@ -10906,6 +10906,31 @@ separate, larger follow-up, not done here.
   unrelated — see the shop-screen `productId` mismatches noted elsewhere). Re-check on an
   actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
   renders identically to before) before considering this fully closed.
+
+### Feed header trimmed to four targets — Discover + People Near Me moved to the account menu (September 2026)
+
+`ConnectFeedScreen.tsx`'s header row carried five 22px Ionicons plus the 34px avatar in a 390px
+bar, which left roughly 4px of visual gap between tap targets (the `hitSlop` made them *usable*,
+but the row read as crowded — user-reported against a true-size mockup of the screen). Two of
+the five were removed: **People Near Me** (`MemberDirectory`) and **Discover**. The row is now
+Hub → Stoop → Bell → Avatar.
+
+Neither destination was orphaned — both were added to `MemberDashboardScreen.tsx`'s
+`QUICK_LINKS` (🧭 Discover, 👥 People Near Me, placed first, ahead of Wallet), which is the
+account menu the header's own avatar opens. **This works because `MemberDashboard` is only ever
+reached through `ConnectStack`**, where `Discover` and `MemberDirectory` are both registered —
+`MemberStack` declares neither, but it is defined and never mounted (`MainTabs` has five tabs:
+Connect/Magazine/Games/Shop/Events), so it's dead code and not a real second entry path. The
+pre-existing "Find your Stoop" quick link already relied on this same assumption by routing to
+`MemberDirectory`. **If `MemberStack` is ever actually mounted as a tab, both new links (and
+that pre-existing one) will break** — register the two routes there at the same time.
+
+Web is unaffected: `apps/connect`'s left nav rail (see "Connect app left-nav rail" above) has
+its own `RAIL_LINKS` block with plenty of room, and was deliberately left alone.
+
+Verified via `tsc --noEmit` on `apps/mobile` — 37 errors before and after, all pre-existing (see
+the SDK 57 upgrade entry for why that baseline is 37 and what's in it), so this introduced none.
+Not verified on a real device.
 
 ### Tablet support — remaining ~55 screens (August 2026, same day follow-up)
 

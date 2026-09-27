@@ -381,23 +381,11 @@ export default function ConnectFeedScreen() {
               <Ionicons name="home-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
-            {/* Member directory */}
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => nav.navigate("MemberDirectory")}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="people-outline" size={22} color={c.ink} />
-            </TouchableOpacity>
-
-            {/* Discover */}
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => nav.navigate("Discover")}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="compass-outline" size={22} color={c.ink} />
-            </TouchableOpacity>
+            {/* People Near Me and Discover used to sit here. Removed
+                September 2026 — six targets in a 390px bar left ~4px between
+                them. Both now live in the account menu's quick links
+                (MemberDashboardScreen.tsx's QUICK_LINKS), reached via the
+                avatar to the right. */}
 
             {/* Bell */}
             <TouchableOpacity

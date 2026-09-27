@@ -138,6 +138,12 @@ const EARN_TABLE = [
 
 
 const QUICK_LINKS = [
+  // Discover and People Near Me were header icons on the feed until September
+  // 2026 — moved here when that bar got too crowded. Both routes are
+  // registered in ConnectStack, which is the only stack this screen is ever
+  // reached through (MemberStack is defined but never mounted).
+  { emoji: "🧭", label: "Discover",    screen: "Discover" },
+  { emoji: "👥", label: "People Near Me", screen: "MemberDirectory" },
   { emoji: "💰", label: "Wallet",      screen: "Wallet" },
   { emoji: "🎁", label: "Perks",       screen: "Perks" },
   { emoji: "🎟️", label: "Coupons",     screen: "Coupons" },
