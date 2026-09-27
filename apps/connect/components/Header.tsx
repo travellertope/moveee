@@ -22,13 +22,13 @@ const NAV = [
 ] as const;
 
 // Rendered at the bottom of the desktop rail — was the right-side icon
-// cluster in the old top header. Order: Discover Culture, People Near Me,
-// Stoop IRL, Interest Hubs (Stoop before Hubs, per the approved mockup).
+// cluster in the old top header. People Near Me sat between Discover and
+// Stoop until September 2026, when the member directory was retired —
+// finding people near you is what Stoop and Literati Connect are for now.
 const RAIL_LINKS = [
-  { href: "/discover",       label: "Discover Culture", icon: "discover" },
-  { href: "/connect/people", label: "People Near Me",   icon: "people"   },
-  { href: "/connect/stoop",  label: "Stoop IRL",        icon: "stoop"    },
-  { href: "/hub",            label: "Interest Hubs",    icon: "hub"      },
+  { href: "/discover",      label: "Discover Culture", icon: "discover" },
+  { href: "/connect/stoop", label: "Stoop IRL",        icon: "stoop"    },
+  { href: "/hub",           label: "Interest Hubs",    icon: "hub"      },
 ] as const;
 
 function RailIcon({ name }: { name: string }) {
@@ -36,8 +36,6 @@ function RailIcon({ name }: { name: string }) {
   switch (name) {
     case "discover":
       return <svg {...common} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" /></svg>;
-    case "people":
-      return <svg {...common} viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
     case "stoop":
       return <svg {...common} viewBox="0 0 24 24"><path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" /></svg>;
     case "hub":

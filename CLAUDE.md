@@ -9523,7 +9523,9 @@ those chips with an empty search box silently did nothing. Two fixes landed from
 - **The generic Category chip row is now hidden in both Directory and People context**
   (`!isDirectory && !isPeople`) — it never had real wiring in either context (Directory has its
   own Type group below; People has the Industry group below), so showing it was a dead control,
-  not a smaller version of a working one.
+  not a smaller version of a working one. **(The People half is gone as of September 2026 —
+  the guard is now `!isDirectory && !isStoop`; see "People Near Me / member directory
+  RETIRED" above. The principle stands and still applies to any new chip group.)**
 - **Any future context-specific chip group must follow the Region/Sort pattern**: call its own
   `emit*Filters()` bus function directly from the `onClick`, not route through `runSearch`/
   `runPeopleSearch`. Those two functions (and their `!q.trim()` early-return) are only for
@@ -9543,6 +9545,69 @@ needed again" convention used elsewhere in this file) and replaced by a `.disc-a
 row — one chip for Type, one for Region, each independently clearable — mirroring
 `.ppl-active-filters` exactly. The modal's own text-search fold-in (for its inline result list)
 now combines both Type and Region labels into the `category` keyword param when present.
+
+### People Near Me / member directory RETIRED — both platforms (September 2026)
+
+**The whole feature is gone.** Per an explicit product decision: Stoop and Literati Connect
+are now how a member finds people near them, so a second, parallel "browse every member in
+your area" surface was redundant with them and was retired rather than maintained alongside
+them. **Everything in the "People Near Me — full rebuild" section directly below this one is
+superseded and describes deleted code** — it is kept only so the git history and any external
+reference to that rebuild resolve to an explanation rather than a silent gap.
+
+**Deleted outright** (not left as dead code, since none of it had any other consumer):
+`apps/connect/app/connect/people/` (the `/connect/people` route), `apps/connect/app/people.css`
+(`ppl-*`), `packages/shared/components/connect/MemberDirectory.tsx`,
+`packages/shared/lib/peopleFiltersBus.ts`, and
+`apps/mobile/src/screens/community/MemberDirectoryScreen.tsx` plus its `ConnectStack`
+registration and its `AppParamList`/`RootStackParamList` entries.
+
+**`/connect/people` was doing double duty as the de facto "Find your Stoop" destination** —
+five separate CTAs pointed at it even though a real Stoop browser (`/connect/stoop`,
+`StoopBrowser.tsx`) had existed since July 2026. Every one of them was **re-pointed, not
+removed**, which is a genuine fix rather than a migration: `/member`'s Stoop card,
+`/connect`'s hero CTA, its mid-page offer CTA and its final-band CTA, `/cluster/create`'s back
+link, and — on mobile — `MemberDashboardScreen.tsx`'s "Find your Stoop" quick link (now
+`StoopHomeScreen`). `Culture_Cron`'s two `cluster_forming_expired` notification `action_url`s
+(`class-culture-cron.php`) said "try joining a nearby Stoop instead" while linking at the
+member directory — also re-pointed to `/connect/stoop`. **If you find any other link still
+aimed at a removed people surface, `/connect/stoop` is almost always the right target.**
+
+**Nav/chrome entries removed**: `Header.tsx`'s `RAIL_LINKS` entry and its now-unused `people`
+`RailIcon` case, the shared `Footer.tsx`'s "People Near Me" link, the `mco-section-nav` row on
+both `/connect` and `/connect/membership` (both now read "Stoop" and point at
+`/connect/stoop`), the `← Directory` back link on `/connect/[username]`, and
+`MakerProfileScreen.tsx`'s "View in Directory →" card. **Public member profiles
+(`/connect/[username]`) are untouched and still fully live** — they are linked from feed
+cards, mentions and follow lists everywhere, and were never part of the directory itself.
+
+**`SearchModal.tsx` lost its entire People context** — the `Person` content type (which was
+never a real WP post subtype), the `PEOPLE_INDUSTRIES`/`PEOPLE_REGIONS` facet consts, the
+`MemberResult` shape, `runPeopleSearch()`, the `selectPeopleIndustry()`/`selectPeopleRegion()`
+bus emitters, the two `isPeople` filter groups and the member results branch. The generic
+Category chip row's `!isDirectory && !isPeople && !isStoop` guard is now
+`!isDirectory && !isStoop`. **Consequence worth knowing: there is no longer any way to search
+for a member by name anywhere in the app** — WordPress's native search has no concept of
+Users, which is exactly why that bespoke endpoint existed. If member search is ever wanted
+back, it needs a deliberate new decision, not a revert of this removal.
+
+**Deliberately left in place, unused**: `GET /culture/v1/members` +
+`Culture_REST_API::handle_get_members_directory()` (including the `region`/`sort`/`offset`
+params added for the July 2026 rebuild) and its `apps/connect/app/api/connect/members/route.ts`
+proxy. Removing them would need a plugin redeploy for zero benefit, they are a harmless
+authenticated read, and they are the only member-search backend that exists — so they are the
+natural starting point if the decision above is ever revisited. This follows the same
+"kept in case needed again" convention used throughout this file. **The mobile
+`/mobile/members` endpoint is a different thing and is still load-bearing** — it backs the
+composer's `@mention` autocomplete and `UserSearch.tsx`; do not remove it.
+
+Verified via `tsc --noEmit` on `apps/mobile` (37 errors before and after, byte-identical — the
+documented pre-existing baseline, see the SDK 57 upgrade entry), a TypeScript syntax check on
+all nine edited web files, `php -l` on `class-culture-cron.php`, and a repo-wide grep
+confirming no live reference to any removed symbol or route survives (the remaining hits are
+all historical comments). `apps/connect` has no `node_modules` in this sandbox, so no
+`next build`/full type-check was possible — re-check that `/connect/stoop` actually renders
+from each re-pointed CTA in a real environment before considering this closed.
 
 ### People Near Me — full rebuild on the Feed/Discover/Events design system (`ppl-*`, July 2026)
 
@@ -10997,6 +11062,11 @@ idea instead — a one-word swap if that framing is ever preferred.
 - Web is untouched — `apps/connect`'s `Header.tsx` rail already uses its own named `"stoop"` icon.
 
 ### Feed header trimmed to four targets — Discover + People Near Me moved to the account menu (September 2026)
+
+**Partly superseded**: People Near Me was retired outright later the same month (see "People
+Near Me / member directory RETIRED" above), so only the Discover half of this move survives.
+The rest of this entry — the crowding measurement, the `MemberStack`-is-never-mounted
+reasoning, and the header's final Hub/Stoop/Bell/Avatar shape — still holds.
 
 `ConnectFeedScreen.tsx`'s header row carried five 22px Ionicons plus the 34px avatar in a 390px
 bar, which left roughly 4px of visual gap between tap targets (the `hitSlop` made them *usable*,

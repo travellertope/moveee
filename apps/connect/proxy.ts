@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
   // Note: the bare /connect path used to redirect to /feed (back-compat for
   // when the feed itself briefly lived there) — that redirect is gone now
   // that /connect is a real page (the Literati Connect landing page, see
-  // app/connect/page.tsx). /connect/people, /connect/membership,
+  // app/connect/page.tsx). /connect/stoop, /connect/membership,
   // /connect/perks, /connect/[username] are unaffected either way.
 
   if (SITE_A_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {

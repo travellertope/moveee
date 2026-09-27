@@ -354,7 +354,7 @@ class Culture_Cron {
                     'cluster_forming_expired',
                     'Your Stoop didn\'t reach activation',
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' didn\'t reach enough members in time. Try joining a nearby Stoop instead.',
-                    '/connect/people',
+                    '/connect/stoop',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
                 );
             }
@@ -446,7 +446,7 @@ class Culture_Cron {
                     'cluster_forming_expired',
                     'Your Stoop has been archived',
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' had no remaining members for 14 days and has been archived.',
-                    '/connect/people',
+                    '/connect/stoop',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
                 );
             }

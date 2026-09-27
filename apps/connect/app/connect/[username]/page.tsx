@@ -157,9 +157,6 @@ export default async function PublicProfilePage(
               <div className="prf-actions">
                 <FollowButton username={profile.username} initialFollowersCount={profile.followers_count} />
                 <ShareButton url={profileUrl} name={profile.display_name} />
-                <Link href="/connect/people" className="prf-share-btn" style={{ textDecoration: "none" }}>
-                  ← Directory
-                </Link>
               </div>
             </div>
           </div>

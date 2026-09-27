@@ -19,7 +19,6 @@ export type AppParamList = {
     improvingEntryType?: string;
   } | undefined;
   MemberProfile: { userId?: string; username?: string };
-  MemberDirectory: undefined;
   Notifications: undefined;
   DirectoryDetail: { id?: number; slug?: string; title?: string; entryType?: string };
   DirectoryPosts: { entryId: number; entryTitle: string; showRating?: boolean };
