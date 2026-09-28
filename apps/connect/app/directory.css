@@ -1336,3 +1336,112 @@
     padding: 48px 20px 40px;
   }
 }
+
+/* ── Entry log control (EntryLogControl.tsx) ──────────────────────────────
+   Shelve and rate an entry from the entry's own page. Uses this page's own
+   --dir-* namespace, not the global --ink/--ochre pair, per the rule in
+   CLAUDE.md — don't mix the two systems in this file. */
+.dir-log {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--dir-border);
+  border-radius: 12px;
+  background: var(--dir-paper, #fff);
+}
+.dir-log-label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dir-muted);
+  margin-bottom: 10px;
+}
+.dir-log-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dir-log-status {
+  flex: 1 1 auto;
+  min-width: 110px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper, #fff);
+  color: var(--dir-ink);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dir-log-status:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+.dir-log-status--active,
+.dir-log-status--active:disabled {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper, #fff);
+  opacity: 1;
+}
+.dir-log-rate {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dir-border);
+}
+.dir-log-rate-line {
+  font-size: 13px;
+  color: var(--dir-muted);
+  margin-bottom: 8px;
+}
+.dir-log-stars {
+  display: flex;
+  gap: 6px;
+}
+.dir-log-star {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--dir-border);
+  border-radius: 10px;
+  background: var(--dir-paper, #fff);
+  color: var(--dir-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dir-log-star--on {
+  color: var(--dir-ochre);
+  border-color: color-mix(in srgb, var(--dir-ochre) 45%, transparent);
+}
+.dir-log-signin,
+.dir-log-remove {
+  display: inline-block;
+  margin-top: 10px;
+  border: 0;
+  padding: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dir-ochre);
+  text-decoration: none;
+  cursor: pointer;
+}
+.dir-quotes-empty {
+  margin: 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--dir-muted);
+}
+.dir-save-line {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dir-ochre);
+  text-decoration: none;
+}

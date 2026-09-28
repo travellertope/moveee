@@ -234,6 +234,12 @@ interface SubmitPostProps {
   onPosted?: (item: { id: string; slug?: string; text: string; authorName: string; tag: string | null; imageUrl: string | null; region: string | null; galleryImages?: string[]; templateType?: string }) => void;
   lockedTag?: string;
   initialTemplate?: TemplateType;
+  /** Quote template arriving pre-linked from a directory entry's own page
+   * ("Save a line from this"). `role` says which of the two optional links
+   * the entry fills: a person entry is the speaker, a work entry is the
+   * source. Seeded once on mount, then editable like any other pick — this
+   * is a shortcut past re-finding the entry, not a lock. */
+  initialQuoteLink?: { id: number; title: string; role: "author" | "source"; dirType?: string };
   /** Hub-scoped composer (docs/hubs-plan.md §3.1). When set, the template
    * picker is filtered down to hubAllowedTemplates (absent entirely, not
    * just dimmed) and every submission includes hub_id. */
@@ -256,7 +262,7 @@ interface SubmitPostProps {
   onSaveDraft?: (draft: { template: TemplateType; text: string; tag: string }) => void;
 }
 
-export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId, hubAllowedTemplates, onChangeType, initialDraft, onSaveDraft }: SubmitPostProps) {
+export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initialQuoteLink, hubId, hubAllowedTemplates, onChangeType, initialDraft, onSaveDraft }: SubmitPostProps) {
   const { data: session, status } = useSession();
   const visibleTemplates = hubAllowedTemplates
     ? TEMPLATES.filter(t => hubAllowedTemplates.includes(t.slug))
@@ -377,10 +383,21 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, hubId
   // author was a freeform culture_quote_author taxonomy term and its source a
   // plain string — a second, lower-quality person registry shadowing the
   // Directory, and no way to show a line under the work it came from.
-  const [quoteAuthorEntry, setQuoteAuthorEntry] = useState<any>(null);
-  const [quoteSourceEntry, setQuoteSourceEntry] = useState<any>(null);
+  const [quoteAuthorEntry, setQuoteAuthorEntry] = useState<any>(
+    initialQuoteLink?.role === "author" ? { id: initialQuoteLink.id, title: initialQuoteLink.title } : null
+  );
+  const [quoteSourceEntry, setQuoteSourceEntry] = useState<any>(
+    initialQuoteLink?.role === "source" ? { id: initialQuoteLink.id, title: initialQuoteLink.title } : null
+  );
   const [quoteSharingReason, setQuoteSharingReason] = useState("");
-  const [quoteType, setQuoteType] = useState("");
+  // A pre-linked person is a "Person" quote (which hides the source field);
+  // a pre-linked work seeds the matching source type so the picker renders in
+  // the mode that entry belongs to. Anything unmapped stays blank.
+  const [quoteType, setQuoteType] = useState(
+    initialQuoteLink?.role === "author"
+      ? "Person"
+      : ({ book: "Book", film: "Film", album: "Song" }[initialQuoteLink?.dirType ?? ""] ?? "")
+  );
 
   // Event specific
   const [eventOrganiser, setEventOrganiser] = useState<{ id: number; title: string; slug: string; type: string; thumbnail: string | null } | null>(null);

@@ -1,0 +1,94 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-09-27T00:00:00Z"
+  },
+  "title": "Moveee Home — Log-First",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Home — the log",
+      "is_interactive": true,
+      "radius": 28
+    },
+    "Book.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Book entry — saved lines",
+      "is_interactive": true,
+      "radius": 28
+    },
+    "Entry.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Place entry — social proof",
+      "is_interactive": true,
+      "radius": 28
+    },
+    "Person.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Person entry — the union",
+      "is_interactive": true,
+      "radius": 28
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Book.dc.html",
+    "Person.dc.html",
+    "Entry.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "x": 0,
+      "y": -300,
+      "text": "Moveee — log-first home",
+      "kind": "title1",
+      "maxW": 1800
+    },
+    "n1": {
+      "x": 0,
+      "y": 900,
+      "text": "Tap a medium chip to log something (two steps: pick the thing, pick the status). Tap an In Progress card to finish and rate it — rating is one tap, no review required. Every completed log lands on a discovery card rather than a dead end.",
+      "w": 390,
+      "fill": "orange"
+    },
+    "n2": {
+      "x": 470,
+      "y": 900,
+      "text": "The work side of the link. Saved lines live on the book itself, each attributed to who said it — tap the name to cross to her entry. Saving a line counts as a log. The bracketed lines are placeholders on purpose; no invented text under a living writer's name.",
+      "w": 390,
+      "fill": "purple"
+    },
+    "n3": {
+      "x": 1410,
+      "y": 900,
+      "text": "The same template for a place, where saved lines don't apply at all. Who you follow logged this, what they logged next, and the backlog feeding Stoop. Reached from the Tatale card in the feed.",
+      "w": 390,
+      "fill": "teal"
+    },
+    "n4": {
+      "x": 940,
+      "y": 900,
+      "fill": "green",
+      "w": 390,
+      "text": "The other side, and the reason the link is two fields not one. A person has no shelf — what accrues is what people saved from them, unioned across every source: two books, a talk, and one with no source at all. Open \"Save a line\" to see the composer: she's locked in as the speaker, and the source is an optional picker that only searches the directory for the media it actually holds (book, film, album). Pick Talk and it falls back to plain text, because there's no entry type for one."
+    }
+  },
+  "designSystems": []
+}

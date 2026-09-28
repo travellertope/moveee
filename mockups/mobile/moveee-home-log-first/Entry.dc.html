@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tatale — Moveee entry</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Fraunces:opsz,wght@9..144,400..800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #FFFFFF; font-family: 'DM Sans', system-ui, sans-serif; }
+    a { color: #7A241C; }
+    a:hover { color: #5C1B15; }
+    button { font-family: inherit; }
+    ::-webkit-scrollbar { width: 0; height: 0; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #FFFFFF; color: #14110D; display: flex; flex-direction: column">
+
+  <header style="flex-shrink: 0; height: 56px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border-bottom: 1px solid #EFEAE1">
+    <a href="Main.dc.html" aria-label="Back to your log" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 9999px; color: #14110D; text-decoration: none">
+      <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 5.5 8 10 12.5"/></svg>
+    </a>
+    <div style="flex-grow: 1; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #6B6153">Culture directory</div>
+    <button type="button" aria-label="Share" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; background: none; border-radius: 9999px; cursor: pointer; color: #14110D">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10.5V2.4M5.2 5.2 8 2.4l2.8 2.8"/><path d="M3.2 9.4v3.4a.8.8 0 0 0 .8.8h8a.8.8 0 0 0 .8-.8V9.4"/></svg>
+    </button>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; overflow-x: hidden">
+
+    <section style="padding: 20px 16px 4px; display: flex; flex-direction: column; gap: 10px">
+      <span style="align-self: flex-start; padding: 3px 9px; border-radius: 9999px; background: #E8F0EA; color: #2F4B3C; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Place</span>
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 30px; font-weight: 700; line-height: 1.12; letter-spacing: -0.02em">Tatale</h1>
+      <div style="font-size: 14px; color: #6B6153">Peckham, London &middot; West African &middot; restaurant</div>
+      <div style="display: flex; align-items: center; gap: 9px; padding-top: 2px">
+        <span style="font-size: 17px; letter-spacing: 0.06em; color: #8A6220">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+        <span style="font-size: 14px; font-weight: 700">4.3</span>
+        <span style="font-size: 13px; color: #6B6153">from 58 logs</span>
+      </div>
+    </section>
+
+    <section style="padding: 16px 16px 0">
+      <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153; padding-bottom: 9px">Add to your log</div>
+      <div style="display: flex; gap: 8px">
+        <button type="button" onClick="{{ pickWant }}" style="{{ wantStyle }}">Want to go</button>
+        <button type="button" onClick="{{ pickBeen }}" style="{{ beenStyle }}">Been</button>
+      </div>
+      <sc-if value="{{ showRate }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 12px; padding: 13px; border: 1px solid #E4D9C6; border-radius: 12px; background: #FBF6EC; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 13.5px; color: #3A342B">{{ rateLine }}</div>
+          <div style="display: flex; gap: 4px; justify-content: space-between">
+            <sc-for list="{{ stars }}" as="st" hint-placeholder-count="5">
+              <button type="button" onClick="{{ st.onPick }}" aria-label="{{ st.label }}" style="{{ st.style }}">{{ st.glyph }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <section style="padding: 22px 16px 0">
+      <div style="border: 1px solid #EFEAE1; border-radius: 14px; background: #FBF9F6; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <div style="display: flex">
+            <span style="width: 30px; height: 30px; border-radius: 9999px; border: 2px solid #FBF9F6; background: #5A3E8F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">A</span>
+            <span style="width: 30px; height: 30px; margin-left: -9px; border-radius: 9999px; border: 2px solid #FBF9F6; background: #234066; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">K</span>
+            <span style="width: 30px; height: 30px; margin-left: -9px; border-radius: 9999px; border: 2px solid #FBF9F6; background: #0B5F62; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">N</span>
+            <span style="width: 30px; height: 30px; margin-left: -9px; border-radius: 9999px; border: 2px solid #FBF9F6; background: #7A4A12; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">I</span>
+          </div>
+          <div style="flex-grow: 1; font-size: 14px; font-weight: 700; line-height: 1.3">4 people you follow have been</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; gap: 8px">
+            <span style="font-size: 13.5px; font-weight: 700">Ify A.</span>
+            <span style="font-size: 13px; letter-spacing: 0.05em; color: #8A6220">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+            <span style="flex-grow: 1; font-size: 13px; color: #6B6153">2 weeks ago</span>
+          </div>
+          <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3A342B">Went for the tasting menu, stayed three hours. Go hungry.</p>
+        </div>
+        <a href="Main.dc.html" style="font-size: 13px; font-weight: 700; text-decoration: none">Read all 58 logs &rarr;</a>
+      </div>
+    </section>
+
+    <section style="padding: 22px 0 0">
+      <div style="padding: 0 16px 11px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6B6153">People who logged Tatale also logged</div>
+      <div style="display: flex; gap: 10px; padding: 0 16px 4px; overflow-x: auto">
+        <sc-for list="{{ alsoLogged }}" as="a" hint-placeholder-count="3">
+          <a href="Main.dc.html" style="{{ a.cardStyle }}">
+            <span style="{{ a.chipStyle }}">{{ a.mediumLabel }}</span>
+            <span style="font-family: Fraunces, Georgia, serif; font-size: 16px; font-weight: 600; line-height: 1.25; color: #14110D">{{ a.title }}</span>
+            <span style="font-size: 12.5px; color: #6B6153; line-height: 1.35">{{ a.sub }}</span>
+            <span style="margin-top: 2px; font-size: 12px; color: #6B6153">{{ a.overlap }}</span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="padding: 22px 16px 0">
+      <div style="border: 1px solid #CFE0D4; border-radius: 14px; background: #E8F0EA; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #2F4B3C">From your backlog</div>
+        <div style="font-family: Fraunces, Georgia, serif; font-size: 18px; font-weight: 700; line-height: 1.25">6 people within 3 miles want to go too</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3A342B">Enough for a table. Starting a Stoop here puts it in the diary instead of the backlog.</p>
+        <a href="Main.dc.html" style="align-self: flex-start; min-height: 44px; display: flex; align-items: center; padding: 0 18px; border-radius: 9999px; background: #2F4B3C; color: #FFFFFF; font-size: 14.5px; font-weight: 700; text-decoration: none">Start a Stoop here</a>
+      </div>
+    </section>
+
+    <section style="padding: 22px 16px 28px">
+      <div style="border-top: 1px solid #EFEAE1; padding-top: 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-family: Fraunces, Georgia, serif; font-size: 17px; font-weight: 700">Got more than a rating?</div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6B6153">A full review sits on your profile and in the feed. Ratings alone never ask for one.</p>
+        <a href="Main.dc.html" style="align-self: flex-start; min-height: 46px; display: flex; align-items: center; padding: 0 18px; border: 1px solid #14110D; border-radius: 9999px; color: #14110D; font-size: 14.5px; font-weight: 700; text-decoration: none">Write a review</a>
+      </div>
+    </section>
+  </div>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 20px; padding: 13px 15px; border-radius: 12px; background: #14110D; color: #FFFFFF; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 9px; box-shadow: 0 8px 24px rgba(20,17,13,0.22)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#E8C77A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 8.4 3 3 6-6.8"/></svg>
+      {{ toast }}
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#7A241C","options":["#7A241C","#2F4B3C","#234066","#5A3E8F"],"section":"Theme"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { status: null, rating: 0 };
+  }
+
+  starsFor(n) {
+    var out = "";
+    for (var i = 1; i <= 5; i++) { out += (i <= n ? "★" : "☆"); }
+    return out;
+  }
+
+  pick(which) {
+    this.setState({ status: which, rating: 0 });
+  }
+
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent || "#7A241C";
+    var s = this.state;
+
+    function btn(on, fill) {
+      return "flex-grow: 1; min-height: 50px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; border: 1px solid " +
+        (on ? fill : "#DDD6CA") + "; background: " + (on ? fill : "#FFFFFF") + "; color: " + (on ? "#FFFFFF" : "#14110D");
+    }
+
+    var stars = [1, 2, 3, 4, 5].map(function (n) {
+      var on = n <= s.rating;
+      return {
+        glyph: on ? "★" : "☆",
+        label: n + " star" + (n === 1 ? "" : "s"),
+        style: "width: 58px; height: 52px; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; font-size: 26px; line-height: 1; border: 1px solid " +
+          (on ? "#E4D9C6" : "#EFEAE1") + "; background: #FFFFFF; color: " + (on ? "#8A6220" : "#C9C0B2"),
+        onPick: function () { self.setState({ rating: n }); }
+      };
+    });
+
+    var also = [
+      { title: "Akoko", sub: "Fitzrovia, London", medium: "place", overlap: "19 people logged both" },
+      { title: "Half of a Yellow Sun", sub: "Chimamanda Ngozi Adichie", medium: "book", overlap: "14 people logged both" },
+      { title: "Timeless", sub: "Davido", medium: "music", overlap: "11 people logged both" }
+    ];
+    var M = {
+      place: { label: "Place", fg: "#2F4B3C", bg: "#E8F0EA" },
+      book:  { label: "Book",  fg: "#5A3E8F", bg: "#F0EBF9" },
+      music: { label: "Music", fg: "#0B5F62", bg: "#E4F2F1" }
+    };
+
+    var alsoLogged = also.map(function (a) {
+      var m = M[a.medium];
+      return {
+        title: a.title,
+        sub: a.sub,
+        overlap: a.overlap,
+        mediumLabel: m.label,
+        chipStyle: "align-self: flex-start; padding: 3px 9px; border-radius: 9999px; background: " + m.bg + "; color: " + m.fg +
+          "; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap",
+        cardStyle: "flex-shrink: 0; width: 168px; padding: 12px; border: 1px solid #EFEAE1; border-radius: 12px; background: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 2px rgba(20,17,13,0.04)"
+      };
+    });
+
+    var toast = "";
+    if (s.status === "want") { toast = "Added to want to go"; }
+    if (s.status === "been" && s.rating > 0) { toast = "Been · " + self.starsFor(s.rating); }
+    if (s.status === "been" && s.rating === 0) { toast = "Marked as been"; }
+
+    return {
+      accent: accent,
+      wantStyle: btn(s.status === "want", accent),
+      beenStyle: btn(s.status === "been", "#14110D"),
+      pickWant: function () { self.pick("want"); },
+      pickBeen: function () { self.pick("been"); },
+      showRate: s.status === "been",
+      rateLine: s.rating > 0 ? "Saved. Tap again to change it." : "How was it? One tap. No review needed.",
+      stars: stars,
+      alsoLogged: alsoLogged,
+      hasToast: !!toast,
+      toast: toast
+    };
+  }
+}
+</script>
+</body>
+</html>

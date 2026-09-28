@@ -39,6 +39,18 @@ export default function PostNewClient() {
   const wantsDraft = searchParams.get("draft") === "1";
   const validTemplate = templateParam && TEMPLATES.some(t => t.slug === templateParam) ? templateParam : null;
 
+  // "Save a line from this" on a directory entry lands here with the entry
+  // already chosen. Only honoured for the quote template — the params are
+  // meaningless anywhere else, and a stale link shouldn't silently seed a
+  // directory link into an unrelated post.
+  const linkId = Number(searchParams.get("link_id")) || 0;
+  const linkTitle = searchParams.get("link_title") ?? "";
+  const linkRole = searchParams.get("link_role");
+  const initialQuoteLink =
+    validTemplate === "quote" && linkId > 0 && linkTitle && (linkRole === "author" || linkRole === "source")
+      ? { id: linkId, title: linkTitle, role: linkRole as "author" | "source", dirType: searchParams.get("link_type") ?? undefined }
+      : undefined;
+
   const [template, setTemplate] = useState<TemplateType | null>(validTemplate);
   const [draftFields, setDraftFields] = useState<{ text: string; tag: string } | null>(null);
   const [modalOpen, setModalOpen] = useState(!validTemplate && !wantsDraft);
@@ -95,6 +107,7 @@ export default function PostNewClient() {
         <SubmitPost
           key={template}
           initialTemplate={template}
+          initialQuoteLink={template === "quote" ? initialQuoteLink : undefined}
           initialDraft={draftFields ?? undefined}
           onChangeType={() => setModalOpen(true)}
           onSaveDraft={handleSaveDraft}
