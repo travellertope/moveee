@@ -23,6 +23,7 @@ import { api, CULTURE_API } from "../../api/client";
 import { openInApp } from "../../utils/openInApp";
 import { decodeHtml } from "../../utils/decodeHtml";
 import BookMoodPace from "../../components/community/BookMoodPace";
+import EntryLogControl from "../../components/community/EntryLogControl";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -145,6 +146,14 @@ const SHOW_SELECTED_WORKS = new Set(["person", "place", "film", "artwork", "fash
 const SHOW_EVENTS = new Set(["person", "place"]);
 // Types that show star rating on community cards
 const SHOW_STAR_RATING = new Set(["food", "book"]);
+/** entryType -> the culture_dir_type the quote composer's source picker uses. */
+const LINE_SOURCE_TYPES: Record<string, string> = {
+  book: "book",
+  film: "film",
+  album: "album",
+  "tv-series": "film",
+};
+
 // Types that can have a blockquote
 const SHOW_BLOCKQUOTE = new Set(["book", "concept"]);
 
@@ -293,6 +302,8 @@ function createStyles(c: ColorPalette) {
     quoteCardMeta:   { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 },
     quoteCardSource: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink },
     quoteCardSaved:  { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    quotesEmpty:     { fontFamily: fonts.sans, fontSize: 14, color: c.mute, marginBottom: 4 },
+    saveLine:        { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, marginTop: 12 },
     reviewsStarsRow: { paddingHorizontal: 16, marginBottom: 12 },
     reviewsStarsText: { fontSize: 20, color: c.ochre, lineHeight: 24 },
 
@@ -506,6 +517,11 @@ export default function DirectoryDetailScreen() {
   const showEvents = SHOW_EVENTS.has(entry.entryType) && events.length > 0;
   const showBlockquote = SHOW_BLOCKQUOTE.has(entry.entryType) && !!entry.entryQuote;
   const showStarRating = SHOW_STAR_RATING.has(entry.entryType);
+  // Which culture_dir_type a line saved FROM this entry would point at, i.e.
+  // what the composer's own source picker searches. Mirrors QUOTE_SOURCE_TYPES
+  // in SubmitPost.tsx / NewPostScreen.tsx; anything absent has no source
+  // picker at all (a person IS the speaker, a movement is neither).
+  const quoteLinkType = LINE_SOURCE_TYPES[entry.entryType] ?? "";
 
   return (
     <View style={[styles.container, { paddingTop: 0 }]}>
@@ -611,6 +627,12 @@ export default function DirectoryDetailScreen() {
           </View>
         )}
 
+        {/* ── Add to your log ── shelve and rate from the entry itself rather
+            than having to find it again from the Culture Log's own add modal.
+            Renders nothing for an entry with no shelf (person, movement,
+            concept — anything TYPE_MEDIA_MAP maps to 'other'). ── */}
+        <EntryLogControl directoryId={entry.id} containerStyle={styles.aboutCard} />
+
         {/* ── About card ── */}
         {entry.aboutFields.length > 0 && (
           <View style={styles.aboutCard}>
@@ -698,18 +720,28 @@ export default function DirectoryDetailScreen() {
         )}
 
         {/* ── Lines saved from this entry ── */}
-        {(entry.quotes?.length ?? 0) > 0 && (
+        {/* Renders with zero lines too, as long as this entry is something a
+            line can actually be attached to — the "Save a line" CTA is the
+            point, and an entry with no lines yet is exactly who needs it. */}
+        {((entry.quotes?.length ?? 0) > 0 || entry.entryType === "person" || !!quoteLinkType) && (
           <View style={{ marginTop: 20 }}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
                 {entry.entryType === "person" ? "Lines people saved" : "Lines saved from this"}
               </Text>
               <Text style={styles.reviewsRatingCount}>
-                {entry.quotes!.length} {entry.quotes!.length === 1 ? "line" : "lines"}
+                {entry.quotes?.length ?? 0} {(entry.quotes?.length ?? 0) === 1 ? "line" : "lines"}
               </Text>
             </View>
+            {(entry.quotes?.length ?? 0) === 0 && (
+              <Text style={styles.quotesEmpty}>
+                {entry.entryType === "person"
+                  ? "No lines saved from them yet."
+                  : "No lines saved from this yet."}
+              </Text>
+            )}
             <View style={{ gap: 10 }}>
-              {entry.quotes!.map((q) => (
+              {(entry.quotes ?? []).map((q) => (
                 <View key={q.id} style={styles.quoteCard}>
                   <Text style={styles.quoteCardText}>{q.text}</Text>
                   <View style={styles.quoteCardMeta}>
@@ -725,6 +757,26 @@ export default function DirectoryDetailScreen() {
                 </View>
               ))}
             </View>
+            {/* Reuses the real composer rather than a second quote form here —
+                the entry arrives pre-selected, so all of SubmitPost's own
+                validation and both link fields still apply. */}
+            <TouchableOpacity
+              onPress={() =>
+                nav.navigate("NewPost", {
+                  template: "quote",
+                  quoteLinkId: entry.id,
+                  quoteLinkTitle: entry.title,
+                  quoteLinkRole: entry.entryType === "person" ? "author" : "source",
+                  quoteLinkType: quoteLinkType || undefined,
+                })
+              }
+            >
+              <Text style={styles.saveLine}>
+                {entry.entryType === "person"
+                  ? "Save a line from them \u2192"
+                  : "Save a line from this \u2192"}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 

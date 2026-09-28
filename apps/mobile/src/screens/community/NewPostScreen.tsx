@@ -354,8 +354,18 @@ export default function NewPostScreen() {
   const [quoteSource, setQuoteSource] = useState("");
   // Directory-backed quote links (September 2026) — see the web composer's
   // matching state for why a freeform author term was the wrong model.
-  const [quoteAuthorEntry, setQuoteAuthorEntry] = useState<DirectoryEntry | null>(null);
-  const [quoteSourceEntry, setQuoteSourceEntry] = useState<DirectoryEntry | null>(null);
+  // Seeded once from "Save a line from this" on a directory entry, then
+  // editable like any other pick — a shortcut past re-finding the entry, not
+  // a lock. Mirrors initialQuoteLink in the web composer (SubmitPost.tsx).
+  const quoteLink = route.params?.quoteLinkRole && route.params?.quoteLinkId
+    ? { id: route.params.quoteLinkId, title: route.params.quoteLinkTitle ?? "", role: route.params.quoteLinkRole, dirType: route.params.quoteLinkType }
+    : null;
+  const [quoteAuthorEntry, setQuoteAuthorEntry] = useState<DirectoryEntry | null>(
+    quoteLink?.role === "author" ? ({ id: quoteLink.id, title: quoteLink.title } as DirectoryEntry) : null
+  );
+  const [quoteSourceEntry, setQuoteSourceEntry] = useState<DirectoryEntry | null>(
+    quoteLink?.role === "source" ? ({ id: quoteLink.id, title: quoteLink.title } as DirectoryEntry) : null
+  );
 
   // Hidden Gem extras
   const [hiddenGemPlaceName, setHiddenGemPlaceName] = useState("");
@@ -431,7 +441,13 @@ export default function NewPostScreen() {
 
   // Quote extras
   const [quoteSharingReason, setQuoteSharingReason] = useState("");
-  const [quoteType, setQuoteType] = useState("");
+  // A pre-linked person is a "Person" quote (which hides the source field);
+  // a pre-linked work seeds the matching source type. Anything unmapped stays blank.
+  const [quoteType, setQuoteType] = useState(
+    quoteLink?.role === "author"
+      ? "Person"
+      : ({ book: "Book", film: "Film", album: "Song" } as Record<string, string>)[quoteLink?.dirType ?? ""] ?? ""
+  );
 
   // Poll extras
   const [pollDescription, setPollDescription] = useState("");

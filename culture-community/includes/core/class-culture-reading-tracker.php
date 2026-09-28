@@ -411,6 +411,53 @@ class Culture_Reading_Tracker {
         return array( 'directoryId' => $directory_id, 'status' => $status, 'rating' => $rating );
     }
 
+    /**
+     * One entry's log state for one member — what the directory entry page
+     * needs to render its own shelf control without pulling the whole shelf
+     * down and filtering client-side.
+     *
+     * Always returns a medium, even for a logged-out visitor ($user_id 0) and
+     * even for an entry nobody has shelved, because the caller needs it to
+     * pick the right verbs ("Want to Read" vs "Want to Go") before there is
+     * any row to read them from.
+     */
+    public static function get_entry_state( int $user_id, int $directory_id ) : array {
+        $post = get_post( $directory_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return array(
+                'directoryId' => $directory_id,
+                'medium'      => 'other',
+                'status'      => null,
+                'rating'      => 0,
+                'startedAt'   => null,
+                'finishedAt'  => null,
+            );
+        }
+
+        $media  = self::media_for_directory_ids( array( $directory_id ) );
+        $medium = $media[ $directory_id ] ?? 'other';
+
+        $row = null;
+        if ( $user_id > 0 ) {
+            global $wpdb;
+            $table = self::table();
+            $row   = $wpdb->get_row( $wpdb->prepare(
+                "SELECT status, rating, started_at, finished_at
+                 FROM {$table} WHERE user_id = %d AND directory_id = %d",
+                $user_id, $directory_id
+            ), ARRAY_A );
+        }
+
+        return array(
+            'directoryId' => $directory_id,
+            'medium'      => $medium,
+            'status'      => $row ? (string) $row['status'] : null,
+            'rating'      => $row ? (int) $row['rating'] : 0,
+            'startedAt'   => $row ? $row['started_at'] : null,
+            'finishedAt'  => $row ? $row['finished_at'] : null,
+        );
+    }
+
     public static function remove_from_shelf( int $user_id, int $directory_id ) : bool {
         global $wpdb;
         return false !== $wpdb->delete(

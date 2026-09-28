@@ -10,6 +10,8 @@ import "../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
+import EntryLogControl from "./EntryLogControl";
+import { decodeHtml } from "@/lib/decode-html";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -62,6 +64,15 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const typeSlug = typeNode?.slug ?? "";
   const typeLabel = TYPE_LABELS[typeSlug] ?? typeNode?.name ?? "Entry";
   const img = entry.featuredImage?.node?.sourceUrl;
+
+  // "Save a line from this" — which of the quote's two optional directory
+  // links this entry fills. A person is the speaker; a work is the source.
+  // Offered on the types lines actually come from, plus any entry that
+  // already has one, so a restaurant doesn't grow a quote composer it has no
+  // use for.
+  const LINE_SOURCE_TYPES: Record<string, string> = { book: "book", film: "film", album: "album", "tv-series": "film" };
+  const quoteLinkRole = typeSlug === "person" ? "author" : "source";
+  const quoteLinkType = typeSlug === "person" ? "" : LINE_SOURCE_TYPES[typeSlug] ?? "";
   const interests: any[] = entry.cultureInterests?.nodes ?? [];
   const works: { title: string; imageUrl: string }[] = entry.selectedWorks ?? [];
 
@@ -243,6 +254,14 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             {date && <div className="dir-wiki-date">Added to directory {date}</div>}
           </div>
 
+          {/* Shelve and rate it from the entry itself, rather than having to
+              find it again from /member/reading's own add-a-thing modal.
+              Renders nothing for an entry with no shelf (person, movement,
+              concept — anything TYPE_MEDIA_MAP maps to 'other'). */}
+          {entry.databaseId && (
+            <EntryLogControl directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+          )}
+
           {/* Body content */}
           <div className="dir-wiki-divider" />
 
@@ -362,17 +381,22 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               because they came from this work or because this person said
               them. Sits alongside reviews rather than in its own tab: both
               are "what members recorded about this thing". */}
-          {directoryQuotes.length > 0 && (
+          {(directoryQuotes.length > 0 || typeSlug === "person" || !!quoteLinkType) && (
             <div className="dir-community-section" style={{ marginTop: "2rem" }}>
               <div className="dir-community-header">
                 <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
                   {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
                 </h2>
-                <span className="dir-community-rating-count">
-                  {directoryQuotes.length} {directoryQuotes.length === 1 ? "line" : "lines"}
-                </span>
+                {directoryQuotes.length > 0 && (
+                  <span className="dir-community-rating-count">
+                    {directoryQuotes.length} {directoryQuotes.length === 1 ? "line" : "lines"}
+                  </span>
+                )}
               </div>
               <div className="dir-quotes">
+                {directoryQuotes.length === 0 && (
+                  <p className="dir-quotes-empty">No lines saved yet.</p>
+                )}
                 {directoryQuotes.map((q) => (
                   <figure key={q.id} className="dir-quote-card">
                     <blockquote className="dir-quote-text">{q.text}</blockquote>
@@ -389,6 +413,19 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                   </figure>
                 ))}
               </div>
+
+              {/* Straight into the real composer with this entry already
+                  picked, rather than a second quote form living here. */}
+              {entry.databaseId && (
+                <a
+                  className="dir-save-line"
+                  href={`/post/new?template=quote&link_id=${entry.databaseId}&link_role=${quoteLinkRole}` +
+                    `&link_title=${encodeURIComponent(decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, ""))}` +
+                    (quoteLinkType ? `&link_type=${quoteLinkType}` : "")}
+                >
+                  {typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
+                </a>
+              )}
             </div>
           )}
 

@@ -1536,6 +1536,19 @@ class Culture_REST_API {
                 'medium'   => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
             ),
         ) );
+        // One entry's own log state, for a directory entry page's shelf
+        // control. user_id is optional here, unlike every other reading/*
+        // read: a logged-out visitor still needs the medium back so the page
+        // can label the buttons before there is anything to label from.
+        register_rest_route( 'culture/v1', '/reading/entry', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_entry_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
         register_rest_route( 'culture/v1', '/reading/shelf/counts', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_reading_shelf_counts' ),
@@ -2220,6 +2233,13 @@ class Culture_REST_API {
         $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
         $medium   = sanitize_key( (string) $request->get_param( 'medium' ) );
         return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page, $medium ) );
+    }
+
+    public static function handle_reading_entry_get( $request ) {
+        return rest_ensure_response( Culture_Reading_Tracker::get_entry_state(
+            (int) $request->get_param( 'user_id' ),
+            (int) $request->get_param( 'directory_id' )
+        ) );
     }
 
     public static function handle_reading_shelf_counts( $request ) {

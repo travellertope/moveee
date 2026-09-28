@@ -61,6 +61,15 @@ export default {
       // file hosted at https://themoveee.com/.well-known/
       // apple-app-site-association — see apps/site/app/.well-known/.
       associatedDomains: ["webcredentials:themoveee.com"],
+      // Sign in with Apple. The expo-apple-authentication plugin writes the
+      // com.apple.developer.applesignin entitlement into the native project,
+      // but EAS reads THIS config field when it syncs capabilities onto the
+      // App ID and mints a provisioning profile — so without it a profile can
+      // be issued that the entitlement then fails to match, which is exactly
+      // the "Provisioning Profile ... does not support the Sign In with Apple
+      // capability" archive failure. Keep both: the plugin for the native
+      // build, this field for the credentials side.
+      usesAppleSignIn: true,
     },
     android: {
       package: "com.moveee.connect",

@@ -10502,6 +10502,54 @@ had logged.
   rate from each platform, re-tap to clear, rate something that also has a review, and
   confirm the histogram and average agree.
 
+### The entry page became the place you log from (September 2026)
+
+Everything the log could do — shelve, rate, save a line against a thing — could only be
+reached from `/member/reading` or the composer's own template picker. The directory entry
+page, which is where you actually *are* when you finish a book or want to keep a line,
+offered none of it: CLAUDE.md had already flagged the missing shelf control as a Phase 1
+gap, and the `rating` column shipped with a route and no UI anywhere near the thing being
+rated. This closes all three on both platforms.
+
+- **`Culture_Reading_Tracker::get_entry_state( $user_id, $directory_id )`** is the new read
+  — the entry's medium plus this viewer's own status/rating/dates, or nulls. **It returns a
+  medium even for a logged-out visitor and even with no shelf row**, which is the whole
+  point: the UI needs to know whether to say "Want to Read" or "Want to Watch" *before*
+  there is a row to read verbs off. Mirrored as `GET /culture/v1/reading/entry` (API key)
+  and `GET /culture/v1/mobile/reading/entry` (JWT), same one-method-two-front-doors shape as
+  every other `reading/*` pair. **`user_id` is optional on the web route only** — unlike
+  every other reading read, which requires it.
+- **`EntryLogControl`** (`apps/connect/app/directory/[slug]/EntryLogControl.tsx` and
+  `apps/mobile/src/components/community/EntryLogControl.tsx`) renders status buttons with
+  the medium's own verbs, a one-tap star row once the status is `read`, and a remove link.
+  **It returns `null` when the medium is `other`** — a person, a movement, a concept has no
+  shelf, and `TYPE_MEDIA_MAP` resolves all of them there. The mobile copy takes a
+  `containerStyle` prop and applies it *itself* rather than being wrapped by the screen,
+  so a person's page doesn't render an empty card. Tapping the star you already gave clears
+  the rating (`rating === state.rating ? 0 : rating`) rather than re-setting it.
+- **"Save a line" deep-links the real composer instead of growing a second quote form.**
+  `/post/new?template=quote&link_id=&link_role=&link_title=&link_type=` (mobile: the same
+  four as `NewPost` route params) seeds `SubmitPost`'s new `initialQuoteLink` prop, which
+  pre-fills `quoteAuthorEntry` **or** `quoteSourceEntry` depending on `role` and picks the
+  matching quote type. `role` is `author` on a person and `source` on a work — the two
+  optional links from "Quotes link to the Directory" above, chosen by what you're standing
+  on. `link_type` mirrors `QUOTE_SOURCE_TYPES` (`book`/`film`/`album`, `tv-series`→`film`);
+  anything not in that map has no source picker, so it's omitted.
+- **The lines section now renders with zero lines** on a person or on any type that map
+  covers — an entry with nothing saved yet is exactly who needs the CTA. Everywhere else it
+  still only appears once there's something to show.
+- **Deliberately not built**: the log-first home from the mockup (capture bar, In Progress
+  rail, Year in Culture strip). That's a feed rebuild, not an entry-page control, and was
+  left for a separate decision.
+- **Verified**: `tsc --noEmit` exit 0 on `apps/connect`; `apps/mobile` at its documented
+  37-error baseline with none in touched files; `php -l` clean on all three PHP files; CSS
+  brace balance on `directory.css` (213/213); `check-brand-language.sh` showing only the
+  pre-existing Literary hits. **Not** tested against a live WordPress — needs the plugin
+  redeployed before `reading/entry` exists, then a real round trip on both platforms:
+  shelve and rate from an entry page, re-tap a star to clear, and save a line from both a
+  person and a work and confirm it lands on both pages.
+
+
 ---
 
 ## Interest taxonomy (canonical slugs)
@@ -10936,6 +10984,31 @@ device signed into a real Apple ID, before considering this fully closed — thi
 also requires the plugin redeployed (manual zip+upload, see "Plugin DB table
 auto-upgrade" — no new dbDelta table here, so no `CULTURE_VERSION` bump was needed,
 only the plugin header version bump to `2.2.4` for redeploy-confirmation purposes).
+
+
+**Archive failed on a stale provisioning profile (September 2026)** — a real EAS iOS
+production build got all the way to `xcodebuild archive` and failed with *"Provisioning
+Profile ... does not support the Associated Domains capability"* / *"... the Sign In with
+Apple capability"*. Not a code bug: the profile EAS reused was minted **before** either
+entitlement existed in this app (passkeys added `associatedDomains`, this feature added
+`com.apple.developer.applesignin`), and EAS syncs capabilities onto the App ID when it
+*creates* a profile, not when it reuses a cached one.
+
+Two halves, and both are needed:
+- **Config** — `ios.usesAppleSignIn: true` added to `app.config.ts`. The
+  `expo-apple-authentication` plugin writes the entitlement into the native project, but
+  **EAS reads this config field on the credentials side**, so without it a profile can be
+  issued that the entitlement then fails to match. `associatedDomains` was already
+  declared and needs no equivalent flag. Keep both the plugin and this field.
+- **Credentials, a human step** — the existing profile still has to be regenerated:
+  `eas credentials` → iOS → production → Build Credentials → delete the provisioning
+  profile, then rebuild. EAS mints a fresh one with the current capabilities. **A code
+  push alone cannot fix this build**, the same way a plugin code push alone never
+  redeploys the WordPress plugin.
+
+**If a future entitlement is ever added** (HealthKit, push, App Groups, anything), expect
+the identical failure on the first build and plan for the profile regeneration as part of
+shipping it — don't re-debug it from the Xcode log each time.
 
 ---
 
