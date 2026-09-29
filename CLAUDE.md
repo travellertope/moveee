@@ -9978,14 +9978,12 @@ still a separate, later decision — only its own *internal* link to Feed was re
 these exist: the bottom-nav rename/restructure itself; a "follow this person/topic" affordance
 for a Person directory entry (a different relationship from the member-to-member
 `Culture_Follows` system, which operates on WP user IDs, not directory post IDs — would need its
-own new backend); the Stoop proximity banner on a Place entry ("N people within 3 miles want to
-go too — starting a Stoop here puts it in the diary instead of the backlog") — this needs either
-real lat/long user geodata (not currently collected, only city/country strings) or a coarser
-city-string-match approximation, either way a deliberate follow-up decision, not built here;
-star ratings/comments on the "From people you follow" activity rail (see `get_following_activity`'s
-own note above); and any web (`apps/connect`/`apps/site`) equivalent of `LogHomeScreen`/
-`LogEntryPanel`/`SavedLines` — this pass is mobile-only on the UI side, though the REST layer is
-already mirrored for whenever web parity is wanted.
+own new backend); star ratings/comments on the "From people you follow" activity rail (see
+`get_following_activity`'s own note above); and any web (`apps/connect`/`apps/site`) equivalent of
+`LogHomeScreen`/`LogEntryPanel`/`SavedLines` — this pass is mobile-only on the UI side, though the
+REST layer is already mirrored for whenever web parity is wanted. **The Stoop proximity banner
+itself was built in a later pass — see "Stoop proximity banner + member geolocation" below,
+mobile-only, same reasoning.**
 
 Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
 credentials gap as every other pass in this file; this pass needs the plugin redeployed (manual
@@ -9997,6 +9995,70 @@ available to actually render `LogHomeScreen`). Re-check the full round trip — 
 film/place, saving a line on a person entry, the social-proof/also-logged counts, and the
 Log home screen's own quick-log/in-progress/goal/activity sections — on a real device before
 considering this fully closed.
+
+### Stoop proximity banner + member geolocation (mobile-only, September 2026)
+
+Closes the deferral flagged in the "Log-First" pass above — "N people within 3 miles want to go
+too" on a Place directory entry, with a "Start a Stoop here" CTA. Needed real location data first,
+which the app never collected before this pass (only free-text city/country strings). Two explicit
+decisions were locked in before building, since location is privacy-sensitive: **capture is a
+one-time device GPS snapshot** (never background/continuous tracking — the member re-triggers it
+manually if they move and want the feature to reflect it), and **stored coordinates are fuzzed to
+~2 decimal places (~1.1km at the equator)** before being persisted, so no one's exact home/work
+address is ever stored, regardless of how precise the original GPS fix was.
+
+**Backend — new `Culture_Geolocation` class**
+(`culture-community/includes/core/class-culture-geolocation.php`) — plain usermeta storage, no new
+table: `_culture_geo_lat`/`_culture_geo_lng`/`_culture_geo_updated_at`. `set_location()` is the
+**only** write path and always rounds before storing — there is no way to persist an unrounded
+coordinate through this class. Also owns the haversine `distance_miles()` helper. Required
+alongside `class-culture-reading-tracker.php` in `culture-community.php`.
+
+**`Culture_Reading_Tracker::get_place_proximity( $viewer_user_id, $directory_id, $radius_miles =
+3.0 )`** — reuses the exact same `status = 'want_to_read'` shelf rows the "Log-First" social-proof
+card already reads (see that pass above), just filtered by real distance instead of by follow
+graph. One raw-SQL query joins the shelf table to each interested member's saved lat/lng via two
+`LEFT JOIN`s filtered by `meta_key` in the join condition (not a `meta_query`), per this file's
+"Raw SQL REST endpoints" convention; distance itself is computed in PHP per row since the result
+set is always small (people interested in one specific place). Returns `hasLocation: false` when
+the *viewer* hasn't saved a location yet (frontend shows an opt-in prompt instead of the banner);
+a member who wants to go but never saved a location is simply excluded from the count — there's no
+way to place them. **Never returns another user's raw coordinates** — only a count and up to 3
+example names/avatars, closest-first.
+
+**REST — mirrored on both surfaces, same shape as every other Reading Tracker endpoint**:
+`GET /mobile/reading/place-proximity` (JWT) / `GET /reading/place-proximity` (API key + explicit
+`user_id`) for the read; `POST`/`GET`/`DELETE /mobile/me/location` (JWT) / `.../me/location`
+(API key + explicit `user_id`) for capturing, checking, and clearing a member's own location.
+**The web write routes are unreachable in practice** — there's no web capture UI (no browser GPS
+button was built), but the routes were mirrored anyway per this codebase's standing convention,
+since a web capture flow could be added later for free.
+
+**Mobile**: `expo-location` (`~18.0.4`, matching the SDK 52 pin — see "Expo SDK version" below)
+added with **foreground-only** permission config in `app.config.ts` (`locationAlwaysAndWhenInUsePermission:
+false`, `isAndroidBackgroundLocationEnabled: false`) — there is no background-location entitlement
+anywhere in this feature, consistent with the one-time-snapshot decision. `src/features/location/
+useLocation.ts` wraps the request-permission → get-fix → POST round trip
+(`requestAndSaveLocation()`) plus `clearLocation()`/`fetchLocationState()`.
+`src/components/community/StoopProximityBanner.tsx` renders one of three states on a Place entry:
+an opt-in prompt (no location saved yet), nothing at all (location saved, but a `count` of 0 —
+this is a signal-driven nudge, not always-on copy, per this codebase's "hide the whole section
+when empty" convention), or the real banner (avatars + count + "Start a Stoop here →", which
+navigates to the existing `HostOnboardingScreen` with no prefill — that screen takes no params
+today, so location/city prefill from the directory entry is a real follow-up, not done here) plus
+a small "Turn off" link to clear the saved location. Wired into `DirectoryDetailScreen.tsx`
+directly below `LogEntryPanel`, gated on `entry.entryType === "place"`.
+
+**Not deployment-tested against a live WordPress instance or a real device** — same
+`NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this feature needs
+the plugin redeployed (manual zip+upload) before the new endpoints exist in production, and a real
+EAS build (native module) before `expo-location` can be exercised at all — a JS-only reload won't
+pick up the new permission config. Verified via `php -l` on every touched PHP file and a
+brace/paren/bracket balance check on every new/touched TS/TSX file (no `node_modules` installed in
+this sandbox, so `tsc --noEmit` couldn't run; the lockfile was regenerated out-of-tree per the
+documented process and confirmed to resolve `expo-location` correctly). Re-check the full round
+trip — granting/denying the permission prompt, the banner's three states, and the "Start a Stoop
+here" handoff — on a real device before considering this fully closed.
 
 ---
 
@@ -10953,6 +11015,9 @@ The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of trut
 - `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
 - `react-native-iap` must be pinned to the **exact** version `12.16.3` (not a caret range) —
   see "react-native-iap 12.16.4 breaks the iOS native build" below.
+- `expo-location` must be pinned to `~18.0.4` (the SDK 52-aligned version) — used only for a
+  one-time GPS snapshot (see "Stoop proximity banner + member geolocation" above), never
+  background tracking.
 - **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
   EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
   `package.json` but not in the lockfile, it won't be installed.
