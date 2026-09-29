@@ -10090,6 +10090,153 @@ Verified via `php -l` and a brace/paren/bracket balance check on every touched f
 `node_modules` installed in this sandbox). Re-check against a real follow who's actually written a
 Book/Film/Place review before considering this fully closed.
 
+### Directory-entry follows — follow a Person or Place (backend + mobile, September 2026)
+
+A member can now follow a `culture_directory` entry (Person or Place, gated client-side per
+entry type — see `DirectoryDetailScreen.tsx`) and get notified whenever a new community post
+links to it, closing a gap flagged in the "Log-First" pass above. **Deliberately a separate
+relationship from `Culture_Follows`** (member-to-member, real WP user IDs on both sides) — most
+Person directory entries are catalogued public figures with no Moveee account at all, so there's
+no "account" on the followed side to reuse that table for.
+
+- **Backend**: `Culture_Directory_Follows`
+  (`culture-community/includes/core/class-culture-directory-follows.php`) — a small dedicated
+  table, `wp_culture_directory_follows` (`id, user_id, directory_id, created_at`, `UNIQUE KEY
+  (user_id, directory_id)`), wired into `Culture_Activator::create_tables()`;
+  `CULTURE_VERSION` bump already covers this table (no separate bump needed beyond what shipped
+  with the rest of this pass). `follow()`/`unfollow()`/`is_following()`/`followers_count()`/
+  `get_follower_ids()`/`get_status()` are the full public surface — `get_status()` returns
+  `{isFollowing, followersCount}`, the shape every REST handler and the web/mobile UI both
+  consume directly.
+  - **Notification trigger is hook-based, not called from either submit handler** —
+    `on_directory_link_added()` is registered on WordPress core's own `added_post_meta` action
+    (fires once, the first time a given `(post, meta_key)` pair is written — not `update`),
+    watching for `_linked_directory_id` being set on a newly-published `culture_post`. This
+    covers every composer template that can link to a directory entry (Hidden Gem/Place,
+    Book/Film/Music Review, Food Review, Cultural Take, etc.) **and** both write paths — the
+    mobile PHP submit handler and the web submit route, which writes postmeta via native WP
+    REST and bypasses the PHP handler entirely — with one implementation instead of two. Fires
+    only when the link is first created on an already-published post; a post that starts
+    pending/draft and is published later does **not** retroactively notify (known v1
+    limitation, not wired to a status-transition hook — flagged in the class's own docblock).
+- **REST routes**, same mirrored shape as every other feature in this plugin: `POST`/`POST`/`GET
+  /mobile/directory/{id}/follow`, `/unfollow`, `/follow-status` (JWT,
+  `class-culture-mobile-api.php`) and `/directory/{id}/follow`, `/unfollow`, `/follow-status`
+  (API key + explicit `user_id`, `class-culture-rest-api.php`) — both just delegate to
+  `Culture_Directory_Follows::follow()`/`unfollow()`/`get_status()`.
+- **Mobile UI**: `DirectoryFollowButton`-equivalent wired into `DirectoryDetailScreen.tsx`
+  (built in an earlier pass this session, alongside the Stoop proximity banner and the
+  following-activity enrichment below) — gated to Person/Place entry types only, matching the
+  backend's own real-world reasoning for why a Book/Film/Album entry doesn't get a follow
+  affordance (there's no "new content about this book" notion the way there is for a person or
+  a place).
+- **Web UI (this pass, closing the mobile-only gap)**: `apps/connect/app/directory/[slug]/
+  DirectoryFollowButton.tsx` — same `SUPPORTED_TYPES = new Set(["person", "place"])` gate as
+  mobile, calls the new `/api/directory/[id]/follow`, `/unfollow`, `/follow-status` proxy
+  routes (session-resolved `user_id`, same `getServerSession()` → 401-if-absent pattern every
+  other proxy route in this feature uses), wired into `apps/connect/app/directory/[slug]/
+  page.tsx` alongside the rest of the Log-First panel components (see below).
+- Not deployment-tested against a live WordPress instance — same recurring gap as every other
+  pass in this file; needs the plugin redeployed (manual zip+upload, see "Plugin DB table
+  auto-upgrade" above) before the new table/routes exist in production. Verified via `php -l`
+  on the PHP class and a brace/paren/bracket balance check on every touched/new TS/TSX file (no
+  `node_modules` installed in this sandbox). Re-check the full follow → post-with-linked-entry
+  → notification round trip, on both platforms, in a real environment before considering this
+  fully closed.
+
+### Log-First web UI — brings `apps/connect` to parity with the mobile Log Home screen (September 2026)
+
+Closes the "everything above was built mobile-only" gap the "Log-First" section flagged —
+every backend REST route for shelving/saved lines/social proof/also-logged/place-proximity/
+following-activity/directory-follows was already mirrored for web (same "one class, two auth
+surfaces" pattern used everywhere else in this codebase); this pass is purely the `apps/connect`
+pages/components that call them. No backend changes in this pass beyond the directory-follows
+class documented directly above (built in an earlier pass this session).
+
+- **10 new proxy routes** (`apps/connect/app/api/`), all following the established proxy shape
+  (session check → 401 if absent, `user_id` resolved server-side and never trusted from the
+  client, `Authorization: Bearer ${CULTURE_API_SECRET}` to WordPress, `.catch(() => null)` → 502
+  on network failure — see `app/api/reading/shelf/route.ts` for the canonical shape every one of
+  these mirrors): `reading/saved-lines` (GET/POST) + `reading/saved-lines/[id]` (DELETE),
+  `reading/social-proof` (GET), `reading/also-logged` (GET, public — a property of the entry
+  itself, matches the PHP route's own public permission callback), `reading/place-proximity`
+  (GET), `reading/following-activity` (GET), `me/location` (POST/GET/DELETE),
+  `directory/[id]/follow` / `/unfollow` (POST) / `/follow-status` (GET).
+- **Directory entry detail page** (`apps/connect/app/directory/[slug]/page.tsx`) now renders
+  four new panels, mirroring `DirectoryDetailScreen.tsx`'s mobile layout section-for-section:
+  - `LogEntryPanel.tsx` — "Add to your log" shelf-status buttons (rendered only for entry types
+    with a shelf label — book/film/place, via the same `SHELF_LABELS`/`shelfLabelsFor()` map
+    documented in the Log-First section above) plus the social-proof line underneath
+    ("N of your follows have read/watched/been here").
+  - `SavedLines.tsx` — the "Lines saved from this" list plus an inline "+ Save a line" composer,
+    rendered for **every** entry type (no type gate — a Person entry gets this section the same
+    as a Book, matching the backend's own type-agnostic `save_line()`).
+  - `DirectoryFollowButton.tsx` — see the directory-follows section directly above.
+  - `StoopProximityBanner.tsx` — the web equivalent of the mobile "N people within 3 miles want
+    to go too" banner, gated to `typeSlug === "place"` only. Uses the browser's own
+    `navigator.geolocation.getCurrentPosition()` for a one-time location capture (never
+    continuous/background tracking, matching the mobile capture's own privacy posture — see
+    "Stoop proximity banner + member geolocation" above), POSTing the fix to `/api/me/location`
+    (which itself rounds to ~2 decimal places server-side via `Culture_Geolocation::
+    set_location()` before ever persisting it — the web route never sends an unrounded
+    coordinate anywhere it could be logged unrounded, but the actual privacy guarantee lives in
+    the PHP class, not the client). Three render states, same as mobile: an opt-in prompt (no
+    location saved yet), nothing at all (location saved, `count` is 0 — hide-when-empty, same
+    convention as every other signal-driven nudge in this codebase), or the real banner with a
+    "Start a Stoop here →" link to `/cluster/create`.
+- **`FollowingActivity.tsx`** (`apps/connect/app/member/reading/FollowingActivity.tsx`, new) —
+  the "From People You Follow" activity feed on `/member/reading`, the last missing piece of
+  web parity: mirrors `LogHomeScreen.tsx`'s mobile activity card exactly, including the
+  star-rating/review-excerpt enrichment `get_following_activity()` already computes server-side
+  (see "'From people you follow' activity feed — real star ratings/comments" above for the full
+  backend mechanics — `REVIEW_TEMPLATE_BY_TYPE` maps book/film/place shelf entries to their
+  matching review template + rating meta key, one batched raw-SQL lookup, no N+1). Renders a
+  plain activity row per followed member's recently-finished entry — avatar (or an initial-letter
+  placeholder), "{name} finished {title}", a `★★★★★ N of 5` line when a matching review exists,
+  the review excerpt (already truncated server-side to 140 chars), and a relative timestamp
+  (`timeAgo()`, a small local helper parsing the MySQL-datetime-shaped ISO string PHP returns).
+  Renders nothing (`return null`) when the feed is empty — same "hide the whole section rather
+  than show an empty state with no signal" convention used throughout this codebase. Wired into
+  `ReadingTrackerClient.tsx`, rendered directly below the shelf grid and above the "Add a Book"
+  modal.
+- **`packages/shared/lib/reading-tracker.ts`** extended with the shared TS types every one of
+  these components consumes (`ShelfStatus`, `SHELF_LABELS`/`shelfLabelsFor()`, `SavedLine`,
+  `SocialProofExample`, `SocialProof`, `ShelfEntry`, `AlsoLoggedEntry`, `FollowingActivityItem`
+  — with `rating: number | null` / `reviewExcerpt: string | null`, `PlaceProximity`,
+  `DirectoryFollowStatus`). **No shared source of truth with the mobile TS copy**
+  (`apps/mobile/src/features/community/readingTracker.ts`, since React Native can't import
+  `packages/shared`) or the PHP response shapes — keep all three in sync by hand if any of these
+  shapes ever change, same caveat already documented for `MOOD_TAGS`/`PACES` elsewhere in this
+  file.
+- **New CSS**: `apps/connect/app/directory.css` gained `.dir-follow-*`/`.dir-log-*`/
+  `.dir-proximity-*`/`.dir-lines-*` rules for the four new directory-page panels;
+  `apps/connect/app/member.css` gained a `.rt-activity-*` block (heading, row list, avatar,
+  rating line, excerpt, timestamp) for `FollowingActivity.tsx`, inserted directly before the
+  pre-existing "Reading Tracker stats dashboard" CSS comment — both new blocks reuse the
+  existing design tokens (`var(--ink)`, `var(--mute)`, `var(--rule)`, `var(--paper-deep)`,
+  `var(--gold, #b38238)`, `var(--font-serif, 'Fraunces', serif)`) rather than introducing new
+  literals.
+- **This closes the "Log-First" feature's mobile-only gap** — shelving, saved lines, mood/pace
+  (already had `BookMoodPace.tsx` from an earlier pass), social proof, directory-entry follows,
+  the Stoop proximity banner, and the enriched following-activity feed are all now live on both
+  `apps/mobile` and `apps/connect`. The one piece still deliberately out of scope, per the
+  original "Log-First" section above: `LogHomeScreen.tsx` itself (the dedicated mobile home
+  screen replacing/sitting alongside the Feed tab) has no web equivalent — this pass brought its
+  *constituent* panels to web (shelving lives on `/member/reading`, the directory-page panels
+  live on `/directory/[slug]`), not a single unified "Log home" web page mirroring that mobile
+  screen's own layout. If a dedicated web Log Home page is ever wanted, that's a separate,
+  explicitly-scoped follow-up, not something this pass silently attempted.
+- Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as every other pass in this file; this pass needed no new PHP beyond the
+  directory-follows class already covered above, so no additional plugin redeploy is required
+  specifically for these web routes (they call already-shipped-or-just-documented endpoints).
+  Verified via a brace/paren/bracket balance check on all 19 touched/new TS/TSX files and a CSS
+  brace-balance check on `directory.css` (228/228) and `member.css` (634/634) — no `node_modules`
+  installed in this sandbox, so `tsc --noEmit` couldn't run. Re-check the full round trip —
+  shelving a book from the directory page, saving a line, following a Person entry, the Stoop
+  proximity banner's geolocation prompt, and the following-activity feed's rating/excerpt
+  rendering — in a real browser before considering this fully closed.
+
 ---
 
 ## Interest taxonomy (canonical slugs)
