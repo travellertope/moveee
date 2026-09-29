@@ -9996,6 +9996,68 @@ film/place, saving a line on a person entry, the social-proof/also-logged counts
 Log home screen's own quick-log/in-progress/goal/activity sections — on a real device before
 considering this fully closed.
 
+### `/stoop` marketing landing page on Site A (September 2026)
+
+A standalone single-page marketing/explainer site for the Stoop feature, at `themoveee.com/stoop`
+— distinct from the "Stoop — full rebuild" section above, which is the real, interactive
+browse/join/host UI on Site B (`web.themoveee.com/connect/stoop`, `/cluster/create`,
+`/cluster/[id]`). This page exists purely to explain what Stoop is and hand visitors off to that
+real UI; it holds no interactive Stoop logic of its own beyond a static FAQ accordion.
+
+Built from a user-supplied mockup ("The Moveee Scoop" — the mockup's own copy used "Scoop"
+throughout; per explicit product direction this was kept as **"Stoop"**, the real feature's actual
+name, everywhere in the built page — treat any future "Scoop" reference in a future mockup for
+this page the same way unless told otherwise). Same "standalone mini-site with its own chrome"
+pattern as Literary/Commons/Lifestyle, just for one page rather than a whole vertical:
+
+- **New files**: `app/stoop/layout.tsx` (loads Syne via `next/font/google`, scoped to this route —
+  body text reuses the root layout's existing `--font-dm-sans` instance rather than loading a
+  second DM Sans, since the one italic use on this page, `.stp-week-note`, is fine falling back to
+  the browser's own synthesized italic on web — this is not the RN-native-rendering case the
+  mobile app's font docs warn about), `app/stoop/page.tsx` (hero, three-panel photo band, "What a
+  week looks like" steps, hosting details, FAQ, closing CTA), `app/stoop/stoop.css` (`stp-*`
+  namespace — every selector scoped under `.stp-page` rather than the mockup's own bare tag
+  selectors, since a plain global CSS import isn't module-scoped and would otherwise leak onto
+  every other page), `components/StoopMasthead.tsx` (fixed nav — brand + About/How it
+  works/Hosting/FAQ anchor links to the page's own section ids + a real CTA), `components/
+  StoopFooter.tsx` (dark footer — newsletter form via the existing `SubscribeForm` component,
+  `list="culture-drop"`, plus Explore/Moveee/Company link columns mirroring the sitewide
+  `Footer.tsx`'s own hrefs, and a giant lowercase "stoop." wordmark), `components/StoopFaq.tsx`
+  (client component — the FAQ accordion, one open item per column, CSS-only expand/collapse via a
+  `grid-template-rows: 0fr → 1fr` transition rather than porting the mockup's own JS
+  `scrollHeight` measurement).
+- **Real CTAs, not placeholders** — "Find groups near you" (nav, hero, closing CTA) links to
+  `https://web.themoveee.com/connect/stoop`; "Start a group" and "Read about hosting" both link to
+  `https://web.themoveee.com/cluster/create` (the real 5-step Host Onboarding flow, which is where
+  venue type/capacity/address-visibility/step-free-access actually get set — see "Host onboarding
+  flow" earlier in this file).
+- **Copy verified against the real data model, not taken on faith** — the hosting-details column
+  ("between 2 and 20", "members only"/"share the area", "without steps") matches the real
+  `_cluster_realistic_capacity`/`_cluster_address_visible`/`_cluster_accessible` fields exactly,
+  and the FAQ's "It stays closed until four people join" was checked directly against
+  `Culture_Clusters::min_activation_members()` (defaults to 4) before being kept verbatim.
+- **Photos**: extracted from the mockup's own embedded base64 images and saved as real assets —
+  `public/stoop-hero.jpg` (hero), `public/stoop-panel-food.jpg`/`-records.jpg`/`-conversation.jpg`
+  (the three-panel band, tinted green/amber/slate respectively via CSS `::before` overlays, same
+  as the mockup).
+- **Wiring**: `proxy.ts`'s `APP_ROUTES` set gained `'stoop'` — without it, a bare `/stoop` visit
+  (no file extension, single path segment) would 301 to the nonexistent `/magazine/stoop` via the
+  root-level-slug catch-all (see that file's own comment on why). `Header.tsx` gained
+  `isStoopLandingPage` (added to the same early-return as Literary/Lifestyle/Makers/Commons) and
+  `ConditionalFooter.tsx` gained a matching `isStoopPath()` check, so the sitewide pill/footer
+  never render here. Added a "Stoop" entry to the header's full-screen menu overlay nav list
+  (between Events and Magazine) and a `sitemap.ts` entry.
+- **Not visually verified in a real browser against the live CMS/deploy** (same `NEXTAUTH_SECRET`/
+  WordPress-credentials gap as every other pass in this file) — verified instead via a static-HTML
+  Playwright render of the real ported CSS against the real extracted images, at both a 1440px
+  desktop and a 390px mobile viewport, confirming every section (hero, three-panel band, week
+  steps, hosting details, FAQ accordion open/closed states, CTA, footer) matches the mockup
+  pixel-for-pixel, plus brace/paren/bracket balance checks on every new/edited file (no
+  `node_modules` installed in this sandbox, so `tsc --noEmit` couldn't run). Re-check the real
+  Next.js render (fonts, `next/image` behavior is N/A here since these are plain CSS
+  `background-image` refs, not `<Image>` components) in a live environment before considering this
+  fully closed.
+
 ### Stoop proximity banner + member geolocation (mobile-only, September 2026)
 
 Closes the deferral flagged in the "Log-First" pass above — "N people within 3 miles want to go
