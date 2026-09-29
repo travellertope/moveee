@@ -26,6 +26,7 @@ import BookMoodPace from "../../components/community/BookMoodPace";
 import LogEntryPanel from "../../components/community/LogEntryPanel";
 import SavedLines from "../../components/community/SavedLines";
 import StoopProximityBanner from "../../components/community/StoopProximityBanner";
+import DirectoryFollowButton from "../../components/community/DirectoryFollowButton";
 import type { AlsoLoggedEntry } from "../../features/community/readingTracker";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -549,6 +550,9 @@ export default function DirectoryDetailScreen() {
             <Text style={styles.cityText}>📍 {entry.city}</Text>
           </View>
         )}
+
+        {/* ── Follow this person/place ── */}
+        <DirectoryFollowButton directoryId={entry.id} entryType={entry.entryType} />
 
         {/* ── Interest tags ── */}
         {entry.interests.length > 0 && (

@@ -501,6 +501,24 @@ class Culture_Mobile_API {
             'permission_callback' => array( __CLASS__, 'mobile_permission' ),
         ) );
 
+        // Directory-entry follows (Person/Place, gated client-side by entry
+        // type) — see class-culture-directory-follows.php.
+        register_rest_route( 'culture/v1', '/mobile/directory/(?P<id>\d+)/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_directory_follow' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/directory/(?P<id>\d+)/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_directory_unfollow' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/directory/(?P<id>\d+)/follow-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_directory_follow_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2411,6 +2429,29 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         Culture_Geolocation::clear_location( $user_id );
         return rest_ensure_response( array( 'hasLocation' => false ) );
+    }
+
+    public static function handle_directory_follow( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'id' );
+        $result       = Culture_Directory_Follows::follow( $user_id, $directory_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
+    }
+
+    public static function handle_directory_unfollow( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'id' );
+        Culture_Directory_Follows::unfollow( $user_id, $directory_id );
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
+    }
+
+    public static function handle_directory_follow_status( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'id' );
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
     }
 
     /* ——————————————————————————————————————

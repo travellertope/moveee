@@ -48,6 +48,11 @@ async function openNotification(item: Notification, nav: AppNavProp): Promise<Fe
       if (followerId) nav.navigate("MemberProfile", { userId: String(followerId) });
       break;
     }
+    case "directory_new_post": {
+      const directoryId = meta.directory_id;
+      if (directoryId) nav.push("DirectoryDetail", { id: Number(directoryId) });
+      break;
+    }
     case "badge_unlocked":
       nav.navigate("MemberDashboard");
       break;
@@ -125,6 +130,7 @@ function getTypeMeta(c: ColorPalette) {
     hub_post_removed:   { emoji: "🗑️", accent: c.error,   border: true  },
     hub_member_removed: { emoji: "🚪", accent: c.error,   border: true  },
     hub_new_post:       { emoji: "📰", accent: c.gold,    border: false },
+    directory_new_post: { emoji: "🔖", accent: c.gold,    border: false },
   } as Record<string, { emoji: string; accent: string; border: boolean }>;
 }
 

@@ -1677,6 +1677,33 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Directory-entry follows (web — API key, explicit user_id param).
+        // Mirrors /mobile/directory/{id}/follow* — see class-culture-directory-follows.php.
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_directory_follow' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_directory_unfollow' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/directory/(?P<id>\d+)/follow-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_directory_follow_status' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
@@ -2405,6 +2432,29 @@ class Culture_REST_API {
         $user_id = (int) $request->get_param( 'user_id' );
         Culture_Geolocation::clear_location( $user_id );
         return rest_ensure_response( array( 'hasLocation' => false ) );
+    }
+
+    public static function handle_directory_follow( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'id' );
+        $result       = Culture_Directory_Follows::follow( $user_id, $directory_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
+    }
+
+    public static function handle_directory_unfollow( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'id' );
+        Culture_Directory_Follows::unfollow( $user_id, $directory_id );
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
+    }
+
+    public static function handle_directory_follow_status( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'id' );
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
     }
 
     public static function handle_community_event_rsvp( $request ) {

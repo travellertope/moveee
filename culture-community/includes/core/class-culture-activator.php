@@ -206,6 +206,10 @@ class Culture_Activator {
         // Reading Tracker shelves table (Phase 1 — see docs/reading-tracker-plan.md).
         Culture_Reading_Tracker::create_table();
 
+        // Directory-entry follows (member -> culture_directory post, distinct
+        // from member-to-member Culture_Follows).
+        Culture_Directory_Follows::create_table();
+
         // Vendor shipping-zone ownership table (each WooCommerce shipping
         // zone is global by default; this maps a zone to the vendor who
         // created it so vendor dashboard APIs can enforce ownership).
