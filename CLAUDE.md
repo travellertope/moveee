@@ -9876,7 +9876,7 @@ trip — finish a book, write a Book Review with a rating/genres, vote mood/pace
 books, then confirm every one of the six stats sections reflects it correctly on both platforms —
 in a real environment before considering this fully closed.
 
-### "Log-First" home concept — mobile pieces built, nav not wired yet (September 2026)
+### "Log-First" home concept — mobile pieces built, nav not wired yet (September 2026, superseded below)
 
 A separate, later ask on top of the four Reading Tracker phases above: the user supplied a
 self-contained mockup export ("Moveee Home — Log-First", 4 frames — Home/the log, Book entry,
@@ -10143,6 +10143,61 @@ no "account" on the followed side to reuse that table for.
   `node_modules` installed in this sandbox). Re-check the full follow → post-with-linked-entry
   → notification round trip, on both platforms, in a real environment before considering this
   fully closed.
+
+### `LogHomeScreen` wired in as the mobile default tab; Events dropped from the bottom bar (September 2026)
+
+**Supersedes the "build first, wire up nav after" deferral in the "Log-First" section above** —
+per explicit later direction, `LogHomeScreen` ("Your log") is now a real, reachable screen and
+the app's default landing tab, not just a built-but-unwired file. The bottom tab bar is now
+**Home → Feed (Connect) → Magazine → Shop → Games** — 5 tabs, reordered, with **Events removed
+as its own tab entirely** and moved to a topbar icon instead (see below). This does *not* revive
+the earlier, larger "renamed bottom nav — Log / Discover / Hubs / Stoop / You" concept from the
+section above (that would have dropped Magazine/Games/Shop too) — only Home was added and only
+Events was removed; Magazine/Shop/Games all stay as real tabs, just reordered.
+
+- **`apps/mobile/src/navigation/index.tsx`** — new `HomeStack()` function, mounted as the first
+  `Tab.Screen` (`name="Home"`). It mirrors `ConnectStack()`'s **entire** screen list verbatim
+  (`LogHome` inserted first, so it's the stack's initial route) rather than a minimal subset —
+  same "duplicate registration across stacks" convention `MemberStack` already uses for its own
+  large overlap with `ConnectStack` (Wallet/Coupons/Perks/Membership/Analytics/etc. are each
+  registered in more than one stack today). This matters because `LogHomeScreen.tsx`'s own
+  `nav.navigate(...)` calls (`ConnectFeed`, `NewPost`, `DirectoryDetail`, `Notifications`,
+  `ReadingTracker`) are all plain, same-stack navigates, not cross-stack `{ screen, params }`
+  calls — for those to resolve from the Home tab, every target screen has to exist inside
+  `HomeStack` too, not just `ConnectStack`.
+- **Events tab removed** — `EventsStack()` (the function) was deleted outright, not just
+  unmounted; `EventsList`/`EventDetail`/`MyRSVPs` are registered directly inside both
+  `ConnectStack` and the new `HomeStack` instead. A new calendar-icon button was added to the
+  topbar on both screens that lost their Events tab neighbor: `ConnectFeedScreen.tsx`'s existing
+  Hub/Stoop/Directory/Discover/Bell/Avatar icon row (inserted between Discover and Bell) and
+  `LogHomeScreen.tsx`'s own header (inserted between the "Your log" title and the notification
+  bell) — both navigate to `EventsList`, which now resolves in-stack from either tab.
+  `components/community/EventSpotlightCarousel.tsx`'s "See all →" link — the one place in the
+  codebase that cross-stack-navigated to the old `Events` tab
+  (`nav.navigate("Events", { screen: "EventsList" } as any)`) — was fixed to a plain
+  `nav.navigate("EventsList")`, since that carousel only ever renders inside `ConnectFeedScreen`,
+  which now lives in both stacks that register `EventsList` directly.
+- **`useNav.ts`'s `AppParamList`** gained `LogHome: undefined` (screen) and a tab-level `Home:
+  undefined` entry (for any future cross-stack navigate into the Home tab), and dropped the
+  now-tabless `Events` tab-level entry — `EventsList`/`EventDetail`/`MyRSVPs` (the real screens)
+  were already declared and are untouched.
+- **`TabletRail.tsx`** — `TAB_ICONS` gained a `Home: ["home", "home-outline"]` entry (the rail's
+  icon/label maps are driven by whatever `Tab.Screen`s actually exist via `state.routes`, so
+  removing Events from the bottom `Tab.Navigator` automatically removed it from the tablet rail
+  too — no code change needed there beyond adding the new tab's icon, per this file's own
+  existing "if you add a 6th tab, only the icon/label maps need an entry" note).
+- **If a future pass wants the unread-notification badge to move from the Feed tab icon to the
+  new Home tab (since Home is now the default landing screen)**, that's a deliberate follow-up,
+  not something this pass did — the badge still lives only on the `Connect`/"Feed" tab icon,
+  unchanged.
+- Not tested on a real device/simulator — this sandbox has neither. Verified via a brace/paren/
+  bracket balance check on every touched file (`navigation/index.tsx`, `useNav.ts`,
+  `TabletRail.tsx`, `ConnectFeedScreen.tsx`, `LogHomeScreen.tsx`,
+  `EventSpotlightCarousel.tsx` — no `node_modules` installed in this sandbox, so `tsc --noEmit`
+  couldn't run) and a repo-wide grep confirming no other `navigate("Events"...)` cross-stack call
+  survived the removal. Re-check a cold app launch lands on Home, that both new calendar icons
+  open Events correctly, and that the tablet rail renders 5 items in the right order, on a real
+  device before considering this fully closed.
 
 ### Log-First web UI — brings `apps/connect` to parity with the mobile Log Home screen (September 2026)
 
