@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import DirectorySearch from "@/components/composer/DirectorySearch";
+import FollowingActivity from "./FollowingActivity";
 
 type ShelfStatus = "want_to_read" | "currently_reading" | "read";
 
@@ -258,6 +259,8 @@ export default function ReadingTrackerClient() {
           ))}
         </div>
       )}
+
+      <FollowingActivity />
 
       {showAddModal && (
         <div className="rt-modal-overlay" onClick={() => setShowAddModal(false)}>

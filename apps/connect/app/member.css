@@ -3160,6 +3160,78 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-modal-close:hover { color: var(--ink); }
 
+/* ── Reading Tracker "From People You Follow" activity feed ("Log-First" pass) ── */
+.rt-activity {
+  margin-top: 32px;
+}
+.rt-activity-heading {
+  font-family: var(--font-serif, 'Fraunces', serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+.rt-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rt-activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule);
+  text-decoration: none;
+  color: inherit;
+}
+.rt-activity-row:first-child { border-top: none; }
+.rt-activity-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--paper-deep);
+}
+.rt-activity-avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--mute);
+}
+.rt-activity-body {
+  min-width: 0;
+}
+.rt-activity-text {
+  font-size: 14px;
+  color: var(--ink);
+  margin: 0 0 2px;
+  line-height: 1.4;
+}
+.rt-activity-rating {
+  font-size: 12px;
+  color: var(--gold, #b38238);
+  margin: 0 0 4px;
+}
+.rt-activity-excerpt {
+  font-size: 13px;
+  color: var(--mute);
+  font-style: italic;
+  margin: 0 0 4px;
+  line-height: 1.45;
+}
+.rt-activity-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0;
+}
+
 /* ── Reading Tracker stats dashboard (Phase 4 — docs/reading-tracker-plan.md §4) ── */
 .rts-month-grid {
   display: flex;

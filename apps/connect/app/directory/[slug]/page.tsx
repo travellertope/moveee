@@ -10,6 +10,10 @@ import "../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
+import LogEntryPanel from "./LogEntryPanel";
+import SavedLines from "./SavedLines";
+import DirectoryFollowButton from "./DirectoryFollowButton";
+import StoopProximityBanner from "./StoopProximityBanner";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -241,6 +245,21 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             {date && <div className="dir-wiki-date">Added to directory {date}</div>}
           </div>
 
+          {/* Follow this person/place ("Log-First" pass) */}
+          {entry.databaseId && (
+            <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
+          )}
+
+          {/* Add to your log + social proof ("Log-First" pass) */}
+          {entry.databaseId && (
+            <LogEntryPanel directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
+          )}
+
+          {/* Stoop proximity banner (places only, "Log-First" pass) */}
+          {entry.databaseId && typeSlug === "place" && (
+            <StoopProximityBanner directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+          )}
+
           {/* Body content */}
           <div className="dir-wiki-divider" />
 
@@ -252,6 +271,13 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             )
           ) : (
             <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
+          )}
+
+          {/* Lines saved from this ("Log-First" pass) */}
+          {entry.databaseId && (
+            <div style={{ marginTop: "32px" }}>
+              <SavedLines directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+            </div>
           )}
 
           {/* Interests / tags */}

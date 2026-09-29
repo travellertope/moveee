@@ -66,3 +66,107 @@ export interface ReadingStats {
   top_genres: { genre: string; count: number }[];
   books_per_month: { month: string; count: number }[];
 }
+
+// "Log-First" pass (September 2026) — generalizes the shelf mechanism from
+// books-only into a cross-type personal log. Mirrors
+// apps/mobile/src/features/community/readingTracker.ts (mobile source of
+// truth for this half, since apps/mobile can't import packages/shared) and
+// Culture_Reading_Tracker (PHP). The backend enum names are still
+// book-shaped (want_to_read/currently_reading/read) — deliberately reused,
+// not renamed, per this codebase's "reuse over new" convention — only the
+// *labels* vary per directory type on the client.
+
+export const SHELF_STATUSES = ["want_to_read", "currently_reading", "read"] as const;
+export type ShelfStatus = (typeof SHELF_STATUSES)[number];
+
+// Entry types that support the shelf/log mechanism, and the label each
+// status wears for that type. A type with no "currently_reading" entry
+// (e.g. place — there's no "currently visiting" state) just never renders a
+// button for it; the backend still accepts the status if ever sent, it's
+// simply not offered in the UI for that type.
+export const SHELF_LABELS: Record<string, Partial<Record<ShelfStatus, string>>> = {
+  book: { want_to_read: "Want to Read", currently_reading: "Reading", read: "Read" },
+  film: { want_to_read: "Want to Watch", currently_reading: "Watching", read: "Watched" },
+  place: { want_to_read: "Want to Go", read: "Been" },
+};
+
+export function shelfLabelsFor(entryType: string): Partial<Record<ShelfStatus, string>> | null {
+  return SHELF_LABELS[entryType] ?? null;
+}
+
+export interface SavedLine {
+  id: number;
+  lineText: string;
+  sourceContext: string | null;
+  createdAt: string;
+  authorId: number;
+  authorName: string;
+  authorAvatar: string | null;
+  isMine: boolean;
+}
+
+export interface SocialProofExample {
+  userId: number;
+  name: string;
+  avatar: string | null;
+  loggedAt: string;
+}
+
+export interface SocialProof {
+  doneCount: number;
+  wantCount: number;
+  examples: SocialProofExample[];
+}
+
+// get_user_shelf()'s card shape.
+export interface ShelfEntry {
+  directoryId: number;
+  title: string;
+  slug: string;
+  type: string | null;
+  thumbnail: string | null;
+  author: string;
+  averageRating: number | null;
+  status: ShelfStatus;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export interface AlsoLoggedEntry {
+  directoryId: number;
+  title: string;
+  slug: string;
+  type: string | null;
+  thumbnail: string | null;
+  author: string | null;
+  peopleCount: number;
+}
+
+// "From people you follow" activity feed. rating/reviewExcerpt come from the
+// follow's own linked review post, when they wrote one — both null for a
+// plain shelf entry with no review attached.
+export interface FollowingActivityItem {
+  userId: number;
+  userName: string;
+  userAvatar: string | null;
+  directoryId: number;
+  title: string;
+  slug: string;
+  type: string | null;
+  thumbnail: string | null;
+  author: string | null;
+  rating: number | null;
+  reviewExcerpt: string | null;
+  loggedAt: string;
+}
+
+export interface PlaceProximity {
+  hasLocation: boolean;
+  count: number;
+  examples: { userId: number; name: string; avatar: string | null }[];
+}
+
+export interface DirectoryFollowStatus {
+  isFollowing: boolean;
+  followersCount: number;
+}
