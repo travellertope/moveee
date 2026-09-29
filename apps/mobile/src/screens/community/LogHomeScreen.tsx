@@ -22,13 +22,13 @@ import type { FeedItem } from "../../types";
 // yet — this is a standalone build, per explicit user direction ("build
 // the pieces first, wire up nav after"). Backend: Culture_Reading_Tracker,
 // generalized in this same pass from books-only to any directory type (see
-// that class's own docblock). Deferred, not built in this pass: the Stoop
-// proximity banner ("N people within 3 miles want to go too"), a "follow
-// this person/topic" affordance (a different relationship than the
-// member-to-member Culture_Follows system), and star ratings/comments on
-// the "From people you follow" activity rail (would need joining to a
-// linked review post, same shape as get_reading_stats()'s review_rows —
-// not built here to keep this pass's scope real).
+// that class's own docblock). The Stoop proximity banner and the "From
+// people you follow" rating/comment enrichment (both originally deferred
+// from this pass) were built in later passes — see CLAUDE.md's "Stoop
+// proximity banner + member geolocation" and this screen's own activity
+// card rendering below. Still deferred, not built: a "follow this person/
+// topic" affordance for a directory-entry person (a different relationship
+// than the member-to-member Culture_Follows system).
 //
 // Per explicit user direction (once Log sits alongside, not instead of,
 // Feed), the community Feed is surfaced as the LAST section on this screen
@@ -140,6 +140,8 @@ function createStyles(c: ColorPalette) {
     activityHeaderName: { fontFamily: fonts.sansBold, color: c.ink },
     activityTitle: { fontFamily: fonts.serifBold, fontSize: 16, color: c.ink, marginTop: 6 },
     activityAuthor: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 1 },
+    activityRating: { fontFamily: fonts.monoBold, fontSize: 13, color: c.ochre, marginTop: 6 },
+    activityExcerpt: { fontFamily: fonts.sans, fontSize: 13, color: c.inkSoft, marginTop: 4, lineHeight: 19 },
 
     emptyText: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
 
@@ -359,6 +361,15 @@ export default function LogHomeScreen() {
                 </View>
                 <Text style={styles.activityTitle} numberOfLines={1}>{item.title}</Text>
                 {!!item.author && <Text style={styles.activityAuthor} numberOfLines={1}>{item.author}</Text>}
+                {!!item.rating && (
+                  <Text style={styles.activityRating}>
+                    {"★".repeat(item.rating)}
+                    {"☆".repeat(5 - item.rating)} {item.rating} of 5
+                  </Text>
+                )}
+                {!!item.reviewExcerpt && (
+                  <Text style={styles.activityExcerpt} numberOfLines={2}>{item.reviewExcerpt}</Text>
+                )}
               </TouchableOpacity>
             ))
           )}

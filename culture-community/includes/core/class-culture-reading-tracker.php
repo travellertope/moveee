@@ -71,6 +71,17 @@ class Culture_Reading_Tracker {
 
     const PACES = array( 'slow', 'medium', 'fast' );
 
+    // Which review template (and which of its rating meta keys) goes with
+    // each shelf-supporting directory type — used by get_following_activity()
+    // to enrich "X finished this" with the actual rating/comment the person
+    // wrote, when they wrote one. Mirrors the "Review family" unification
+    // (Book/Film Review, Hidden Gem/Place) — see CLAUDE.md.
+    const REVIEW_TEMPLATE_BY_TYPE = array(
+        'book'  => array( 'template' => 'book-review', 'rating_meta' => '_book_overall_rating' ),
+        'film'  => array( 'template' => 'film-review', 'rating_meta' => '_film_overall_rating' ),
+        'place' => array( 'template' => 'hidden-gem',  'rating_meta' => '_star_rating' ),
+    );
+
     public static function table() : string {
         global $wpdb;
         return $wpdb->prefix . 'culture_reading_shelf';
@@ -866,6 +877,13 @@ class Culture_Reading_Tracker {
      * people logged, is already visible via their public shelf/profile) but
      * still scoped to $viewer_user_id's own follow list, same as every
      * other follow-scoped read in this codebase.
+     *
+     * Enriches each entry with the follow's own rating/comment when they
+     * wrote a linked review (REVIEW_TEMPLATE_BY_TYPE) for that entry — the
+     * mockup's "★★★★★ 5 of 5 — finished it on the bus" line, per CLAUDE.md's
+     * "Star ratings/comments on the activity feed" follow-up. A shelf entry
+     * with no matching review just gets rating/reviewExcerpt = null, same
+     * plain "X finished this" as before this pass.
      */
     public static function get_following_activity( int $viewer_user_id, int $limit = 10 ) : array {
         $following_ids = array_map( 'intval', wp_list_pluck( Culture_Follows::get_following( $viewer_user_id, 200 ), 'followed_id' ) );
@@ -904,6 +922,60 @@ class Culture_Reading_Tracker {
             $posts_by_id[ $p->ID ] = $p;
         }
 
+        // One query for every possible review across the three review
+        // templates, keyed by "author-directory" so it can be matched
+        // against each activity row below without an N+1 lookup — same
+        // multi-LEFT-JOIN-filtered-by-meta_key shape get_reading_stats()
+        // already uses for exactly this kind of user-review join.
+        $reviews_by_key = array();
+        $templates_in   = "'" . implode( "','", array_map( static function ( $t ) {
+            return esc_sql( $t['template'] );
+        }, self::REVIEW_TEMPLATE_BY_TYPE ) ) . "'";
+        $review_rows = $wpdb->get_results(
+            "SELECT p.ID, p.post_author, p.post_content,
+                    pm_template.meta_value AS template_type,
+                    pm_link.meta_value AS directory_id,
+                    pm_book_rating.meta_value AS book_rating,
+                    pm_film_rating.meta_value AS film_rating,
+                    pm_gem_rating.meta_value AS gem_rating
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm_template ON pm_template.post_id = p.ID AND pm_template.meta_key = '_template_type' AND pm_template.meta_value IN ({$templates_in})
+             INNER JOIN {$wpdb->postmeta} pm_link ON pm_link.post_id = p.ID AND pm_link.meta_key = '_linked_directory_id'
+             LEFT JOIN {$wpdb->postmeta} pm_book_rating ON pm_book_rating.post_id = p.ID AND pm_book_rating.meta_key = '_book_overall_rating'
+             LEFT JOIN {$wpdb->postmeta} pm_film_rating ON pm_film_rating.post_id = p.ID AND pm_film_rating.meta_key = '_film_overall_rating'
+             LEFT JOIN {$wpdb->postmeta} pm_gem_rating ON pm_gem_rating.post_id = p.ID AND pm_gem_rating.meta_key = '_star_rating'
+             WHERE p.post_author IN ({$ids_in}) AND p.post_type = 'culture_post' AND p.post_status = 'publish'
+             ORDER BY p.post_date DESC",
+            ARRAY_A
+        );
+        foreach ( $review_rows ?: array() as $rrow ) {
+            $key = $rrow['post_author'] . '-' . $rrow['directory_id'];
+            // ORDER BY post_date DESC above + only-set-if-absent below means
+            // the most recent review wins if someone somehow has more than
+            // one (shouldn't happen — the composer treats a review as one
+            // per directory entry per author — but no unique constraint
+            // enforces that at the DB level).
+            if ( isset( $reviews_by_key[ $key ] ) ) {
+                continue;
+            }
+            $rating = null;
+            if ( 'book-review' === $rrow['template_type'] && '' !== $rrow['book_rating'] ) {
+                $rating = (int) $rrow['book_rating'];
+            } elseif ( 'film-review' === $rrow['template_type'] && '' !== $rrow['film_rating'] ) {
+                $rating = (int) $rrow['film_rating'];
+            } elseif ( 'hidden-gem' === $rrow['template_type'] && '' !== $rrow['gem_rating'] ) {
+                $rating = (int) $rrow['gem_rating'];
+            }
+            $excerpt = trim( wp_strip_all_tags( (string) $rrow['post_content'] ) );
+            if ( mb_strlen( $excerpt ) > 140 ) {
+                $excerpt = mb_substr( $excerpt, 0, 140 ) . '…';
+            }
+            $reviews_by_key[ $key ] = array(
+                'rating'  => $rating,
+                'excerpt' => '' !== $excerpt ? $excerpt : null,
+            );
+        }
+
         $activity = array();
         foreach ( $rows as $row ) {
             $dir_id = (int) $row['directory_id'];
@@ -914,6 +986,7 @@ class Culture_Reading_Tracker {
             $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
             $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
                 ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+            $review     = $reviews_by_key[ $row['user_id'] . '-' . $dir_id ] ?? array( 'rating' => null, 'excerpt' => null );
 
             $activity[] = array(
                 'userId'      => (int) $row['user_id'],
@@ -924,6 +997,8 @@ class Culture_Reading_Tracker {
                 'slug'        => $post->post_name,
                 'type'        => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
                 'thumbnail'   => $thumb ?: null,
+                'rating'        => $review['rating'],
+                'reviewExcerpt' => $review['excerpt'],
                 'author'      => Culture_Directory::get_first_about_field( $post->ID ),
                 'loggedAt'    => $row['finished_at'],
             );

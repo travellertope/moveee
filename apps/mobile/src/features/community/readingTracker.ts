@@ -142,7 +142,10 @@ export interface AlsoLoggedEntry {
   peopleCount: number;
 }
 
-// "From people you follow" — the Log home screen's activity rail.
+// "From people you follow" — the Log home screen's activity rail. rating/
+// reviewExcerpt come from the follow's own linked review post, when they
+// wrote one (Culture_Reading_Tracker::REVIEW_TEMPLATE_BY_TYPE) — both null
+// for a plain shelf entry with no review attached.
 export interface FollowingActivityItem {
   userId: number;
   userName: string;
@@ -153,5 +156,7 @@ export interface FollowingActivityItem {
   type: string | null;
   thumbnail: string | null;
   author: string | null;
+  rating: number | null;
+  reviewExcerpt: string | null;
   loggedAt: string;
 }

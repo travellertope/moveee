@@ -9978,12 +9978,12 @@ still a separate, later decision — only its own *internal* link to Feed was re
 these exist: the bottom-nav rename/restructure itself; a "follow this person/topic" affordance
 for a Person directory entry (a different relationship from the member-to-member
 `Culture_Follows` system, which operates on WP user IDs, not directory post IDs — would need its
-own new backend); star ratings/comments on the "From people you follow" activity rail (see
-`get_following_activity`'s own note above); and any web (`apps/connect`/`apps/site`) equivalent of
-`LogHomeScreen`/`LogEntryPanel`/`SavedLines` — this pass is mobile-only on the UI side, though the
-REST layer is already mirrored for whenever web parity is wanted. **The Stoop proximity banner
-itself was built in a later pass — see "Stoop proximity banner + member geolocation" below,
-mobile-only, same reasoning.**
+own new backend); and any web (`apps/connect`/`apps/site`) equivalent of `LogHomeScreen`/
+`LogEntryPanel`/`SavedLines` — this pass is mobile-only on the UI side, though the REST layer is
+already mirrored for whenever web parity is wanted. **The Stoop proximity banner and the "From
+people you follow" rating/comment enrichment were both built in later passes — see "Stoop
+proximity banner + member geolocation" below, and the activity-feed enrichment note right after
+it. Both mobile-only, same reasoning.**
 
 Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
 credentials gap as every other pass in this file; this pass needs the plugin redeployed (manual
@@ -10059,6 +10059,36 @@ this sandbox, so `tsc --noEmit` couldn't run; the lockfile was regenerated out-o
 documented process and confirmed to resolve `expo-location` correctly). Re-check the full round
 trip — granting/denying the permission prompt, the banner's three states, and the "Start a Stoop
 here" handoff — on a real device before considering this fully closed.
+
+### "From people you follow" activity feed — real star ratings/comments (mobile-only, September 2026)
+
+Closes the second deferral flagged in the "Log-First" pass above. `Culture_Reading_Tracker::
+get_following_activity()` previously only showed the plain fact "X finished this" — no rating, no
+comment, even when the follow actually wrote a full review. `REVIEW_TEMPLATE_BY_TYPE` (a new class
+const) maps each shelf-supporting directory type to the review template + rating meta key that
+goes with it — `book` → `book-review`/`_book_overall_rating`, `film` → `film-review`/
+`_film_overall_rating`, `place` → `hidden-gem`/`_star_rating` (the "Review family" unification's
+Place review, see that section elsewhere in this file — not `food-review`, which isn't linked to
+the shelf mechanism at all).
+
+One extra raw-SQL query (same multi-`LEFT JOIN`-filtered-by-`meta_key` shape
+`get_reading_stats()`'s own `$review_rows` query already uses) finds every review post any of the
+viewer's follows authored across all three templates, keyed by `"{author}-{directory_id}"` so it
+can be matched against each activity row with no N+1 lookup. A matched row gets `rating` (int) and
+`reviewExcerpt` (the review's `post_content`, HTML-stripped and truncated to 140 chars) merged in;
+an entry with no matching review just gets both as `null` — same plain "X finished this" as
+before. `FollowingActivityItem` (`src/features/community/readingTracker.ts`) gained both fields;
+`LogHomeScreen.tsx`'s activity card renders a `★★★★★ N of 5` line and the excerpt (2-line clamp)
+when present, mirroring the mockup's "★★★★★ 5 of 5 — finished it on the bus" treatment. **No web
+mirror of `FollowingActivityItem` exists** — this type was never ported to
+`packages/shared/lib/reading-tracker.ts` in the first place, consistent with the rest of the
+Log-First feature being mobile-only.
+
+Not deployment-tested against a live WordPress instance — same recurring gap as every other pass
+in this file; needs the plugin redeployed before the enriched fields appear in production.
+Verified via `php -l` and a brace/paren/bracket balance check on every touched file (no
+`node_modules` installed in this sandbox). Re-check against a real follow who's actually written a
+Book/Film/Place review before considering this fully closed.
 
 ---
 
