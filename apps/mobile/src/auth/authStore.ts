@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { api, CULTURE_API, setUnauthorizedHandler, setAuthToken } from "../api/client";
+import { api, ApiError, CULTURE_API, setUnauthorizedHandler, setAuthToken } from "../api/client";
 import type { User } from "../types";
 
 interface AuthState {
@@ -38,9 +38,18 @@ export const useAuthStore = create<AuthState>((set, get) => {
       setAuthToken(token);
       const user = await api.get<User>(`${CULTURE_API}/mobile/me`);
       set({ user, token, isAuthenticated: true });
-    } catch {
-      await SecureStore.deleteItemAsync("auth_token");
-      setAuthToken(null);
+    } catch (err) {
+      // Only throw the stored token away when WordPress itself genuinely
+      // rejected it (401/403) — a network hiccup or a 5xx while verifying it
+      // on cold start doesn't mean the token is actually bad, and wiping a
+      // perfectly valid session's credentials here would force the user to
+      // log back in for no reason. See client.ts's resolveAuthToken() note
+      // and the "no_token" auto-logout investigation for the same principle
+      // applied to every other authenticated request.
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        await SecureStore.deleteItemAsync("auth_token");
+        setAuthToken(null);
+      }
     } finally {
       set({ isLoading: false });
     }

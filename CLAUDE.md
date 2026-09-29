@@ -10946,6 +10946,66 @@ for `Auto-logout triggered:`** — that message now names the exact endpoint and
 time this fires, instead of the silent-by-design gap this section used to document as
 correct behavior.
 
+**Follow-up (September 2026) — the diagnostic paid off immediately: the very next real
+occurrence's Sentry event was `Auto-logout triggered: POST
+https://themoveee.com/api/directory/quick-create → 401 (no_token)`, and the user separately
+confirmed the same symptom happens "at all types of post creation," not just picking an
+external search result.** `no_token` is emitted by that proxy route's very first check
+(`if (!token) return ... code: "no_token"`, before it ever contacts WordPress) — meaning
+the mobile app's own outgoing request had **no `Authorization` header at all**. That rules
+out every theory this section's earlier passes considered (a masked-401 bug in the proxy,
+a WAF/Cloudflare challenge page, a WordPress-side token check) — the request never got far
+enough to hit any of those. The only way `request()`/`upload()` in `src/api/client.ts` send
+no header on an `auth: true` call is if the in-memory `_authToken` variable was falsy at
+that exact moment.
+
+Traced every place that can clear or set `_authToken` (`setAuthToken()` has exactly five
+call sites, all in `authStore.ts`'s `hydrate()`/`login()`/`loginWithToken()`/`logout()`) and
+confirmed `hydrate()` only ever runs once, at boot (`App.tsx`'s one `useEffect([])`) — so a
+mid-session composer failure can't be a hydrate timing race. That leaves the in-memory
+mirror simply falling out of sync with the real, durable SecureStore-held token for reasons
+this investigation couldn't pin down further from static analysis alone (no live device/
+Sentry-session access from this environment) — but regardless of the exact trigger, an
+in-memory cache disagreeing with its own durable backing store is a class of bug with a
+standard fix: **re-sync from the durable store before concluding the session is gone,
+rather than trusting the cache blindly.**
+
+Fixed in `src/api/client.ts` with a new `resolveAuthToken()` — called from both `request()`
+and `upload()` in place of reading `_authToken` directly. It returns `_authToken` unchanged
+when set; when it's empty, it re-reads `SecureStore.getItemAsync("auth_token")` (the same
+key `authStore.ts` writes) and, if that comes back non-empty, repopulates `_authToken` and
+uses it for this request (with a Sentry breadcrumb noting the recovery, so a future
+investigation can see exactly how often this actually saves a request). Only if SecureStore
+*also* has nothing does the request go out tokenless and legitimately 401/`no_token`/force a
+real logout — this only ever prevents a **false-positive** logout for a session that was
+still genuinely valid; it changes nothing for an actually-expired-or-revoked session. This
+is now the single choke point every authenticated mobile call goes through (same "one
+implementation, not per-endpoint" reasoning as everything else in `client.ts`), so the fix
+automatically covers every post-creation path the user described ("all types") — community
+submit, image upload, and directory quick-create alike — without needing per-endpoint changes.
+
+**A second, related bug fixed in the same pass**: `authStore.ts`'s `hydrate()` used to
+delete the stored token and call `setAuthToken(null)` on **any** exception from its
+boot-time "verify the token" call (`GET /mobile/me`) — including a plain network error or a
+5xx, not just a genuine 401/403 rejection. A network hiccup on cold start (spotty wifi,
+cellular handoff mid-launch) would permanently throw away a perfectly valid token, forcing
+a real session to log back in for no reason — the exact same "collapsing a transient
+upstream failure into a blanket auth rejection" anti-pattern this file's own
+`quick-create/route.ts` comment already warns against, just one layer up, at the client's
+own boot sequence. Fixed to only wipe the stored token when the failure is a genuine
+`ApiError` with `status === 401 || status === 403` (i.e. WordPress itself rejected the
+token); any other failure now just leaves `isLoading` false and skips setting
+`isAuthenticated` for that launch, without destroying the durable credential — so a retry or
+next launch can still recover once the network is back.
+
+**Not verified against a real device** — this sandbox has neither. Verified via a
+brace/paren balance check on both edited files (no `node_modules` installed this session,
+so `tsc --noEmit` couldn't run). Re-check on a real build that the composer's post-creation
+flows no longer force-logout under the conditions that produced the `no_token` Sentry event
+above, and watch for the new "In-memory auth token was empty; recovered from SecureStore."
+breadcrumb — if it never fires in practice, the root cause is elsewhere and this fix, while
+still a correct defensive improvement, isn't the whole story.
+
 ---
 
 ## Passkeys (WebAuthn) — never worked on native, missing platform setup (fixed August 2026)
