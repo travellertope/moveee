@@ -23,6 +23,9 @@ import { api, CULTURE_API } from "../../api/client";
 import { openInApp } from "../../utils/openInApp";
 import { decodeHtml } from "../../utils/decodeHtml";
 import BookMoodPace from "../../components/community/BookMoodPace";
+import LogEntryPanel from "../../components/community/LogEntryPanel";
+import SavedLines from "../../components/community/SavedLines";
+import type { AlsoLoggedEntry } from "../../features/community/readingTracker";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -377,6 +380,7 @@ export default function DirectoryDetailScreen() {
 
   const [entry, setEntry] = useState<DirectoryEntry | null>(null);
   const [events, setEvents] = useState<EventRow[]>([]);
+  const [alsoLogged, setAlsoLogged] = useState<AlsoLoggedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [bodyExpanded, setBodyExpanded] = useState(false);
@@ -413,6 +417,18 @@ export default function DirectoryDetailScreen() {
       try {
         const res = await api.get<{ events?: EventRow[] }>(`${CULTURE_API}/directory/${entry.id}/events`, false);
         setEvents(res.events ?? (Array.isArray(res) ? res as EventRow[] : []));
+      } catch { /* optional */ }
+    })();
+  }, [entry]);
+
+  // "People who logged this also logged" — public, co-occurrence over the
+  // shelf table. See CLAUDE.md's "Log-First" pass.
+  useEffect(() => {
+    if (!entry) return;
+    (async () => {
+      try {
+        const res = await api.get<{ entries?: AlsoLoggedEntry[] }>(`${CULTURE_API}/mobile/reading/also-logged?directory_id=${entry.id}`, false);
+        setAlsoLogged(res.entries ?? []);
       } catch { /* optional */ }
     })();
   }, [entry]);
@@ -552,6 +568,10 @@ export default function DirectoryDetailScreen() {
         {!!entry.excerpt && (
           <Text style={styles.excerpt} numberOfLines={3}>{entry.excerpt}</Text>
         )}
+
+        {/* ── Add to your log + social proof ("Log-First" pass) ── */}
+        <LogEntryPanel directoryId={entry.id} entryType={entry.entryType} />
+
         <View style={styles.divider} />
 
         {/* ── Body (4-line clamp + read more) ── */}
@@ -604,6 +624,11 @@ export default function DirectoryDetailScreen() {
             <BookMoodPace directoryId={entry.id} />
           </View>
         )}
+
+        {/* ── Lines saved from this ("Log-First" pass) ── */}
+        <View style={[styles.aboutCard, { paddingBottom: 12 }]}>
+          <SavedLines directoryId={entry.id} />
+        </View>
 
         {/* ── Selected Works ── */}
         {showSelectedWorks && (
@@ -716,6 +741,43 @@ export default function DirectoryDetailScreen() {
                 </Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        {/* ── People who logged this also logged ("Log-First" pass) ── */}
+        {alsoLogged.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>People who logged this also logged</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.worksScroll}
+            >
+              {alsoLogged.map((also) => (
+                <TouchableOpacity
+                  key={also.directoryId}
+                  style={styles.workItem}
+                  onPress={() => nav.push("DirectoryDetail", { id: also.directoryId, title: also.title, entryType: also.type ?? undefined })}
+                  activeOpacity={0.75}
+                >
+                  {also.thumbnail ? (
+                    <Image source={{ uri: also.thumbnail }} style={styles.workImage} resizeMode="cover" />
+                  ) : (
+                    <LinearGradient
+                      colors={(TYPE_CONFIG[also.type ?? ""] ?? DEFAULT_CONFIG).gradient}
+                      style={styles.workImage}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    />
+                  )}
+                  <Text style={styles.workCaption} numberOfLines={1}>{also.title}</Text>
+                  <Text style={[styles.sectionCount, { textAlign: "center", marginTop: 2 }]}>
+                    {also.peopleCount} logged both
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
 

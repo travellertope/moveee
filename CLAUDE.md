@@ -9876,6 +9876,121 @@ trip — finish a book, write a Book Review with a rating/genres, vote mood/pace
 books, then confirm every one of the six stats sections reflects it correctly on both platforms —
 in a real environment before considering this fully closed.
 
+### "Log-First" home concept — mobile pieces built, nav not wired yet (September 2026)
+
+A separate, later ask on top of the four Reading Tracker phases above: the user supplied a
+self-contained mockup export ("Moveee Home — Log-First", 4 frames — Home/the log, Book entry,
+Person entry, Place entry) proposing a StoryGraph-style personal-log home screen that replaces
+the community Feed as the app's main tab, plus redesigned Book/Person/Place directory pages
+(quick "add to your log" buttons, social proof, cross-recommendations, and a brand-new
+"save a line" feature), under a renamed bottom nav — **Log / Discover / Hubs / Stoop / You** —
+dropping Magazine/Games/Shop/Events from the tab bar. Given that removes four existing tabs,
+scope was confirmed via `AskUserQuestion` before touching navigation: **build the pieces first,
+wire up nav after** — so this pass built the underlying screens/components/backend, but the
+bottom tab bar and the `ConnectFeed` "Feed" tab are both still exactly as they were; `LogHomeScreen`
+below is not yet reachable from anywhere in the app.
+
+**The shelf mechanism generalizes to any directory type almost for free.**
+`Culture_Reading_Tracker::set_shelf_status()` never actually restricted `directory_id` to
+book-type entries in the first place (only `vote_mood_pace()` does that check) — so a Place or
+Film entry can already carry a shelf row today, with the exact same three enum values
+(`want_to_read`/`currently_reading`/`read`). Deliberately **not renamed** — per this codebase's
+"reuse over new" convention — only the *display label* varies per type, via a new
+`SHELF_LABELS`/`shelfLabelsFor()` map (`packages/shared/lib/reading-tracker.ts` web,
+`apps/mobile/src/features/community/readingTracker.ts` mobile): book → Want to
+Read/Reading/Read, film → Want to Watch/Watching/Watched, place → Want to Go/Been (no
+"currently_reading" button for place — there's no "currently visiting" state, though the backend
+would still accept it if ever sent). `get_goal()`'s `booksRead` count has no type filter either, so
+a shelved Film/Place already counts toward the per-year goal for free — "Your year in culture" is
+literally the same goal endpoint, just relabelled once more than book-type entries are in use.
+
+**Two genuinely new backend pieces**, both in `Culture_Reading_Tracker`
+(`culture-community/includes/core/class-culture-reading-tracker.php`), `CULTURE_VERSION` bumped
+`3.4.0` → `3.5.0` for the one new table (plugin header bumped to `2.6.7`):
+- **Saved lines** — a new `wp_culture_saved_lines` table (`directory_id, user_id, line_text,
+  source_context, created_at`, no unique constraint — a user can save more than one line from the
+  same entry). `save_line()`/`get_saved_lines()`/`delete_saved_line()` — a short quote a member
+  attaches to *any* directory entry (book, person, talk-as-`source_context`), independent of
+  shelf status entirely, since a Person entry has no read/watched concept at all. Public read
+  (any authenticated member sees everyone's saved lines on a given entry, same trust model as
+  book reviews), owner-only delete. Capped at 500 chars (`MAX_LINE_LENGTH`).
+- **Social proof + cross-recommendations** — `get_social_proof( $viewer_user_id, $directory_id )`
+  (how many of the viewer's follows have this entry at `status='read'` vs. `'want_to_read'`, plus
+  up to 3 example loggers — uses `Culture_Follows::get_following()` for the ID list, no new
+  follow-adjacent infra needed) and `get_also_logged( $directory_id )` (a same-table
+  self-join co-occurrence query: other entries most commonly also on the "read" shelf of anyone
+  who has *this* entry on their "read" shelf, ranked by distinct-user count, hydrated into the
+  same card shape `get_user_shelf()` already returns). Also added `get_following_activity(
+  $viewer_user_id )` for the Home screen's "From people you follow" rail — the viewer's follows'
+  most recent finished (`status='read'`) shelf entries, hydrated with entry + logger info.
+  **Deliberately no star rating/comment enrichment on this feed** — that would need joining to a
+  linked review post per entry (same shape as `get_reading_stats()`'s `review_rows` query) and
+  was cut for scope; the mockup's "★★★★★ 5 of 5 / Finished it on the bus…" flourish isn't built,
+  only the plain "X logged this" fact.
+- `get_user_shelf()`'s and `get_also_logged()`'s returned entries both gained a `type` field
+  (the entry's `culture_dir_type` term slug) they didn't have before — needed so a card can show
+  a Book/Film/Place badge; neither method filtered by type to begin with, so this was purely
+  additive.
+- All five new capabilities are mirrored on **both** REST surfaces, same convention as every
+  other Reading Tracker endpoint — `/mobile/reading/saved-lines` (GET/POST + `/{id}` DELETE),
+  `/mobile/reading/social-proof`, `/mobile/reading/also-logged` (public — a property of the
+  entry itself), `/mobile/reading/following-activity` on the mobile/JWT side
+  (`class-culture-mobile-api.php`), and `/reading/saved-lines` etc. on the web/API-key side
+  (`class-culture-rest-api.php`) — even though only the mobile app consumes them in this pass,
+  keeping both mirrors is cheap here (each web handler is a 3-line delegate to the same PHP
+  class method) and avoids the exact kind of gap this file already warns about elsewhere.
+
+**Mobile UI, wired into the existing `DirectoryDetailScreen.tsx`** (no new route needed for
+this half):
+- `components/community/LogEntryPanel.tsx` (new) — "Add to your log" buttons (rendered only for
+  entry types that have a `SHELF_LABELS` entry — book/film/place; renders nothing for person/food/
+  etc.) plus the social-proof card underneath, right after the excerpt. Optimistic tap-to-toggle
+  (tapping the already-active button clears the shelf entry), reverts on a failed request.
+- `components/community/SavedLines.tsx` (new) — the "Lines saved from this" list + inline
+  "+ Save a line from this" composer, wired into every entry type (no type gate — a Person entry
+  gets this section same as a Book), placed right after the About/Mood-Pace card.
+- `screens/community/DirectoryDetailScreen.tsx` — imports both of the above, plus a new "People
+  who logged this also logged" horizontal rail (mirrors the existing "Related Entries" section's
+  visual shape) sourced from the new `also-logged` endpoint, placed just before "Related Entries".
+
+**Mobile UI, standalone (not yet reachable)**: `screens/community/LogHomeScreen.tsx` (new) — the
+actual "Home — the log" screen from the mockup: avatar + "Your log" header + notification bell,
+a "Log something" quick-chip row (Book/Film open an inline `DirectorySearch` modal that
+immediately shelves the pick as `want_to_read`; Music/Food navigate to the existing
+`NewPost` composer with `template: "music-review"|"food-review"` — no new shelf semantics needed
+for those two, they just reuse the existing review templates), an "In progress" horizontal rail
+(shelf entries at `status='currently_reading'`, with a one-tap "Finish · rate →" that moves the
+entry straight to `read`), a "Your year in culture" progress bar (the same generalized goal
+endpoint), and a "From people you follow" vertical activity feed. **This screen is not registered
+in `useNav.ts`'s `AppParamList` or any navigator, and the bottom tab bar is completely
+untouched** — per the explicit "build first, wire up nav after" scope, deciding when/whether to
+make this reachable (replace the Feed tab? add alongside it? something else) is a separate,
+later decision.
+
+**Explicitly deferred, not built in this pass** — flagged here so a future pass doesn't assume
+these exist: the bottom-nav rename/restructure itself; a "follow this person/topic" affordance
+for a Person directory entry (a different relationship from the member-to-member
+`Culture_Follows` system, which operates on WP user IDs, not directory post IDs — would need its
+own new backend); the Stoop proximity banner on a Place entry ("N people within 3 miles want to
+go too — starting a Stoop here puts it in the diary instead of the backlog") — this needs either
+real lat/long user geodata (not currently collected, only city/country strings) or a coarser
+city-string-match approximation, either way a deliberate follow-up decision, not built here;
+star ratings/comments on the "From people you follow" activity rail (see `get_following_activity`'s
+own note above); and any web (`apps/connect`/`apps/site`) equivalent of `LogHomeScreen`/
+`LogEntryPanel`/`SavedLines` — this pass is mobile-only on the UI side, though the REST layer is
+already mirrored for whenever web parity is wanted.
+
+Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+credentials gap as every other pass in this file; this pass needs the plugin redeployed (manual
+zip+upload, see "Plugin DB table auto-upgrade" above) before the new `wp_culture_saved_lines`
+table and any of the five new routes exist in production. Verified via `php -l` on every touched
+PHP file and a brace/paren/bracket balance check on every new/touched TS/TSX file (no
+`node_modules` installed this session, so `tsc --noEmit` couldn't run, and no device/simulator
+available to actually render `LogHomeScreen`). Re-check the full round trip — shelving a
+film/place, saving a line on a person entry, the social-proof/also-logged counts, and the
+Log home screen's own quick-log/in-progress/goal/activity sections — on a real device before
+considering this fully closed.
+
 ---
 
 ## Interest taxonomy (canonical slugs)

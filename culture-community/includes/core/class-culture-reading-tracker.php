@@ -15,9 +15,26 @@
  * pace, aggregated by mode across every member's vote for that book. This
  * pass adds Phase 4 (§2/§4): the stats dashboard's `get_reading_stats()`
  * aggregation — a pure per-user raw-SQL read, never a WP_Query loop, per
- * CLAUDE.md's "Raw SQL REST endpoints" convention. Buddy Reads prefill and
- * the gamification hook are still later phases and are not implemented
- * here yet.
+ * CLAUDE.md's "Raw SQL REST endpoints" convention.
+ *
+ * September 2026, "Log-First" pass — this generalizes the shelf mechanism
+ * from books-only into a cross-type personal log, per a "Moveee Home —
+ * Log-First" mockup: `set_shelf_status()` never actually restricted
+ * `directory_id` to book-type entries (only `vote_mood_pace()` does), so
+ * Place entries can already use the same three statuses today, just
+ * relabelled client-side ("want_to_read" -> "Want to go", "read" ->
+ * "Been" — "currently_reading" is simply never shown as a button for a
+ * place). `get_goal()` counting every status='read' row with no type filter
+ * means a shelved Film/Place already counts toward the per-year goal for
+ * free — the mockup's "Your year in culture" is this same goal endpoint,
+ * just relabelled once more than one type is in use. Two genuinely new
+ * pieces are added by this pass: **saved lines** (a short quote a member
+ * attaches to any directory entry — book, person, talk — independent of
+ * shelf status, since a Person entry has no "read/watched" concept at all)
+ * and **social proof / also-logged** (which of the viewer's follows have
+ * logged this entry, and what else people who logged it also logged).
+ * Buddy Reads prefill and the gamification hook are still later phases and
+ * are not implemented here yet.
  *
  * Single source of truth for both REST surfaces (mobile JWT + web API-key),
  * same mirrored-endpoint convention as Culture_Community_RSVP/Culture_Follows.
@@ -61,6 +78,13 @@ class Culture_Reading_Tracker {
         return $wpdb->prefix . 'culture_book_mood_votes';
     }
 
+    public static function saved_lines_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_saved_lines';
+    }
+
+    const MAX_LINE_LENGTH = 500;
+
     public static function create_table() {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
@@ -103,6 +127,18 @@ class Culture_Reading_Tracker {
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY directory_user (directory_id, user_id)
+        ) {$charset_collate};" );
+
+        $lines_table = self::saved_lines_table();
+        dbDelta( "CREATE TABLE {$lines_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            directory_id bigint(20) NOT NULL,
+            user_id bigint(20) NOT NULL,
+            line_text text NOT NULL,
+            source_context varchar(140) DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY directory_created (directory_id, created_at)
         ) {$charset_collate};" );
     }
 
@@ -249,11 +285,13 @@ class Culture_Reading_Tracker {
             $post  = $posts_by_id[ $dir_id ];
             $thumb = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
                 ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
 
             $entries[] = array(
                 'directoryId'   => $post->ID,
                 'title'         => $post->post_title,
                 'slug'          => $post->post_name,
+                'type'          => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
                 'thumbnail'     => $thumb ?: null,
                 'author'        => Culture_Directory::get_first_about_field( $post->ID ),
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
@@ -608,5 +646,281 @@ class Culture_Reading_Tracker {
             'top_genres'         => $top_genres,
             'books_per_month'    => $books_per_month_list,
         );
+    }
+
+    /* ——————————————————————————————————————
+     *  Saved lines ("Log-First" pass, September 2026)
+     *
+     *  A short quote a member attaches to any culture_directory entry —
+     *  book, person, talk-as-source-context — independent of shelf status,
+     *  since a Person entry has no "read/watched" state at all. Public
+     *  read (any authenticated member sees everyone's saved lines on a
+     *  given entry, same as book reviews), owner-only delete.
+     * —————————————————————————————————————— */
+
+    /**
+     * @return array|WP_Error
+     */
+    public static function save_line( int $user_id, int $directory_id, string $line_text, string $source_context = '' ) {
+        $post = get_post( $directory_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return new WP_Error( 'invalid_entry', 'This entry could not be found.', array( 'status' => 400 ) );
+        }
+
+        $line_text = trim( wp_strip_all_tags( $line_text ) );
+        if ( '' === $line_text ) {
+            return new WP_Error( 'empty_line', 'The saved line cannot be empty.', array( 'status' => 400 ) );
+        }
+        if ( mb_strlen( $line_text ) > self::MAX_LINE_LENGTH ) {
+            $line_text = mb_substr( $line_text, 0, self::MAX_LINE_LENGTH );
+        }
+        $source_context = sanitize_text_field( $source_context );
+        if ( mb_strlen( $source_context ) > 140 ) {
+            $source_context = mb_substr( $source_context, 0, 140 );
+        }
+
+        global $wpdb;
+        $wpdb->insert( self::saved_lines_table(), array(
+            'directory_id'   => $directory_id,
+            'user_id'        => $user_id,
+            'line_text'      => $line_text,
+            'source_context' => '' !== $source_context ? $source_context : null,
+            'created_at'     => current_time( 'mysql' ),
+        ) );
+
+        return array( 'id' => (int) $wpdb->insert_id, 'directoryId' => $directory_id );
+    }
+
+    /**
+     * Public — every saved line on this entry, newest first, with the
+     * saving member's display name/avatar. $viewer_user_id (optional) is
+     * only used so the frontend can show a delete affordance on the
+     * viewer's own lines.
+     */
+    public static function get_saved_lines( int $directory_id, int $viewer_user_id = 0, int $limit = 20 ) : array {
+        global $wpdb;
+        $limit = min( 50, max( 1, $limit ) );
+        $rows  = $wpdb->get_results( $wpdb->prepare(
+            "SELECT l.id, l.user_id, l.line_text, l.source_context, l.created_at, u.display_name
+             FROM " . self::saved_lines_table() . " l
+             INNER JOIN {$wpdb->users} u ON u.ID = l.user_id
+             WHERE l.directory_id = %d
+             ORDER BY l.created_at DESC
+             LIMIT %d",
+            $directory_id, $limit
+        ), ARRAY_A );
+
+        $lines = array();
+        foreach ( $rows ?: array() as $row ) {
+            $lines[] = array(
+                'id'            => (int) $row['id'],
+                'lineText'      => $row['line_text'],
+                'sourceContext' => $row['source_context'] ?: null,
+                'createdAt'     => $row['created_at'],
+                'authorId'      => (int) $row['user_id'],
+                'authorName'    => $row['display_name'],
+                'authorAvatar'  => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                'isMine'        => $viewer_user_id > 0 && $viewer_user_id === (int) $row['user_id'],
+            );
+        }
+        return $lines;
+    }
+
+    public static function delete_saved_line( int $user_id, int $line_id ) : bool {
+        global $wpdb;
+        return false !== $wpdb->delete(
+            self::saved_lines_table(),
+            array( 'id' => $line_id, 'user_id' => $user_id ),
+            array( '%d', '%d' )
+        );
+    }
+
+    /* ——————————————————————————————————————
+     *  Social proof + cross-recommendations ("Log-First" pass)
+     * —————————————————————————————————————— */
+
+    /**
+     * How many of $viewer_user_id's follows have logged this entry, split
+     * by "done" (read/watched/been — status='read') vs. "want to" (status=
+     * 'want_to_read'), plus up to 3 example loggers for display. Returns an
+     * all-zero shape (never an error) when the viewer follows no one or
+     * has no follows on this entry — matches this codebase's "degrade
+     * gracefully, never fabricate" convention rather than hiding the
+     * section entirely, since the frontend already treats zero as its own
+     * empty state.
+     */
+    public static function get_social_proof( int $viewer_user_id, int $directory_id ) : array {
+        global $wpdb;
+        $following_ids = wp_list_pluck( Culture_Follows::get_following( $viewer_user_id, 500 ), 'followed_id' );
+        $following_ids = array_map( 'intval', $following_ids );
+
+        if ( empty( $following_ids ) ) {
+            return array( 'doneCount' => 0, 'wantCount' => 0, 'examples' => array() );
+        }
+
+        $ids_in = implode( ',', $following_ids );
+        $table  = self::table();
+
+        $done_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE directory_id = %d AND status = 'read' AND user_id IN ({$ids_in})",
+            $directory_id
+        ) );
+        $want_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE directory_id = %d AND status = 'want_to_read' AND user_id IN ({$ids_in})",
+            $directory_id
+        ) );
+
+        $example_rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.user_id, s.status, s.finished_at, u.display_name
+             FROM {$table} s
+             INNER JOIN {$wpdb->users} u ON u.ID = s.user_id
+             WHERE s.directory_id = %d AND s.status = 'read' AND s.user_id IN ({$ids_in})
+             ORDER BY s.finished_at DESC
+             LIMIT 3",
+            $directory_id
+        ), ARRAY_A );
+
+        $examples = array();
+        foreach ( $example_rows ?: array() as $row ) {
+            $examples[] = array(
+                'userId'    => (int) $row['user_id'],
+                'name'      => $row['display_name'],
+                'avatar'    => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                'loggedAt'  => $row['finished_at'],
+            );
+        }
+
+        return array( 'doneCount' => $done_count, 'wantCount' => $want_count, 'examples' => $examples );
+    }
+
+    /**
+     * "People who logged this also logged…" — co-occurrence over the
+     * shelf table: other entries that show up on the "read" shelf of
+     * anyone who has *this* entry on their "read" shelf, ranked by how
+     * many distinct people logged both. Reuses the same card shape as
+     * get_user_shelf()'s entries so the frontend can render both with one
+     * component.
+     */
+    public static function get_also_logged( int $directory_id, int $limit = 4 ) : array {
+        global $wpdb;
+        $table = self::table();
+        $limit = min( 12, max( 1, $limit ) );
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s2.directory_id, COUNT(DISTINCT s2.user_id) AS c
+             FROM {$table} s1
+             INNER JOIN {$table} s2 ON s2.user_id = s1.user_id AND s2.directory_id != s1.directory_id AND s2.status = 'read'
+             WHERE s1.directory_id = %d AND s1.status = 'read'
+             GROUP BY s2.directory_id
+             ORDER BY c DESC
+             LIMIT %d",
+            $directory_id, $limit
+        ), ARRAY_A );
+
+        if ( ! $rows ) {
+            return array();
+        }
+
+        $ids   = array_map( 'intval', wp_list_pluck( $rows, 'directory_id' ) );
+        $posts = get_posts( array(
+            'post_type'      => 'culture_directory',
+            'post__in'       => $ids,
+            'posts_per_page' => count( $ids ),
+            'post_status'    => 'publish',
+            'orderby'        => 'post__in',
+        ) );
+
+        $counts_by_id = array_map( 'intval', array_combine( wp_list_pluck( $rows, 'directory_id' ), wp_list_pluck( $rows, 'c' ) ) );
+
+        $entries = array();
+        foreach ( $posts as $post ) {
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
+                ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
+            $entries[]  = array(
+                'directoryId' => $post->ID,
+                'title'       => $post->post_title,
+                'slug'        => $post->post_name,
+                'type'        => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
+                'thumbnail'   => $thumb ?: null,
+                'author'      => Culture_Directory::get_first_about_field( $post->ID ),
+                'peopleCount' => $counts_by_id[ $post->ID ] ?? 0,
+            );
+        }
+
+        return $entries;
+    }
+
+    /**
+     * "From people you follow" — the Log home screen's activity rail: the
+     * viewer's follows' most recent finished (status='read') shelf entries.
+     * Public data by construction (who a viewer follows, and what those
+     * people logged, is already visible via their public shelf/profile) but
+     * still scoped to $viewer_user_id's own follow list, same as every
+     * other follow-scoped read in this codebase.
+     */
+    public static function get_following_activity( int $viewer_user_id, int $limit = 10 ) : array {
+        $following_ids = array_map( 'intval', wp_list_pluck( Culture_Follows::get_following( $viewer_user_id, 200 ), 'followed_id' ) );
+        if ( empty( $following_ids ) ) {
+            return array();
+        }
+
+        global $wpdb;
+        $ids_in = implode( ',', $following_ids );
+        $table  = self::table();
+        $limit  = min( 30, max( 1, $limit ) );
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.user_id, s.directory_id, s.status, s.finished_at, u.display_name
+             FROM {$table} s
+             INNER JOIN {$wpdb->users} u ON u.ID = s.user_id
+             WHERE s.user_id IN ({$ids_in}) AND s.status = 'read'
+             ORDER BY s.finished_at DESC
+             LIMIT %d",
+            $limit
+        ), ARRAY_A );
+
+        if ( ! $rows ) {
+            return array();
+        }
+
+        $dir_ids = array_map( 'intval', wp_list_pluck( $rows, 'directory_id' ) );
+        $posts   = get_posts( array(
+            'post_type'      => 'culture_directory',
+            'post__in'       => $dir_ids,
+            'posts_per_page' => count( $dir_ids ),
+            'post_status'    => 'publish',
+        ) );
+        $posts_by_id = array();
+        foreach ( $posts as $p ) {
+            $posts_by_id[ $p->ID ] = $p;
+        }
+
+        $activity = array();
+        foreach ( $rows as $row ) {
+            $dir_id = (int) $row['directory_id'];
+            if ( ! isset( $posts_by_id[ $dir_id ] ) ) {
+                continue;
+            }
+            $post       = $posts_by_id[ $dir_id ];
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
+            $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
+                ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+
+            $activity[] = array(
+                'userId'      => (int) $row['user_id'],
+                'userName'    => $row['display_name'],
+                'userAvatar'  => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                'directoryId' => $post->ID,
+                'title'       => $post->post_title,
+                'slug'        => $post->post_name,
+                'type'        => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
+                'thumbnail'   => $thumb ?: null,
+                'author'      => Culture_Directory::get_first_about_field( $post->ID ),
+                'loggedAt'    => $row['finished_at'],
+            );
+        }
+
+        return $activity;
     }
 }

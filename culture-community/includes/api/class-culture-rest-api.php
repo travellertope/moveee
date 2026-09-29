@@ -1575,6 +1575,64 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Saved lines + social proof / also-logged (web — API key, explicit
+        // user_id param). Mirrors /mobile/reading/saved-lines etc. in
+        // class-culture-mobile-api.php.
+        register_rest_route( 'culture/v1', '/reading/saved-lines', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_save_line' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'         => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id'    => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'line_text'       => array( 'required' => true, 'type' => 'string' ),
+                'source_context'  => array( 'type' => 'string' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/saved-lines', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_get_saved_lines' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'user_id'      => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/saved-lines/(?P<id>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_reading_delete_saved_line' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/social-proof', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_social_proof' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/also-logged', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_also_logged' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reading/following-activity', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_following_activity' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'limit'   => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
@@ -2225,6 +2283,48 @@ class Culture_REST_API {
         $user_id = (int) $request->get_param( 'user_id' );
         $year    = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
         return rest_ensure_response( Culture_Reading_Tracker::get_reading_stats( $user_id, $year ) );
+    }
+
+    public static function handle_reading_save_line( $request ) {
+        $user_id        = (int) $request->get_param( 'user_id' );
+        $directory_id   = (int) $request->get_param( 'directory_id' );
+        $line_text      = (string) $request->get_param( 'line_text' );
+        $source_context = (string) $request->get_param( 'source_context' );
+        $result         = Culture_Reading_Tracker::save_line( $user_id, $directory_id, $line_text, $source_context );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_get_saved_lines( $request ) {
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $user_id      = (int) $request->get_param( 'user_id' );
+        return rest_ensure_response( array( 'lines' => Culture_Reading_Tracker::get_saved_lines( $directory_id, $user_id ) ) );
+    }
+
+    public static function handle_reading_delete_saved_line( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $line_id = (int) $request->get_param( 'id' );
+        Culture_Reading_Tracker::delete_saved_line( $user_id, $line_id );
+        return rest_ensure_response( array( 'removed' => true ) );
+    }
+
+    public static function handle_reading_social_proof( $request ) {
+        $viewer_user_id = (int) $request->get_param( 'user_id' );
+        $directory_id   = (int) $request->get_param( 'directory_id' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_social_proof( $viewer_user_id, $directory_id ) );
+    }
+
+    public static function handle_reading_also_logged( $request ) {
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        return rest_ensure_response( array( 'entries' => Culture_Reading_Tracker::get_also_logged( $directory_id ) ) );
+    }
+
+    public static function handle_reading_following_activity( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $limit   = (int) $request->get_param( 'limit' ) ?: 10;
+        return rest_ensure_response( array( 'activity' => Culture_Reading_Tracker::get_following_activity( $user_id, $limit ) ) );
     }
 
     public static function handle_community_event_rsvp( $request ) {
