@@ -61,6 +61,15 @@ export default {
       // file hosted at https://themoveee.com/.well-known/
       // apple-app-site-association — see apps/site/app/.well-known/.
       associatedDomains: ["webcredentials:themoveee.com"],
+      // Sign in with Apple. The expo-apple-authentication plugin writes the
+      // com.apple.developer.applesignin entitlement into the native project,
+      // but EAS reads THIS config field when it syncs capabilities onto the
+      // App ID and mints a provisioning profile — so without it a profile can
+      // be issued that the entitlement then fails to match, which is exactly
+      // the "Provisioning Profile ... does not support the Sign In with Apple
+      // capability" archive failure. Keep both: the plugin for the native
+      // build, this field for the credentials side.
+      usesAppleSignIn: true,
     },
     android: {
       package: "com.moveee.connect",
@@ -88,7 +97,11 @@ export default {
       [
         "expo-build-properties",
         {
-          ios: { deploymentTarget: "15.1" },
+          // SDK 57 enforces a floor of 16.4 — below that `expo config`
+          // refuses to load. This supersedes the old 15.1 value, which was
+          // set only to clear react-native-passkeys' own 15.0+ requirement.
+          // Consequence: iOS 15 devices are no longer supported.
+          ios: { deploymentTarget: "16.4" },
         },
       ],
       [
@@ -130,13 +143,10 @@ export default {
         "@react-native-google-signin/google-signin",
         { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
       ],
+      // v14 ships no Android product flavors, so the old
+      // withAndroidIapStoreFlavor missingDimensionStrategy hint is gone with
+      // it. This plugin now only adds iOS StoreKit entitlements.
       "react-native-iap",
-      // react-native-iap ships both "amazon" and "play" Android product
-      // flavors — Gradle can't resolve which one to use without this hint.
-      // Must come after the "react-native-iap" plugin above so the Gradle
-      // file it patches already has the dependency block react-native-iap's
-      // own plugin adds.
-      "./plugins/withAndroidIapStoreFlavor",
       // Patches native iOS/Android projects (dSYM/ProGuard mapping upload
       // build phases) and, when a SENTRY_AUTH_TOKEN env var is present at
       // build time (EAS Secret — never hardcoded), uploads JS source maps
@@ -164,14 +174,6 @@ export default {
       // the newer Xcode/Clang required by eas.json's build.production.ios.image
       // ("latest"). See apps/mobile/plugins/withFmtConstevalFix.js.
       "./plugins/withFmtConstevalFix",
-      // Works around an Android Gradle build failure (Gradle's stricter
-      // task-validation rejecting a race between two duplicate
-      // :sentry-react-native / :sentry_react-native Gradle project
-      // registrations for @sentry/react-native, caused by that package
-      // being picked up by both classic RN autolinking and Expo Modules
-      // autolinking on this SDK-52-pinned project). See
-      // apps/mobile/plugins/withSentryGradleTaskOrderingFix.js.
-      "./plugins/withSentryGradleTaskOrderingFix",
     ],
     extra: {
       eas: {

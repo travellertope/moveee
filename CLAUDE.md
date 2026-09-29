@@ -433,25 +433,40 @@ codebase or in anyone's browser needed updating.
 - **Moveee Content** (anchor slug `culture-content-manager`, same pattern,
   added September 2026) — a catch-all for general content CPTs that don't
   belong under any of the other top-level menus: Directory
-  (`culture_directory`), Quotes (`culture_quote`), Community Posts
-  (`culture_post`), Journeys (`culture_journey` — all four native CPT
-  screens, `show_in_menu` pointing at `culture-content-manager`, all were
-  under Culture Community), plus **Directory Tools** (`culture-directory-tools`,
-  moved from Culture Community — it manages the Directory CPT's seeder/image
-  tools, so it belongs alongside Directory itself). Registered in the new
-  `class-culture-content-admin.php` (top-level `add_menu_page()` + the anchor
-  submenu, a plain landing page linking out to each CPT's list screen — there
-  was never a real admin page for these CPTs before, just their native WP
-  list/edit screens, so this class only registers the menu shell). Directory
-  Tools' `enqueue_assets()` hook-suffix check was updated to
-  `culture-content-manager_page_culture-directory-tools` — see the hook-suffix
-  gotcha note below.
-  **Whether Quotes (`culture_quote`) is still worth keeping as a separate
-  content type** — now that quotes render natively inline in the unified
-  feed (see "Quotes feed merge" elsewhere in this file) — is an open product
-  question, not yet decided; it was moved here for menu-organization
-  purposes only, independent of that decision. If quotes are ever fully
-  retired into community posts, this menu entry is what to remove.
+  (`culture_directory`), Feed Posts (`culture_post`, sidebar label renamed
+  from "All Community Posts" — see below), Journeys (`culture_journey` — all
+  native CPT screens, `show_in_menu` pointing at `culture-content-manager`,
+  all were under Culture Community), plus **Directory Tools**
+  (`culture-directory-tools`, moved from Culture Community — it manages the
+  Directory CPT's seeder/image tools, so it belongs alongside Directory
+  itself). Registered in the new `class-culture-content-admin.php` (top-level
+  `add_menu_page()` + the anchor submenu, a plain landing page linking out to
+  each CPT's list screen — there was never a real admin page for these CPTs
+  before, just their native WP list/edit screens, so this class only
+  registers the menu shell). Directory Tools' `enqueue_assets()` hook-suffix
+  check was updated to `culture-content-manager_page_culture-directory-tools`
+  — see the hook-suffix gotcha note below.
+  **Quotes (`culture_quote`) removed from the sidebar entirely (September
+  2026, follow-up to the same-month "Quotes feed merge")** — the previous
+  entry here flagged this as an open question ("if quotes are ever fully
+  retired into community posts, this menu entry is what to remove"); the
+  same pass that removed the standalone `/quotes` archive/author pages and
+  submission UI from the site (see "Quotes feed merge" elsewhere in this
+  file) made the sidebar entry pointless, since there's no longer a browsing
+  surface that points an editor at individual quote management day-to-day.
+  `culture_quote` itself is **not** deleted or hidden from the DB/REST/
+  GraphQL layer — it's still what backs quote cards in the unified feed and
+  `/quotes/[slug]` single pages — only `show_in_menu` flipped to `false` in
+  `class-culture-post-types.php` (same "hide the native screen, keep it
+  reachable by direct URL" pattern already used for `culture_cluster`/
+  `culture_hub`). The Moveee Content landing page keeps one plain link to
+  `edit.php?post_type=culture_quote` for when a quote genuinely needs manual
+  editing (the Bulk Quote Importer CSV panel on Directory Tools is still the
+  normal way to add quotes in bulk — see "Quotes feed merge" for what's
+  automated vs. manual). **"Community Posts" CPT's `all_items` label renamed
+  to "Feed Posts"** (was "All Community Posts") — copy-only, the CPT's own
+  `name`/`singular_name`/slug/REST base (`community-posts`) and everything
+  else about it are unchanged.
 - **Moveee Literary** (anchor slug `culture-literary-submissions`, same
   pattern) — just Literary Submissions (the submissions manager + its
   Waivers tab) today; registered in `class-culture-literary-submissions.php`.
@@ -802,11 +817,158 @@ language into this vertical's user-facing copy unless a real print product is co
 Critics" — legitimate use of "The X" as this section's own proper noun, not the "The Moveee"
 generic-brand-name bug documented elsewhere in this file.
 
+### Three-tier membership — Moveee Lit (September 2026)
+
+A third membership tier, **Moveee Lit** — `_culture_membership_tier` value `'lit'`, alongside the
+existing `'citizen'` (free) and `'patron'` (Moveee Pro, paid). Explicit spec from the user:
+"Moveee Lit — everything in citizen plus access to everything in Moveee Literary." This
+**reverses** the decision documented in "Literary access gating" below against a separate
+Literary tier — the user confirmed this scope directly after being shown the tradeoff (the
+two-tier boolean was baked into dozens of touchpoints across web/mobile/PHP).
+
+**The load-bearing property that made this tractable**: every gating check in this codebase —
+web, mobile, and PHP alike — is a *strict* equality/inequality against the literal string
+`'patron'` (`tier === "patron"` / `'patron' === $tier`), never a "not citizen" or ordinal
+comparison. That means introducing a third value is safe by default everywhere: any check that
+was never explicitly updated for `'lit'` still correctly treats a Lit member the same as a
+Citizen (i.e., **not** Pro) for that feature — shop discount, game-play/credit caps, cashout,
+Poll/Itinerary templates, feed-boost, Magazine's own patron-only gate, event RSVP management, etc.
+all remain Pro-only, untouched. Only the few places that needed to explicitly *grant* something
+to Lit are listed below — everything else needed zero changes.
+
+**Where Lit actually grants access — Literary only, never Magazine:**
+- `Culture_Literary_Access::verify_code()` (`culture-community/includes/core/
+  class-culture-literary-access.php`) resolves a verified email's access as `'pro'` when the
+  account's tier is `patron`, or **`'lit'`** when the tier is `lit` **and** the caller's
+  `$context === 'literary'`. A Lit-tier member verifying through the *Magazine* gate
+  (`$context === 'magazine'`) still gets plain `'free'` — this one context check is what keeps
+  Lit from ever unlocking Magazine's separate patron-only content. The signed token's `access`
+  value is now `'free' | 'lit' | 'pro'` (widened in both `make_token()`/`verify_token()` here and
+  `apps/site/lib/literary-access.ts`'s `LiteraryAccess` type) — Magazine's own check
+  (`apps/site/app/magazine/[slug]/page.tsx`, `app/api/magazine/remainder/route.ts`) still compares
+  strictly against `'pro'`, so it was never touched and can't be fooled by a `'lit'` token.
+- `apps/site/app/literary/[slug]/page.tsx`'s `PiecePage` and `app/api/literary/remainder/
+  route.ts` both compute `hasLiteraryFullAccess` (or equivalent inline) as `isPatron || isLit ||
+  litToken?.access === "pro" || litToken?.access === "lit"` — this is the only widened check on
+  either file.
+- `LiteraryPieceGate.tsx`'s `mode === "pro"` gate now unlocks on `json.access === "lit"` too, and
+  its copy/upgrade CTA leads with **Moveee Lit** (cheaper, and it's exactly what unlocks this
+  content) rather than Pro — `/register?tier=lit`, not `/register?tier=patron`.
+- **If a Lit-tier member's real WP session (not the OTP token) is what's being checked**
+  (`session.user.tier`), the same `|| isLit` / `|| tier === "lit"` pattern applies — grep
+  `apps/site/app/literary/[slug]/page.tsx` for the canonical shape if extending this further.
+
+**Payment — Paystack + Stripe, parallel to the existing Patron flow, not a new gateway:**
+- `Culture_Paystack`/`Culture_Stripe`'s `get_plan_code()`/`get_amount_lowest()`/`get_price_id()`
+  all take a `$tier` param now. `'patron'` keeps the exact pre-existing option-key shape
+  (`culture_paystack_plan_{cycle}_{currency}`, `culture_stripe_price_{cycle}_usd`) so nothing
+  needed re-configuring for Pro; `'lit'` reads a parallel `_lit`-suffixed key
+  (`culture_paystack_plan_{cycle}_{currency}_lit`, `culture_stripe_price_{cycle}_usd_lit`),
+  falling back to roughly a third of the matching Patron amount when unset. **Configure real Lit
+  prices/plan codes in WP Admin → Culture Community → Payment** — new "Moveee Lit — Nigeria
+  (NGN) Plans" and "Moveee Lit — Stripe (USD) Price IDs" sections, mirroring the existing Patron
+  fields exactly (`class-culture-settings.php`).
+- **Paystack needed a "remember which tier this checkout is for" mechanism** since its webhook
+  (`subscription.create`) carries no metadata of its own — `_culture_pending_tier` usermeta is
+  set right before every checkout is initiated (`init_checkout_session()`,
+  `process_checkout_action()`, `ajax_init_payment()`) and read back (defaulting to `'patron'` for
+  backward compatibility with any in-flight checkout that predates this change) by whichever of
+  `handle_payment_callback()`/`handle_subscription_create()` completes first, then deleted.
+  Stripe doesn't need this — its Checkout Session `metadata.tier` survives round-trip to the
+  `checkout.session.completed` webhook natively, so `upgrade_user()` just reads it back directly.
+- `POST /culture/v1/user/upgrade-init` (existing-user upgrade flow, called by
+  `apps/connect/app/api/membership/upgrade-init/route.ts` **and** its Site A twin,
+  `apps/site/app/api/membership/upgrade-init/route.ts` — the latter didn't exist before this
+  pass; Site A's own `/register/complete` page was calling a route that had never been created,
+  a real pre-existing bug this work happened to surface and fix) and `POST /culture/v1/
+  complete-profile` (new-user registration flow) both accept an optional `tier` param (`'lit'` or
+  `'patron'`, defaulting to `'patron'`) and pass it straight through to
+  `Culture_Paystack::get_checkout_url()`/`Culture_Stripe::get_checkout_url()`.
+- **Registration** (`class-culture-registration.php`'s shortcode form): the tier radio group
+  gained a Lit card between Citizen and Patron; server-side validation widened from
+  `['citizen','patron']` to `['citizen','lit','patron']`; a Lit signup redirects to Paystack
+  checkout exactly like Patron does (`Culture_Paystack::get_checkout_url($user_id,
+  'monthly_ngn', $tier)`).
+- **`apps/site/app/register/complete/page.tsx` and its `apps/connect` twin** (byte-identical
+  logic, different `auth-*`-class-based styling — keep both in sync) — the membership step's
+  tier state widened to `"citizen" | "lit" | "patron"`, a 3-card grid (Citizen/Lit/Pro,
+  `.auth-tier-grid` bumped from a 2-col to a 3-col/2-col/1-col responsive grid in
+  `apps/connect/app/auth.css`), and `?upgrade=lit` (alongside the existing `?upgrade=patron`) on
+  both `/register` and `/register/complete` pre-selects and fast-tracks straight to the
+  membership step for an already-logged-in member upgrading in place.
+
+**WP Admin — "Pro Memberships" renamed to "Paid Memberships"**
+(`class-culture-memberships.php`, same `culture-memberships` slug, unchanged URLs): the list
+query, status-count SQL, and pagination all widened from a hardcoded `meta_value = 'patron'` to
+`IN ('patron', 'lit')`; a new Tier filter tab row (All / Moveee Pro / Moveee Lit) sits above the
+existing Status tabs; the list table gained a Tier column; the Add/Edit form's tier `<select>`
+gained a Lit option; `handle_save()`'s allow-list widened to `['patron','lit','citizen']`.
+
+**Two latent bugs this surfaced and fixed, unrelated to the UI work above but load-bearing**:
+1. `Culture_Cron`'s manual-expiry sweep (`class-culture-cron.php`) queried strictly
+   `_culture_membership_tier = 'patron'` before checking whether an admin-set expiry date had
+   passed — a Lit member given a manual expiry date would never have been auto-downgraded to
+   Citizen. Widened to `IN ('patron', 'lit')`.
+2. `Culture_Emails::send_payment_receipt()` hardcoded its plan-name fallback to `"Patron
+   Membership"` whenever the payment payload didn't carry an explicit plan name (true for every
+   Paystack/Stripe flow in this codebase) — a Lit purchaser's receipt would have said "Patron
+   Membership." Fixed to read the user's just-granted tier fresh and pick the matching default.
+
+**Deliberately not built in this pass**: a native Google Play Billing SKU for Lit on Android
+(`MembershipScreen.tsx`'s Lit card always says "Upgrade on the web," same as iOS's Pro path —
+see "Google Play Billing" elsewhere in this file for why a second real Play Console subscription
+product is a human-setup step, not something code alone can do) and any live-pricing API for the
+marketing pages that display a Lit price (`apps/connect/app/connect/membership/page.tsx`,
+`apps/site/app/features/membership/page.tsx` both show a hardcoded fallback figure —
+`PatronPrice.tsx`'s own live-pricing plumbing is itself dead code today, since
+`apps/connect/app/layout.tsx` passes `initialPricing={null}` unconditionally; a Lit price display
+was made consistent with that pre-existing state, not worse than it).
+
+**Citizen-vs-Lit pricing table added to `/literary/subscribe` (September 2026 follow-up)** —
+`apps/site/app/literary/subscribe/page.tsx` (the destination for `/literary`'s "Get Updates"
+ribbon/masthead "Subscribe" pill — see "Magic-code sign-in + subscribe" above) previously only
+offered the free GetMeLit OTP signup, with no Lit-membership upsell on the page at all. Added a
+two-card pricing table (new `.lit-pricing-*` classes in `literary.css`, styled off the section's
+own oxblood/parchment palette rather than the sitewide tokens, per this vertical's standing
+"own standalone brand identity" rule) directly above the `<LiterarySubscribeForm>`:
+- **Moveee Citizen** — free; `LITERARY_FREE_READ_LIMIT` (3, imported from `lib/literary-access.ts`
+  rather than hardcoded) free reads every 30 days; GetMeLit/Culture Drop; the rest of Moveee.
+- **Moveee Lit** — real pricing (₦1,500/mo or ₦15,000/yr, $1/mo or $13/yr — same figures already
+  shipped on `/register/complete`'s membership step, not re-derived): everything in Citizen, plus
+  unmetered full access to every piece (public and exclusive alike), **commenting on stories**,
+  early news/previews/event invites (especially Literati Connect), and complimentary "TML
+  Originals × The Moveee Literary" merch for annual subscribers only.
+- **"Comment on stories" built, same follow-up session.** New: `apps/site/components/
+  LiteraryComments.tsx` — a Literary-branded sibling of `ArticleComments.tsx`, same `/api/comments`
+  backend and `Comment` shape, but its own JSX/CSS (`.lit-comments-*` in `literary.css`, not
+  `editorial.css`'s `.ar-gate`/`.comments` families) since this section runs its own `--lit-*`
+  design tokens. Mounted at the bottom of the piece body in `app/literary/[slug]/page.tsx`
+  (`<LiteraryComments postId={post.databaseId} canComment={hasLiteraryFullAccess} />`) — gated
+  on the exact same `hasLiteraryFullAccess` check every other Literary-only feature already uses
+  (`isLit || isPatron || litToken?.access === "pro" || litToken?.access === "lit"`), confirmed
+  directly with the user rather than assumed: **Moveee Pro also gets to comment, same as every
+  other Literary-only feature** — a literal "Moveee Lit only, excluding Pro" reading was floated
+  and explicitly rejected in favor of staying consistent with the rest of this section's gating.
+  Three states: signed-in + gated tier → real composer; signed-in + ungated (Citizen) → an inline
+  upsell card ("Comments are for members" + an Upgrade-to-Lit CTA); signed-out → the same card
+  with a sign-in link added. The comment thread itself (once posted) is always visible to every
+  reader regardless of tier — only *posting* is gated, reading isn't. **Not built**: replies/likes
+  on individual comments (no such backend concept exists here either, same limitation
+  `ArticleComments.tsx` has). Not visually verified in a browser — same `NEXTAUTH_SECRET`/
+  WordPress credentials gap as every other pass in this file. Verified via a brace/paren-balance
+  check on both new/edited files.
+
 ### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
 
-Pro-only Literary pieces are folded into the **existing** Moveee Pro mechanism — no separate
-"Literary Club" membership tier was built, per an explicit decision against that ("fold it into
-Moveee Pro" beats a second paid tier splitting the audience). All non-logged-in readers are also
+**Superseded in part by "Three-tier membership — Moveee Lit" above.** Pro-only Literary pieces
+were originally folded into the existing Moveee Pro mechanism only — no separate tier — per an
+explicit decision against a second paid tier splitting the audience. That decision was
+**reversed** the same month: Moveee Lit now also unlocks every Pro-only Literary piece (see that
+section for the mechanics — the `pro`/`lit` access split is deliberate and Magazine-side gating is
+untouched). Everything below in this section (the metering, the OTP mechanism, the truncation)
+is unchanged; only which tiers can satisfy `accessLevel === "patron-only"` grew.
+
+All non-logged-in readers are also
 metered: a limited number of free Literary reads per rolling 30 days, enforced server-side
 (genuine truncation of the HTML that's sent, not a client-hidden soft gate), with a compact inline
 email/OTP box doing double duty as both the unlock mechanism and the list-building funnel.
@@ -1599,6 +1761,20 @@ unillustrated flat gradient with cryptic text. Fixed:
   every other pass in this file. Verified via brace/paren-balance checks on
   `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
 
+**`LITERARY_HOMEPAGE_CUTOFF` extended to every `/literary` listing, not just the homepage, and
+moved into `wp.ts` (September 2026, follow-up).** Per explicit request, the fixed
+"nothing published before this date shows in a listing" cutoff — previously local to
+`app/literary/page.tsx` and applied only to the homepage's hero/Latest/In Translation pools —
+now also applies to a genre archive's main grid (`/literary/{genre}`) and a single piece's
+"More In {genre}"/"Also Like" grids (`app/literary/[slug]/page.tsx`). Still nothing gets
+unpublished or hidden from a direct link, search, or the sitemap — this only ever trims what a
+`getLiteraryPieces()` **listing** surfaces, on any page under this vertical. Extracted into a
+single shared export in `packages/shared/lib/wp.ts` — `LITERARY_CUTOFF` (renamed from
+`LITERARY_HOMEPAGE_CUTOFF`, since it's no longer homepage-only) plus a `filterLiteraryCutoff()`
+helper — so both files call the same constant instead of each keeping their own copy. **If this
+cutoff ever needs to move or be removed, `LITERARY_CUTOFF` in `wp.ts` is the one place to
+change it** — don't reintroduce a page-local copy.
+
 ## The Moveee Commons (`/commons`, added September 2026)
 
 A public-affairs/research vertical at `apps/site/app/commons/*` — opinions, reports, research
@@ -1722,6 +1898,33 @@ couldn't run either. Verified via brace/paren-balance checks on every new/edited
 file defines a colliding `.comm-*` CSS class or a colliding `Commons*`/`getCommons*` export.
 Re-check pixel fidelity against the approved Artifact mockup, and confirm the real `"commons"`
 category slug in WP Admin, in a real environment before considering this fully closed.
+
+**Commons-qualifying posts excluded from every `/magazine` and homepage listing (September
+2026, follow-up).** Per explicit request — a Commons post's single-page URL already redirected
+away from `/magazine/{slug}` (see "Route every Commons-qualifying post to /commons" above), but
+it could still surface inside `/magazine`'s own listings as a card linking to that now-redirecting
+URL, which reads as a bug even though the click itself worked. Every place a story pool is built
+now filters out `isCommonsPost(p)` (the same category-or-author union already used for the
+single-page redirect) before rendering:
+- `getMagazineSections()` (`wp.ts`) — feeds the site root `/`'s Front Page/Edit/Opinions/Lane/
+  Free Critics sections. This is the one function both `/` and (historically) `/magazine` shared,
+  so fixing it here is the single highest-leverage change.
+- `MagazineArchiveWrapper.tsx` — every filtered view (category/tag/series/industry/country
+  archives all assign into one `stories` variable, filtered once after the branch that populates
+  it) and the Hub's own "Browse by Section" tile list (`allFetchedCats` now drops the `"commons"`
+  category slug outright, so it's not a dead-end tile that resolves to an empty archive).
+- `/magazine/[slug]/page.tsx` — the "Keep reading"/related-stories grid at the bottom of an
+  article.
+- `fetchHomepageData.ts` — the site root's separate hero/`coverStory` pipeline (independent of
+  `getMagazineSections()`): the "Featured"-tag pool (so a Commons piece tagged Featured can never
+  become the homepage hero), the edition-scoped and general story pools, and the Interviews pool.
+- **Deliberately left alone**: `generateStaticParams()` in `/magazine/[slug]/page.tsx` (still
+  pre-generates a Commons post's `/magazine/{slug}` static path — harmless, since visiting it
+  just hits the existing redirect to `/commons/{slug}`, not a rendered page) and `sitemap.ts`
+  (already excludes category-based Commons pieces from `articleUrls`, per the routing commit
+  referenced above — no further change needed there).
+- Not visually verified in a browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
+  other pass in this file. Verified via brace/paren-balance checks on all four touched files.
 
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
@@ -2315,7 +2518,10 @@ view, a PDF renderer), assume it has this bug until proven otherwise.
 ## Key conventions
 
 - Internal tier value is `patron` — never rename it in PHP or the DB.
-  All user-facing copy uses "Moveee Pro" / "Pro".
+  All user-facing copy uses "Moveee Pro" / "Pro". A third tier, `lit`
+  (Moveee Lit — full access to The Moveee Literary only, see "Three-tier
+  membership" above), joined `citizen`/`patron` in September 2026 — same
+  rule applies, never rename it either.
 - "Cultural Digest" / "The Cultural Digest" is the old name — do not use it.
   Use "GetMeLit" and "Culture Drop" specifically, or "Moveee newsletters"
   generically.
@@ -2434,6 +2640,19 @@ random upload-hash prefix from the filename (e.g. `8143d30d-moveee_connect_setti
 `moveee_connect_settings.html`), then copy it into whichever of the two folders matches the
 surface the mockup is for, `git add` by filename, commit, and push — don't invent a third
 location like `docs/figma-design/` or put it back under `apps/figma/`.
+
+**Artifact Design canvas mockups live in their own subfolder, not flat alongside the single-file
+ones** (added 2026-09-27, first instance: `mockups/mobile/moveee-home-log-first/`). These are a
+different artifact from every other file in `mockups/` — a multi-file canvas project (one
+`*.dc.html` per board plus a `canvas.json` board index), **not** a standalone page. Each board
+loads `./support.js` and uses `<sc-if>`/`<sc-for>` and a `class Component extends DCLogic` block,
+all supplied by the Artifact type's runtime rather than by the folder, so opening one directly in
+a browser renders a blank page — that's expected, not a broken file. Give each such project its
+own subfolder with a short `README.md` saying which board is which and that it needs the runtime;
+don't flatten the boards in among the single-file mockups, where a future session would waste time
+trying to open one. Editing one means editing the files and republishing the canvas to its
+existing Artifact URL (`Artifact` tool, `action: publish` with the same `url`) — publishing without
+that URL creates a second, disconnected canvas.
 
 **History (2026-06-24):** these folders were originally `apps/figma/designs/` (mobile) and
 `apps/figma/designs-web/` (web) — first consolidated together under `apps/figma/` from three
@@ -6873,6 +7092,93 @@ deleted in favor of importing this new util.
 one field the backend already guarantees is shaped correctly per item type; a hand-rolled
 per-caller path is exactly how this bug happened (twice, in near-identical duplicated lines).
 
+## Quotes link to the Directory (September 2026)
+
+A quote used to point at nothing. Who said it was a freeform
+`culture_quote_author` **taxonomy term** — a second, lower-quality person
+registry shadowing the Directory — and where it came from was a plain
+`_quote_source` string. `_quote_type` (`Person`/`Book`/`Film`/`Speech`/`Song`)
+mapped almost exactly onto `culture_dir_type`, so someone had already reached
+for the right model and stopped one field short of the pointer. Net effect: the
+most shareable object in the app (quotes have share cards, QR codes and a
+permalink kept alive specifically so shares resolve) produced no signal, and a
+line could never appear on the entry of the book or person it belonged to.
+
+**Two links, both optional.** `_linked_directory_id` = the **work** it came
+from; `_quote_author_directory_id` = the **person** who said it. Optional is
+load-bearing, not laziness: a proverb, an overheard line and a `Speech`-type
+quote (there is no `speech` `culture_dir_type`) legitimately have neither.
+
+- **The work reuses `_linked_directory_id`, the same key community posts use**,
+  so every reverse-lookup that already queries it keeps working. Verified safe
+  before doing it: all four readers that aggregate off that key —
+  `Culture_Directory::recompute_directory_aggregates()`,
+  `handle_directory_posts()`'s meta_query, `Culture_Reading_Tracker::
+  get_reading_stats()`'s join, and the mobile entry query — scope to
+  `post_type = 'culture_post'`, so **a quote can never inflate a review count,
+  a star average or a rating histogram**. Re-check that before adding a fifth
+  reader.
+- **`Culture_Directory::quotes_for_directory_entry()`** is the one lookup, used
+  by both surfaces. It **unions** the two keys, which is what makes a person's
+  entry show everything they said regardless of source while a work's entry
+  shows lines from that work. Raw SQL resolve-to-IDs, never a two-branch OR
+  `meta_query` — that is the exact shape that hung the `culture_event` endpoint
+  for 20s+ in production.
+- **Quotes come back from the endpoint that already powers reviews**
+  (`/directory/{id}/posts` → new `quotes` array + `summary.total_quotes`), not a
+  parallel route, so the entry page needs no second fetch. Rendered under
+  reviews on both web (`.dir-quote-*` in `directory.css`) and mobile. On a
+  `person` entry the heading reads "Lines people saved" and each line shows its
+  **source**; elsewhere it reads "Lines saved from this" and shows the **author**
+  — repeating the page's own title on every row is noise.
+- **The composer's author field is a `DirectorySearch`, not a text input**
+  (`typeFilter="person"`), on both platforms. The freeform input stays
+  underneath, shown only while nothing is picked, as the escape hatch for an
+  unattributable line — "Anonymous" should not become a person entry to satisfy
+  a required field. The **source** field is a picker only where the type maps to
+  something the Directory holds (`QUOTE_SOURCE_TYPES`: Book→`book`+Google Books,
+  Film→`film`+TMDB, Song→`album`+Spotify); `Person` hides it (the person *is*
+  the source) and `Speech`/none fall back to freeform. **That map is mirrored in
+  three places** — `SubmitPost.tsx`, `NewPostScreen.tsx` and the PHP backfill —
+  same no-shared-source-of-truth caveat as every other constant trio here.
+- **The freeform strings are still written exactly as before.** The taxonomy
+  term and `_quote_source` meta are unchanged, so every existing reader (feed
+  mapper, `/quotes/[slug]`, share cards, GraphQL) keeps working whether or not a
+  link was supplied. The ids are purely additive.
+- **`apps/connect/app/api/quotes/create/route.ts` destructures the body
+  explicitly rather than spreading it**, so a new field is silently dropped
+  unless named there. It nearly was. Check that route when adding any quote field.
+- **Backfill**: `Culture_System_Author::maybe_link_quotes_to_directory()`
+  (`wp_loaded`, gated by `culture_quotes_directory_linked`) resolves existing
+  quotes' author terms and source strings against directory titles.
+  **Exact, case-insensitive match only — never fuzzy, and don't "improve" it
+  later.** A near match attributes words to the wrong person *on their own entry
+  page*: an unlinked quote is merely invisible, a mislinked one is a fabrication.
+  A title shared by two entries of the same type is skipped for the same reason.
+  Batched 300/request and resumable — the gate is only set once a pass finds
+  nothing left, so a large archive finishes over several requests instead of
+  timing out.
+
+**Pre-existing bug found and fixed in the same pass**: the mobile directory
+entry endpoint read `_culture_linked_directory` and `_community_template_type`,
+**neither of which is written anywhere in this codebase** (the composer writes
+`_linked_directory_id` and `_template_type`). That section had therefore never
+rendered a single post on mobile. If a mobile entry screen suddenly starts
+showing reviews it never had, this is why.
+
+**Verified**: `php -l` clean on all four touched PHP files; `tsc --noEmit`
+**exit 0** on `apps/connect` and `apps/site`, `apps/mobile` at its documented
+37-error baseline with none in touched files; `directory.css` brace-balanced
+(199/199); `scripts/check-brand-language.sh` shows only the four pre-existing
+Literary/comment hits, none in touched files. Both new queries were **executed
+against real tables** rather than reasoned about — the union lookup returns both
+a work-linked and an author-linked quote newest-first, and the backfill candidate
+query correctly flags partial links while excluding a fully-linked quote. **Not**
+tested against a live WordPress: needs the plugin redeployed (no new table, so no
+`CULTURE_VERSION` bump), then a real round trip — post a quote with each type,
+confirm it appears on both the person's and the work's entry pages, and check the
+backfill actually linked existing quotes rather than silently matching nothing.
+
 **No web-side (`apps/connect`/`packages/shared`) equivalent exists** — the QR-code-on-shared-
 image feature is mobile-only (`QuoteShareCard.tsx`); confirmed via grep that no `QRCode`/`qrcode`
 usage exists anywhere under `packages/shared/components`.
@@ -7031,6 +7337,56 @@ repo-wide grep confirming zero remaining imports of any deleted component/route.
 full flow — creating a quote via each platform's composer, opening it from a shared QR code, and
 opening a saved quote from the member Collection — in a real environment before considering this
 fully closed.
+
+---
+
+## Raw `cms.themoveee.com/{slug}/` links now redirect to the real frontend URL (September 2026)
+
+Visiting a WordPress permalink directly on the CMS origin (e.g. a link an editor
+pasted into Slack, or one search engines indexed from the un-proxied backend)
+used to serve the bare `culture-theme` template — unbranded, and on a headless
+setup, not the page anyone actually wants. `moveee_redirect_singular()`
+(`culture-theme/functions.php`, a sibling of the pre-existing
+`moveee_redirect_taxonomies()` right above it — same file, same
+`template_redirect` hook, same `MOVE_FRONTEND_URL`-constant-with-production-
+fallback pattern) 301-redirects any single-post request on `cms.themoveee.com`
+to its real Next.js URL, on whichever site actually owns that content type:
+
+| Post type | Redirects to |
+|---|---|
+| `post` | Site A `/magazine/{slug}` (the Next.js side itself redirects further to `/literary/{slug}` or `/commons/{slug}` when the post belongs there — see those sections above — so this is always correct, just occasionally a two-hop redirect) |
+| `product` | Site A `/lifestyle/{slug}` |
+| `culture_newsletter` / `getmelit` / `culture_drop` | Site A `/newsletter/{slug}` (all three render through the same route, see "Archive / frontend" above) |
+| `culture_journey` | Site A `/journeys/{slug}` |
+| `culture_directory` | Site B `/directory/{slug}` |
+| `culture_quote` | Site B `/quotes/{id}-{slug}` (compound slug — see "Quotes feed merge" above for why) |
+| `culture_post` | Site B `/community/{slug}` |
+| `culture_event` | Site B `/events/{slug}` |
+| `culture_hub` | Site B `/hub/{slug}` |
+| `culture_cluster` | Site B `/cluster/{id}` (Stoop clusters route by numeric id, not slug) |
+
+**Deliberately skipped**: `is_preview()` requests — `Culture_Preview::maybe_redirect_preview_request()`
+(also hooked on `template_redirect`, in the plugin) already owns that case and
+sends a draft to `/api/preview`, not the plain public URL; `moveee_redirect_singular()`
+returns early on `is_preview()` so it never fights that handler for the same
+request. Any post type with no row above (native WP `page`, `attachment`, or a
+future CPT with no frontend route yet) is left alone — same "if nothing
+matched, do nothing" behavior `moveee_redirect_taxonomies()` already has.
+
+**If a new CPT is added with a real frontend detail page, add a `case` here** —
+this is now the single place that maps a WP post type to its canonical
+frontend URL for the purpose of un-proxied CMS links; don't invent a second,
+route-specific redirect for it.
+
+Needs the theme redeployed (manual zip+upload, same as the plugin — see
+"Plugin DB table auto-upgrade" for why a code push alone isn't enough) before
+it takes effect in production — bumped `culture-theme/style.css`'s `Version:`
+header (1.0.0 → 1.0.1) for the same redeploy-confirmation reason the plugin
+header gets bumped. Not deployment-tested against a live WordPress instance —
+same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this
+file. Verified via `php -l`. Re-check a real `cms.themoveee.com/{slug}/` visit
+for at least a `post` and one Site B type in a live environment before
+considering this fully closed.
 
 ---
 
@@ -9267,7 +9623,9 @@ those chips with an empty search box silently did nothing. Two fixes landed from
 - **The generic Category chip row is now hidden in both Directory and People context**
   (`!isDirectory && !isPeople`) — it never had real wiring in either context (Directory has its
   own Type group below; People has the Industry group below), so showing it was a dead control,
-  not a smaller version of a working one.
+  not a smaller version of a working one. **(The People half is gone as of September 2026 —
+  the guard is now `!isDirectory && !isStoop`; see "People Near Me / member directory
+  RETIRED" above. The principle stands and still applies to any new chip group.)**
 - **Any future context-specific chip group must follow the Region/Sort pattern**: call its own
   `emit*Filters()` bus function directly from the `onClick`, not route through `runSearch`/
   `runPeopleSearch`. Those two functions (and their `!q.trim()` early-return) are only for
@@ -9287,6 +9645,139 @@ needed again" convention used elsewhere in this file) and replaced by a `.disc-a
 row — one chip for Type, one for Region, each independently clearable — mirroring
 `.ppl-active-filters` exactly. The modal's own text-search fold-in (for its inline result list)
 now combines both Type and Region labels into the `category` keyword param when present.
+
+## Stoop marketing landing page (`/stoop`, Site A, September 2026)
+
+A public acquisition page for Stoop, built because Stoop is being used as the main
+entry-point pitch for joining Moveee and downloading the app. Mockup-first as usual (an
+Artifact, iterated through several rounds of copy direction before any code was written);
+`apps/site/app/stoop/page.tsx` + `stoop.css`. It is a **plain static server component** — no
+data fetching, no session, no `dynamic` override needed.
+
+- **Route registration**: `'stoop'` added to `APP_ROUTES` in `apps/site/proxy.ts`, without
+  which the bare `/stoop` path would be swallowed by the legacy-WordPress-permalink catch-all
+  and 301'd to a nonexistent `/magazine/stoop` — the same trap `'literary'` documents. It is
+  **deliberately not in `connectPrefixes`**: this is Site A's own page, and its CTAs link out
+  to `web.themoveee.com` rather than the path itself redirecting there. Also added to
+  `sitemap.ts`'s `staticPages`.
+- **CTAs**: "Get Started" → `{CONNECT_URL}/register`, "Sign in" → `{CONNECT_URL}/login`, both
+  carrying a `callbackUrl` of `/connect/stoop` so a member lands on the Stoop browser rather
+  than the generic feed. "Read about hosting" → `/cluster/create`.
+- **Every class is `stp-`-prefixed, and this is not optional.** The mockup used bare
+  `.hero`/`.btn-primary`/`.btn-ghost`/`.step`/`.wrap`, and `stoop.css` loads into `apps/site`'s
+  global cascade where several of those names already belong to other surfaces — carrying them
+  over verbatim would have silently restyled unrelated pages. Same lesson as the comment-box
+  redesign's `.btn-ghost` collision documented elsewhere in this file.
+- **Gotcha worth knowing: `apps/site`'s global `--rule` is a solid dark colour (`#2a241c`), not
+  a translucent hairline.** The mockup assumed the latter. Using `var(--rule)` for the card
+  borders here would have painted them near-black. Local `--stp-rule`/`--stp-rule-strong`/
+  `--stp-shadow`/`--stp-shadow-lift` are scoped to `.stp-page`, never `:root`, so nothing
+  leaks out of the route. **Check what `--rule` actually resolves to in the app you're in
+  before reaching for it as a border colour.**
+- **Photo slots are CSS background layers, not `<img>`/`next/image`** — each `.stp-ph--*` rule
+  is `background-image: url("/stoop/<name>.jpg"), linear-gradient(...)`, so a missing file
+  degrades to a plausible block of colour instead of a broken-image icon. That is what let the
+  page ship before the photography existed. **Drop the real files at
+  `apps/site/public/stoop/{hero,talking,table,doorstep,arriving,planning,street}.jpg` and
+  they appear with no code change.** Each filename is commented in `stoop.css` with the shot it
+  needs. **When the real photos land, convert these to `next/image`** — a CSS background
+  carries no alt text, no responsive srcset and no lazy loading, which is fine for placeholder
+  art and not fine long-term. There is a TODO to this effect in the file.
+- **The page clears the fixed header via `padding-top: var(--header-clear, 96px)` on
+  `.stp-page`** — the hero is light, so it deliberately does *not* carry
+  `data-header-zone="dark"`.
+- Copy is deliberately plain and non-technical, per explicit direction: no "check in", no
+  "streak", no "cluster", no "tier", no punchlines. The weekly section describes what people
+  actually do (turn up, eat and talk, make plans), not the QR/reminder mechanics. Rewards are
+  one line, not a breakdown. **If you edit this page's copy, keep that register** — several
+  rounds of feedback went into removing exactly that kind of language.
+- **Three follow-up changes (September 2026)**: the CTA pairs became `StoopCtas.tsx`, a client
+  island that swaps "Get Started"/"Sign in" for "Find groups near you"/"Start a group" once
+  `useSession()` resolves an authenticated visitor (same pattern as `LiteraryMasthead.tsx`,
+  reading the shared `.themoveee.com` cookie — the page itself stays static); the "A group opens
+  once four people have joined" section was removed at the user's request, leaving
+  `.stp-facts`/`.stp-fact*`/`.stp-ph--door` dead but kept, and `door.jpg` no longer needed; and
+  `.stp-two` went from `align-items: center` to `start` so a left column doesn't float
+  vertically against a taller card beside it.
+- **A real bug found in that pass, worth remembering**: `.stp-week-note`'s `margin-top` had
+  never once applied, because `.stp-page p { margin: 0 }` (0,1,1) out-specifies
+  `.stp-week-note` (0,1,0) — the note had been sitting flush against the cards since it
+  shipped. Fixed by qualifying the rule to `.stp-page .stp-week-note`. **This file sets
+  `margin: 0` on every `p` under `.stp-page`, so any new rule here that needs a margin on a
+  paragraph must carry at least two classes** — same "a more specific selector silently zeroes
+  a margin a more general rule was meant to set" class of bug already documented for the
+  article gallery/table.
+- **Verified in a real browser** (unlike most passes in this file): the real `stoop.css` plus
+  the real `:root` tokens from `globals.css` were rendered in headless Chromium at 1280px and
+  390px — no horizontal overflow at either width, no console errors. Also checked via a
+  TypeScript syntax pass on all three touched/new files, a CSS brace/paren balance check
+  (73/73, 86/86), a JSX-vs-CSS class parity diff (zero orphans in either direction), and
+  `scripts/check-brand-language.sh` (clean). `apps/site` has no `node_modules` in this sandbox,
+  so no `next build`/full type-check was possible — re-check the live route and the outbound
+  CTAs in a real environment.
+
+### People Near Me / member directory RETIRED — both platforms (September 2026)
+
+**The whole feature is gone.** Per an explicit product decision: Stoop and Literati Connect
+are now how a member finds people near them, so a second, parallel "browse every member in
+your area" surface was redundant with them and was retired rather than maintained alongside
+them. **Everything in the "People Near Me — full rebuild" section directly below this one is
+superseded and describes deleted code** — it is kept only so the git history and any external
+reference to that rebuild resolve to an explanation rather than a silent gap.
+
+**Deleted outright** (not left as dead code, since none of it had any other consumer):
+`apps/connect/app/connect/people/` (the `/connect/people` route), `apps/connect/app/people.css`
+(`ppl-*`), `packages/shared/components/connect/MemberDirectory.tsx`,
+`packages/shared/lib/peopleFiltersBus.ts`, and
+`apps/mobile/src/screens/community/MemberDirectoryScreen.tsx` plus its `ConnectStack`
+registration and its `AppParamList`/`RootStackParamList` entries.
+
+**`/connect/people` was doing double duty as the de facto "Find your Stoop" destination** —
+five separate CTAs pointed at it even though a real Stoop browser (`/connect/stoop`,
+`StoopBrowser.tsx`) had existed since July 2026. Every one of them was **re-pointed, not
+removed**, which is a genuine fix rather than a migration: `/member`'s Stoop card,
+`/connect`'s hero CTA, its mid-page offer CTA and its final-band CTA, `/cluster/create`'s back
+link, and — on mobile — `MemberDashboardScreen.tsx`'s "Find your Stoop" quick link (now
+`StoopHomeScreen`). `Culture_Cron`'s two `cluster_forming_expired` notification `action_url`s
+(`class-culture-cron.php`) said "try joining a nearby Stoop instead" while linking at the
+member directory — also re-pointed to `/connect/stoop`. **If you find any other link still
+aimed at a removed people surface, `/connect/stoop` is almost always the right target.**
+
+**Nav/chrome entries removed**: `Header.tsx`'s `RAIL_LINKS` entry and its now-unused `people`
+`RailIcon` case, the shared `Footer.tsx`'s "People Near Me" link, the `mco-section-nav` row on
+both `/connect` and `/connect/membership` (both now read "Stoop" and point at
+`/connect/stoop`), the `← Directory` back link on `/connect/[username]`, and
+`MakerProfileScreen.tsx`'s "View in Directory →" card. **Public member profiles
+(`/connect/[username]`) are untouched and still fully live** — they are linked from feed
+cards, mentions and follow lists everywhere, and were never part of the directory itself.
+
+**`SearchModal.tsx` lost its entire People context** — the `Person` content type (which was
+never a real WP post subtype), the `PEOPLE_INDUSTRIES`/`PEOPLE_REGIONS` facet consts, the
+`MemberResult` shape, `runPeopleSearch()`, the `selectPeopleIndustry()`/`selectPeopleRegion()`
+bus emitters, the two `isPeople` filter groups and the member results branch. The generic
+Category chip row's `!isDirectory && !isPeople && !isStoop` guard is now
+`!isDirectory && !isStoop`. **Consequence worth knowing: there is no longer any way to search
+for a member by name anywhere in the app** — WordPress's native search has no concept of
+Users, which is exactly why that bespoke endpoint existed. If member search is ever wanted
+back, it needs a deliberate new decision, not a revert of this removal.
+
+**Deliberately left in place, unused**: `GET /culture/v1/members` +
+`Culture_REST_API::handle_get_members_directory()` (including the `region`/`sort`/`offset`
+params added for the July 2026 rebuild) and its `apps/connect/app/api/connect/members/route.ts`
+proxy. Removing them would need a plugin redeploy for zero benefit, they are a harmless
+authenticated read, and they are the only member-search backend that exists — so they are the
+natural starting point if the decision above is ever revisited. This follows the same
+"kept in case needed again" convention used throughout this file. **The mobile
+`/mobile/members` endpoint is a different thing and is still load-bearing** — it backs the
+composer's `@mention` autocomplete and `UserSearch.tsx`; do not remove it.
+
+Verified via `tsc --noEmit` on `apps/mobile` (37 errors before and after, byte-identical — the
+documented pre-existing baseline, see the SDK 57 upgrade entry), a TypeScript syntax check on
+all nine edited web files, `php -l` on `class-culture-cron.php`, and a repo-wide grep
+confirming no live reference to any removed symbol or route survives (the remaining hits are
+all historical comments). `apps/connect` has no `node_modules` in this sandbox, so no
+`next build`/full type-check was possible — re-check that `/connect/stoop` actually renders
+from each re-pointed CTA in a real environment before considering this closed.
 
 ### People Near Me — full rebuild on the Feed/Discover/Events design system (`ppl-*`, July 2026)
 
@@ -9898,187 +10389,24 @@ trip — finish a book, write a Book Review with a rating/genres, vote mood/pace
 books, then confirm every one of the six stats sections reflects it correctly on both platforms —
 in a real environment before considering this fully closed.
 
-### "Log-First" home concept — mobile pieces built, nav not wired yet (September 2026, superseded below)
+### "Log-First" home concept — origin (September 2026, superseded below)
 
 A separate, later ask on top of the four Reading Tracker phases above: the user supplied a
 self-contained mockup export ("Moveee Home — Log-First", 4 frames — Home/the log, Book entry,
-Person entry, Place entry) proposing a StoryGraph-style personal-log home screen that replaces
-the community Feed as the app's main tab, plus redesigned Book/Person/Place directory pages
-(quick "add to your log" buttons, social proof, cross-recommendations, and a brand-new
-"save a line" feature), under a renamed bottom nav — **Log / Discover / Hubs / Stoop / You** —
-dropping Magazine/Games/Shop/Events from the tab bar. Given that removes four existing tabs,
-scope was confirmed via `AskUserQuestion` before touching navigation: **build the pieces first,
-wire up nav after** — so this pass built the underlying screens/components/backend, but the
-bottom tab bar and the `ConnectFeed` "Feed" tab are both still exactly as they were; `LogHomeScreen`
-below is not yet reachable from anywhere in the app.
+Person entry, Place entry) proposing a StoryGraph-style personal-log home screen, plus redesigned
+Book/Person/Place directory pages (quick "add to your log" buttons, social proof,
+cross-recommendations, and a brand-new "save a line" feature). This section originally documented
+the mobile-only first pass in detail (a book/film/place-only `SHELF_LABELS` map, a
+`LogEntryPanel.tsx` component, a `LogHomeScreen.tsx` not yet wired into navigation) — all of that
+has since been **superseded by the "Generalised from books to all five review media" pass below**,
+which replaced the book/film/place-only shelf with a real five-medium system
+(`MEDIA`/`TYPE_MEDIA_MAP`/`statusLabel()`) and replaced `LogEntryPanel` with `EntryLogControl` +
+a small standalone `SocialProofLine` component on both platforms. Kept here only as a pointer so
+old references to `LogEntryPanel`/`SHELF_LABELS`/`shelfLabelsFor` in git history or elsewhere in
+this doc resolve to *why* they're gone, not because any of that implementation still exists.
 
-**The shelf mechanism generalizes to any directory type almost for free.**
-`Culture_Reading_Tracker::set_shelf_status()` never actually restricted `directory_id` to
-book-type entries in the first place (only `vote_mood_pace()` does that check) — so a Place or
-Film entry can already carry a shelf row today, with the exact same three enum values
-(`want_to_read`/`currently_reading`/`read`). Deliberately **not renamed** — per this codebase's
-"reuse over new" convention — only the *display label* varies per type, via a new
-`SHELF_LABELS`/`shelfLabelsFor()` map (`packages/shared/lib/reading-tracker.ts` web,
-`apps/mobile/src/features/community/readingTracker.ts` mobile): book → Want to
-Read/Reading/Read, film → Want to Watch/Watching/Watched, place → Want to Go/Been (no
-"currently_reading" button for place — there's no "currently visiting" state, though the backend
-would still accept it if ever sent). `get_goal()`'s `booksRead` count has no type filter either, so
-a shelved Film/Place already counts toward the per-year goal for free — "Your year in culture" is
-literally the same goal endpoint, just relabelled once more than book-type entries are in use.
-
-**Two genuinely new backend pieces**, both in `Culture_Reading_Tracker`
-(`culture-community/includes/core/class-culture-reading-tracker.php`), `CULTURE_VERSION` bumped
-`3.4.0` → `3.5.0` for the one new table (plugin header bumped to `2.6.7`):
-- **Saved lines** — a new `wp_culture_saved_lines` table (`directory_id, user_id, line_text,
-  source_context, created_at`, no unique constraint — a user can save more than one line from the
-  same entry). `save_line()`/`get_saved_lines()`/`delete_saved_line()` — a short quote a member
-  attaches to *any* directory entry (book, person, talk-as-`source_context`), independent of
-  shelf status entirely, since a Person entry has no read/watched concept at all. Public read
-  (any authenticated member sees everyone's saved lines on a given entry, same trust model as
-  book reviews), owner-only delete. Capped at 500 chars (`MAX_LINE_LENGTH`).
-- **Social proof + cross-recommendations** — `get_social_proof( $viewer_user_id, $directory_id )`
-  (how many of the viewer's follows have this entry at `status='read'` vs. `'want_to_read'`, plus
-  up to 3 example loggers — uses `Culture_Follows::get_following()` for the ID list, no new
-  follow-adjacent infra needed) and `get_also_logged( $directory_id )` (a same-table
-  self-join co-occurrence query: other entries most commonly also on the "read" shelf of anyone
-  who has *this* entry on their "read" shelf, ranked by distinct-user count, hydrated into the
-  same card shape `get_user_shelf()` already returns). Also added `get_following_activity(
-  $viewer_user_id )` for the Home screen's "From people you follow" rail — the viewer's follows'
-  most recent finished (`status='read'`) shelf entries, hydrated with entry + logger info.
-  **Deliberately no star rating/comment enrichment on this feed** — that would need joining to a
-  linked review post per entry (same shape as `get_reading_stats()`'s `review_rows` query) and
-  was cut for scope; the mockup's "★★★★★ 5 of 5 / Finished it on the bus…" flourish isn't built,
-  only the plain "X logged this" fact.
-- `get_user_shelf()`'s and `get_also_logged()`'s returned entries both gained a `type` field
-  (the entry's `culture_dir_type` term slug) they didn't have before — needed so a card can show
-  a Book/Film/Place badge; neither method filtered by type to begin with, so this was purely
-  additive.
-- All five new capabilities are mirrored on **both** REST surfaces, same convention as every
-  other Reading Tracker endpoint — `/mobile/reading/saved-lines` (GET/POST + `/{id}` DELETE),
-  `/mobile/reading/social-proof`, `/mobile/reading/also-logged` (public — a property of the
-  entry itself), `/mobile/reading/following-activity` on the mobile/JWT side
-  (`class-culture-mobile-api.php`), and `/reading/saved-lines` etc. on the web/API-key side
-  (`class-culture-rest-api.php`) — even though only the mobile app consumes them in this pass,
-  keeping both mirrors is cheap here (each web handler is a 3-line delegate to the same PHP
-  class method) and avoids the exact kind of gap this file already warns about elsewhere.
-
-**Mobile UI, wired into the existing `DirectoryDetailScreen.tsx`** (no new route needed for
-this half):
-- `components/community/LogEntryPanel.tsx` (new) — "Add to your log" buttons (rendered only for
-  entry types that have a `SHELF_LABELS` entry — book/film/place; renders nothing for person/food/
-  etc.) plus the social-proof card underneath, right after the excerpt. Optimistic tap-to-toggle
-  (tapping the already-active button clears the shelf entry), reverts on a failed request.
-- `components/community/SavedLines.tsx` (new) — the "Lines saved from this" list + inline
-  "+ Save a line from this" composer, wired into every entry type (no type gate — a Person entry
-  gets this section same as a Book), placed right after the About/Mood-Pace card.
-- `screens/community/DirectoryDetailScreen.tsx` — imports both of the above, plus a new "People
-  who logged this also logged" horizontal rail (mirrors the existing "Related Entries" section's
-  visual shape) sourced from the new `also-logged` endpoint, placed just before "Related Entries".
-
-**Mobile UI, standalone (not yet reachable)**: `screens/community/LogHomeScreen.tsx` (new) — the
-actual "Home — the log" screen from the mockup: avatar + "Your log" header + notification bell,
-a "Log something" quick-chip row (Book/Film open an inline `DirectorySearch` modal that
-immediately shelves the pick as `want_to_read`; Music/Food navigate to the existing
-`NewPost` composer with `template: "music-review"|"food-review"` — no new shelf semantics needed
-for those two, they just reuse the existing review templates), an "In progress" horizontal rail
-(shelf entries at `status='currently_reading'`, with a one-tap "Finish · rate →" that moves the
-entry straight to `read`), a "Your year in culture" progress bar (the same generalized goal
-endpoint), and a "From people you follow" vertical activity feed, closed by a **"Community Feed"
-section as the last thing on the screen** (per explicit user follow-up, once it was decided Log
-sits alongside Feed rather than replacing it) — a lightweight one-shot preview of the 3 most
-recent `GET /mobile/feed` items (not the full paginated `useUnifiedFeed` hook, which owns its own
-refresh/pagination state this preview doesn't need), with every card and a "See all →"/"Open
-Feed →" link all just opening the real `ConnectFeed` screen (`nav.navigate("ConnectFeed")`) —
-this screen doesn't attempt to reproduce per-item detail sheets/modals for every feed template,
-that's what `ConnectFeed`'s own `PostDetailSheet` is for. **This screen is still not registered
-in `useNav.ts`'s `AppParamList` or any navigator, and the bottom tab bar is completely
-untouched** — per the explicit "build first, wire up nav after" scope, deciding when/whether to
-make `LogHomeScreen` itself reachable (replace the Feed tab? add alongside it? something else) is
-still a separate, later decision — only its own *internal* link to Feed was resolved.
-
-**Explicitly deferred, not built in this pass** — flagged here so a future pass doesn't assume
-these exist: the bottom-nav rename/restructure itself; a "follow this person/topic" affordance
-for a Person directory entry (a different relationship from the member-to-member
-`Culture_Follows` system, which operates on WP user IDs, not directory post IDs — would need its
-own new backend); and any web (`apps/connect`/`apps/site`) equivalent of `LogHomeScreen`/
-`LogEntryPanel`/`SavedLines` — this pass is mobile-only on the UI side, though the REST layer is
-already mirrored for whenever web parity is wanted. **The Stoop proximity banner and the "From
-people you follow" rating/comment enrichment were both built in later passes — see "Stoop
-proximity banner + member geolocation" below, and the activity-feed enrichment note right after
-it. Both mobile-only, same reasoning.**
-
-Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
-credentials gap as every other pass in this file; this pass needs the plugin redeployed (manual
-zip+upload, see "Plugin DB table auto-upgrade" above) before the new `wp_culture_saved_lines`
-table and any of the five new routes exist in production. Verified via `php -l` on every touched
-PHP file and a brace/paren/bracket balance check on every new/touched TS/TSX file (no
-`node_modules` installed this session, so `tsc --noEmit` couldn't run, and no device/simulator
-available to actually render `LogHomeScreen`). Re-check the full round trip — shelving a
-film/place, saving a line on a person entry, the social-proof/also-logged counts, and the
-Log home screen's own quick-log/in-progress/goal/activity sections — on a real device before
-considering this fully closed.
-
-### `/stoop` marketing landing page on Site A (September 2026)
-
-A standalone single-page marketing/explainer site for the Stoop feature, at `themoveee.com/stoop`
-— distinct from the "Stoop — full rebuild" section above, which is the real, interactive
-browse/join/host UI on Site B (`web.themoveee.com/connect/stoop`, `/cluster/create`,
-`/cluster/[id]`). This page exists purely to explain what Stoop is and hand visitors off to that
-real UI; it holds no interactive Stoop logic of its own beyond a static FAQ accordion.
-
-Built from a user-supplied mockup ("The Moveee Scoop" — the mockup's own copy used "Scoop"
-throughout; per explicit product direction this was kept as **"Stoop"**, the real feature's actual
-name, everywhere in the built page — treat any future "Scoop" reference in a future mockup for
-this page the same way unless told otherwise). Same "standalone mini-site with its own chrome"
-pattern as Literary/Commons/Lifestyle, just for one page rather than a whole vertical:
-
-- **New files**: `app/stoop/layout.tsx` (loads Syne via `next/font/google`, scoped to this route —
-  body text reuses the root layout's existing `--font-dm-sans` instance rather than loading a
-  second DM Sans, since the one italic use on this page, `.stp-week-note`, is fine falling back to
-  the browser's own synthesized italic on web — this is not the RN-native-rendering case the
-  mobile app's font docs warn about), `app/stoop/page.tsx` (hero, three-panel photo band, "What a
-  week looks like" steps, hosting details, FAQ, closing CTA), `app/stoop/stoop.css` (`stp-*`
-  namespace — every selector scoped under `.stp-page` rather than the mockup's own bare tag
-  selectors, since a plain global CSS import isn't module-scoped and would otherwise leak onto
-  every other page), `components/StoopMasthead.tsx` (fixed nav — brand + About/How it
-  works/Hosting/FAQ anchor links to the page's own section ids + a real CTA), `components/
-  StoopFooter.tsx` (dark footer — newsletter form via the existing `SubscribeForm` component,
-  `list="culture-drop"`, plus Explore/Moveee/Company link columns mirroring the sitewide
-  `Footer.tsx`'s own hrefs, and a giant lowercase "stoop." wordmark), `components/StoopFaq.tsx`
-  (client component — the FAQ accordion, one open item per column, CSS-only expand/collapse via a
-  `grid-template-rows: 0fr → 1fr` transition rather than porting the mockup's own JS
-  `scrollHeight` measurement).
-- **Real CTAs, not placeholders** — "Find groups near you" (nav, hero, closing CTA) links to
-  `https://web.themoveee.com/connect/stoop`; "Start a group" and "Read about hosting" both link to
-  `https://web.themoveee.com/cluster/create` (the real 5-step Host Onboarding flow, which is where
-  venue type/capacity/address-visibility/step-free-access actually get set — see "Host onboarding
-  flow" earlier in this file).
-- **Copy verified against the real data model, not taken on faith** — the hosting-details column
-  ("between 2 and 20", "members only"/"share the area", "without steps") matches the real
-  `_cluster_realistic_capacity`/`_cluster_address_visible`/`_cluster_accessible` fields exactly,
-  and the FAQ's "It stays closed until four people join" was checked directly against
-  `Culture_Clusters::min_activation_members()` (defaults to 4) before being kept verbatim.
-- **Photos**: extracted from the mockup's own embedded base64 images and saved as real assets —
-  `public/stoop-hero.jpg` (hero), `public/stoop-panel-food.jpg`/`-records.jpg`/`-conversation.jpg`
-  (the three-panel band, tinted green/amber/slate respectively via CSS `::before` overlays, same
-  as the mockup).
-- **Wiring**: `proxy.ts`'s `APP_ROUTES` set gained `'stoop'` — without it, a bare `/stoop` visit
-  (no file extension, single path segment) would 301 to the nonexistent `/magazine/stoop` via the
-  root-level-slug catch-all (see that file's own comment on why). `Header.tsx` gained
-  `isStoopLandingPage` (added to the same early-return as Literary/Lifestyle/Makers/Commons) and
-  `ConditionalFooter.tsx` gained a matching `isStoopPath()` check, so the sitewide pill/footer
-  never render here. Added a "Stoop" entry to the header's full-screen menu overlay nav list
-  (between Events and Magazine) and a `sitemap.ts` entry.
-- **Not visually verified in a real browser against the live CMS/deploy** (same `NEXTAUTH_SECRET`/
-  WordPress-credentials gap as every other pass in this file) — verified instead via a static-HTML
-  Playwright render of the real ported CSS against the real extracted images, at both a 1440px
-  desktop and a 390px mobile viewport, confirming every section (hero, three-panel band, week
-  steps, hosting details, FAQ accordion open/closed states, CTA, footer) matches the mockup
-  pixel-for-pixel, plus brace/paren/bracket balance checks on every new/edited file (no
-  `node_modules` installed in this sandbox, so `tsc --noEmit` couldn't run). Re-check the real
-  Next.js render (fonts, `next/image` behavior is N/A here since these are plain CSS
-  `background-image` refs, not `<Image>` components) in a live environment before considering this
-  fully closed.
+The `/stoop` marketing landing page (`themoveee.com/stoop`) is documented once, above, under
+"Stoop marketing landing page (`/stoop`, Site A, September 2026)" — don't duplicate it here.
 
 ### Stoop proximity banner + member geolocation (mobile-only, September 2026)
 
@@ -10131,7 +10459,7 @@ when empty" convention), or the real banner (avatars + count + "Start a Stoop he
 navigates to the existing `HostOnboardingScreen` with no prefill — that screen takes no params
 today, so location/city prefill from the directory entry is a real follow-up, not done here) plus
 a small "Turn off" link to clear the saved location. Wired into `DirectoryDetailScreen.tsx`
-directly below `LogEntryPanel`, gated on `entry.entryType === "place"`.
+directly below `EntryLogControl`/`SocialProofLine`, gated on `entry.entryType === "place"`.
 
 **Not deployment-tested against a live WordPress instance or a real device** — same
 `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this feature needs
@@ -10148,12 +10476,15 @@ here" handoff — on a real device before considering this fully closed.
 
 Closes the second deferral flagged in the "Log-First" pass above. `Culture_Reading_Tracker::
 get_following_activity()` previously only showed the plain fact "X finished this" — no rating, no
-comment, even when the follow actually wrote a full review. `REVIEW_TEMPLATE_BY_TYPE` (a new class
-const) maps each shelf-supporting directory type to the review template + rating meta key that
-goes with it — `book` → `book-review`/`_book_overall_rating`, `film` → `film-review`/
-`_film_overall_rating`, `place` → `hidden-gem`/`_star_rating` (the "Review family" unification's
-Place review, see that section elsewhere in this file — not `food-review`, which isn't linked to
-the shelf mechanism at all).
+comment, even when the follow actually wrote a full review. `REVIEW_RATING_META` (a class const —
+originally added narrower, as `REVIEW_TEMPLATE_BY_TYPE`, then folded into the broader
+`REVIEW_RATING_META` map the "Generalised from books to all five review media" pass below builds
+for the stats dashboard) maps each review template to the rating meta key that goes with it —
+`book-review` → `_book_overall_rating`, `film-review` → `_film_overall_rating`, `music-review` →
+`_music_overall_rating`, `hidden-gem` → `_star_rating` (the "Review family" unification's Place
+review, see that section elsewhere in this file — not `food-review`, which isn't linked to the
+shelf mechanism at all). Using the broader map means this feed's rating/comment enrichment covers
+music-review entries too, not just book/film/place.
 
 One extra raw-SQL query (same multi-`LEFT JOIN`-filtered-by-`meta_key` shape
 `get_reading_stats()`'s own `$review_rows` query already uses) finds every review post any of the
@@ -10303,10 +10634,12 @@ class documented directly above (built in an earlier pass this session).
   `directory/[id]/follow` / `/unfollow` (POST) / `/follow-status` (GET).
 - **Directory entry detail page** (`apps/connect/app/directory/[slug]/page.tsx`) now renders
   four new panels, mirroring `DirectoryDetailScreen.tsx`'s mobile layout section-for-section:
-  - `LogEntryPanel.tsx` — "Add to your log" shelf-status buttons (rendered only for entry types
-    with a shelf label — book/film/place, via the same `SHELF_LABELS`/`shelfLabelsFor()` map
-    documented in the Log-First section above) plus the social-proof line underneath
-    ("N of your follows have read/watched/been here").
+  - `EntryLogControl.tsx` — "Add to your log" shelf-status buttons + one-tap rating (rendered only
+    for entry types with a shelf — see the generalized `TYPE_MEDIA_MAP` documented below; renders
+    nothing for a medium of `'other'`) plus `SocialProofLine.tsx`, a small standalone component
+    underneath it showing "N of your follows have logged this" (split out separately during the
+    SDK 57 merge, since `EntryLogControl` itself is mirrored 1:1 with mobile and shouldn't grow a
+    Log-First-only feature onto it).
   - `SavedLines.tsx` — the "Lines saved from this" list plus an inline "+ Save a line" composer,
     rendered for **every** entry type (no type gate — a Person entry gets this section the same
     as a Book, matching the backend's own type-agnostic `save_line()`).
@@ -10328,8 +10661,8 @@ class documented directly above (built in an earlier pass this session).
   web parity: mirrors `LogHomeScreen.tsx`'s mobile activity card exactly, including the
   star-rating/review-excerpt enrichment `get_following_activity()` already computes server-side
   (see "'From people you follow' activity feed — real star ratings/comments" above for the full
-  backend mechanics — `REVIEW_TEMPLATE_BY_TYPE` maps book/film/place shelf entries to their
-  matching review template + rating meta key, one batched raw-SQL lookup, no N+1). Renders a
+  backend mechanics — `REVIEW_RATING_META` maps each shelf-supporting review template to its
+  rating meta key, one batched raw-SQL lookup, no N+1). Renders a
   plain activity row per followed member's recently-finished entry — avatar (or an initial-letter
   placeholder), "{name} finished {title}", a `★★★★★ N of 5` line when a matching review exists,
   the review excerpt (already truncated server-side to 140 chars), and a relative timestamp
@@ -10339,10 +10672,13 @@ class documented directly above (built in an earlier pass this session).
   `ReadingTrackerClient.tsx`, rendered directly below the shelf grid and above the "Add a Book"
   modal.
 - **`packages/shared/lib/reading-tracker.ts`** extended with the shared TS types every one of
-  these components consumes (`ShelfStatus`, `SHELF_LABELS`/`shelfLabelsFor()`, `SavedLine`,
-  `SocialProofExample`, `SocialProof`, `ShelfEntry`, `AlsoLoggedEntry`, `FollowingActivityItem`
-  — with `rating: number | null` / `reviewExcerpt: string | null`, `PlaceProximity`,
-  `DirectoryFollowStatus`). **No shared source of truth with the mobile TS copy**
+  these components consumes (`ShelfStatus`, `SavedLine`, `SocialProofExample`, `SocialProof`,
+  `AlsoLoggedEntry`, `FollowingActivityItem` — with `rating: number | null` /
+  `reviewExcerpt: string | null`, `PlaceProximity`, `DirectoryFollowStatus`; `ShelfEntry`/
+  `SHELF_LABELS`/`shelfLabelsFor()` from the original book/film/place-only pass are superseded by
+  the generalized `ShelfEntry`/`statusLabel()` the "all five review media" pass below adds — the
+  old `SHELF_LABELS` pair is left in the file as dead code, harmless since `EntryLogControl`
+  doesn't import it). **No shared source of truth with the mobile TS copy**
   (`apps/mobile/src/features/community/readingTracker.ts`, since React Native can't import
   `packages/shared`) or the PHP response shapes — keep all three in sync by hand if any of these
   shapes ever change, same caveat already documented for `MOOD_TAGS`/`PACES` elsewhere in this
@@ -10375,6 +10711,188 @@ class documented directly above (built in an earlier pass this session).
   shelving a book from the directory page, saving a line, following a Person entry, the Stoop
   proximity banner's geolocation prompt, and the following-activity feed's rating/excerpt
   rendering — in a real browser before considering this fully closed.
+
+### Generalised from books to all five review media — the "Culture Log" (September 2026)
+
+**Supersedes the books-only framing everywhere above.** The tracker now covers the same five
+things the composer's `REVIEW_FAMILY` does — **book / film / music / food / place** — not just
+books. Prompted by a marketing-strategy question: the accumulating layer that creates real
+switching cost (shelves, a goal, year-end stats) only worked for one of the five things members
+actually review, so the log couldn't carry a campaign built on the review system.
+
+**No migration, no new table, no `CULTURE_VERSION` bump.** `wp_culture_reading_shelf` was
+already keyed on a plain `directory_id` with no type column, and the three status values
+(`want_to_read`/`currently_reading`/`read`) are unchanged in the DB — they were always
+medium-neutral internally. What was actually book-specific was only ever: the stats query, the
+labels, and the absence of a medium dimension.
+
+- **Medium is derived from the entry, never from the review template.** `Culture_Reading_Tracker
+  ::TYPE_MEDIA_MAP` maps a `culture_dir_type` slug to one of the five media
+  (`album`→music, `tv-series`→film, `restaurant`/`event-venue`→place, etc.); anything unmapped
+  resolves to `'other'`. **This is deliberately not driven by `_template_type`** — Place
+  (hidden-gem) reviews are composed with no `typeFilter` at all, so the template says nothing
+  reliable about what the thing is. `media_for_directory_ids()` is the batch resolver (one raw
+  taxonomy query for a whole page, never `get_the_terms()` per row).
+- **Shelf reads gained a `medium` filter**, threaded through both mirrored REST surfaces
+  (`GET /reading/shelf` and `/mobile/reading/shelf`) and validated against `MEDIA` server-side.
+  `medium_where_clause()` builds an `EXISTS`/`NOT EXISTS` fragment from class constants only —
+  `'other'` is the inverse of every mapped slug, so an untyped entry is still reachable by
+  filter rather than only visible under "All". The fragment adds no `%` placeholders, so the
+  surrounding `$wpdb->prepare()` arg count is unaffected (verified).
+- **`get_shelf_counts()` returns a `byMedium` map** alongside the pre-existing flat per-status
+  totals, which is what the filter chips' counts read.
+- **`get_reading_stats()` widened from one review template to five.** One pivoted postmeta join
+  now reads `_book_/_film_/_music_overall_rating`, `_star_rating` (place), and the three
+  `_food_rating_*` scores, plus `_book_/_film_/_music_genres` and `_cuisine_tag` (food).
+  **Food has no stored overall rating, so its three breakdown scores are averaged** — exactly
+  what the composer already does to derive an overall for book/music/film. New fields:
+  `entries_logged`, `per_month`, `medium_breakdown`, and a `medium` on each `top_genres` row.
+- **`pace_breakdown`/`mood_breakdown` stay book-only, on purpose.** The 12-tag vocabulary is
+  StoryGraph's and doesn't transfer to a restaurant or an album; both sections are now labelled
+  "Books only" in the UI. **Don't "finish the job" by widening these without a real vocabulary
+  for the other four** — that's a product decision, not a gap.
+- **Deprecated aliases are returned deliberately.** `books_read`/`books_per_month` (stats) and
+  `targetBooks`/`booksRead` (goal) still ship alongside the new names, because an
+  already-installed mobile build can't be force-updated and would otherwise render zeros. Drop
+  them once the field has turned over; read the new names in anything new.
+- **Statuses keep one set of values and vary only by label.** `STATUS_LABELS` in
+  `packages/shared/lib/reading-tracker.ts` (mirrored in the mobile copy) gives each medium its
+  own verbs — Want to Read/Reading/Read, Want to Watch/Watching/Watched, Want to Go/Going/Been,
+  etc. Tabs use the active filter's verbs (or neutral Planned/In progress/Done under "All");
+  **a card always uses its own medium's verbs, not the active filter's**.
+- **The goal stayed a single cross-medium target per year**, not one per medium — a member
+  logging 30 things across five media is the number worth showing, and five separate targets is
+  a lot of setup friction for a feature most people never configure at all. Revisit only if
+  asked.
+- **User-facing rename, copy-only** (same convention as Hidden Gem→Place / Stoop): "Reading
+  Tracker" → **Culture Log**, "Your Year in Books" → **Your Year in Culture**. The `/member/
+  reading` route, the `reading/*` REST paths, the table names and the class name are all
+  unchanged — don't rename them.
+- **A real gap this pass caught**: `apps/connect/app/api/reading/shelf/route.ts` dropped the new
+  `medium` param, which would have made the web filter silently no-op while the mobile one
+  worked. **If you add a param to a `reading/*` endpoint, check that proxy forwards it** — the
+  proxy rebuilds the query string by hand rather than passing it through.
+- **The Add modal now picks a medium first**, mapping to the right `typeFilter`/`externalSource`
+  (Google Books / TMDB / Spotify, none for food/place) via a `MEDIA_SEARCH` map duplicated
+  between the web and mobile screens. `typeFilter` is a single slug on purpose: `DirectorySearch`
+  reuses that same value as the `entry_type` it *creates* with, so a comma list would widen
+  search at the cost of creating entries with a nonsense type. Place therefore searches `place`
+  only and won't surface `restaurant`-typed entries in that modal — a narrower search is the
+  better half of that trade.
+- **Verified**: `tsc --noEmit` **exit 0** on both `apps/connect` and `apps/site`; `apps/mobile`
+  held at exactly its documented 37-error pre-existing baseline with none in the touched files;
+  `php -l` clean on all four touched PHP files; CSS brace balance on `member.css` (629/629); the
+  generated medium SQL fragments checked standalone in real PHP for every branch
+  (none/book/place/other/invalid) confirming valid SQL and a stable placeholder count; and the
+  new chip row / scope-note pills rendered in real Chromium at 1280px and 390px against the real
+  `member.css` (no horizontal overflow at either). **Not** tested against a live WordPress —
+  needs the plugin redeployed (header bumped to 2.6.10; no new table, so no `CULTURE_VERSION`
+  bump) and then a real round trip: log something of each medium, review a couple of them, and
+  confirm the filter, the counts and every stats section agree.
+
+### Rating without a review — the `rating` column (September 2026)
+
+Until this, a rating could only exist on a `culture_post` **review**
+(`_book_overall_rating` and its four siblings), so there was no way to say "4 stars"
+without going through the composer. The log had a cheap action (shelve it) and an
+expensive one (write a review) and nothing in between — and a member who rated
+nothing showed an empty histogram on Your Year in Culture no matter how much they
+had logged.
+
+- **`wp_culture_reading_shelf` gained `rating tinyint(4) NOT NULL DEFAULT 0` and
+  `rated_at datetime`.** `CULTURE_VERSION` bumped `3.4.0` → `3.5.0` so
+  `culture_community_maybe_upgrade()` runs the `dbDelta` (plugin header `2.6.10` →
+  `2.6.11`). **0 means unrated, not zero stars** — there is no zero-star rating
+  anywhere in this product, and the frontends rely on that distinction.
+- **`set_shelf_rating( $user_id, $directory_id, $rating )`** is the new write.
+  A rating above 0 also moves the row to `read` and stamps `finished_at` (stickily,
+  same rule the rest of this class already follows), because rating something *is*
+  the finish action in both frontends. **Clearing a rating (0) deliberately does not
+  un-read it** — those are separate statements. Rating an unshelved entry creates the
+  row; rating 0 on an unshelved entry is a no-op rather than a reason to insert an
+  empty one.
+- **`set_shelf_status()` took an optional 4th `$rating` param** so a status change and
+  a rating can land in one write. **Neither REST surface `absint`s the `rating` arg** —
+  the handler needs to tell an absent param (leave the rating alone) from an explicit
+  `0` (clear it), and `absint` collapses both. `is_valid_rating()` rejects anything
+  non-integral or outside 0–5 rather than clamping: a 7 is a caller bug, not a 5.
+- **New routes, mirrored as usual**: `POST /culture/v1/reading/rating` (API key +
+  explicit `user_id`) and `POST /culture/v1/mobile/reading/rating` (JWT), both thin
+  wrappers over the one method. Next.js proxy: `apps/connect/app/api/reading/rating/
+  route.ts`. The pre-existing shelf POST proxy needed no change — it already spreads
+  `...body`, so `rating` passes through.
+- **`get_reading_stats()`'s rating histogram was restructured from per-review to
+  per-entry.** A review's rating still wins (it has prose behind it); the shelf column
+  only fills entries with no review, which previously went uncounted entirely. This
+  also closes a latent double-count: the old loop incremented once per *review*, so two
+  reviews pointing at one entry counted twice. New fields `rated_count` and
+  `average_rating` (one decimal, `null` when nothing is rated) come out of the same
+  pass. **Top genres stay review-only** — the shelf has no genre data to fall back on.
+- **Copy that was wrong the moment this shipped, and is fixed**: both stats screens said
+  "Ratings — Your Reviews" with an empty state reading "review something you've logged to
+  see it here." Ratings no longer require a review; both now read "Your ratings" with the
+  average inline, and the empty state points at the stars.
+- **Not built**: no credits/reputation award for rating (the gamification hook is still
+  its own later phase, and paying for a one-tap action is exactly the list-stuffing
+  incentive the plan doc warns about); no half-stars; no rating history (a re-rate
+  overwrites, `rated_at` moves).
+- **Verified**: `tsc --noEmit` **exit 0** on `apps/connect` and `apps/site`, `apps/mobile`
+  held at its documented 37-error baseline with none in the touched files; `php -l` clean
+  on all four touched PHP files; CSS brace balance on `member.css` (633/633); and both new
+  pieces of logic exercised standalone in real PHP rather than reasoned about — the
+  review-wins/shelf-fallback resolution across seven fixtures (review only, shelf only,
+  both on one entry, mixed, none, out-of-range, empty year) and `is_valid_rating()` across
+  fifteen inputs including `3.0`, `"4.5"`, `true` and `[]`. **Not** tested against a live
+  WordPress: needs the plugin redeployed before the column exists, then a real round trip —
+  rate from each platform, re-tap to clear, rate something that also has a review, and
+  confirm the histogram and average agree.
+
+### The entry page became the place you log from (September 2026)
+
+Everything the log could do — shelve, rate, save a line against a thing — could only be
+reached from `/member/reading` or the composer's own template picker. The directory entry
+page, which is where you actually *are* when you finish a book or want to keep a line,
+offered none of it: CLAUDE.md had already flagged the missing shelf control as a Phase 1
+gap, and the `rating` column shipped with a route and no UI anywhere near the thing being
+rated. This closes all three on both platforms.
+
+- **`Culture_Reading_Tracker::get_entry_state( $user_id, $directory_id )`** is the new read
+  — the entry's medium plus this viewer's own status/rating/dates, or nulls. **It returns a
+  medium even for a logged-out visitor and even with no shelf row**, which is the whole
+  point: the UI needs to know whether to say "Want to Read" or "Want to Watch" *before*
+  there is a row to read verbs off. Mirrored as `GET /culture/v1/reading/entry` (API key)
+  and `GET /culture/v1/mobile/reading/entry` (JWT), same one-method-two-front-doors shape as
+  every other `reading/*` pair. **`user_id` is optional on the web route only** — unlike
+  every other reading read, which requires it.
+- **`EntryLogControl`** (`apps/connect/app/directory/[slug]/EntryLogControl.tsx` and
+  `apps/mobile/src/components/community/EntryLogControl.tsx`) renders status buttons with
+  the medium's own verbs, a one-tap star row once the status is `read`, and a remove link.
+  **It returns `null` when the medium is `other`** — a person, a movement, a concept has no
+  shelf, and `TYPE_MEDIA_MAP` resolves all of them there. The mobile copy takes a
+  `containerStyle` prop and applies it *itself* rather than being wrapped by the screen,
+  so a person's page doesn't render an empty card. Tapping the star you already gave clears
+  the rating (`rating === state.rating ? 0 : rating`) rather than re-setting it.
+- **"Save a line" deep-links the real composer instead of growing a second quote form.**
+  `/post/new?template=quote&link_id=&link_role=&link_title=&link_type=` (mobile: the same
+  four as `NewPost` route params) seeds `SubmitPost`'s new `initialQuoteLink` prop, which
+  pre-fills `quoteAuthorEntry` **or** `quoteSourceEntry` depending on `role` and picks the
+  matching quote type. `role` is `author` on a person and `source` on a work — the two
+  optional links from "Quotes link to the Directory" above, chosen by what you're standing
+  on. `link_type` mirrors `QUOTE_SOURCE_TYPES` (`book`/`film`/`album`, `tv-series`→`film`);
+  anything not in that map has no source picker, so it's omitted.
+- **The lines section now renders with zero lines** on a person or on any type that map
+  covers — an entry with nothing saved yet is exactly who needs the CTA. Everywhere else it
+  still only appears once there's something to show.
+- **Deliberately not built**: the log-first home from the mockup (capture bar, In Progress
+  rail, Year in Culture strip). That's a feed rebuild, not an entry-page control, and was
+  left for a separate decision.
+- **Verified**: `tsc --noEmit` exit 0 on `apps/connect`; `apps/mobile` at its documented
+  37-error baseline with none in touched files; `php -l` clean on all three PHP files; CSS
+  brace balance on `directory.css` (213/213); `check-brand-language.sh` showing only the
+  pre-existing Literary hits. **Not** tested against a live WordPress — needs the plugin
+  redeployed before `reading/entry` exists, then a real round trip on both platforms:
+  shelve and rate from an entry page, re-tap a star to clear, and save a line from both a
+  person and a work and confirm it lands on both pages.
 
 ---
 
@@ -10502,6 +11020,13 @@ attempt to skip straight to code with "mockup first perhaps," and the approved m
 
 ## Registration flow (redesigned)
 
+**Partly superseded (September 2026)** — the flow below is still exactly what happens when
+someone picks "Set a username and password" on `/register`, but it is no longer the default
+path. See "Sign-in and registration — one-time codes are the default (September 2026)" below
+for what `/login` and `/register` actually lead with now, and for which of the steps below are
+still blocking (none of them are).
+
+
 New flow: 3-field quick signup → email verification → 2 post-verification steps.
 
 **Step 1 — `/register`:** Email, Username, Password only. On submit:
@@ -10531,6 +11056,83 @@ New flow: 3-field quick signup → email verification → 2 post-verification st
 - `class-culture-emails.php`: `send_verification_email($user_id, $token, $next_url)`
 
 ---
+
+## Sign-in and registration — one-time codes are the default (September 2026)
+
+Signing up used to be six screens: `/register` (email + username + password) → leave the site
+and click an emailed verification link → `/register/complete`'s three-step wizard (DOB/country/
+city/occupation → a 3-interest minimum → pick a membership tier). Almost none of it was
+load-bearing, and the tier step asked a stranger to choose a plan before they had seen
+anything. `/login` and `/register` now both lead with a 6-digit emailed code instead: enter an
+email, type the code, you are in — the same two taps whether or not the address already has an
+account.
+
+**Almost nothing new was built — the mechanism already existed and was only ever pointed at
+newsletter widgets.** `Culture_Magic_OTP` (`class-culture-magic-otp.php`) and the `otpEmail`/
+`otpCode` branch of `authorize()` in `packages/shared/lib/auth.ts` have been shipped since the
+"Magic-code sign-in + subscribe" work on Site A; `verify_otp()` already found-or-created a real
+account (auto-generating a username from the email, `citizen` tier, email marked verified). The
+work here was wiring that to the auth pages and taking the wall down behind it.
+
+- **New: `apps/connect/components/MagicCodeSignIn.tsx`** — the email → code widget both pages
+  render. Step 1 posts to the new `apps/connect/app/api/auth/magic-otp/request/route.ts` (Site
+  B's own copy of the proxy Site A already had at `app/api/newsletter/magic-otp/request`); step
+  2 calls `signIn("credentials", { otpEmail, otpCode })` directly, so there is deliberately no
+  verify proxy on either app — `authorize()` is what reaches WordPress. Includes a 30s resend
+  countdown, because WordPress rate-limits to 3 requests per 10 minutes per address and it is
+  easy to burn all three on impatient taps.
+- **`otpList` is now sent as `""` from the auth pages, and that empty value is meaningful.**
+  `handle_magic_otp_verify()` switched from `get_param('list') ?: 'getmelit'` to
+  `has_param('list') ? ... : 'getmelit'`, and `verify_otp()` skips subscribing on an empty slug
+  — signing in must never silently join anyone to a mailing list. A caller that omits the param
+  entirely still gets the GetMeLit default the subscribe widgets were built around, so
+  `SubscribeForm`/`LiterarySubscribeForm` are untouched (all three already pass a real slug).
+  **Never pass a real list slug from an auth page.**
+- **Referral attribution survives the code path**, which it would not have by default.
+  `Culture_Referrals::process_referral()` is hooked on `user_register` and reads
+  `$_COOKIE['culture_ref']` or `$_POST['culture_referral_code']` — the cookie can't work
+  headlessly (it would land on `cms.themoveee.com`, not the frontend origin) and a JSON REST
+  body never populates `$_POST`. So `verify_otp()`/`find_or_create_user()` take a `$referral`
+  param and set `$_POST['culture_referral_code']` around the `wp_create_user()` call only,
+  restoring the previous value after. `?ref=` on `/register` is threaded through as
+  `otpReferral`. **If another headless path ever needs to create an account with referral
+  credit, copy this shape — don't re-hook `user_register`.**
+- **`/register/complete` is no longer a gate.** Every field on the About step is optional (the
+  `required` attributes and the three "*" markers are gone), the interests step's 3-minimum is
+  gone, and both steps have a real "Skip for now" that completes the account as a free Citizen.
+  `handleMembershipSubmit()` was split so `submitProfile(tier)` can be called from either. The
+  membership step now opens with "Moveee Citizen is free and already selected". The
+  `?upgrade=patron|lit` entry is untouched and still goes straight to the membership step.
+- **Interests needed no new nudge** — `PulseFeed.tsx` has shown a "Personalise your feed" banner
+  to logged-in members with none set since the Overlays pass. That is now the primary place
+  interests get collected, where the payoff is visible.
+- **Stoop collects the location instead**, since it is the only surface where "near you" is
+  load-bearing. `StoopBrowser.tsx` renders a `.stoop-loc-prompt` card (CountrySelect +
+  CitySelect + save) when the viewer has no city or country on their profile and no city filter
+  set; it PATCHes the existing `/api/user/profile` and then sets the component's own `city`
+  state directly rather than waiting for the NextAuth JWT to pick the saved profile up on its
+  next refresh. Without it the page still worked, it just silently listed every Stoop
+  everywhere.
+- **Two pre-existing bugs fixed in passing**: `/register` called `router.replace()` during
+  render, *before* its `useState` calls, on the `isUpgrade && session` path — a Rules of Hooks
+  violation that changes the hook count between renders (moved into a `useEffect`); and
+  `/register` only ever read `?next=`, so the `?callbackUrl=` that Site A's `/stoop` landing
+  page sends was silently dropped. It now accepts either.
+- **Known rough edge, deliberately left**: finishing the *password* path still redirects to
+  `/login?registered=1` rather than signing you in, because that flow never holds the password
+  on the client. The code path signs you in immediately, so this only affects the secondary
+  route; closing it properly needs a token exchange and was out of scope.
+- Plugin header bumped `2.6.8` → `2.6.9` for redeploy confirmation. **No `CULTURE_VERSION`
+  bump** — no new dbDelta table. The plugin must be redeployed before `referral`/the empty-list
+  behaviour exist in production; until then an auth-page sign-in would subscribe the address to
+  GetMeLit, which is the pre-existing behaviour, not a new break.
+- **Verified**: `tsc --noEmit` clean on both `apps/connect` and `apps/site` (exit 0, not merely
+  "no new errors" — `node_modules` was present this session), `php -l` clean on all three
+  touched PHP files, CSS brace-balance on `auth.css` (96/96) and `stoop.css` (167/167), and the
+  code step rendered in real Chromium at 1280px and 390px against the real `auth.css` (no
+  horizontal overflow at either). **Not** tested end-to-end against a live WordPress — re-check
+  the full email → code → account-created → signed-in round trip, on both a brand-new address
+  and an existing member's, and a `?ref=` signup, before considering this closed.
 
 ## Google Sign-In (June 2026)
 
@@ -10726,6 +11328,31 @@ device signed into a real Apple ID, before considering this fully closed — thi
 also requires the plugin redeployed (manual zip+upload, see "Plugin DB table
 auto-upgrade" — no new dbDelta table here, so no `CULTURE_VERSION` bump was needed,
 only the plugin header version bump to `2.2.4` for redeploy-confirmation purposes).
+
+
+**Archive failed on a stale provisioning profile (September 2026)** — a real EAS iOS
+production build got all the way to `xcodebuild archive` and failed with *"Provisioning
+Profile ... does not support the Associated Domains capability"* / *"... the Sign In with
+Apple capability"*. Not a code bug: the profile EAS reused was minted **before** either
+entitlement existed in this app (passkeys added `associatedDomains`, this feature added
+`com.apple.developer.applesignin`), and EAS syncs capabilities onto the App ID when it
+*creates* a profile, not when it reuses a cached one.
+
+Two halves, and both are needed:
+- **Config** — `ios.usesAppleSignIn: true` added to `app.config.ts`. The
+  `expo-apple-authentication` plugin writes the entitlement into the native project, but
+  **EAS reads this config field on the credentials side**, so without it a profile can be
+  issued that the entitlement then fails to match. `associatedDomains` was already
+  declared and needs no equivalent flag. Keep both the plugin and this field.
+- **Credentials, a human step** — the existing profile still has to be regenerated:
+  `eas credentials` → iOS → production → Build Credentials → delete the provisioning
+  profile, then rebuild. EAS mints a fresh one with the current capabilities. **A code
+  push alone cannot fix this build**, the same way a plugin code push alone never
+  redeploys the WordPress plugin.
+
+**If a future entitlement is ever added** (HealthKit, push, App Groups, anything), expect
+the identical failure on the first build and plan for the profile regeneration as part of
+shipping it — don't re-debug it from the Xcode log each time.
 
 ---
 
@@ -11202,7 +11829,7 @@ separate, larger follow-up, not done here.
   out of scope for this pass.
 - **Not touched in this pass, still phone-only layout**: every screen besides Feed/
   Discover, and the in-screen headers some screens carry (e.g. `ConnectFeedScreen.tsx`'s
-  own Hub/Stoop/Directory/Discover/Bell/Avatar icon row) — those provide real navigation the
+  own Hub/Stoop/Bell/Avatar icon row) — those provide real navigation the
   rail doesn't cover and were deliberately left as-is rather than restructured into the rail
   itself, to keep this pass scoped to the shell + two example screens the mockup covered.
 - **Not visually verified on a real device or simulator** — this sandbox has neither. Verified
@@ -11210,6 +11837,125 @@ separate, larger follow-up, not done here.
   unrelated — see the shop-screen `productId` mismatches noted elsewhere). Re-check on an
   actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
   renders identically to before) before considering this fully closed.
+
+### Site B (`apps/connect`) title-metadata sweep — doubled brand suffix + "The Moveee" (September 2026)
+
+User-reported as "why is the Hubs page title showing **Hubs · Moveee | Moveee**". That one page
+was a symptom of two bugs across 44 files — the Site B counterpart to the `apps/site` brand-suffix
+cleanup documented above, which never covered this app.
+
+**Bug 1 — the doubled suffix.** `apps/connect/app/layout.tsx` sets
+`title: { default: ..., template: "%s | Moveee" }`. Next.js applies that template to every
+descendant page's **plain** `title:` string, so any page title that already ended in the brand
+rendered it twice. 21 pages did (`"Hubs · Moveee"` → `Hubs · Moveee | Moveee`). Fixed by making
+the page title the bare page name and letting the template supply the brand.
+**The rule for this app: a plain `title:` must never contain "Moveee".** Only
+`title: { absolute: "…" }` bypasses the template, and those keep the brand themselves.
+
+- **`openGraph.title` and `twitter.title` are NOT templated** — Next.js applies `title.template`
+  only to `metadata.title`. A nested `"Name | Moveee"` in either block is correct and was
+  deliberately left alone (see `app/connect/[username]/page.tsx`, where line 72 was fixed but
+  lines 75/82 were not). Don't "fix" those to match; they'd lose the brand entirely.
+  `ShareButton.tsx`'s `navigator.share({ title })` is not metadata at all — also left alone.
+
+**Bug 2 — "The Moveee" in 30 titles.** Same banned string the `apps/site` sweep removed; that
+rule ("Never write 'The Moveee' — that string is not the brand name") was never applied here.
+Normalised to plain **Moveee**, separator standardised to `" | "`, and invented sub-brands
+collapsed per the same precedent: `Moveee Happenings`, `Moveee Community`, `Moveee Pulse` and
+`The Moveee Games` all became plain `Moveee`. Real feature names were kept as the page-name half
+(`Culture Games`, `Culture Directory`, `Vendor Dashboard`). Also fixed: `siteName` and the JSON-LD
+publisher `name` in `community/[slug]` and `pulse/[slug]`, and the root layout description.
+
+**Deliberately left alone**, matching the `apps/site` sweep's own scope (metadata only):
+- **`The Moveee Literary`** — a legitimate section proper noun, explicitly sanctioned above.
+  Not the generic-brand-name bug.
+- **`© {year} The Moveee. All Rights Reserved.`** footers (6 files) — the established legal
+  entity line, same "legal defined-term usage is out of scope" call as on Site A.
+- Body copy and AI prompts containing the phrase.
+
+Two other things fixed in passing, both caught while reading the titles: `app/feed/page.tsx` was
+titled `"Moveee — Community for Global Creatives"`, which both doubled **and** used the
+geography-emphasising "Global" the brand-language rule above warns against — now just `"Feed"`.
+And `app/pulse/categories/layout.tsx`'s `"Categories — Moveee Pulse"` became `"Pulse Categories"`
+rather than a bare `"Categories"`, which would have been meaningless in a browser tab.
+
+Not verified in a browser — `apps/connect` has no `node_modules` in this sandbox, so neither
+`tsc --noEmit` nor `next build` could run. Verified via a brace/paren-balance check on all 44
+edited files and a re-run of the audit script that found the bug (0 templated titles still
+carrying the brand, 0 titles containing "The Moveee"). Re-check a couple of real tabs after
+deploy before considering this closed.
+
+### Stoop companion Hubs hidden from the Hubs browse page; Stoop icon changed (September 2026)
+
+Two small Stoop-facing fixes, both user-reported.
+
+**Companion Hubs no longer appear in Hub discovery.** Every Stoop cluster auto-provisions its own
+Hub on creation (`Culture_Clusters::maybe_create_companion_hub()` — named `"{Cluster} — Stoop"`,
+linked both ways via `_cluster_hub_id` / `_hub_cluster_id`), which is the right mechanism: it
+reuses the ordinary Hub join/post/feed plumbing rather than a bespoke cluster-chat feature. But
+those Hubs are a private discussion space for one small local group, not a topic community anyone
+can usefully browse into — and at one per cluster they would swamp the public directory as Stoops
+grow. `Culture_Hubs::discover()` now subtracts every post ID carrying `_hub_cluster_id` from its
+candidate set, right after the `_hub_status = active` lookup and before the category filter, using
+the same raw-SQL resolve-to-IDs shape the rest of that method already uses (never a `meta_query`
+join — see the "meta_query OR-branches are slow" note above).
+
+- **Deliberately scoped to `discover()` only.** `my_hubs()` is untouched: a member who joined
+  their Stoop's Hub still sees it in their own list, which is correct — it genuinely is one of
+  their Hubs. This is the narrower reading of "don't list Stoop hubs on the Hubs page"; if the
+  intent was to hide them from the member's own list too, that is a second, separate filter.
+- **Nothing is stranded.** The companion Hub stays reachable from its cluster page on both
+  platforms (`ClusterScreen.tsx` and `apps/connect/app/cluster/[id]/page.tsx` both render a link
+  gated on `cluster.hubId && cluster.hubSlug`). Verified before making the change.
+- Needs the plugin redeployed before it takes effect in production. No new dbDelta table, so no
+  `CULTURE_VERSION` bump. Verified via `php -l`.
+
+**Stoop's nav icon changed from `home-outline` to `bonfire-outline`** (`ConnectFeedScreen.tsx`
+header). A house glyph reads as "go to the start of the app" in every other app's navigation, so
+it competed with the nav's own semantics instead of naming the feature — and it was inaccurate
+besides: `HostOnboardingScreen.tsx` offers home / café / coworking / other as venue types, so a
+Stoop is frequently not a home at all. A bonfire reads as "a small group that gathers here
+regularly", which is what a Stoop is, and collides with nothing else in the header (Hub is
+`planet-outline`). Runner-up was `location-outline`, which leans on the area-level half of the
+idea instead — a one-word swap if that framing is ever preferred.
+
+- `MemberDashboardScreen.tsx`'s `QUICK_LINKS` still uses a 🏠 emoji for "My Stoop" / "Find your
+  Stoop". Left as-is: it sits directly beside its own text label, so it can't be misread as a
+  home button the way a bare nav icon can.
+- `HostOnboardingScreen.tsx`'s 🏠 (and the web equivalents in `CreateClusterClient.tsx` /
+  `cluster/[id]/page.tsx`) are the literal "Home" **venue type**, not Stoop branding — correct as
+  they are, don't sweep them.
+- Web is untouched — `apps/connect`'s `Header.tsx` rail already uses its own named `"stoop"` icon.
+
+### Feed header trimmed to four targets — Discover + People Near Me moved to the account menu (September 2026)
+
+**Partly superseded**: People Near Me was retired outright later the same month (see "People
+Near Me / member directory RETIRED" above), so only the Discover half of this move survives.
+The rest of this entry — the crowding measurement, the `MemberStack`-is-never-mounted
+reasoning, and the header's final Hub/Stoop/Bell/Avatar shape — still holds.
+
+`ConnectFeedScreen.tsx`'s header row carried five 22px Ionicons plus the 34px avatar in a 390px
+bar, which left roughly 4px of visual gap between tap targets (the `hitSlop` made them *usable*,
+but the row read as crowded — user-reported against a true-size mockup of the screen). Two of
+the five were removed: **People Near Me** (`MemberDirectory`) and **Discover**. The row is now
+Hub → Stoop → Bell → Avatar.
+
+Neither destination was orphaned — both were added to `MemberDashboardScreen.tsx`'s
+`QUICK_LINKS` (🧭 Discover, 👥 People Near Me, placed first, ahead of Wallet), which is the
+account menu the header's own avatar opens. **This works because `MemberDashboard` is only ever
+reached through `ConnectStack`**, where `Discover` and `MemberDirectory` are both registered —
+`MemberStack` declares neither, but it is defined and never mounted (`MainTabs` has five tabs:
+Connect/Magazine/Games/Shop/Events), so it's dead code and not a real second entry path. The
+pre-existing "Find your Stoop" quick link already relied on this same assumption by routing to
+`MemberDirectory`. **If `MemberStack` is ever actually mounted as a tab, both new links (and
+that pre-existing one) will break** — register the two routes there at the same time.
+
+Web is unaffected: `apps/connect`'s left nav rail (see "Connect app left-nav rail" above) has
+its own `RAIL_LINKS` block with plenty of room, and was deliberately left alone.
+
+Verified via `tsc --noEmit` on `apps/mobile` — 37 errors before and after, all pre-existing (see
+the SDK 57 upgrade entry for why that baseline is 37 and what's in it), so this introduced none.
+Not verified on a real device.
 
 ### Tablet support — remaining ~55 screens (August 2026, same day follow-up)
 
@@ -11386,14 +12132,23 @@ All other post templates submit to `${CULTURE_API}/community/submit` (WordPress 
 - "For You" badge on community cards: ochre `badgePulseBg` background, `badgePulseText` colour
 
 ### Expo SDK version — critical
-The mobile app uses **Expo SDK 52** (not 54). The lockfile is the source of truth.
-- `expo: ~52.0.0`, `react: 18.3.1`, `react-native: 0.76.9`
-- `react-native-passkeys` must be pinned to `0.4.0` (0.4.1 requires Expo 53+)
-- `react-native-iap` must be pinned to the **exact** version `12.16.3` (not a caret range) —
-  see "react-native-iap 12.16.4 breaks the iOS native build" below.
-- `expo-location` must be pinned to `~18.0.4` (the SDK 52-aligned version) — used only for a
-  one-time GPS snapshot (see "Stoop proximity banner + member geolocation" above), never
-  background tracking.
+
+**SUPERSEDED (September 2026): the app is now on Expo SDK 57, and the SDK 52 pin described
+below is retired. See "Expo SDK 52 → 57 upgrade" at the end of this file for the current
+state — it is authoritative over every SDK-52-era claim in this section and the several that
+follow it.** Google Play rejected the 1.0.1 release on three errors (target API 34 vs 36, no
+16 KB page support, Play Billing 7 vs 8) that SDK 52 structurally could not satisfy.
+
+Current: `expo: ~57.0.0`, `react: 19.2.3`, `react-native: 0.86.3`, and the New Architecture
+is **enabled** (SDK 57's template sets `newArchEnabled=true`; SDK 52's set it to `false`).
+`react-native-passkeys` is `0.4.2` and `react-native-iap` is `^14.7.20` — **both old pins
+below are wrong now**; passkeys `0.4.2` requires `expo >=53`, and the iOS bug that forced the
+exact `12.16.3` pin does not exist in v14. `expo-location` is now `~57.0.20` (used only for a
+one-time GPS snapshot — see "Stoop proximity banner + member geolocation" above — never
+background tracking).
+
+The lockfile is still the source of truth, and the regeneration process below is unchanged
+and still mandatory.
 - **Always regenerate `package-lock.json` from scratch** after changing `package.json` —
   EAS Build uses `npm ci` which only installs what's in the lockfile. If a package is in
   `package.json` but not in the lockfile, it won't be installed.
@@ -11584,6 +12339,60 @@ Not verified against a real Gradle/Android toolchain — this sandbox has none. 
 `node --check` on the plugin file and a brace/paren balance check on both the JS wrapper and the
 embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
 actually clears the Gradle validation error before considering it closed.
+
+**Real root cause found and fixed at source (September 2026) — everything above is a symptom, and
+the ordering plugin is now expected to be inert.** Eight rounds of ordering fixes cleared every
+`implicit_dependency` failure but then hit a real javac error,
+`package io.sentry.react.expo does not exist`, in `:expo:compileReleaseJavaWithJavac`. A theory
+that the two duplicates were not identical (that the Expo copy compiled a superset, making their
+relative order load-bearing) was tested by flipping the order — the identical error recurred, which
+disproved it and prompted actually downloading and reading the installed package instead of
+reasoning about it. `:expo:compileReleaseJavaWithJavac` had in fact **never once succeeded** in any
+build this session; the ordering work simply got far enough to reach a problem that was always
+there.
+
+What the package actually contains: `@sentry/react-native@8.24.0`'s `expo-module.config.json` is
+`{"platforms":["android"],"android":{"name":"sentry-react-native-expo","path":"android/expo-handler"}}`
+— the autolinking **3.x** schema (SDK 54+). `expo-modules-autolinking@2.0.8`, which SDK 52 pins,
+reads neither `path` nor `name`: its only config key here is `android.gradlePath`
+(`ExpoModuleConfig.androidGradlePaths()`), and its project names are derived mechanically from the
+package name plus the gradle file's directory (`convertPackageWithGradleToProjectName`), never from
+`android.name`. Both of Sentry's keys are therefore silently ignored, and it falls back to globbing
+`*/build.gradle` **one level deep** (`findGradleFilesAsync`) — which matches `android/build.gradle`
+but not `android/expo-handler/build.gradle`. So Expo links `:sentry-react-native` → `android/`, the
+exact directory classic RN autolinking already links as `:sentry_react-native`. That is the
+duplicate, and it is a schema-version mismatch, not the generic dual-autolinking bug the original
+entry above blamed.
+
+The missing class is the same misread, one step on: Expo's package-list generator scans the whole
+linked source tree, so it finds `SentryExpoPackage.java` at `android/expo-handler/src/...` (which is
+under `android/`) and writes it into the generated `ExpoModulesPackageList.java` — but the Gradle
+project rooted at `android/` compiles only `android/src`, so the class is referenced and never
+compiled.
+
+**Fix**: one key in `apps/mobile/package.json` —
+`"expo": { "autolinking": { "exclude": ["@sentry/react-native"] } }` (`exclude` is supported in
+2.0.8, confirmed in `findModules.js`). This drops the package from **Expo** autolinking only;
+classic autolinking still links `android/` and registers `RNSentryPackage`, so native Sentry crash
+reporting is unaffected. The only thing lost is `SentryExpoPackage`, whose entire job (per its own
+javadoc) is registering a `ReactNativeHostHandler` to catch native exceptions swallowed by Expo's
+**bridgeless** error handling — and this app does not enable the New Architecture, so that handler
+was inert here regardless.
+
+**This supersedes the ordering plugin.** With no duplicate project, `withSentryGradleTaskOrderingFix.js`'s
+`findProject` guards make it a no-op. It was deliberately left registered for the first build after
+this fix so only one variable changed; once a production build is green, delete it and its entry in
+`app.config.ts`'s `plugins` array. **If a duplicate `:sentry-*` project ever reappears, fix the
+autolinking registration — do not re-derive ordering rules.** The same applies to any other package
+that starts throwing `implicit_dependency` errors against itself: check whether its
+`expo-module.config.json` uses a schema key this pinned autolinking version cannot read, before
+assuming Gradle is at fault.
+
+Verified by inspecting the real published tarballs (`@sentry/react-native@8.24.0` and
+`expo-modules-autolinking@2.0.8` fetched from the npm registry) rather than by reasoning — this
+sandbox has no `node_modules` and no Android toolchain, so the Gradle side still needs a real
+`eas build --platform android --profile production` to confirm.
+
 
 ### `tsc --noEmit` in `apps/mobile` — React 18/19 type collision (fixed August 2026; the original fix broke a real production build — corrected same month)
 In a full monorepo `npm install`, `react-native` (hoisted by npm to the **root** `node_modules`,
@@ -11780,3 +12589,165 @@ this list — it was out of scope for "no more paper background."
 - `radius`: `sm`(2), `md`(4), `lg`(6), `xl`(12), `"2xl"`(20), `full`(9999) — use bracket notation for `"2xl"`
 - `fontSize`: includes `eyebrow`(9) for uppercase labels
 - `fonts`: `sans`, `sansBold`, `sansItalic`, `serif`, `serifBold`, `serifItalic`, `serifBoldItalic`, `mono`, `monoBold`, `monoItalic`. **`fontStyle: "italic"` synthesis is unreliable for custom/embedded TTF fonts on iOS** — applying it on top of a non-italic `fontFamily` (e.g. `Fraunces_400Regular`) can silently fall back to the system font's italic face instead of rendering the custom font at all. Always reference the real italic font file by name instead (`fonts.serifItalic` → `Fraunces_400Regular_Italic`). **Fixed app-wide June 2026** — every `fontFamily: fonts.serif/sans/mono(...)` + `fontStyle: "italic"` combo across the codebase (quote views, pull quotes, book-review favourite quotes, game screens, composer inputs, TOC titles, etc.) was swapped to the matching `*Italic` key. The italic weights (`Fraunces_700Bold_Italic`, `DMSans_400Regular_Italic`, `JetBrainsMono_400Regular_Italic`) are loaded in `App.tsx`'s `useFonts()` call alongside the existing weights — **if you add a new bold/regular weight to `theme.ts`'s `fonts` object, check whether an italic counterpart should be added and loaded at the same time**, since there's no synthesis fallback that looks right on iOS. Text with no explicit `fontFamily` (system default) is unaffected and can use plain `fontStyle: "italic"` safely — e.g. `react-native-render-html`'s `em`/`i`/`blockquote` tag styles in `ArticleScreen.tsx` intentionally have no custom `fontFamily`.
+
+---
+
+## Expo SDK 52 → 57 upgrade (September 2026) — authoritative over all SDK-52-era notes above
+
+Google Play rejected the 1.0.1 production release with five errors. Two were console-only
+(AD_ID declaration, no countries selected) and were fixed in Play Console. The other three —
+**target API 34 vs required 36**, **no 16 KB page support**, **Play Billing 7.0.0 vs required
+8.0.0** — were one problem: the toolchain was too old.
+
+**There was no configuration-only fix**, and this is the part worth internalising: forcing
+API 36 on SDK 52 would have made 16 KB support *mandatory* (it only applies to apps targeting
+Android 15+) while SDK 52's pinned `ndkVersion 26.1.10909125` cannot produce 16 KB-aligned
+libs — i.e. it would have shipped an app that crashes on 16 KB devices. The two are coupled.
+
+Full reasoning and the verified evidence for each claim: `docs/expo-sdk-57-upgrade.md`.
+
+### What changed
+
+- `expo ~57.0.0`, `react 19.2.3`, `react-native 0.86.3`. The dependency set was taken from
+  SDK 57's own `bundledNativeModules.json`, not hand-picked, so it matches what
+  `expo install` would choose. **`@sentry/react-native` moved to `~7.11.0`** — Expo's tested
+  pin, which is a step *back* from the 8.24.0 we had.
+- **The New Architecture is now ON.** SDK 57's template sets `newArchEnabled=true`; SDK 52's
+  set `false`. This invalidates the old note that `SentryExpoPackage` is "inert since New Arch
+  is not enabled" — that handler catches exceptions swallowed by bridgeless error handling and
+  is now genuinely load-bearing.
+- **iOS 15 is no longer supported.** SDK 57 enforces `ios.deploymentTarget >= 16.4`; below it
+  `expo config` refuses to load outright.
+- `expo-av` does not exist in SDK 57. `AudioPreviewButton.tsx` moved to `expo-audio`, whose
+  play/pause are synchronous void calls and whose `playing` is a plain property.
+
+### Three workarounds this upgrade killed — do not reintroduce them
+
+1. **`expo.autolinking.exclude` for `@sentry/react-native`** — removed, and
+   `plugins/withSentryGradleTaskOrderingFix.js` deleted with it. That whole saga existed
+   because `expo-modules-autolinking@2.0.8` ignores the `android.path`/`android.name` keys
+   Sentry declares. Verified: autolinking `57.x` reads both, so the duplicate Gradle project
+   and the missing `SentryExpoPackage` class both disappear on their own.
+2. **`plugins/withAndroidIapStoreFlavor.js`** — deleted. It injected a
+   `missingDimensionStrategy` hint because `react-native-iap` v12 shipped "amazon"/"play"
+   product flavors. v14 ships no flavors, and its own Expo plugin only adds iOS StoreKit
+   entitlements now.
+3. **The `typeRoots`/`types` hack in `apps/mobile/tsconfig.json`** — removed, along with the
+   `module`/`moduleResolution` overrides that fought SDK 57's base config (which sets
+   `moduleResolution: "bundler"` + `customConditions`). The hack stopped TS resolving the
+   monorepo root's React 19 types into a React 18 app; mobile is React 19 now, so the
+   collision is gone. **It had also started breaking resolution outright** — it pointed at
+   `apps/mobile/node_modules/@types`, which does not exist under workspace hoisting.
+
+### The type-check baseline was never real
+
+Under the old tsconfig, `tsc` bailed after 2 config errors without analysing any code. The
+"35 pre-existing errors" baseline recorded elsewhere in this file was therefore never a
+measurement. With the config repaired the true count is **37 pre-existing errors** — navigation
+param mismatches (`product`/`productId`, `article`/`slug`, `event`/`eventId`), a `fontSize
+'3xl'` that does not exist in the theme, an author `.role` that does not exist, and dead code
+in `MemberScreen.tsx`. None are upgrade fallout; none were fixed.
+
+Upgrade-caused fixes were: `StyleSheet.absoluteFillObject` → `absoluteFill` (13 sites — only
+safe because RN 0.86 turned `absoluteFill` into a plain object with the old shape; on older RN
+the same edit silently breaks every overlay), React 19's `RefObject<T | null>` variance, React
+19 removing the zero-argument `useRef` overload, and `expo-notifications` replacing
+`shouldShowAlert` with `shouldShowBanner`/`shouldShowList`.
+
+### `react-native-render-html` is abandoned and needs React 19 help — fixed in our code
+
+`6.3.4` is both our version and the newest published. It configures its render engine via
+`TRenderEngineProvider.defaultProps`, which React 19 ignores on function components, and
+`RenderHTML` spreads caller props straight into that provider without adding defaults. Left
+alone, every article and pulse body loses base typography and all user-agent styling.
+
+**`HtmlContent.tsx` re-supplies those defaults ahead of caller props.** Deliberately not
+`patch-package`: the library is abandoned so the values cannot drift, and patching
+`node_modules` is fragile under workspace hoisting and awkward on EAS. Its other three
+`defaultProps` sites were each checked and are genuinely safe to lose — `renderChildren`
+already has a `propsForChildren = empty` default parameter, and `propsFromParent` is read with
+optional chaining plus a `typeof !== 'number'` guard.
+
+### `plugins/withFmtConstevalFix.js` — verified, probably now unnecessary
+
+RN 0.86 pins fmt **12.1.0**, not the 11.0.2 it was written against. Checked against real
+12.1.0 source: the block it rewrites is unchanged so it still matches (it is *not* silently
+no-opping, and it warns if it ever stops matching). 12.1.0 also added the
+`#ifdef FMT_USE_CONSTEVAL` guard whose absence was the entire reason the simpler
+compiler-flag approach failed originally. Kept for now; **delete it and its `app.config.ts`
+entry once one real iOS build goes green on SDK 57.**
+
+### Hazard: never run `npm install` from inside `apps/mobile`
+
+It rewrites the **root** lockfile and prunes the other workspaces' entries out of it — a
+6,193-line deletion in this case, which would likely break the Vercel builds for both web
+apps. If you need `node_modules` locally to type-check, back up the root lockfile first and
+restore it afterwards. The mobile lockfile must still be regenerated out-of-tree per the
+process documented above; that is what EAS's `npm ci` consumes.
+
+### Do NOT let `@sentry/react-native` follow Expo SDK 57's pin — it is stale and breaks the build
+
+SDK 57's `bundledNativeModules.json` pins `@sentry/react-native: ~7.11.0` (and the long-dead
+`sentry-expo: ~7.0.0`). That pin is **wrong for this package** — 7.11.0 is *older* than the
+8.24.0 this repo already ran on SDK 52. Taking it broke the iOS JS bundle two separate ways,
+both caught by `expo export:embed` before any build credit was spent:
+
+1. **`Unable to resolve module promise/setimmediate/done`** — 7.11.0 `require()`s the `promise`
+   package at runtime but declares it nowhere (not a dep, not a peer). 8.28.0 declares it as an
+   optional peer.
+2. **`Cannot read properties of undefined (reading 'match')` in `determineDebugIdFromBundleSource`**
+   — Metro 0.84 resolves the serializer to `{ artifacts, assets }`, not `{ code, map }`. 7.11.0's
+   `extractSerializerResult` only understands `{ code, map }` and crashes. 8.28.0 returns `null`
+   for an unrecognised shape and passes the result through untouched, with a comment citing
+   upstream [getsentry/sentry-react-native#6650](https://github.com/getsentry/sentry-react-native/issues/6650)
+   — Expo's own serializer adds the debug IDs for that output.
+
+7.11.0 also ships **no `expo-module.config.json` at all**, so the Expo handler would not autolink
+— i.e. it silently undoes the reasoning behind removing the `expo.autolinking.exclude` workaround.
+8.28.0 ships the modern `android.path`/`android.name` schema that SDK 57's autolinking reads.
+
+**Pinned to `^8.28.0` deliberately. Never run `expo install --fix` / `expo-doctor --fix` and let it
+"correct" this back to `~7.11.0`** — that reintroduces all three problems at once. If expo-doctor
+flags the version as mismatched, that warning is expected and should be ignored for this package.
+
+**`promise` hoisting — FIXED September 2026, and the old note here was wrong.** This entry used
+to claim that "the standalone `apps/mobile/package-lock.json` that EAS's `npm ci` consumes hoists
+it to top level, which is the layout that actually matters," and to recommend a local symlink
+(`ln -sfn .../react-native/node_modules/promise node_modules/promise`) to make local checks
+faithful. **Both halves of that were wrong, and together they hid a real build break for weeks.**
+
+A real EAS iOS production build failed with exactly the `Unable to resolve module
+promise/setimmediate/done from .../@sentry/react-native/...` error this section describes. The
+log's first line — `npm warn config ignoring workspace config at
+/Users/expo/workingdir/build/apps/mobile/.npmrc` — plus its resolution paths (`../../node_modules`,
+i.e. the monorepo root) prove **EAS installs from the repo root as a workspace, not from the
+standalone mobile lockfile**. And the root lockfile placed `promise` at
+`node_modules/react-native/node_modules/promise`, where `@sentry/react-native` (a sibling at
+`node_modules/@sentry/react-native/`) genuinely cannot reach it. The recommended symlink made
+every local `expo export:embed` pass regardless, so the one check that would have caught this was
+neutralised by the very note telling you to run it.
+
+**The fix is a one-line dependency declaration**: `"promise": "^8.3.0"` in `apps/mobile/package.json`
+(matching React Native's own range exactly, so there is never a second copy or a version skew).
+Declaring it as a direct dependency of the workspace forces npm to hoist a single copy to the root
+`node_modules`, where both `react-native` and `@sentry/react-native` resolve it by ordinary upward
+lookup. Verified empirically, not by reasoning: with the symlink removed, `npx expo export:embed
+--eager --platform ios --dev false` reproduced the EAS error byte-for-byte; with `promise` moved to
+top level exactly as the regenerated lockfile specifies, the same command bundled 2606 modules
+cleanly.
+
+**Never reinstate the symlink.** If a local check needs a faithful tree, delete
+`node_modules/promise` if it is a symlink and let a real install place it. **And do not trust the
+standalone `apps/mobile/package-lock.json` as "the one EAS uses"** — it is still tracked and still
+regenerated out-of-tree per the process above, but the root `package-lock.json` is what a
+root-workspace EAS build actually resolves against. When a dependency-resolution bug reaches an EAS
+build, check the **root** lockfile's layout for the package first (`python3 -c "import json; pk =
+json.load(open('package-lock.json'))['packages']; print([k for k in pk if
+k.endswith('node_modules/<pkg>')])"`), not the mobile one.
+
+**Regenerating the root lockfile is safe from the repo root** (`npm install --package-lock-only`)
+— that is not the forbidden operation. The forbidden one is running `npm install` *inside*
+`apps/mobile`, which prunes the other workspaces out of the root lockfile. After regenerating,
+confirm the diff is scoped: entry count unchanged, all 8 `apps/*`/`packages/*` workspace entries
+still present. This fix's own diff was exactly one added declaration plus `promise` moving from
+nested to top level.

@@ -19,26 +19,40 @@ class Culture_Stripe {
     }
 
     /**
-     * Get the Stripe Price ID based on billing cycle.
+     * Get the Stripe Price ID based on billing cycle and tier.
+     *
+     * $tier === 'patron' keeps the pre-existing option-key shape
+     * (culture_stripe_price_{cycle}_usd) so nothing needs re-configuring
+     * for the tier this plugin has always supported; 'lit' (Moveee Lit —
+     * see CLAUDE.md's "Three-tier membership" section) reads a parallel,
+     * tier-suffixed key instead.
      *
      * @param string $cycle 'monthly' or 'yearly'.
+     * @param string $tier 'patron' or 'lit'.
      * @return string
      */
-    private static function get_price_id( $cycle = 'monthly' ) {
-        $key = 'culture_stripe_price_' . strtolower( $cycle ) . '_usd';
+    private static function get_price_id( $cycle = 'monthly', $tier = 'patron' ) {
+        $suffix = ( 'patron' === $tier ) ? '' : '_' . strtolower( $tier );
+        $key    = 'culture_stripe_price_' . strtolower( $cycle ) . '_usd' . $suffix;
         return get_option( $key, '' );
     }
 
     /**
-     * Generate checkout URL for upgrading to Patron via Stripe.
+     * Generate checkout URL for upgrading to a paid tier ('patron' or 'lit') via Stripe.
      *
      * @param int    $user_id
      * @param string $plan_key e.g. 'monthly_usd'
+     * @param string $tier 'patron' or 'lit'.
+     * @param string $return_path Optional path (e.g. '/lit-welcome') on the
+     *                            frontend to land on after checkout, instead
+     *                            of the site root — see
+     *                            Culture_Paystack::build_return_url().
      * @return string|WP_Error
      */
-    public static function get_checkout_url( $user_id, $plan_key = 'monthly_usd' ) {
+    public static function get_checkout_url( $user_id, $plan_key = 'monthly_usd', $tier = 'patron', $return_path = '' ) {
+        $tier     = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
         $cycle    = strpos( $plan_key, 'yearly' ) !== false ? 'yearly' : 'monthly';
-        $price_id = self::get_price_id( $cycle );
+        $price_id = self::get_price_id( $cycle, $tier );
 
         if ( empty( $price_id ) ) {
             return new WP_Error( 'missing_price_id', __( 'Stripe Price ID not configured.', 'culture-community' ) );
@@ -46,12 +60,13 @@ class Culture_Stripe {
 
         $user = get_userdata( $user_id );
         $frontend_url = get_option( 'culture_frontend_url', home_url( '/' ) );
+        $return_base  = Culture_Paystack::build_return_url( $frontend_url, $return_path );
 
         $response = self::api_request( 'POST', '/checkout/sessions', array(
             'mode'                => 'subscription',
             'client_reference_id' => (string) $user_id,
-            'success_url'         => add_query_arg( 'culture_upgraded', '1', $frontend_url ),
-            'cancel_url'          => add_query_arg( 'culture_upgraded', '0', $frontend_url ),
+            'success_url'         => add_query_arg( 'culture_upgraded', '1', $return_base ),
+            'cancel_url'          => add_query_arg( 'culture_upgraded', '0', $return_base ),
             'line_items'          => array(
                 array(
                     'price'    => $price_id,
@@ -60,6 +75,7 @@ class Culture_Stripe {
             ),
             'metadata' => array(
                 'user_id' => $user_id,
+                'tier'    => $tier,
             ),
         ) );
 
@@ -113,13 +129,16 @@ class Culture_Stripe {
     }
 
     /**
-     * Upgrade user to Patron tier.
+     * Upgrade user to the paid tier they checked out for ('patron' or 'lit').
      *
      * @param int   $user_id
      * @param array $session Stripe Session object.
      */
     private static function upgrade_user( $user_id, $session ) {
-        update_user_meta( $user_id, '_culture_membership_tier', 'patron' );
+        $tier = $session['metadata']['tier'] ?? 'patron';
+        $tier = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
+
+        update_user_meta( $user_id, '_culture_membership_tier', $tier );
         update_user_meta( $user_id, '_culture_stripe_customer_id', $session['customer'] ?? '' );
         update_user_meta( $user_id, '_culture_stripe_subscription_id', $session['subscription'] ?? '' );
         update_user_meta( $user_id, '_culture_subscription_status', 'active' );

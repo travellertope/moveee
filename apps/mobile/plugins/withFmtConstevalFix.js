@@ -1,5 +1,27 @@
 const { withPodfile } = require("@expo/config-plugins");
 
+// STATUS AFTER THE EXPO SDK 57 UPGRADE (verified, not assumed):
+// RN 0.86 pins fmt 12.1.0, not the 11.0.2 this was written against. Both
+// facts below were checked against the real fmt 12.1.0 include/fmt/base.h:
+//
+//   1. The block this plugin rewrites is byte-for-byte unchanged in 12.1.0,
+//      so the regex below still matches and this is NOT silently no-opping.
+//      (It also warns loudly if it ever stops matching — see the Kernel.warn
+//      below, which is the real guard against that failure mode.)
+//   2. 12.1.0 DID add the `#ifdef FMT_USE_CONSTEVAL / "Use the provided
+//      definition."` guard that 11.0.2 lacked. That absence is the entire
+//      reason the simpler GCC_PREPROCESSOR_DEFINITIONS approach failed
+//      originally; on 12.1.0 it would now work. If this patch ever needs
+//      reworking, prefer that route over source rewriting.
+//
+// This patch is therefore probably UNNECESSARY on RN 0.86 — fmt 12.1.0 with
+// a current Xcode is what React Native itself tests against, so the original
+// compile failure has most likely been resolved upstream. It is kept because
+// forcing the non-consteval path is a configuration fmt fully supports, and
+// keeping it costs nothing, whereas removing it on a guess costs an iOS build
+// cycle. Delete it (and its app.config.ts entry) once one real iOS build has
+// gone green on SDK 57.
+
 // Newer Xcode/Clang versions (needed for Apple's Xcode 26+ App Store SDK
 // requirement — see eas.json's build.production.ios.image) fail to compile
 // `fmt` 11.0.2 (pulled in transitively via RCT-Folly, a core React Native

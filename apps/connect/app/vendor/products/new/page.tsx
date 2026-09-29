@@ -2,7 +2,7 @@ import Link from "next/link";
 import ProductForm from "@/components/vendor/ProductForm";
 import "../../vendor.css";
 
-export const metadata = { title: { absolute: "Add Product | Vendor Dashboard | The Moveee" } };
+export const metadata = { title: { absolute: "Add Product | Vendor Dashboard | Moveee" } };
 
 export default function NewProductPage() {
   return (

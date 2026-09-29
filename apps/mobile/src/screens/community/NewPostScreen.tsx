@@ -163,6 +163,26 @@ const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", s
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
+/**
+ * Quote type -> the culture_dir_type its *source* resolves to, plus the
+ * external catalog to search alongside the local directory. Mirrors
+ * QUOTE_SOURCE_TYPES in packages/shared/components/pulse/SubmitPost.tsx —
+ * keep the two in sync, same caveat as every other PHP/web/mobile constant
+ * trio in this codebase.
+ *
+ * Person and Speech are absent on purpose: a Person quote's source is the
+ * person (captured by the author picker), and a Speech has no directory type
+ * at all. Both fall back to the freeform source input.
+ */
+const QUOTE_SOURCE_TYPES: Record<
+  string,
+  { type: string; label: string; about: string; external?: "google_books" | "spotify" | "tmdb" }
+> = {
+  Book: { type: "book", label: "Which book?", about: "Author", external: "google_books" },
+  Film: { type: "film", label: "Which film?", about: "Director", external: "tmdb" },
+  Song: { type: "album", label: "Which song or album?", about: "Artist", external: "spotify" },
+};
+
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long screen — short
 // templates (post, quote, poll, creative-showcase) stay single-step/unlisted
@@ -332,6 +352,20 @@ export default function NewPostScreen() {
   const [stops, setStops] = useState<StopDraft[]>([{ name: "", note: "" }, { name: "", note: "" }]);
   const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+  // Directory-backed quote links (September 2026) — see the web composer's
+  // matching state for why a freeform author term was the wrong model.
+  // Seeded once from "Save a line from this" on a directory entry, then
+  // editable like any other pick — a shortcut past re-finding the entry, not
+  // a lock. Mirrors initialQuoteLink in the web composer (SubmitPost.tsx).
+  const quoteLink = route.params?.quoteLinkRole && route.params?.quoteLinkId
+    ? { id: route.params.quoteLinkId, title: route.params.quoteLinkTitle ?? "", role: route.params.quoteLinkRole, dirType: route.params.quoteLinkType }
+    : null;
+  const [quoteAuthorEntry, setQuoteAuthorEntry] = useState<DirectoryEntry | null>(
+    quoteLink?.role === "author" ? ({ id: quoteLink.id, title: quoteLink.title } as DirectoryEntry) : null
+  );
+  const [quoteSourceEntry, setQuoteSourceEntry] = useState<DirectoryEntry | null>(
+    quoteLink?.role === "source" ? ({ id: quoteLink.id, title: quoteLink.title } as DirectoryEntry) : null
+  );
 
   // Hidden Gem extras
   const [hiddenGemPlaceName, setHiddenGemPlaceName] = useState("");
@@ -407,7 +441,13 @@ export default function NewPostScreen() {
 
   // Quote extras
   const [quoteSharingReason, setQuoteSharingReason] = useState("");
-  const [quoteType, setQuoteType] = useState("");
+  // A pre-linked person is a "Person" quote (which hides the source field);
+  // a pre-linked work seeds the matching source type. Anything unmapped stays blank.
+  const [quoteType, setQuoteType] = useState(
+    quoteLink?.role === "author"
+      ? "Person"
+      : ({ book: "Book", film: "Film", album: "Song" } as Record<string, string>)[quoteLink?.dirType ?? ""] ?? ""
+  );
 
   // Poll extras
   const [pollDescription, setPollDescription] = useState("");
@@ -610,15 +650,21 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "poll" && poll.options.filter((o) => o.trim()).length < 2) {
       Alert.alert("Poll options required", "Add at least 2 poll options."); return;
     }
-    if (template === "quote" && !quoteAuthor.trim()) {
-      Alert.alert("Author required", "Please enter the quote author."); return;
+    if (template === "quote" && !quoteAuthorEntry && !quoteAuthor.trim()) {
+      Alert.alert("Author required", "Pick who said it, or type a name."); return;
     }
 
     setSubmitting(true);
     try {
       if (template === "quote") {
         await api.post(`${MOBILE_API}/community/quote`, {
-          text, author: quoteAuthor, source: quoteSource || undefined,
+          text,
+          // The freeform strings still go up exactly as before — the taxonomy
+          // term and _quote_source meta are unchanged; the ids are additive.
+          author: quoteAuthorEntry?.title || quoteAuthor,
+          source: quoteSourceEntry?.title || quoteSource || undefined,
+          quote_author_directory_id: quoteAuthorEntry?.id || undefined,
+          linked_directory_id: quoteSourceEntry?.id || undefined,
           sharing_reason: quoteSharingReason || undefined,
           quote_type: quoteType || undefined,
         } as Record<string, unknown>);
@@ -2049,26 +2095,56 @@ const uploadImages = async (): Promise<string[]> => {
         />
       </View>
 
+      {/* Who said it — a directory picker, so the line shows up on that
+          person's entry. The freeform input below stays as the escape hatch
+          for an unattributable line (a proverb, something overheard), which
+          should not be forced into becoming a person entry. */}
       <View style={[styles.fieldGroup, { marginTop: space[3] }]}>
-        <Text style={styles.fieldLabel}>Who said it *</Text>
-        <TextInput
-          style={styles.input}
-          value={quoteAuthor}
-          onChangeText={setQuoteAuthor}
-          placeholder="Author name"
-          placeholderTextColor={c.ghost}
+        <DirectorySearch
+          selected={quoteAuthorEntry}
+          onSelect={setQuoteAuthorEntry}
+          typeFilter="person"
+          label="Who said it? *"
+          aboutFieldLabel="Known for"
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Source (optional)</Text>
-        <TextInput
-          style={styles.input}
-          value={quoteSource}
-          onChangeText={setQuoteSource}
-          placeholder="Book, speech, film…"
-          placeholderTextColor={c.ghost}
-        />
-      </View>
+      {!quoteAuthorEntry && (
+        <View style={styles.fieldGroup}>
+          <TextInput
+            style={styles.input}
+            value={quoteAuthor}
+            onChangeText={setQuoteAuthor}
+            placeholder="…or just type a name"
+            placeholderTextColor={c.ghost}
+          />
+        </View>
+      )}
+
+      {/* Source — a picker only where the quote type maps to something the
+          Directory holds; otherwise freeform. */}
+      {QUOTE_SOURCE_TYPES[quoteType] ? (
+        <View style={styles.fieldGroup}>
+          <DirectorySearch
+            selected={quoteSourceEntry}
+            onSelect={setQuoteSourceEntry}
+            typeFilter={QUOTE_SOURCE_TYPES[quoteType].type}
+            label={QUOTE_SOURCE_TYPES[quoteType].label}
+            aboutFieldLabel={QUOTE_SOURCE_TYPES[quoteType].about}
+            externalSource={QUOTE_SOURCE_TYPES[quoteType].external}
+          />
+        </View>
+      ) : quoteType !== "Person" ? (
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Source (optional)</Text>
+          <TextInput
+            style={styles.input}
+            value={quoteSource}
+            onChangeText={setQuoteSource}
+            placeholder="Speech, article, somewhere else…"
+            placeholderTextColor={c.ghost}
+          />
+        </View>
+      ) : null}
       {renderDivider()}
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Why are you sharing this? (optional)</Text>
@@ -2089,7 +2165,9 @@ const uploadImages = async (): Promise<string[]> => {
             <TouchableOpacity
               key={qt}
               style={[styles.sectionTag, quoteType === qt && styles.sectionTagActive]}
-              onPress={() => setQuoteType(quoteType === qt ? "" : qt)}
+              // Switching type changes what the source picker searches, so a
+              // stale pick from the previous type must not survive.
+              onPress={() => { setQuoteType(quoteType === qt ? "" : qt); setQuoteSourceEntry(null); }}
             >
               <Text style={[styles.sectionTagText, quoteType === qt && styles.sectionTagTextActive]}>{qt}</Text>
             </TouchableOpacity>

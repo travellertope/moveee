@@ -390,7 +390,7 @@ export default function ClusterScreen() {
       ) : (
         <ScrollView contentContainerStyle={[styles.scroll, tabletCap]}>
           <View style={styles.nameBlock}>
-            <Text style={styles.eyebrow}>People Near Me › Stoop</Text>
+            <Text style={styles.eyebrow}>Stoop</Text>
             <Text style={styles.name}>{cluster.name}</Text>
             <Text style={styles.address}>
               {[cluster.street, cluster.city, cluster.country].filter(Boolean).join(", ")}

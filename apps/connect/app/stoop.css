@@ -664,3 +664,75 @@
   .stoop-detail-cap-count { text-align: left; }
   .stoop-detail-cap-track { width: 100%; margin-left: 0; }
 }
+
+/* ── Location prompt ────────────────────────────────────────────────────────
+   Signing up no longer collects a city (see the auth flow in CLAUDE.md), so
+   Stoop asks for one itself — this is the only surface where "near you" is
+   load-bearing. Shown only when the viewer has no city or country on their
+   profile and hasn't set a city filter. Tokens are the same --paper/--ink/
+   --ochre/--rule set the rest of this file uses. */
+
+.stoop-loc-prompt {
+  background: var(--paper);
+  border: 1px solid var(--ochre);
+  border-radius: var(--radius-xl, 12px);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(20, 17, 13, 0.08));
+  padding: 20px 22px;
+  margin-bottom: 22px;
+}
+.stoop-loc-copy h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.stoop-loc-copy p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--mute);
+  margin: 0 0 16px;
+  max-width: 52ch;
+}
+.stoop-loc-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.stoop-loc-fields > * { flex: 1 1 180px; min-width: 0; }
+.stoop-loc-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+}
+.stoop-loc-input:focus { outline: none; border-color: var(--ochre); }
+.stoop-loc-save {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+}
+.stoop-loc-save:hover { background: var(--ochre); }
+.stoop-loc-save:disabled { opacity: 0.6; cursor: default; }
+.stoop-loc-error {
+  font-size: 13px;
+  color: var(--error, #c62828);
+  margin: 12px 0 0;
+}
+
+@media (max-width: 560px) {
+  .stoop-loc-fields > *,
+  .stoop-loc-save { flex: 1 1 100%; }
+}

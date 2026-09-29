@@ -9,6 +9,8 @@ import {
   GET_CATEGORY_INFO,
   getAllIssues,
   getNewslettersWithFallback,
+  isCommonsPost,
+  COMMONS_CATEGORY_SLUG,
   type IssueTerm,
 } from "@/lib/wp";
 import Link from "next/link";
@@ -109,8 +111,16 @@ export default async function MagazineArchiveWrapper({
     console.error("[magazine-archive] story fetch failed:", err?.message || err);
   }
 
-  const allFetchedCats =
-    filters?.categories?.nodes?.map((c: any) => ({ name: c.name, slug: c.slug })) || [];
+  // Commons-qualifying posts never surface anywhere under /magazine, per
+  // explicit request — same isCommonsPost union already used to redirect a
+  // single Commons piece's own /magazine/[slug] URL and to split it out of
+  // sitemap.ts's articleUrls. Filtered once here, covering every branch
+  // above (series/industry/country/tag/category all assign into `stories`).
+  stories = stories.filter((p: any) => !isCommonsPost(p));
+
+  const allFetchedCats = (
+    filters?.categories?.nodes?.map((c: any) => ({ name: c.name, slug: c.slug })) || []
+  ).filter((c: any) => c.slug !== COMMONS_CATEGORY_SLUG);
 
   const seriesOptions = filters?.series?.nodes || [];
 

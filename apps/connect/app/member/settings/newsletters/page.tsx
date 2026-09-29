@@ -6,7 +6,7 @@ import NewsletterPreferences from "../NewsletterPreferences";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Newsletter Preferences | The Moveee" },
+  title: { absolute: "Newsletter Preferences | Moveee" },
 };
 
 export default async function NewslettersSettingsPage() {

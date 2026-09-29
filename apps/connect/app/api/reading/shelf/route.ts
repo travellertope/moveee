@@ -19,8 +19,15 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") ?? "";
   const page = searchParams.get("page") ?? "1";
   const perPage = searchParams.get("per_page") ?? "20";
+  // Optional medium filter (book/film/music/food/place/other). Validated
+  // server-side against Culture_Reading_Tracker::MEDIA, so an unrecognised
+  // value degrades to "no filter" rather than erroring.
+  const medium = searchParams.get("medium") ?? "";
 
-  const url = `${WP_URL}/wp-json/culture/v1/reading/shelf?user_id=${session.user.id}&status=${encodeURIComponent(status)}&page=${page}&per_page=${perPage}`;
+  const url =
+    `${WP_URL}/wp-json/culture/v1/reading/shelf?user_id=${session.user.id}` +
+    `&status=${encodeURIComponent(status)}&page=${page}&per_page=${perPage}` +
+    (medium ? `&medium=${encodeURIComponent(medium)}` : "");
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${API_SECRET}` },
     cache: "no-store",

@@ -80,9 +80,15 @@ class Culture_Magic_OTP {
 	 * @param string $email
 	 * @param string $code
 	 * @param string $list_slug Newsletter list slug to subscribe the email to.
+	 *                          Pass an empty string to skip subscribing entirely —
+	 *                          the sign-in/register pages use the code purely as a
+	 *                          credential and must not silently add anyone to a
+	 *                          mailing list they never asked for.
+	 * @param string $referral  Optional referral code to attribute a brand-new
+	 *                          account to. Ignored for an existing account.
 	 * @return WP_User|WP_Error
 	 */
-	public static function verify_otp( $email, $code, $list_slug = 'getmelit' ) {
+	public static function verify_otp( $email, $code, $list_slug = 'getmelit', $referral = '' ) {
 		$email = sanitize_email( $email );
 		if ( ! is_email( $email ) ) {
 			return new WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'culture-community' ), array( 'status' => 400 ) );
@@ -110,13 +116,14 @@ class Culture_Magic_OTP {
 		delete_transient( 'culture_magic_otp_' . $key );
 		delete_transient( $attempts_key );
 
-		$user = self::find_or_create_user( $email );
+		$user = self::find_or_create_user( $email, $referral );
 		if ( is_wp_error( $user ) ) {
 			return $user;
 		}
 
-		if ( class_exists( 'Culture_Subscribers_DB' ) ) {
-			Culture_Subscribers_DB::subscribe( $email, array( sanitize_title( $list_slug ) ), $user->display_name );
+		$list_slug = sanitize_title( (string) $list_slug );
+		if ( '' !== $list_slug && class_exists( 'Culture_Subscribers_DB' ) ) {
+			Culture_Subscribers_DB::subscribe( $email, array( $list_slug ), $user->display_name );
 		}
 
 		return $user;
@@ -131,9 +138,11 @@ class Culture_Magic_OTP {
 	 * here too.
 	 *
 	 * @param string $email
+	 * @param string $referral Optional referral code, applied only when this call
+	 *                         actually creates the account.
 	 * @return WP_User|WP_Error
 	 */
-	private static function find_or_create_user( $email ) {
+	private static function find_or_create_user( $email, $referral = '' ) {
 		$user = get_user_by( 'email', $email );
 		if ( $user ) {
 			if ( '1' !== get_user_meta( $user->ID, '_culture_email_verified', true ) ) {
@@ -145,7 +154,28 @@ class Culture_Magic_OTP {
 		$username = self::unique_username_from_email( $email );
 		$password = wp_generate_password( 32 );
 
+		// Culture_Referrals::process_referral() is hooked on user_register and
+		// reads $_POST['culture_referral_code'] (its cookie path can't work
+		// headlessly — the cookie would land on cms.themoveee.com, not the
+		// frontend origin). A JSON REST body never populates $_POST, so set it
+		// here for the duration of the create call and restore it after.
+		$referral   = sanitize_key( (string) $referral );
+		$had_post   = array_key_exists( 'culture_referral_code', $_POST );
+		$prev_post  = $had_post ? $_POST['culture_referral_code'] : null;
+		if ( '' !== $referral ) {
+			$_POST['culture_referral_code'] = $referral;
+		}
+
 		$user_id = wp_create_user( $username, $password, $email );
+
+		if ( '' !== $referral ) {
+			if ( $had_post ) {
+				$_POST['culture_referral_code'] = $prev_post;
+			} else {
+				unset( $_POST['culture_referral_code'] );
+			}
+		}
+
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}

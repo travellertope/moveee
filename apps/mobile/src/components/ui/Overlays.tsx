@@ -420,7 +420,7 @@ export function ToastContainer({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   // Backdrop
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(20,17,13,0.45)",
   },
 

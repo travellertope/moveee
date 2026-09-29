@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Categories — Moveee Pulse",
+  title: "Pulse Categories",
   description: "Explore culture across music, film, fashion, and more — all through a global lens.",
 };
 

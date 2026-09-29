@@ -1,5 +1,8 @@
 // ── Tiers ──────────────────────────────────────────────────────────────────
-export type Tier = 'citizen' | 'patron';
+// 'lit' (Moveee Lit) grants full access to The Moveee Literary only — see
+// CLAUDE.md's "Three-tier membership" section. It is a separate paid tier
+// from 'patron' (Moveee Pro), not a synonym for it.
+export type Tier = 'citizen' | 'lit' | 'patron';
 
 // ── Auth user (mirrors CultureUser in lib/auth.ts) ─────────────────────────
 export interface User {

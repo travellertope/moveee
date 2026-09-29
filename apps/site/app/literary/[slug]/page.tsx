@@ -11,6 +11,7 @@ import {
   isLiteraryPost,
   literaryGenreOfPost,
   LITERARY_GENRES,
+  filterLiteraryCutoff,
 } from "@/lib/wp";
 import { getAccessLevel } from "@/lib/access";
 import {
@@ -26,7 +27,9 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { decodeHtml } from "@/lib/decode-html";
 import LiteraryPieceCard from "@/components/LiteraryPieceCard";
 import LiteraryPieceGate from "@/components/LiteraryPieceGate";
+import LiteraryLitUpsellCard from "@/components/LiteraryLitUpsellCard";
 import LiteraryReadTracker from "@/components/LiteraryReadTracker";
+import LiteraryComments from "@/components/LiteraryComments";
 import SubscribeForm from "@/components/SubscribeForm";
 import ArticleShareFab from "@/components/ArticleShareFab";
 
@@ -104,24 +107,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 async function GenreArchive({ genre }: { genre: NonNullable<ReturnType<typeof getLiteraryGenre>> }) {
-  const pieces = await getLiteraryPieces(genre.tagSlug, 24);
+  const pieces = filterLiteraryCutoff(await getLiteraryPieces(genre.tagSlug, 24));
 
   return (
     <div className="lit-wrap">
       <section className="lit-genre-head">
         <h1>{genre.label}</h1>
         <p className="lit-sub">{genre.tagline}</p>
-        <nav className="lit-genre-pills" aria-label="Genres">
-          {LITERARY_GENRES.map((g) => (
-            <Link
-              key={g.slug}
-              href={`/literary/${g.slug}`}
-              className={`lit-genre-pill${g.slug === genre.slug ? " lit-genre-pill--active" : ""}`}
-            >
-              {g.label}
-            </Link>
-          ))}
-        </nav>
       </section>
 
       <section className="lit-section">
@@ -177,19 +169,31 @@ async function PiecePage({ slug }: { slug: string }) {
   const isBot = isCrawlerUserAgent(hdrs.get("user-agent"));
   const isLoggedIn = !!session?.user;
   const isPatron = session?.user?.tier === "patron";
+  // Moveee Lit grants full access to everything in this section — see
+  // CLAUDE.md's "Three-tier membership" section. It never unlocks anything
+  // outside /literary (Magazine's own patron-only gate stays strictly
+  // "patron"-only, untouched by this tier).
+  const isLit = session?.user?.tier === "lit";
   const accessLevel = getAccessLevel(post);
   const litToken = verifyLiteraryToken(cookieStore.get(LITERARY_TOKEN_COOKIE)?.value);
+  const hasLiteraryFullAccess =
+    isPatron || isLit || litToken?.access === "pro" || litToken?.access === "lit";
 
   const bodyHtml = sanitizeHtml(post.content || "");
   let visibleBodyHtml = bodyHtml;
   let trailingBodyHtml = "";
   let gateBlock: React.ReactNode = null;
   let shouldTrackRead = false;
+  // The Moveee Lit upsell — lands a few paragraphs after the free gate
+  // box, not fused beside it (see LiteraryLitUpsellCard). Only set on the
+  // non-blocking free-reads-left path below; splits trailingBodyHtml a
+  // second time so there's real body copy between the two.
+  let litUpsellBlock: React.ReactNode = null;
+  let trailingBodyHtmlAfterUpsell = "";
 
   if (!isBot) {
     if (accessLevel === "patron-only") {
-      const proAuthorized = isPatron || litToken?.access === "pro";
-      if (!proAuthorized) {
+      if (!hasLiteraryFullAccess) {
         const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
         if (hasMore) {
           visibleBodyHtml = visibleHtml;
@@ -198,11 +202,11 @@ async function PiecePage({ slug }: { slug: string }) {
               <div className="lit-gate-eyebrow">★ Subscribe to Continue</div>
               <h3>There&rsquo;s more to read.</h3>
               <p>
-                This piece continues in the Moveee Pro archive — extended fiction, poetry, and
-                essays for members going further with The Moveee Literary.
+                This piece continues in the archive — extended fiction, poetry, and essays for
+                members going further with The Moveee Literary.
               </p>
-              <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?tier=patron">
-                Upgrade to Moveee Pro →
+              <Link className="lit-btn-pill lit-btn-pill--fill" href="/register?upgrade=lit">
+                Upgrade to Moveee Lit →
               </Link>
             </div>
           ) : (
@@ -223,8 +227,16 @@ async function PiecePage({ slug }: { slug: string }) {
         );
         if (hasMore) {
           visibleBodyHtml = visibleHtml;
-          trailingBodyHtml = remainderHtml;
           gateBlock = <LiteraryPieceGate slug={slug} mode="meter" blocking={false} />;
+
+          const upsellSplit = truncateHtmlByPercent(remainderHtml, 0.25);
+          if (upsellSplit.hasMore) {
+            trailingBodyHtml = upsellSplit.visibleHtml;
+            litUpsellBlock = <LiteraryLitUpsellCard />;
+            trailingBodyHtmlAfterUpsell = upsellSplit.remainderHtml;
+          } else {
+            trailingBodyHtml = remainderHtml;
+          }
         }
       } else {
         const { visibleHtml, hasMore } = truncateHtmlByPercent(bodyHtml, LITERARY_READ_PERCENT);
@@ -242,12 +254,14 @@ async function PiecePage({ slug }: { slug: string }) {
   // instead of reserving its first pick for a sidebar teaser.
   let genrePool: any[] = [];
   if (genre) {
-    genrePool = (await getLiteraryPieces(genre.tagSlug, 8)).filter((p: any) => p.slug !== slug);
+    genrePool = filterLiteraryCutoff(await getLiteraryPieces(genre.tagSlug, 8)).filter(
+      (p: any) => p.slug !== slug
+    );
   }
   const moreFromGenre = genrePool.slice(0, 3);
 
   const usedSlugs = new Set([slug, ...moreFromGenre.map((p: any) => p.slug)].filter(Boolean));
-  const widerPool = await getLiteraryPieces(undefined, 12);
+  const widerPool = filterLiteraryCutoff(await getLiteraryPieces(undefined, 12));
   const alsoLike = widerPool.filter((p: any) => !usedSlugs.has(p.slug)).slice(0, 3);
 
   return (
@@ -279,6 +293,13 @@ async function PiecePage({ slug }: { slug: string }) {
           {trailingBodyHtml && (
             <div className="lit-piece-body" dangerouslySetInnerHTML={{ __html: trailingBodyHtml }} />
           )}
+          {litUpsellBlock}
+          {trailingBodyHtmlAfterUpsell && (
+            <div
+              className="lit-piece-body"
+              dangerouslySetInnerHTML={{ __html: trailingBodyHtmlAfterUpsell }}
+            />
+          )}
           {post.author?.node?.name && (
             <div className="lit-piece-author">
               <div className="lit-piece-author-avatar">
@@ -299,16 +320,18 @@ async function PiecePage({ slug }: { slug: string }) {
               </div>
             </div>
           )}
+
+          <LiteraryComments postId={post.databaseId} canComment={hasLiteraryFullAccess} />
         </article>
 
         <ArticleShareFab />
 
-        <aside>
+        <aside className="lit-piece-sidebar">
           <div className="lit-piece-sb-block lit-piece-sb-block--flush">
             <div className="lit-piece-subscribe">
               <div className="lit-piece-subscribe-rule" />
-              <h3>Read what we publish, as we publish it.</h3>
-              <p>New fiction, poetry, essays and translation — straight to your inbox, no charge.</p>
+              <h3>The Moveee Literary Citizen</h3>
+              <p>New fiction, poetry, essays and translation, as we publish it — enter your email to opt in.</p>
               <div className="lit-nl-form">
                 <SubscribeForm
                   placeholder="Email address"
@@ -354,7 +377,7 @@ async function PiecePage({ slug }: { slug: string }) {
         <div className="lit-wrap lit-piece-nlbreak-inner">
           <div>
             <h3>Enjoyed this piece?</h3>
-            <p>Get new fiction, poetry, essays and translation the moment we publish it — no charge, no clutter.</p>
+            <p>Get new fiction, poetry, essays and translation the moment we publish it.</p>
           </div>
           <div className="lit-piece-nlbreak-form">
             <SubscribeForm

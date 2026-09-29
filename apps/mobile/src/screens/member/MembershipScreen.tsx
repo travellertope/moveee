@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, SafeAreaView,
   TouchableOpacity, Platform, ActivityIndicator, Alert,
 } from "react-native";
-import type { Subscription } from "react-native-iap";
+import type { ProductSubscription } from "react-native-iap";
 import { openInApp } from "../../utils/openInApp";
 import { useNav } from "../../hooks/useNav";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +25,11 @@ const CITIZEN_PERKS = [
   "Culture points & badges",
 ];
 
+const LIT_PERKS = [
+  "Everything in Moveee Citizen, plus:",
+  "Full access to The Moveee Literary",
+];
+
 const PRO_PERKS = [
   "Everything in Moveee Citizen, plus:",
   "Patron-only articles & editorials",
@@ -42,6 +47,10 @@ export default function MembershipScreen() {
   const nav = useNav();
   const { user, isAuthenticated, updateUser } = useAuthStore();
   const isPro = user?.tier === "patron";
+  // Moveee Lit grants full access to The Moveee Literary only — see
+  // CLAUDE.md's "Three-tier membership" section. It never unlocks any of
+  // the Moveee Pro perks listed below.
+  const isLit = user?.tier === "lit";
 
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
@@ -49,7 +58,7 @@ export default function MembershipScreen() {
 
   // Android: real Google Play Billing purchase flow. iOS keeps directing to
   // the web checkout (see handleUpgrade below) — StoreKit isn't wired up.
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subscriptions, setSubscriptions] = useState<ProductSubscription[]>([]);
   const [loadingSubs, setLoadingSubs] = useState(Platform.OS === "android");
   const [purchasingSku, setPurchasingSku] = useState<string | null>(null);
 
@@ -75,8 +84,8 @@ export default function MembershipScreen() {
     };
   }, []);
 
-  const handlePurchase = useCallback(async (subscription: Subscription) => {
-    setPurchasingSku(subscription.productId);
+  const handlePurchase = useCallback(async (subscription: ProductSubscription) => {
+    setPurchasingSku(subscription.id);
     try {
       await purchaseProSubscription(subscription);
       updateUser({ tier: "patron" });
@@ -90,12 +99,16 @@ export default function MembershipScreen() {
     }
   }, [updateUser]);
 
-  const monthlySub = subscriptions.find((s) => s.productId === MOVEEE_PRO_MONTHLY_SKU) ?? null;
-  const annualSub = subscriptions.find((s) => s.productId === MOVEEE_PRO_ANNUAL_SKU) ?? null;
+  const monthlySub = subscriptions.find((s) => s.id === MOVEEE_PRO_MONTHLY_SKU) ?? null;
+  const annualSub = subscriptions.find((s) => s.id === MOVEEE_PRO_ANNUAL_SKU) ?? null;
   const hasNativePlans = Platform.OS === "android" && !loadingSubs && (!!monthlySub || !!annualSub);
 
   const handleUpgrade = () => {
     openInApp("https://web.themoveee.com/register?upgrade=patron");
+  };
+
+  const handleUpgradeLit = () => {
+    openInApp("https://web.themoveee.com/register?upgrade=lit");
   };
 
   const handleJoinFree = () => {
@@ -124,7 +137,7 @@ export default function MembershipScreen() {
               <Text style={styles.perkText}>{p}</Text>
             </View>
           ))}
-          {isAuthenticated && !isPro ? (
+          {isAuthenticated && !isPro && !isLit ? (
             <View style={styles.currentPlanBadge}>
               <Text style={styles.currentPlanText}>Your current plan</Text>
             </View>
@@ -133,6 +146,32 @@ export default function MembershipScreen() {
               <Text style={styles.ctaSecondaryText}>Join free →</Text>
             </TouchableOpacity>
           ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardEyebrow}>LITERARY</Text>
+          <Text style={styles.cardName}>Moveee Lit</Text>
+          <Text style={styles.proPrice}>Upgrade on the web</Text>
+          <View style={styles.divider} />
+          {LIT_PERKS.map((p) => (
+            <View key={p} style={styles.perkRow}>
+              <Ionicons name="checkmark" size={15} color={c.mute} />
+              <Text style={styles.perkText}>{p}</Text>
+            </View>
+          ))}
+          {isLit ? (
+            <View style={styles.currentPlanBadge}>
+              <Text style={styles.currentPlanText}>Your current plan</Text>
+            </View>
+          ) : isPro ? (
+            <View style={styles.currentPlanBadge}>
+              <Text style={styles.currentPlanText}>Included in Moveee Pro</Text>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.ctaSecondary} onPress={handleUpgradeLit}>
+              <Text style={styles.ctaSecondaryText}>Upgrade to Lit →</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={[styles.card, styles.proCard]}>
@@ -173,7 +212,7 @@ export default function MembershipScreen() {
                   disabled={!!purchasingSku}
                   onPress={() => handlePurchase(monthlySub)}
                 >
-                  {purchasingSku === monthlySub.productId ? (
+                  {purchasingSku === monthlySub.id ? (
                     <ActivityIndicator color={c.ink} />
                   ) : (
                     <Text style={styles.ctaProText}>
@@ -188,7 +227,7 @@ export default function MembershipScreen() {
                   disabled={!!purchasingSku}
                   onPress={() => handlePurchase(annualSub)}
                 >
-                  {purchasingSku === annualSub.productId ? (
+                  {purchasingSku === annualSub.id ? (
                     <ActivityIndicator color={c.ink} />
                   ) : (
                     <Text style={styles.ctaSecondaryText}>

@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: QuotePageProps): Promise<Meta
   const author = quote.quoteAuthors?.nodes[0]?.name || 'Unknown Author';
 
   return {
-    title: { absolute: `Quote by ${author} — Moveee` },
+    title: { absolute: `Quote by ${author} | Moveee` },
     description: quote.title,
     openGraph: {
       type: 'article',

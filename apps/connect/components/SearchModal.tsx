@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { emitDiscoverFilters, type DiscoverFilters } from "@/lib/discoverFiltersBus";
-import { emitPeopleFilters } from "@/lib/peopleFiltersBus";
 import { emitStoopFilters } from "@/lib/stoopFiltersBus";
 import "./search-modal.css";
 
@@ -16,9 +15,6 @@ const CONTENT_TYPES = [
   { label: "Event",     value: "event"     },
   { label: "Directory", value: "directory" },
   { label: "Quote",     value: "quote"     },
-  // Not a WP post subtype like the others — routes to a dedicated member
-  // search (/api/connect/members) instead of /api/search. See isPeople below.
-  { label: "Person",    value: "member"    },
   // Also not a WP post subtype — routes to /api/cluster/discover's own `q`
   // param instead of /api/search. See isStoop below.
   { label: "Stoop",     value: "stoop"     },
@@ -46,46 +42,6 @@ interface StoopResult {
   street: string;
   meetingDay: string;
   meetingTime: string;
-}
-
-// People-only facets — shown only when contentType === "member". Mirrors
-// DISCIPLINES in MemberDirectory.tsx (values are literal words matched via
-// LIKE against _culture_directory_disciplines, not slugs) — no shared
-// source of truth, same caveat as the other facet lists in this file.
-// Colors match the approved People Near Me mockup's colored-dot chips.
-const PEOPLE_INDUSTRIES: { value: string; color: string }[] = [
-  { value: "Creative", color: "#7b1fa2" },
-  { value: "Entrepreneur", color: "#b38238" },
-  { value: "Artist", color: "#c2185b" },
-  { value: "Filmmaker", color: "#1976d2" },
-  { value: "Writer", color: "#78350f" },
-  { value: "Designer", color: "#00695c" },
-  { value: "Musician", color: "#6b48a8" },
-  { value: "Photographer", color: "#2e7d32" },
-  { value: "Tech", color: "#37474f" },
-  { value: "Legal", color: "#283593" },
-  { value: "Finance", color: "#8d6e63" },
-  { value: "Academic", color: "#5d4037" },
-];
-
-// Same 5 region slugs as DISCOVER_REGIONS (kept as separate consts since
-// they gate different pages/params, even though the values happen to
-// match) — "Near Me" (null) and "All Locations" ("all") are People-specific
-// states with no Discover equivalent.
-const PEOPLE_REGIONS: { slug: string; label: string }[] = [
-  { slug: "nigeria", label: "Nigeria" },
-  { slug: "ghana", label: "Ghana" },
-  { slug: "uk", label: "UK" },
-  { slug: "usa", label: "USA" },
-  { slug: "pan-african", label: "Pan-African" },
-];
-
-interface MemberResult {
-  id: string;
-  username: string;
-  displayName: string;
-  occupation: string;
-  tier: string;
 }
 
 // Mirrors PulseFeed.tsx's CATEGORY_FILTERS — kept in sync manually, same
@@ -163,17 +119,13 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   const [discoverType, setDiscoverType] = useState<string | null>(null);
   const [discoverRegion, setDiscoverRegion] = useState<string | null>(null);
   const [discoverSort, setDiscoverSort] = useState<DiscoverFilters["sort"]>("relevant");
-  const [peopleIndustry, setPeopleIndustry] = useState<string | null>(null);
-  const [peopleRegion, setPeopleRegion] = useState<string | null>(null);
   const [stoopCity, setStoopCity] = useState<string | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [memberResults, setMemberResults] = useState<MemberResult[]>([]);
   const [stoopResults, setStoopResults] = useState<StoopResult[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isEvent = contentType === "event";
   const isDirectory = contentType === "directory";
-  const isPeople = contentType === "member";
   const isStoop = contentType === "stoop";
 
   useEffect(() => {
@@ -224,29 +176,6 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
       .finally(() => setLoading(false));
   }, []);
 
-  // Member search is a different endpoint/shape entirely (/api/connect/members,
-  // not /api/search) — WP's native search has no concept of Users, so the
-  // generic runSearch above can never find a member. Industry/Region are real
-  // structured params here (not folded-into-text approximations like
-  // Directory's Region), since /api/connect/members already supports them
-  // natively.
-  const runPeopleSearch = useCallback((q: string, industry: string | null, region: string | null) => {
-    if (!q.trim()) {
-      setMemberResults([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const params = new URLSearchParams({ search: q.trim(), directory: "1", per_page: "20" });
-    if (industry) params.set("discipline", industry);
-    if (region) params.set("region", region);
-    fetch(`/api/connect/members?${params.toString()}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => setMemberResults(data?.members ?? []))
-      .catch(() => setMemberResults([]))
-      .finally(() => setLoading(false));
-  }, []);
-
   // Stoop search is a third different endpoint/shape — /api/cluster/discover's
   // own `q` param (native WP_Query title/content search on culture_cluster),
   // not /api/search. City is a real structured param here too (not a
@@ -269,12 +198,11 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (isPeople) runPeopleSearch(query, peopleIndustry, peopleRegion);
-      else if (isStoop) runStoopSearch(query, stoopCity);
+      if (isStoop) runStoopSearch(query, stoopCity);
       else runSearch(query, contentType, category, city, price, format, discoverType, discoverRegion);
     }, 300);
     return () => clearTimeout(t);
-  }, [query, contentType, category, city, price, format, discoverType, discoverRegion, isPeople, peopleIndustry, peopleRegion, isStoop, stoopCity, runSearch, runPeopleSearch, runStoopSearch]);
+  }, [query, contentType, category, city, price, format, discoverType, discoverRegion, isStoop, stoopCity, runSearch, runStoopSearch]);
 
   // Directory-only — Type/Region/Sort remote-control the /discover page's
   // own grid via discoverFiltersBus (see the file for why: SearchModal is a
@@ -295,21 +223,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     emitDiscoverFilters({ type: discoverType, region: discoverRegion, sort: value });
   }
 
-  // People-only — same immediate-apply pattern as Discover's Region/Sort:
-  // clicking a chip remote-controls the /connect/people page's own
-  // rails/grid via peopleFiltersBus, completely independent of whatever
-  // (if anything) is typed in the search box above.
-  function selectPeopleIndustry(value: string | null) {
-    const next = peopleIndustry === value ? null : value;
-    setPeopleIndustry(next);
-    emitPeopleFilters({ industry: next, region: peopleRegion });
-  }
-  function selectPeopleRegion(value: string | null) {
-    setPeopleRegion(value);
-    emitPeopleFilters({ industry: peopleIndustry, region: value });
-  }
-
-  // Stoop-only — same immediate-apply pattern as People's Region: clicking a
+  // Stoop-only — same immediate-apply pattern as Discover's Region: clicking a
   // city chip remote-controls the /connect/stoop page's own rails/grid via
   // stoopFiltersBus, completely independent of whatever (if anything) is
   // typed in the search box above.
@@ -320,20 +234,18 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   }
 
   // Reset to a clean slate each time the modal opens — defaulting Content
-  // Type to Event/Directory/Person when opened while on /events, /discover,
-  // or /connect/people, since that's almost always what you want to search
+  // Type to Event/Directory/Stoop when opened while on /events, /discover,
+  // or /connect/stoop, since that's almost always what you want to search
   // for from there (rail search bar, ⌘K, or the page's own search bar all
   // funnel through this same reset).
   useEffect(() => {
     if (open) {
       setQuery("");
       setResults([]);
-      setMemberResults([]);
       setStoopResults([]);
       setContentType(
         pathname?.startsWith("/events") ? "event" :
         pathname?.startsWith("/discover") ? "directory" :
-        pathname?.startsWith("/connect/people") ? "member" :
         (pathname?.startsWith("/connect/stoop") || pathname?.startsWith("/cluster")) ? "stoop" :
         "all"
       );
@@ -344,8 +256,6 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
       setDiscoverType(null);
       setDiscoverRegion(null);
       setDiscoverSort("relevant");
-      setPeopleIndustry(null);
-      setPeopleRegion(null);
       setStoopCity(null);
     }
   }, [open, pathname]);
@@ -507,64 +417,6 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
             </div>
           )}
 
-          {isPeople && (
-            <div className="sm-filter-group">
-              <p className="sm-filter-label">Industry</p>
-              <div className="sm-filter-chips">
-                <button
-                  type="button"
-                  className={`sm-chip${!peopleIndustry ? " active" : ""}`}
-                  onClick={() => selectPeopleIndustry(null)}
-                >
-                  ✦ All
-                </button>
-                {PEOPLE_INDUSTRIES.map((i) => (
-                  <button
-                    key={i.value}
-                    type="button"
-                    className={`sm-chip${peopleIndustry === i.value ? " active" : ""}`}
-                    onClick={() => selectPeopleIndustry(i.value)}
-                  >
-                    <span className="sm-chip-dot" style={{ background: i.color }} />
-                    {i.value}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isPeople && (
-            <div className="sm-filter-group">
-              <p className="sm-filter-label">Location</p>
-              <div className="sm-filter-chips">
-                <button
-                  type="button"
-                  className={`sm-chip${!peopleRegion ? " active" : ""}`}
-                  onClick={() => selectPeopleRegion(null)}
-                >
-                  📍 Near Me
-                </button>
-                {PEOPLE_REGIONS.map((r) => (
-                  <button
-                    key={r.slug}
-                    type="button"
-                    className={`sm-chip${peopleRegion === r.slug ? " active" : ""}`}
-                    onClick={() => selectPeopleRegion(r.slug)}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className={`sm-chip${peopleRegion === "all" ? " active" : ""}`}
-                  onClick={() => selectPeopleRegion("all")}
-                >
-                  All Locations
-                </button>
-              </div>
-            </div>
-          )}
-
           {isStoop && (
             <div className="sm-filter-group">
               <p className="sm-filter-label">City</p>
@@ -590,15 +442,15 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
             </div>
           )}
 
-          {/* Hidden in Directory/People/Stoop context — this chip row only
-              ever folds into the modal's own text search (needs a typed
-              query to run at all), and each of those contexts already has
-              its own structural filter covering the same role (Directory's
-              on-page Type tabs; People's Industry group; Stoop's City group
-              above). Showing it here would be a dead control: clicking a
-              chip with no query typed does nothing, which is exactly the
-              confusion this whole change is meant to fix. */}
-          {!isDirectory && !isPeople && !isStoop && (
+          {/* Hidden in Directory/Stoop context — this chip row only ever
+              folds into the modal's own text search (needs a typed query to
+              run at all), and each of those contexts already has its own
+              structural filter covering the same role (Directory's on-page
+              Type tabs; Stoop's City group above). Showing it here would be
+              a dead control: clicking a chip with no query typed does
+              nothing, which is exactly the confusion this whole change is
+              meant to fix. */}
+          {!isDirectory && !isStoop && (
             <div className="sm-filter-group">
               <p className="sm-filter-label">Category</p>
               <div className="sm-filter-chips">
@@ -617,27 +469,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
           )}
 
           <div className="sm-results">
-            {isPeople ? (
-              !query.trim() ? (
-                <p className="sm-hint">Start typing to search members by name or role. Industry and Location above filter the People Near Me page directly — no typing needed for those.</p>
-              ) : loading ? (
-                <p className="sm-hint">Searching…</p>
-              ) : memberResults.length === 0 ? (
-                <p className="sm-hint">No members found for “{query}.”</p>
-              ) : (
-                memberResults.map((m) => (
-                  <Link key={m.id} href={`/connect/${m.username}`} className="sm-result-row" onClick={onClose}>
-                    <div className="sm-result-avatar" style={{ background: m.tier === "patron" ? "var(--gold, #b38238)" : "var(--ink, #14110d)" }}>
-                      {m.displayName.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="sm-result-title">{m.displayName}</p>
-                      <p className="sm-result-meta">{(m.occupation || "MEMBER").toUpperCase()}</p>
-                    </div>
-                  </Link>
-                ))
-              )
-            ) : isStoop ? (
+            {isStoop ? (
               !query.trim() ? (
                 <p className="sm-hint">Start typing to search Stoops by name. City above filters the Stoop page directly — no typing needed for that.</p>
               ) : loading ? (

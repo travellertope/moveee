@@ -29,11 +29,28 @@ class Culture_Settings {
         'culture_paystack_amount_monthly_usd'  => 4,
         'culture_paystack_amount_yearly_usd'   => 40,
 
+        // Payment (Paystack) — Moveee Lit tier (see CLAUDE.md's "Three-tier
+        // membership" section). Falls back to roughly a third of the
+        // matching Patron price if left unset — see Culture_Paystack::
+        // get_amount_lowest().
+        'culture_paystack_plan_monthly_ngn_lit'   => '',
+        'culture_paystack_plan_yearly_ngn_lit'    => '',
+        'culture_paystack_plan_monthly_usd_lit'   => '',
+        'culture_paystack_plan_yearly_usd_lit'    => '',
+        'culture_paystack_amount_monthly_ngn_lit' => 1500,
+        'culture_paystack_amount_yearly_ngn_lit'  => 15000,
+        'culture_paystack_amount_monthly_usd_lit' => 1,
+        'culture_paystack_amount_yearly_usd_lit'  => 13,
+
         // Payment (Stripe).
         'culture_stripe_publishable_key'       => '',
         'culture_stripe_secret_key'            => '',
         'culture_stripe_price_monthly_usd'     => '',
         'culture_stripe_price_yearly_usd'      => '',
+
+        // Payment (Stripe) — Moveee Lit tier.
+        'culture_stripe_price_monthly_usd_lit' => '',
+        'culture_stripe_price_yearly_usd_lit'  => '',
 
         // Payment (Google Play Billing — Android app Moveee Pro upgrade).
         'culture_google_play_package_name'              => 'com.moveee.connect',
@@ -235,6 +252,18 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_ngn', $int );
         register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_usd', $int );
         register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_usd', $int );
+
+        // Payment (Moveee Lit tier).
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_ngn_lit', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_ngn_lit', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_usd_lit', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_usd_lit', $text );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_ngn_lit', $int );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_ngn_lit', $int );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_usd_lit', $int );
+        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_usd_lit', $int );
+        register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd_lit', $text );
+        register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd_lit', $text );
 
         // Stripe.
         register_setting( 'culture_settings_payment', 'culture_stripe_publishable_key', $text );
@@ -504,6 +533,41 @@ class Culture_Settings {
         </table>
 
         <hr />
+        <h3><?php esc_html_e( 'Moveee Lit — Nigeria (NGN) Plans', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Moveee Lit grants full access to The Moveee Literary only (see CLAUDE.md\'s "Three-tier membership" section) — a separate, cheaper tier from Moveee Pro above. Leave blank to fall back to roughly a third of the matching Patron price.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_paystack_plan_monthly_ngn_lit"><?php esc_html_e( 'Monthly Plan Code (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_paystack_plan_monthly_ngn_lit" name="culture_paystack_plan_monthly_ngn_lit"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_monthly_ngn_lit' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Paystack plan code for Moveee Lit NGN Monthly (PLN_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_amount_monthly_ngn_lit"><?php esc_html_e( 'Monthly Price (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_paystack_amount_monthly_ngn_lit" name="culture_paystack_amount_monthly_ngn_lit"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_monthly_ngn_lit' ) ); ?>" class="small-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_plan_yearly_ngn_lit"><?php esc_html_e( 'Yearly Plan Code (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_paystack_plan_yearly_ngn_lit" name="culture_paystack_plan_yearly_ngn_lit"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_yearly_ngn_lit' ) ); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_paystack_amount_yearly_ngn_lit"><?php esc_html_e( 'Yearly Price (NGN)', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_paystack_amount_yearly_ngn_lit" name="culture_paystack_amount_yearly_ngn_lit"
+                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_yearly_ngn_lit' ) ); ?>" class="small-text" />
+                </td>
+            </tr>
+        </table>
+
+        <hr />
         <h3><?php esc_html_e( 'Stripe Configuration (International Gateway)', 'culture-community' ); ?></h3>
         <p class="description"><?php esc_html_e( 'If configured, USD transactions will use Stripe instead of Paystack.', 'culture-community' ); ?></p>
         <table class="form-table">
@@ -535,6 +599,27 @@ class Culture_Settings {
                     <input type="text" id="culture_stripe_price_yearly_usd" name="culture_stripe_price_yearly_usd"
                            value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd' ) ); ?>" class="regular-text" />
                     <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $40 subscription (price_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <h3><?php esc_html_e( 'Moveee Lit — Stripe (USD) Price IDs', 'culture-community' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Leave blank to fall back to roughly a third of the matching Patron price.', 'culture-community' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_stripe_price_monthly_usd_lit"><?php esc_html_e( 'Monthly Price ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_stripe_price_monthly_usd_lit" name="culture_stripe_price_monthly_usd_lit"
+                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_monthly_usd_lit' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the Moveee Lit monthly subscription (price_...).', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_stripe_price_yearly_usd_lit"><?php esc_html_e( 'Yearly Price ID', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_stripe_price_yearly_usd_lit" name="culture_stripe_price_yearly_usd_lit"
+                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd_lit' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the Moveee Lit yearly subscription (price_...).', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

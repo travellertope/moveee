@@ -23,7 +23,8 @@ import { api, CULTURE_API } from "../../api/client";
 import { openInApp } from "../../utils/openInApp";
 import { decodeHtml } from "../../utils/decodeHtml";
 import BookMoodPace from "../../components/community/BookMoodPace";
-import LogEntryPanel from "../../components/community/LogEntryPanel";
+import EntryLogControl from "../../components/community/EntryLogControl";
+import SocialProofLine from "../../components/community/SocialProofLine";
 import SavedLines from "../../components/community/SavedLines";
 import StoopProximityBanner from "../../components/community/StoopProximityBanner";
 import DirectoryFollowButton from "../../components/community/DirectoryFollowButton";
@@ -50,6 +51,23 @@ interface DirectoryEntry {
   aboutFields: AboutField[]; entryQuote: string;
   selectedWorks: SelectedWork[]; relatedEntries: RelatedEntry[];
   communityPosts: CommunityPost[]; communityPostCount: number;
+  /** Optional — absent from an un-redeployed plugin's response. */
+  quotes?: DirectoryQuote[];
+}
+
+/** A quote attached to this entry: saved FROM it (a work) or SAID BY it (a
+ *  person). The endpoint unions both. */
+interface DirectoryQuote {
+  id: number;
+  slug: string;
+  /** Compound /quotes/{id}-{slug} permalink — a bare slug 404s. */
+  href: string;
+  text: string;
+  author: string;
+  source: string;
+  quote_type: string;
+  saved_by: { name: string; avatar: string };
+  created_at: string;
 }
 
 // WordPress taxonomy term names and post text fields come back with HTML
@@ -80,6 +98,12 @@ function decodeEntry(entry: DirectoryEntry): DirectoryEntry {
       title: decodeHtml(p.title),
       excerpt: decodeHtml(p.excerpt),
       authorName: decodeHtml(p.authorName),
+    })),
+    quotes: (entry.quotes ?? []).map((q) => ({
+      ...q,
+      text: decodeHtml(q.text),
+      author: decodeHtml(q.author),
+      source: decodeHtml(q.source),
     })),
   };
 }
@@ -127,6 +151,14 @@ const SHOW_SELECTED_WORKS = new Set(["person", "place", "film", "artwork", "fash
 const SHOW_EVENTS = new Set(["person", "place"]);
 // Types that show star rating on community cards
 const SHOW_STAR_RATING = new Set(["food", "book"]);
+/** entryType -> the culture_dir_type the quote composer's source picker uses. */
+const LINE_SOURCE_TYPES: Record<string, string> = {
+  book: "book",
+  film: "film",
+  album: "album",
+  "tv-series": "film",
+};
+
 // Types that can have a blockquote
 const SHOW_BLOCKQUOTE = new Set(["book", "concept"]);
 
@@ -155,8 +187,8 @@ function createStyles(c: ColorPalette) {
     container:     { flex: 1, backgroundColor: c.paper },
     heroWrap:      { width: "100%", height: HERO_HEIGHT, position: "relative" },
     heroImage:     { width: "100%", height: HERO_HEIGHT },
-    heroGradient:  { ...StyleSheet.absoluteFillObject },
-    heroOverlay:   { ...StyleSheet.absoluteFillObject, justifyContent: "flex-end" },
+    heroGradient:  { ...StyleSheet.absoluteFill },
+    heroOverlay:   { ...StyleSheet.absoluteFill, justifyContent: "flex-end" },
     heroFade:      {
       position: "absolute", bottom: 0, left: 0, right: 0, height: HERO_HEIGHT * 0.4,
     },
@@ -268,6 +300,15 @@ function createStyles(c: ColorPalette) {
     reviewsRatingScore: { fontFamily: fonts.monoBold, fontSize: 13, color: c.ochre },
     reviewsRatingStar:  { fontSize: 12, color: c.ochre },
     reviewsRatingCount: { fontFamily: fonts.sans, fontSize: 11, color: c.ghost },
+    // Saved lines. Lighter chrome than a review card — the line is the
+    // content, so the serif italic does the work of marking it as quoted.
+    quoteCard:       { padding: 14, backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg },
+    quoteCardText:   { fontFamily: fonts.serifItalic, fontSize: 16, lineHeight: 24, color: c.ink },
+    quoteCardMeta:   { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 },
+    quoteCardSource: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ink },
+    quoteCardSaved:  { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
+    quotesEmpty:     { fontFamily: fonts.sans, fontSize: 14, color: c.mute, marginBottom: 4 },
+    saveLine:        { fontFamily: fonts.sansBold, fontSize: 14, color: c.ochre, marginTop: 12 },
     reviewsStarsRow: { paddingHorizontal: 16, marginBottom: 12 },
     reviewsStarsText: { fontSize: 20, color: c.ochre, lineHeight: 24 },
 
@@ -494,6 +535,11 @@ export default function DirectoryDetailScreen() {
   const showEvents = SHOW_EVENTS.has(entry.entryType) && events.length > 0;
   const showBlockquote = SHOW_BLOCKQUOTE.has(entry.entryType) && !!entry.entryQuote;
   const showStarRating = SHOW_STAR_RATING.has(entry.entryType);
+  // Which culture_dir_type a line saved FROM this entry would point at, i.e.
+  // what the composer's own source picker searches. Mirrors QUOTE_SOURCE_TYPES
+  // in SubmitPost.tsx / NewPostScreen.tsx; anything absent has no source
+  // picker at all (a person IS the speaker, a movement is neither).
+  const quoteLinkType = LINE_SOURCE_TYPES[entry.entryType] ?? "";
 
   return (
     <View style={[styles.container, { paddingTop: 0 }]}>
@@ -574,8 +620,9 @@ export default function DirectoryDetailScreen() {
           <Text style={styles.excerpt} numberOfLines={3}>{entry.excerpt}</Text>
         )}
 
-        {/* ── Add to your log + social proof ("Log-First" pass) ── */}
-        <LogEntryPanel directoryId={entry.id} entryType={entry.entryType} />
+        {/* ── Add to your log + social proof ── */}
+        <EntryLogControl directoryId={entry.id} />
+        <SocialProofLine directoryId={entry.id} />
 
         {/* ── Stoop proximity banner (places only) ── */}
         {entry.entryType === "place" && <StoopProximityBanner directoryId={entry.id} />}
@@ -608,6 +655,12 @@ export default function DirectoryDetailScreen() {
             <Text style={styles.blockquoteText}>"{entry.entryQuote}"</Text>
           </View>
         )}
+
+        {/* ── Add to your log ── shelve and rate from the entry itself rather
+            than having to find it again from the Culture Log's own add modal.
+            Renders nothing for an entry with no shelf (person, movement,
+            concept — anything TYPE_MEDIA_MAP maps to 'other'). ── */}
+        <EntryLogControl directoryId={entry.id} containerStyle={styles.aboutCard} />
 
         {/* ── About card ── */}
         {entry.aboutFields.length > 0 && (
@@ -697,6 +750,67 @@ export default function DirectoryDetailScreen() {
                 </View>
               );
             })}
+          </View>
+        )}
+
+        {/* ── Lines saved from this entry ── */}
+        {/* Renders with zero lines too, as long as this entry is something a
+            line can actually be attached to — the "Save a line" CTA is the
+            point, and an entry with no lines yet is exactly who needs it. */}
+        {((entry.quotes?.length ?? 0) > 0 || entry.entryType === "person" || !!quoteLinkType) && (
+          <View style={{ marginTop: 20 }}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {entry.entryType === "person" ? "Lines people saved" : "Lines saved from this"}
+              </Text>
+              <Text style={styles.reviewsRatingCount}>
+                {entry.quotes?.length ?? 0} {(entry.quotes?.length ?? 0) === 1 ? "line" : "lines"}
+              </Text>
+            </View>
+            {(entry.quotes?.length ?? 0) === 0 && (
+              <Text style={styles.quotesEmpty}>
+                {entry.entryType === "person"
+                  ? "No lines saved from them yet."
+                  : "No lines saved from this yet."}
+              </Text>
+            )}
+            <View style={{ gap: 10 }}>
+              {(entry.quotes ?? []).map((q) => (
+                <View key={q.id} style={styles.quoteCard}>
+                  <Text style={styles.quoteCardText}>{q.text}</Text>
+                  <View style={styles.quoteCardMeta}>
+                    {/* On a person's own page their name is the screen title,
+                        so repeating it per line is noise — show the source. */}
+                    {!!(entry.entryType === "person" ? q.source : q.author) && (
+                      <Text style={styles.quoteCardSource}>
+                        {entry.entryType === "person" ? q.source : q.author}
+                      </Text>
+                    )}
+                    <Text style={styles.quoteCardSaved}>Saved by {q.saved_by.name}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            {/* Reuses the real composer rather than a second quote form here —
+                the entry arrives pre-selected, so all of SubmitPost's own
+                validation and both link fields still apply. */}
+            <TouchableOpacity
+              onPress={() =>
+                nav.navigate("NewPost", {
+                  template: "quote",
+                  quoteLinkId: entry.id,
+                  quoteLinkTitle: entry.title,
+                  quoteLinkRole: entry.entryType === "person" ? "author" : "source",
+                  quoteLinkType: quoteLinkType || undefined,
+                })
+              }
+            >
+              <Text style={styles.saveLine}>
+                {entry.entryType === "person"
+                  ? "Save a line from them \u2192"
+                  : "Save a line from this \u2192"}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
 

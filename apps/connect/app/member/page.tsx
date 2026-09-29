@@ -12,7 +12,7 @@ import "../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "My Account | The Moveee" },
+  title: { absolute: "My Account | Moveee" },
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -173,7 +173,7 @@ export default async function MemberPage() {
                   : "Join a local Stoop to meet other members near you."}
               </p>
               <Link
-                href={myCluster ? `/cluster/${myCluster.id}` : "/connect/people"}
+                href={myCluster ? `/cluster/${myCluster.id}` : "/connect/stoop"}
                 className="acct-card-link"
               >
                 {myCluster ? "View my Stoop →" : "Find your Stoop →"}

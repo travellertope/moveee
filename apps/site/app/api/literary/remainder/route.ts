@@ -43,7 +43,13 @@ export async function GET(request: NextRequest) {
 
   let authorized = false;
   if (accessLevel === "patron-only") {
-    authorized = session?.user?.tier === "patron" || litToken?.access === "pro";
+    // Moveee Lit grants full /literary access alongside Moveee Pro — see
+    // CLAUDE.md's "Three-tier membership" section.
+    authorized =
+      session?.user?.tier === "patron" ||
+      session?.user?.tier === "lit" ||
+      litToken?.access === "pro" ||
+      litToken?.access === "lit";
   } else {
     const isLoggedIn = !!session?.user;
     const reads = parseReadsCookie(request.cookies.get(LITERARY_READS_COOKIE)?.value);

@@ -266,6 +266,11 @@ class Culture_REST_API {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_title',
                 ),
+                'referral' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
             ),
         ) );
 
@@ -312,6 +317,12 @@ class Culture_REST_API {
                 'text'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ),
                 'author' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
                 'source' => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                // Optional culture_directory links. Both are additive: the
+                // freeform `author`/`source` strings above are still written
+                // exactly as before, so every existing reader keeps working
+                // whether or not a link was supplied.
+                'linked_directory_id'      => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'quote_author_directory_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
 
@@ -1487,6 +1498,21 @@ class Culture_REST_API {
                 'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'status'       => array( 'required' => true, 'type' => 'string' ),
+                // Optional: set a rating in the same write. Deliberately not
+                // absint'd — the handler needs to tell "absent" from "0"
+                // (clear the rating), and absint would collapse both to 0.
+                'rating'       => array( 'required' => false, 'type' => 'integer' ),
+            ),
+        ) );
+        // Rate without authoring a review. Mirrors /mobile/reading/rating.
+        register_rest_route( 'culture/v1', '/reading/rating', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_rating_set' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'rating'       => array( 'required' => true, 'type' => 'integer' ),
             ),
         ) );
         register_rest_route( 'culture/v1', '/reading/shelf', array(
@@ -1507,6 +1533,20 @@ class Culture_REST_API {
                 'status'   => array( 'required' => true, 'type' => 'string' ),
                 'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
                 'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'medium'   => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
+            ),
+        ) );
+        // One entry's own log state, for a directory entry page's shelf
+        // control. user_id is optional here, unlike every other reading/*
+        // read: a logged-out visitor still needs the medium back so the page
+        // can label the buttons before there is anything to label from.
+        register_rest_route( 'culture/v1', '/reading/entry', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_entry_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
         ) );
         register_rest_route( 'culture/v1', '/reading/shelf/counts', array(
@@ -2288,7 +2328,20 @@ class Culture_REST_API {
         $user_id      = (int) $request->get_param( 'user_id' );
         $directory_id = (int) $request->get_param( 'directory_id' );
         $status       = sanitize_key( $request->get_param( 'status' ) );
-        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status );
+        $rating       = $request->has_param( 'rating' ) ? $request->get_param( 'rating' ) : null;
+        $result       = Culture_Reading_Tracker::set_shelf_status( $user_id, $directory_id, $status, $rating );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_rating_set( $request ) {
+        $result = Culture_Reading_Tracker::set_shelf_rating(
+            (int) $request->get_param( 'user_id' ),
+            (int) $request->get_param( 'directory_id' ),
+            $request->get_param( 'rating' )
+        );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
@@ -2307,7 +2360,15 @@ class Culture_REST_API {
         $status   = sanitize_key( $request->get_param( 'status' ) );
         $page     = (int) $request->get_param( 'page' ) ?: 1;
         $per_page = (int) $request->get_param( 'per_page' ) ?: 20;
-        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page ) );
+        $medium   = sanitize_key( (string) $request->get_param( 'medium' ) );
+        return rest_ensure_response( Culture_Reading_Tracker::get_user_shelf( $user_id, $status, $page, $per_page, $medium ) );
+    }
+
+    public static function handle_reading_entry_get( $request ) {
+        return rest_ensure_response( Culture_Reading_Tracker::get_entry_state(
+            (int) $request->get_param( 'user_id' ),
+            (int) $request->get_param( 'directory_id' )
+        ) );
     }
 
     public static function handle_reading_shelf_counts( $request ) {
@@ -3144,8 +3205,18 @@ class Culture_REST_API {
     }
 
     public static function handle_magic_otp_verify( $request ) {
-        $list = $request->get_param( 'list' ) ?: 'getmelit';
-        $user = Culture_Magic_OTP::verify_otp( $request->get_param( 'email' ), $request->get_param( 'code' ), $list );
+        // An explicitly-sent empty list means "this code is a credential, not a
+        // subscription" — the /login and /register pages send that, so signing
+        // in never silently joins anyone to a mailing list. Only a caller that
+        // omits the param entirely (e.g. an older client) gets the GetMeLit
+        // default the subscribe widgets were originally built around.
+        $list = $request->has_param( 'list' ) ? (string) $request->get_param( 'list' ) : 'getmelit';
+        $user = Culture_Magic_OTP::verify_otp(
+            $request->get_param( 'email' ),
+            $request->get_param( 'code' ),
+            $list,
+            (string) $request->get_param( 'referral' )
+        );
         if ( is_wp_error( $user ) ) {
             return $user;
         }
@@ -3626,9 +3697,12 @@ class Culture_REST_API {
             }
         }
 
-        if ( ! in_array( $tier, array( 'citizen', 'patron' ), true ) ) {
+        if ( ! in_array( $tier, array( 'citizen', 'lit', 'patron' ), true ) ) {
             $tier = 'citizen';
         }
+        // Lit/Patron users start as citizen until payment completes — see
+        // handle_upgrade_init()/the Paystack/Stripe webhooks, which grant
+        // the real tier once the checkout below actually succeeds.
         update_user_meta( $user_id, '_culture_membership_tier', 'citizen' );
 
         // Mark email as verified and consume the token.
@@ -3656,13 +3730,13 @@ class Culture_REST_API {
             Culture_Emails::send_welcome_email( $user_id );
         }
 
-        // Patron tier — return payment checkout URL.
-        if ( 'patron' === $tier ) {
+        // Paid tier (Lit or Patron) — return payment checkout URL.
+        if ( in_array( $tier, array( 'lit', 'patron' ), true ) ) {
             $checkout_url = '';
             if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key );
+                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key, $tier );
             } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
-                $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
+                $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier );
             }
             if ( $checkout_url ) {
                 return rest_ensure_response( array(
@@ -4033,6 +4107,27 @@ class Culture_REST_API {
      * live infrastructure, not part of the retired standalone /quotes
      * browsing product.
      */
+    /**
+     * A directory link is only stored when it names a real, published
+     * culture_directory entry — a stale or hostile id is dropped silently
+     * rather than failing the whole submission, since the link is an
+     * optional enrichment and the quote itself is still perfectly valid
+     * without it.
+     *
+     * @return int 0 when there is nothing valid to link.
+     */
+    private static function resolve_directory_link( $raw_id ) : int {
+        $id = absint( $raw_id );
+        if ( ! $id ) {
+            return 0;
+        }
+        $post = get_post( $id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return 0;
+        }
+        return $id;
+    }
+
     public static function handle_create_quote( $request ) {
         $text    = $request->get_param( 'text' );
         $author  = $request->get_param( 'author' );
@@ -4110,6 +4205,28 @@ class Culture_REST_API {
         $allowed_types = array( 'Person', 'Book', 'Film', 'Speech', 'Song' );
         if ( $quote_type && in_array( $quote_type, $allowed_types, true ) ) {
             update_post_meta( $post_id, '_quote_type', sanitize_text_field( $quote_type ) );
+        }
+
+        // Directory links (September 2026). A quote points at up to two
+        // things: the work it came from and the person who said it. Both are
+        // optional — a proverb, an overheard line, or a Speech-type quote
+        // (which has no culture_dir_type at all) legitimately has neither,
+        // so this is never a requirement, only an upgrade.
+        //
+        // The work reuses `_linked_directory_id`, the same key community
+        // posts use, so every reverse-lookup that already queries it keeps
+        // working. Safe because the two readers that aggregate off it —
+        // Culture_Directory::recompute_directory_aggregates() and
+        // Culture_Reading_Tracker::get_reading_stats() — both scope their
+        // query to post_type = 'culture_post', so a quote can never inflate
+        // a review count, a star average, or a rating histogram.
+        $work_id = self::resolve_directory_link( $request->get_param( 'linked_directory_id' ) );
+        if ( $work_id ) {
+            update_post_meta( $post_id, '_linked_directory_id', $work_id );
+        }
+        $author_dir_id = self::resolve_directory_link( $request->get_param( 'quote_author_directory_id' ) );
+        if ( $author_dir_id ) {
+            update_post_meta( $post_id, '_quote_author_directory_id', $author_dir_id );
         }
 
         // Award points.
@@ -5053,7 +5170,9 @@ class Culture_REST_API {
 
     /**
      * POST /culture/v1/user/upgrade-init
-     * Initiates a Paystack session for an existing user to upgrade to Patron.
+     * Initiates a checkout session for an existing user to upgrade to a
+     * paid tier — 'patron' (Moveee Pro) or 'lit' (Moveee Lit, see CLAUDE.md's
+     * "Three-tier membership" section).
      */
     public static function handle_upgrade_init( $request ) {
         $user_id = (int) $request->get_param( 'user_id' );
@@ -5063,18 +5182,25 @@ class Culture_REST_API {
             return new WP_Error( 'not_found', 'User not found.', array( 'status' => 404 ) );
         }
 
-        $plan_key          = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $plan_key    = $request->get_param( 'plan_key' ) ?: 'monthly_ngn';
+        $tier        = $request->get_param( 'tier' ) ?: 'patron';
+        $tier        = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
+        // Where to land after checkout (e.g. '/lit-welcome') instead of the
+        // generic site root — always joined onto the trusted frontend URL
+        // (Culture_Paystack::build_return_url()), never used as a host of
+        // its own, so an arbitrary value here can't become an open redirect.
+        $return_path = sanitize_text_field( (string) ( $request->get_param( 'return_path' ) ?: '' ) );
 
         $checkout_url = '';
 
         // If Paystack.
         if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
             // We'll call a new method that returns the direct authorization URL.
-            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key );
-        } 
+            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key, $tier, $return_path );
+        }
         // If Stripe.
         elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
-            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key );
+            $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier, $return_path );
         }
 
         if ( is_wp_error( $checkout_url ) ) {

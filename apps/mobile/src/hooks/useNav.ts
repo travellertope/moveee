@@ -14,6 +14,13 @@ export type AppParamList = {
     hubId?: number;
     hubSlug?: string;
     hubAllowedTemplates?: string[];
+    /** "Save a line from this" on a directory entry — the entry arrives
+     *  already chosen. `quoteLinkRole` says which of the quote's two optional
+     *  links it fills: a person is the speaker, a work is the source. */
+    quoteLinkId?: number;
+    quoteLinkTitle?: string;
+    quoteLinkRole?: "author" | "source";
+    quoteLinkType?: string;
   } | undefined;
   DirectorySubmit: {
     improvingSlug?: string;
@@ -21,7 +28,6 @@ export type AppParamList = {
     improvingEntryType?: string;
   } | undefined;
   MemberProfile: { userId?: string; username?: string };
-  MemberDirectory: undefined;
   Notifications: undefined;
   DirectoryDetail: { id?: number; slug?: string; title?: string; entryType?: string };
   DirectoryPosts: { entryId: number; entryTitle: string; showRating?: boolean };

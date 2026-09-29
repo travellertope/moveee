@@ -41,7 +41,7 @@ export default function DiscoverFilterSheet({ visible, onClose, type, region, so
   const [draftRegion, setDraftRegion] = useState(region);
   const [draftSort, setDraftSort] = useState(sort);
   const [count, setCount] = useState<number | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (!visible) return;

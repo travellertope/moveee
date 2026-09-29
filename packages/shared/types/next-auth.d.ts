@@ -6,7 +6,7 @@ declare module "next-auth" {
     user: {
       id: string;
       username: string;
-      tier: "citizen" | "patron";
+      tier: "citizen" | "lit" | "patron";
       points: number;
       badges: string[];
       visual_downloads_today: number;
@@ -16,7 +16,7 @@ declare module "next-auth" {
   interface User {
     id: string;
     username: string;
-    tier: "citizen" | "patron";
+    tier: "citizen" | "lit" | "patron";
     points: number;
     badges: string[];
     visual_downloads_today: number;
@@ -27,7 +27,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     username: string;
-    tier: "citizen" | "patron";
+    tier: "citizen" | "lit" | "patron";
     points: number;
     badges: string[];
     visualDownloadsToday: number;

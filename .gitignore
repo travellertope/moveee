@@ -35,3 +35,8 @@ next-env.d.ts
 # the plugin zip for deployment is built on demand (composer install + zip),
 # not checked into source control.
 culture-community/vendor/
+
+# Theme/plugin deploy zips — built on demand for manual WP upload, never
+# committed (same reasoning as the plugin's composer build artifact above).
+culture-theme.zip
+culture-community.zip

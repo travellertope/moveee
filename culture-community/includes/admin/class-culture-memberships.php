@@ -1,12 +1,14 @@
 <?php
 /**
- * Moveee Pro Membership Manager
+ * Moveee Paid Membership Manager
  *
- * Admin page for viewing all Pro subscribers and manually managing
- * patron subscriptions — add, edit, set expiry, upgrade or downgrade.
+ * Admin page for viewing all paid-tier subscribers ('patron' = Moveee Pro,
+ * 'lit' = Moveee Lit — see CLAUDE.md's "Three-tier membership" section) and
+ * manually managing their subscriptions — add, edit, set expiry, upgrade or
+ * downgrade.
  *
  * Meta keys managed here:
- *   _culture_membership_tier        – 'patron' | 'citizen'
+ *   _culture_membership_tier        – 'patron' | 'lit' | 'citizen'
  *   _culture_subscription_status    – 'active' | 'cancelled' | 'non-renewing' | 'expired'
  *   _culture_subscription_type      – 'manual' | 'paystack' | 'stripe'
  *   _culture_subscription_expiry    – Unix timestamp, 0 = never expires
@@ -33,8 +35,8 @@ class Culture_Memberships {
 	public static function register_menu(): void {
 		add_submenu_page(
 			'culture-community',
-			__( 'Pro Memberships', 'culture-community' ),
-			__( 'Pro Memberships', 'culture-community' ),
+			__( 'Paid Memberships', 'culture-community' ),
+			__( 'Paid Memberships', 'culture-community' ),
 			'manage_options',
 			'culture-memberships',
 			[ __CLASS__, 'render_page' ]
@@ -72,14 +74,18 @@ class Culture_Memberships {
 
 	private static function render_list(): void {
 		$status_filter = isset( $_GET['status'] ) ? sanitize_key( $_GET['status'] ) : '';
+		$tier_filter   = isset( $_GET['tier'] )   && in_array( $_GET['tier'], [ 'patron', 'lit' ], true ) ? $_GET['tier'] : '';
 		$search        = isset( $_GET['s'] )      ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 		$paged         = max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 );
 		$per_page      = 30;
 
 		// ── Query ──────────────────────────────────────────────────────────────
+		$tier_meta_clause = $tier_filter
+			? [ 'key' => '_culture_membership_tier', 'value' => $tier_filter ]
+			: [ 'key' => '_culture_membership_tier', 'value' => [ 'patron', 'lit' ], 'compare' => 'IN' ];
+
 		$args = [
-			'meta_key'   => '_culture_membership_tier',
-			'meta_value' => 'patron',
+			'meta_query' => [ $tier_meta_clause ],
 			'number'     => $per_page,
 			'offset'     => ( $paged - 1 ) * $per_page,
 			'orderby'    => 'registered',
@@ -87,11 +93,7 @@ class Culture_Memberships {
 		];
 
 		if ( $status_filter ) {
-			$args['meta_query'] = [
-				[ 'key' => '_culture_membership_tier',     'value' => 'patron' ],
-				[ 'key' => '_culture_subscription_status', 'value' => $status_filter ],
-			];
-			unset( $args['meta_key'], $args['meta_value'] );
+			$args['meta_query'][] = [ 'key' => '_culture_subscription_status', 'value' => $status_filter ];
 		}
 
 		if ( $search ) {
@@ -112,13 +114,36 @@ class Culture_Memberships {
 		$add_url   = $base_url . '&action=add';
 
 		?>
-		<h1 class="wp-heading-inline"><?php esc_html_e( 'Moveee Pro Memberships', 'culture-community' ); ?></h1>
+		<h1 class="wp-heading-inline"><?php esc_html_e( 'Moveee Paid Memberships', 'culture-community' ); ?></h1>
 		<a href="<?php echo esc_url( $add_url ); ?>" class="page-title-action">
 			<?php esc_html_e( 'Add New', 'culture-community' ); ?>
 		</a>
 		<hr class="wp-header-end">
 
 		<?php self::render_notices(); ?>
+
+		<?php /* Tier filter tabs — Moveee Pro ('patron') vs Moveee Lit ('lit') */ ?>
+		<ul class="subsubsub">
+			<?php
+			$tier_tabs = [
+				''       => __( 'All', 'culture-community' ),
+				'patron' => __( 'Moveee Pro', 'culture-community' ),
+				'lit'    => __( 'Moveee Lit', 'culture-community' ),
+			];
+			$tier_tab_links = [];
+			foreach ( $tier_tabs as $slug => $label ) {
+				$url    = $slug ? $base_url . '&tier=' . $slug : $base_url;
+				$active = ( $tier_filter === $slug ) ? ' class="current"' : '';
+				$tier_tab_links[] = sprintf(
+					'<li><a href="%s"%s>%s</a>',
+					esc_url( $url ),
+					$active,
+					esc_html( $label )
+				);
+			}
+			echo implode( ' | </li>', $tier_tab_links ) . '</li>';
+			?>
+		</ul>
 
 		<?php /* Status filter tabs */ ?>
 		<ul class="subsubsub">
@@ -133,7 +158,8 @@ class Culture_Memberships {
 			$tab_links = [];
 			foreach ( $tabs as $slug => $label ) {
 				$count  = $slug ? ( $counts[ $slug ] ?? 0 ) : array_sum( $counts );
-				$url    = $slug ? $base_url . '&status=' . $slug : $base_url;
+				$base   = $tier_filter ? $base_url . '&tier=' . $tier_filter : $base_url;
+				$url    = $slug ? $base . '&status=' . $slug : $base;
 				$active = ( $status_filter === $slug ) ? ' class="current"' : '';
 				$tab_links[] = sprintf(
 					'<li><a href="%s"%s>%s <span class="count">(%d)</span></a>',
@@ -153,6 +179,9 @@ class Culture_Memberships {
 			<?php if ( $status_filter ) : ?>
 				<input type="hidden" name="status" value="<?php echo esc_attr( $status_filter ); ?>">
 			<?php endif; ?>
+			<?php if ( $tier_filter ) : ?>
+				<input type="hidden" name="tier" value="<?php echo esc_attr( $tier_filter ); ?>">
+			<?php endif; ?>
 			<p class="search-box">
 				<input type="search" name="s" value="<?php echo esc_attr( $search ); ?>"
 					placeholder="<?php esc_attr_e( 'Search by name or email…', 'culture-community' ); ?>"
@@ -165,20 +194,22 @@ class Culture_Memberships {
 		<table class="wp-list-table widefat fixed striped">
 			<thead>
 				<tr>
-					<th style="width:22%"><?php esc_html_e( 'User', 'culture-community' ); ?></th>
-					<th style="width:20%"><?php esc_html_e( 'Email', 'culture-community' ); ?></th>
+					<th style="width:20%"><?php esc_html_e( 'User', 'culture-community' ); ?></th>
+					<th style="width:18%"><?php esc_html_e( 'Email', 'culture-community' ); ?></th>
+					<th style="width:10%"><?php esc_html_e( 'Tier', 'culture-community' ); ?></th>
 					<th style="width:10%"><?php esc_html_e( 'Status', 'culture-community' ); ?></th>
 					<th style="width:10%"><?php esc_html_e( 'Type', 'culture-community' ); ?></th>
-					<th style="width:18%"><?php esc_html_e( 'Expiry', 'culture-community' ); ?></th>
-					<th style="width:20%"><?php esc_html_e( 'Actions', 'culture-community' ); ?></th>
+					<th style="width:14%"><?php esc_html_e( 'Expiry', 'culture-community' ); ?></th>
+					<th style="width:18%"><?php esc_html_e( 'Actions', 'culture-community' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php if ( empty( $users ) ) : ?>
-				<tr><td colspan="6"><em><?php esc_html_e( 'No members found.', 'culture-community' ); ?></em></td></tr>
+				<tr><td colspan="7"><em><?php esc_html_e( 'No members found.', 'culture-community' ); ?></em></td></tr>
 			<?php else : ?>
 				<?php foreach ( $users as $user ) : ?>
 					<?php
+					$member_tier = get_user_meta( $user->ID, '_culture_membership_tier',   true ) ?: 'patron';
 					$status  = get_user_meta( $user->ID, '_culture_subscription_status', true ) ?: '—';
 					$type    = get_user_meta( $user->ID, '_culture_subscription_type',   true ) ?: 'paystack';
 					$expiry  = (int) get_user_meta( $user->ID, '_culture_subscription_expiry', true );
@@ -207,6 +238,7 @@ class Culture_Memberships {
 							<?php endif; ?>
 						</td>
 						<td><?php echo esc_html( $user->user_email ); ?></td>
+						<td><?php echo esc_html( 'lit' === $member_tier ? __( 'Moveee Lit', 'culture-community' ) : __( 'Moveee Pro', 'culture-community' ) ); ?></td>
 						<td>
 							<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:<?php echo esc_attr( $dot_colour ); ?>;margin-right:4px"></span>
 							<?php echo esc_html( ucfirst( str_replace( '-', '‑', $status ) ) ); ?>
@@ -245,8 +277,9 @@ class Culture_Memberships {
 				<div class="tablenav-pages">
 					<?php
 					$pag_args = [ 'base' => $base_url . '%_%', 'format' => '&paged=%#%', 'total' => $pages, 'current' => $paged ];
-					if ( $status_filter ) $pag_args['add_args'] = [ 'status' => $status_filter ];
-					if ( $search )        $pag_args['add_args']['s'] = $search;
+					if ( $status_filter ) $pag_args['add_args']['status'] = $status_filter;
+					if ( $tier_filter )   $pag_args['add_args']['tier']   = $tier_filter;
+					if ( $search )        $pag_args['add_args']['s']      = $search;
 					echo paginate_links( $pag_args );
 					?>
 				</div>
@@ -321,7 +354,8 @@ class Culture_Memberships {
 					<th><label for="cm_tier"><?php esc_html_e( 'Tier', 'culture-community' ); ?></label></th>
 					<td>
 						<select id="cm_tier" name="tier">
-							<option value="patron"  <?php selected( $tier, 'patron'  ); ?>><?php esc_html_e( 'Patron (Pro)', 'culture-community' ); ?></option>
+							<option value="patron"  <?php selected( $tier, 'patron'  ); ?>><?php esc_html_e( 'Patron (Moveee Pro)', 'culture-community' ); ?></option>
+							<option value="lit"     <?php selected( $tier, 'lit'     ); ?>><?php esc_html_e( 'Lit (Moveee Lit)', 'culture-community' ); ?></option>
 							<option value="citizen" <?php selected( $tier, 'citizen' ); ?>><?php esc_html_e( 'Citizen (Free)', 'culture-community' ); ?></option>
 						</select>
 					</td>
@@ -473,7 +507,7 @@ class Culture_Memberships {
 			return;
 		}
 
-		$tier        = in_array( $_POST['tier'] ?? '', [ 'patron', 'citizen' ], true ) ? $_POST['tier'] : 'patron';
+		$tier        = in_array( $_POST['tier'] ?? '', [ 'patron', 'lit', 'citizen' ], true ) ? $_POST['tier'] : 'patron';
 		$status      = in_array( $_POST['status'] ?? '', [ 'active', 'cancelled', 'non-renewing', 'expired' ], true ) ? $_POST['status'] : 'active';
 		$sub_type    = in_array( $_POST['sub_type'] ?? '', [ 'manual', 'paystack', 'stripe' ], true ) ? $_POST['sub_type'] : 'manual';
 		$expiry_date = sanitize_text_field( $_POST['expiry_date'] ?? '' );
@@ -540,7 +574,7 @@ class Culture_Memberships {
 			   ON m1.user_id = m2.user_id
 			  AND m2.meta_key = '_culture_subscription_status'
 			 WHERE m1.meta_key  = '_culture_membership_tier'
-			   AND m1.meta_value = 'patron'
+			   AND m1.meta_value IN ( 'patron', 'lit' )
 			 GROUP BY m2.meta_value"
 		);
 

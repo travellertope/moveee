@@ -76,6 +76,9 @@ const APP_ROUTES = new Set([
   'author',
   'services',
   'vendor',
+  // Marketing landing page for Stoop (app/stoop/page.tsx). Note /stoop is
+  // deliberately NOT in connectPrefixes above — this is Site A's own page;
+  // its CTAs link out to web.themoveee.com rather than the path redirecting.
   'stoop',
   'about',
   'contact',

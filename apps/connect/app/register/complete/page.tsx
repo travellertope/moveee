@@ -18,7 +18,9 @@ function CompleteProfileForm() {
   const uid = searchParams.get("uid") || "";
   const token = searchParams.get("token") || "";
   const nextUrl = searchParams.get("next") || "";
-  const isUpgrade = searchParams.get("upgrade") === "patron";
+  const upgradeParam = searchParams.get("upgrade");
+  const isUpgrade = upgradeParam === "lit" || upgradeParam === "patron";
+  const upgradeTier: "lit" | "patron" = upgradeParam === "lit" ? "lit" : "patron";
 
   const [step, setStep] = useState<Step>(isUpgrade ? "membership" : "verify");
   const [interests, setInterests] = useState<string[]>([]);
@@ -33,7 +35,9 @@ function CompleteProfileForm() {
   const [occupation, setOccupation] = useState("");
 
   // Membership
-  const [tier, setTier] = useState<"citizen" | "patron">("citizen");
+  const [tier, setTier] = useState<"citizen" | "lit" | "patron">(
+    isUpgrade ? upgradeTier : "citizen"
+  );
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [currency, setCurrency] = useState<"NGN" | "USD">("NGN");
 
@@ -79,7 +83,7 @@ function CompleteProfileForm() {
 
   async function handleUpgrade() {
     if (!session) {
-      router.push("/login?callbackUrl=/register/complete?upgrade=patron");
+      router.push(`/login?callbackUrl=/register/complete?upgrade=${upgradeTier}`);
       return;
     }
     setLoading(true);
@@ -88,7 +92,10 @@ function CompleteProfileForm() {
       const res = await fetch("/api/membership/upgrade-init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_key: `${billingCycle}_${currency.toLowerCase()}` }),
+        body: JSON.stringify({
+          plan_key: `${billingCycle}_${currency.toLowerCase()}`,
+          tier: upgradeTier,
+        }),
       });
       const data = await res.json();
       if (data.checkout_url) {
@@ -105,9 +112,9 @@ function CompleteProfileForm() {
 
   async function handleAboutSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!dateOfBirth) { setError("Date of birth is required."); return; }
-    if (!countryOfResidence.trim()) { setError("Country of residence is required."); return; }
-    if (!city.trim()) { setError("City is required."); return; }
+    // Nothing here is required to have an account. Country and city are the
+    // only fields anything actually reads (Stoop asks for them itself, at the
+    // point it needs them), so this step is a convenience, not a gate.
     setError("");
     setStep("interests");
   }
@@ -120,7 +127,9 @@ function CompleteProfileForm() {
 
   function handleInterestsSubmit(e: FormEvent) {
     e.preventDefault();
-    if (interests.length < 3) { setError("Please select at least 3 interests."); return; }
+    // No minimum. Skipping only costs a less-personalised feed on day one,
+    // and PulseFeed already nudges members with no interests set to pick some
+    // once they can see what it changes.
     setError("");
     setStep("membership");
   }
@@ -128,6 +137,16 @@ function CompleteProfileForm() {
   async function handleMembershipSubmit(e: FormEvent) {
     e.preventDefault();
     if (isUpgrade) { handleUpgrade(); return; }
+    submitProfile(tier);
+  }
+
+  /**
+   * Finish the account with whatever has been filled in so far. Called both
+   * by the membership step's own button and by "Skip for now" on the earlier
+   * steps — skipping always completes as a free Citizen, which is what the
+   * tier state already defaults to.
+   */
+  async function submitProfile(selectedTier: "citizen" | "lit" | "patron") {
     if (loading) return;
     setError("");
     setLoading(true);
@@ -144,8 +163,9 @@ function CompleteProfileForm() {
           city: city.trim(),
           occupation: occupation.trim(),
           interests,
-          tier,
-          plan_key: tier === "patron" ? `${billingCycle}_${currency.toLowerCase()}` : undefined,
+          tier: selectedTier,
+          plan_key:
+            selectedTier !== "citizen" ? `${billingCycle}_${currency.toLowerCase()}` : undefined,
         }),
       });
       const data = await res.json();
@@ -215,12 +235,11 @@ function CompleteProfileForm() {
             <div className="auth-row">
               <div className="auth-field">
                 <label className="auth-label" htmlFor="dob">
-                  Date of Birth <span className="auth-label-required">*</span>
+                  Date of Birth <span className="auth-label-optional">(optional)</span>
                 </label>
                 <input
                   id="dob"
                   type="date"
-                  required
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
                   className="auth-input"
@@ -228,7 +247,7 @@ function CompleteProfileForm() {
               </div>
               <div className="auth-field">
                 <label className="auth-label" htmlFor="country">
-                  Country of Residence <span className="auth-label-required">*</span>
+                  Country of Residence <span className="auth-label-optional">(optional)</span>
                 </label>
                 <CountrySelect
                   id="country"
@@ -243,7 +262,7 @@ function CompleteProfileForm() {
             <div className="auth-row">
               <div className="auth-field">
                 <label className="auth-label" htmlFor="city">
-                  City <span className="auth-label-required">*</span>
+                  City <span className="auth-label-optional">(optional)</span>
                 </label>
                 <CitySelect
                   id="city"
@@ -269,13 +288,21 @@ function CompleteProfileForm() {
             </div>
 
             <p className="auth-hint" style={{ marginTop: 4 }}>
-              You can add your bio, disciplines, and social links from profile settings after joining.
+              All optional &mdash; you can fill any of this in later from profile settings, and
+              Moveee will ask for your city when something actually needs it.
             </p>
 
             {error && <p className="auth-error">{error}</p>}
 
             <div className="auth-nav">
-              <span />
+              <button
+                type="button"
+                onClick={() => submitProfile("citizen")}
+                className="auth-btn-secondary auth-btn-secondary--nav"
+                disabled={loading}
+              >
+                {loading ? "Finishing…" : "Skip for now"}
+              </button>
               <button type="submit" className="auth-btn-primary" style={{ width: "auto" }}>
                 Continue →
               </button>
@@ -298,7 +325,8 @@ function CompleteProfileForm() {
           <form onSubmit={handleInterestsSubmit} noValidate>
             <h2 className="auth-step-heading">Pick your interests</h2>
             <p className="auth-sub" style={{ marginTop: -12, marginBottom: 20 }}>
-              Select at least 3. This shapes your feed and connects you with the right community.
+              Pick as many as you like &mdash; this shapes your For You feed. You can change them
+              any time from settings.
             </p>
 
             <div className="auth-chip-grid">
@@ -318,8 +346,8 @@ function CompleteProfileForm() {
               })}
             </div>
 
-            <p className={`auth-chip-count${interests.length >= 3 ? " auth-chip-count--ok" : ""}`}>
-              {interests.length} selected {interests.length < 3 ? `— ${3 - interests.length} more needed` : "✓"}
+            <p className={`auth-chip-count${interests.length > 0 ? " auth-chip-count--ok" : ""}`}>
+              {interests.length > 0 ? `${interests.length} selected ✓` : "None selected yet"}
             </p>
 
             {error && <p className="auth-error">{error}</p>}
@@ -328,12 +356,7 @@ function CompleteProfileForm() {
               <button type="button" onClick={() => setStep("about")} className="auth-btn-secondary auth-btn-secondary--nav">
                 ← Back
               </button>
-              <button
-                type="submit"
-                className="auth-btn-primary"
-                style={{ width: "auto" }}
-                disabled={interests.length < 3}
-              >
+              <button type="submit" className="auth-btn-primary" style={{ width: "auto" }}>
                 Continue →
               </button>
             </div>
@@ -347,7 +370,16 @@ function CompleteProfileForm() {
   return (
     <div className="auth-page">
       <div className="auth-card auth-card--wide">
-        <h1 className="auth-heading">{isUpgrade ? "Upgrade to Moveee Pro" : "Choose your membership"}</h1>
+        <h1 className="auth-heading">
+          {isUpgrade ? `Upgrade to Moveee ${upgradeTier === "lit" ? "Lit" : "Pro"}` : "One last thing"}
+        </h1>
+
+        {!isUpgrade && (
+          <p className="auth-sub auth-sub--tight">
+            Moveee Citizen is free and already selected &mdash; the paid tiers are here if you want
+            them, and you can upgrade at any point from your account.
+          </p>
+        )}
 
         {!isUpgrade && (
           <ProgressBar labels={stepLabels} currentIdx={2} percent={100} />
@@ -356,18 +388,18 @@ function CompleteProfileForm() {
         <form onSubmit={handleMembershipSubmit} noValidate>
           <h2 className="auth-step-heading">Your membership tier</h2>
 
-          <div className="auth-billing-toggle" style={{ opacity: tier === "patron" ? 1 : 0.5 }}>
+          <div className="auth-billing-toggle" style={{ opacity: tier !== "citizen" ? 1 : 0.5 }}>
             <button
               type="button"
               onClick={() => setBillingCycle("monthly")}
               className={`auth-cycle-btn${billingCycle === "monthly" ? " auth-cycle-btn--active" : ""}`}
-              disabled={tier !== "patron"}
+              disabled={tier === "citizen"}
             >Monthly</button>
             <button
               type="button"
               onClick={() => setBillingCycle("yearly")}
               className={`auth-cycle-btn${billingCycle === "yearly" ? " auth-cycle-btn--active" : ""}`}
-              disabled={tier !== "patron"}
+              disabled={tier === "citizen"}
             >Annually</button>
             <div className="auth-savings-tag">{currency === "NGN" ? "Save ₦9,000" : "Save $8"}</div>
           </div>
@@ -382,11 +414,18 @@ function CompleteProfileForm() {
                   perks: ["Access to free member articles", "Access to online events", "GetMeLit & Culture Drop newsletters", "Community forum & Pulse"],
                 },
                 {
+                  value: "lit" as const,
+                  label: "Moveee Lit",
+                  price: currency === "NGN" ? (billingCycle === "monthly" ? "₦1,999" : "₦19,990") : (billingCycle === "monthly" ? "$1" : "$13"),
+                  period: billingCycle === "monthly" ? "/ mo" : "/ yr",
+                  perks: ["Everything in Citizen", "Full access to The Moveee Literary"],
+                },
+                {
                   value: "patron" as const,
                   label: "Moveee Pro",
                   price: currency === "NGN" ? (billingCycle === "monthly" ? "₦4,500" : "₦45,000") : (billingCycle === "monthly" ? "$4" : "$40"),
                   period: billingCycle === "monthly" ? "/ mo" : "/ yr",
-                  perks: ["Everything in Citizen", "All patron-only articles", "10% shop discount + early access", "Cash out credits · 100 credits/day · Pro badge"],
+                  perks: ["Everything in Citizen", "All patron-only articles + The Moveee Literary", "10% shop discount + early access", "Cash out credits · 100 credits/day · Pro badge"],
                 },
               ]
             ).map(({ value, label, price, perks, ...rest }) => (
@@ -428,7 +467,11 @@ function CompleteProfileForm() {
             )}
             {isUpgrade && <span />}
             <button type="submit" className="auth-btn-primary" style={{ width: "auto" }} disabled={loading}>
-              {loading ? "Please wait…" : tier === "patron" ? "Continue to payment →" : "Complete registration →"}
+              {loading
+                ? "Please wait…"
+                : tier !== "citizen"
+                  ? "Continue to payment →"
+                  : "Finish and join free →"}
             </button>
           </div>
         </form>

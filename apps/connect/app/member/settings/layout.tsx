@@ -6,7 +6,7 @@ import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const metadata = {
-  title: { absolute: "Settings | The Moveee" },
+  title: { absolute: "Settings | Moveee" },
 };
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {

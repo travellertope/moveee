@@ -138,6 +138,12 @@ const EARN_TABLE = [
 
 
 const QUICK_LINKS = [
+  // Discover was a header icon on the feed until September 2026 — moved here
+  // when that bar got too crowded. People Near Me sat beside it until the
+  // member directory was retired later that month. Discover is registered in
+  // ConnectStack, which is the only stack this screen is ever reached through
+  // (MemberStack is defined but never mounted).
+  { emoji: "🧭", label: "Discover",    screen: "Discover" },
   { emoji: "💰", label: "Wallet",      screen: "Wallet" },
   { emoji: "🎁", label: "Perks",       screen: "Perks" },
   { emoji: "🎟️", label: "Coupons",     screen: "Coupons" },
@@ -145,7 +151,7 @@ const QUICK_LINKS = [
   { emoji: "📊", label: "Analytics",   screen: "Analytics" },
   { emoji: "🔗", label: "Refer a Friend", screen: "Referral" },
   { emoji: "📋", label: "My Events",   screen: "MyEvents" },
-  { emoji: "📚", label: "Reading Tracker", screen: "ReadingTracker" },
+  { emoji: "📓", label: "Culture Log", screen: "ReadingTracker" },
   { emoji: "📖", label: "Magazine",    screen: "Magazine" },
   { emoji: "⚙️", label: "Settings",    screen: "MemberSettings" },
   { emoji: "📧", label: "Newsletters", screen: "MemberSettings", tab: "newsletters" },
@@ -192,7 +198,7 @@ export default function MemberDashboardScreen() {
   const quickLinks = useMemo(() => {
     const houseFellowshipItem = myCluster
       ? { emoji: "🏠", label: "My Stoop", screen: "ClusterScreen", params: { id: myCluster.id } }
-      : { emoji: "🏠", label: "Find your Stoop", screen: "MemberDirectory" };
+      : { emoji: "🏠", label: "Find your Stoop", screen: "StoopHomeScreen" };
     return [houseFellowshipItem, ...QUICK_LINKS];
   }, [myCluster]);
 

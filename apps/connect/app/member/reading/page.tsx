@@ -8,7 +8,7 @@ import "../../member.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "Reading Tracker | The Moveee" },
+  title: { absolute: "Culture Log | Moveee" },
 };
 
 export default async function ReadingTrackerPage() {
@@ -43,8 +43,8 @@ export default async function ReadingTrackerPage() {
 
         <div className="acct-page-head">
           <p className="acct-page-eyebrow">Books</p>
-          <h2 className="acct-page-title">Reading Tracker</h2>
-          <p className="acct-page-sub">Keep a private shelf of what you want to read, what you&apos;re reading, and what you&apos;ve finished.</p>
+          <h2 className="acct-page-title">Culture Log</h2>
+          <p className="acct-page-sub">A private log of the books, films, music, food and places you want to get to, what you&apos;re on now, and everything you&apos;ve already done.</p>
         </div>
 
         <ReadingTrackerClient />

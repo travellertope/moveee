@@ -6,6 +6,7 @@ import {
   getLatestIssue,
   getPostsByIssue,
   getStoriesByCountrySlugs,
+  isCommonsPost,
   type IssueTerm,
 } from "@/lib/wp";
 import { EDITIONS, type RegionalSlug } from "@/lib/editions";
@@ -38,7 +39,12 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   let featuredPool: any[] = [];
   try {
     const featuredData = await getWPData(GET_STORIES, { first: 8, tag: "featured" }, OPT);
-    featuredPool = featuredData?.posts?.nodes || [];
+    // Commons-qualifying posts (category "commons" or a Basit Jamiu byline)
+    // never surface anywhere under /magazine or the homepage — same
+    // isCommonsPost exclusion applied in getMagazineSections() and
+    // MagazineArchiveWrapper.tsx. Filtered here so a Commons piece can never
+    // become the homepage hero just because it's tagged "Featured".
+    featuredPool = (featuredData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
   } catch (err) { console.error("Featured pool fetch error:", err); }
 
   // ── 1. Stories ────────────────────────────────────────────────────────────
@@ -48,11 +54,12 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   try {
     if (edition) {
       const countrySlugs = EDITIONS[edition]?.countrySlugs ?? [];
-      const [editionPosts, latestData] = await Promise.all([
+      const [editionPostsRaw, latestData] = await Promise.all([
         getStoriesByCountrySlugs(countrySlugs as unknown as string[], 14, OPT),
         getWPData(GET_STORIES, { first: 20 }, OPT),
       ]);
-      const latestPosts: any[] = latestData?.posts?.nodes || [];
+      const editionPosts = editionPostsRaw.filter((p: any) => !isCommonsPost(p));
+      const latestPosts: any[] = (latestData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
 
       // A post only counts as "universal" filler if it isn't tagged to ANY
       // edition's countries — a Nigeria-tagged post should never appear as
@@ -87,7 +94,7 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
       stories = pool.filter((s: any) => s.slug !== coverStory?.slug).slice(0, 13);
     } else {
       const data = await getWPData(GET_STORIES, { first: 14 }, OPT);
-      const pool: any[] = data?.posts?.nodes || [];
+      const pool: any[] = (data?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
       coverStory = featuredPool[0] || pool[0] || null;
       stories = pool.filter((s: any) => s.slug !== coverStory?.slug).slice(0, 13);
     }
@@ -121,7 +128,7 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   // ── 5. Interviews ─────────────────────────────────────────────────────────
   try {
     const data = await getWPData(GET_STORIES, { first: 10, categoryName: "Interviews" }, OPT);
-    interviewStories = data?.posts?.nodes || [];
+    interviewStories = (data?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
   } catch (err) { console.error("Interviews fetch error:", err); }
 
   // ── 6. Series (single batched query) ─────────────────────────────────────

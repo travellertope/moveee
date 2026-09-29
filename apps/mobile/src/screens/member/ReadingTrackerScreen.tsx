@@ -11,15 +11,34 @@ import { useColors } from "../../hooks/useColors";
 import { useTabletContentStyle } from "../../hooks/useTabletContentStyle";
 import DirectorySearch, { DirectoryEntry } from "../../components/composer/DirectorySearch";
 import type { ColorPalette } from "../../theme";
-import { MOOD_LABELS, PACE_LABELS, type Pace, type ReadingStats } from "../../features/community/readingTracker";
+import {
+  MOOD_LABELS, PACE_LABELS, MEDIA, MEDIUM_LABELS, MEDIUM_EMOJI, SHELF_STATUSES,
+  statusLabel,
+  type Pace, type ReadingStats, type ReadingGoal, type ShelfCounts,
+  type Medium, type MediumOrOther, type ShelfStatus,
+} from "../../features/community/readingTracker";
 
-type ShelfStatus = "want_to_read" | "currently_reading" | "read";
+/**
+ * How to search for / create an entry of each medium. Mirrors the web copy in
+ * ReadingTrackerClient.tsx — `typeFilter` is a single slug because
+ * DirectorySearch reuses it as the created entry's own type.
+ */
+const MEDIA_SEARCH: Record<Medium, {
+  typeFilter: string;
+  aboutFieldLabel?: string;
+  externalSource?: "google_books" | "spotify" | "tmdb";
+}> = {
+  book:  { typeFilter: "book",  aboutFieldLabel: "Author",   externalSource: "google_books" },
+  film:  { typeFilter: "film",  aboutFieldLabel: "Director", externalSource: "tmdb" },
+  music: { typeFilter: "album", aboutFieldLabel: "Artist",   externalSource: "spotify" },
+  food:  { typeFilter: "food" },
+  place: { typeFilter: "place" },
+};
 
-const TABS: { key: ShelfStatus; label: string }[] = [
-  { key: "want_to_read", label: "Want to Read" },
-  { key: "currently_reading", label: "Reading" },
-  { key: "read", label: "Read" },
-];
+const EMPTY_COUNTS: ShelfCounts = {
+  want_to_read: 0, currently_reading: 0, read: 0, total: 0,
+  byMedium: {} as ShelfCounts["byMedium"],
+};
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -40,15 +59,12 @@ interface ShelfEntry {
   thumbnail: string | null;
   author: string;
   averageRating: number | null;
+  medium: MediumOrOther;
   status: ShelfStatus;
+  /** This member's own rating, 0-5. 0 means unrated. */
+  rating: number;
   startedAt: string | null;
   finishedAt: string | null;
-}
-
-interface Goal {
-  year: number;
-  targetBooks: number | null;
-  booksRead: number;
 }
 
 function fmtDate(dateStr: string | null): string {
@@ -67,26 +83,26 @@ export default function ReadingTrackerScreen() {
   const tabletCap = useTabletContentStyle(680);
 
   const [tab, setTab] = useState<ShelfStatus>("want_to_read");
-  const [counts, setCounts] = useState<Record<ShelfStatus, number>>({
-    want_to_read: 0, currently_reading: 0, read: 0,
-  });
+  const [medium, setMedium] = useState<MediumOrOther | "all">("all");
+  const [addMedium, setAddMedium] = useState<Medium>("book");
+  const [counts, setCounts] = useState<ShelfCounts>(EMPTY_COUNTS);
   const [entries, setEntries] = useState<ShelfEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [goal, setGoal] = useState<Goal | null>(null);
+  const [goal, setGoal] = useState<ReadingGoal | null>(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState("");
   const [stats, setStats] = useState<ReadingStats | null>(null);
   const [statsExpanded, setStatsExpanded] = useState(false);
 
   const loadCounts = useCallback(() => {
-    api.get<Record<ShelfStatus, number>>(`${MOBILE_API}/reading/shelf/counts`)
-      .then(setCounts)
+    api.get<ShelfCounts>(`${MOBILE_API}/reading/shelf/counts`)
+      .then((d) => setCounts({ ...EMPTY_COUNTS, ...d }))
       .catch(() => {});
   }, []);
 
   const loadGoal = useCallback(() => {
-    api.get<Goal>(`${MOBILE_API}/reading/goal`)
+    api.get<ReadingGoal>(`${MOBILE_API}/reading/goal`)
       .then(setGoal)
       .catch(() => {});
   }, []);
@@ -100,22 +116,34 @@ export default function ReadingTrackerScreen() {
   function saveGoal() {
     const target = parseInt(goalInput, 10);
     if (!target || target < 1) return;
-    api.post<Goal>(`${MOBILE_API}/reading/goal`, { target_books: target })
+    api.post<ReadingGoal>(`${MOBILE_API}/reading/goal`, { target_books: target })
       .then(setGoal)
       .catch(() => {})
       .finally(() => setEditingGoal(false));
   }
 
-  const loadShelf = useCallback((status: ShelfStatus) => {
+  const loadShelf = useCallback((status: ShelfStatus, med: MediumOrOther | "all") => {
     setLoading(true);
-    api.get<{ entries: ShelfEntry[]; total: number }>(`${MOBILE_API}/reading/shelf?status=${status}`)
+    const q = med === "all" ? "" : `&medium=${med}`;
+    api.get<{ entries: ShelfEntry[]; total: number }>(`${MOBILE_API}/reading/shelf?status=${status}${q}`)
       .then((data) => setEntries(data.entries ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { loadCounts(); loadGoal(); loadStats(); }, [loadCounts, loadGoal, loadStats]);
-  useEffect(() => { loadShelf(tab); }, [tab, loadShelf]);
+  useEffect(() => { loadShelf(tab, medium); }, [tab, medium, loadShelf]);
+
+  // Only offer a medium chip once something is actually on that shelf — an
+  // empty "Music (0)" chip is noise, not a feature.
+  const mediumChips = useMemo(() => {
+    const present = ([...MEDIA, "other"] as MediumOrOther[])
+      .filter((m) => (counts.byMedium?.[m]?.total ?? 0) > 0);
+    return present.length > 1 ? present : [];
+  }, [counts]);
+
+  const tabCount = (status: ShelfStatus) =>
+    medium === "all" ? counts[status] : counts.byMedium?.[medium]?.[status] ?? 0;
 
   function moveShelf(directoryId: number, status: ShelfStatus) {
     setEntries((prev) => (status === tab ? prev : prev.filter((e) => e.directoryId !== directoryId)));
@@ -124,12 +152,31 @@ export default function ReadingTrackerScreen() {
       .finally(() => {
         loadCounts();
         if (status === "read") { loadGoal(); loadStats(); }
-        if (status === tab) loadShelf(tab);
+        if (status === tab) loadShelf(tab, medium);
+      });
+  }
+
+  /**
+   * One tap, no review. Tapping the star you're already on clears the rating
+   * (0) — the only way back out of a misfire. Optimistic; the refetches
+   * reconcile. A rating > 0 also marks the entry read server-side, so a card
+   * rated from another tab leaves that tab.
+   */
+  function rate(directoryId: number, current: number, next: number) {
+    const value = current === next ? 0 : next;
+    setEntries((prev) =>
+      prev.map((e) => (e.directoryId === directoryId ? { ...e, rating: value } : e)),
+    );
+    api.post(`${MOBILE_API}/reading/rating`, { directory_id: directoryId, rating: value })
+      .catch(() => {})
+      .finally(() => {
+        loadCounts();
+        if (value > 0 && tab !== "read") { loadShelf(tab, medium); loadGoal(); loadStats(); }
       });
   }
 
   function removeFromShelf(directoryId: number) {
-    Alert.alert("Remove from shelf?", "This book will be taken off your Reading Tracker.", [
+    Alert.alert("Remove from your log?", "This will be taken off your Culture Log.", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Remove", style: "destructive", onPress: () => {
@@ -142,15 +189,20 @@ export default function ReadingTrackerScreen() {
     ]);
   }
 
-  function addBook(entry: DirectoryEntry) {
+  function addEntry(entry: DirectoryEntry) {
     setAddOpen(false);
     api.post(`${MOBILE_API}/reading/shelf`, { directory_id: entry.id, status: "want_to_read" })
       .then(() => {
         loadCounts();
-        if (tab === "want_to_read") loadShelf("want_to_read");
+        if (tab === "want_to_read") loadShelf("want_to_read", medium);
       })
       .catch(() => {});
   }
+
+  const goalTarget = goal?.target ?? goal?.targetBooks ?? null;
+  const goalLogged = goal?.logged ?? goal?.booksRead ?? 0;
+  const statsLogged = stats?.entries_logged ?? stats?.books_read ?? 0;
+  const statsPerMonth = stats?.per_month ?? stats?.books_per_month ?? [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -158,7 +210,7 @@ export default function ReadingTrackerScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
           <Ionicons name="chevron-back" size={22} color={c.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reading Tracker</Text>
+        <Text style={styles.headerTitle}>Culture Log</Text>
         <TouchableOpacity style={styles.addBtn} onPress={() => setAddOpen(true)}>
           <Ionicons name="add" size={24} color={c.ink} />
         </TouchableOpacity>
@@ -166,22 +218,22 @@ export default function ReadingTrackerScreen() {
 
       {goal ? (
         <View style={styles.goalCard}>
-          {editingGoal || goal.targetBooks === null ? (
+          {editingGoal || goalTarget === null ? (
             <View style={styles.goalEdit}>
-              <Text style={styles.goalLabel}>Set your {goal.year} reading goal</Text>
+              <Text style={styles.goalLabel}>Set your {goal.year} goal</Text>
               <View style={styles.goalEditRow}>
                 <TextInput
                   style={styles.goalInput}
                   keyboardType="number-pad"
                   placeholder="e.g. 24"
                   placeholderTextColor={c.mute}
-                  defaultValue={goal.targetBooks ? String(goal.targetBooks) : ""}
+                  defaultValue={goalTarget ? String(goalTarget) : ""}
                   onChangeText={setGoalInput}
                 />
                 <TouchableOpacity style={styles.goalSaveBtn} onPress={saveGoal}>
                   <Text style={styles.goalSaveBtnText}>Save</Text>
                 </TouchableOpacity>
-                {goal.targetBooks !== null && (
+                {goalTarget !== null && (
                   <TouchableOpacity onPress={() => setEditingGoal(false)}>
                     <Text style={styles.goalCancelText}>Cancel</Text>
                   </TouchableOpacity>
@@ -191,13 +243,13 @@ export default function ReadingTrackerScreen() {
           ) : (
             <TouchableOpacity onPress={() => setEditingGoal(true)}>
               <Text style={styles.goalText}>
-                {goal.booksRead} of {goal.targetBooks} books this year
+                {goalLogged} of {goalTarget} logged this year
               </Text>
               <View style={styles.goalBar}>
                 <View
                   style={[
                     styles.goalBarFill,
-                    { width: `${Math.min(100, (goal.booksRead / (goal.targetBooks || 1)) * 100)}%` },
+                    { width: `${Math.min(100, (goalLogged / (goalTarget || 1)) * 100)}%` },
                   ]}
                 />
               </View>
@@ -210,19 +262,45 @@ export default function ReadingTrackerScreen() {
         <View style={styles.statsCard}>
           <TouchableOpacity style={styles.statsHeaderRow} onPress={() => setStatsExpanded((v) => !v)}>
             <View>
-              <Text style={styles.statsTitle}>Your Year in Books</Text>
-              <Text style={styles.statsCount}>{stats.books_read} book{stats.books_read === 1 ? "" : "s"} finished in {stats.year}</Text>
+              <Text style={styles.statsTitle}>Your Year in Culture</Text>
+              <Text style={styles.statsCount}>{statsLogged} thing{statsLogged === 1 ? "" : "s"} logged in {stats.year}</Text>
             </View>
             <Ionicons name={statsExpanded ? "chevron-up" : "chevron-down"} size={20} color={c.mute} />
           </TouchableOpacity>
 
           {statsExpanded && (
             <ScrollView style={styles.statsBody} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-              {/* Books per month */}
-              <Text style={styles.statsSectionLabel}>Books Per Month</Text>
+              {/* What you logged, by medium */}
+              {(() => {
+                const rows = ([...MEDIA, "other"] as MediumOrOther[])
+                  .map((m) => ({ medium: m, count: stats.medium_breakdown?.[m] ?? 0 }))
+                  .filter((r) => r.count > 0)
+                  .sort((a, b) => b.count - a.count);
+                if (rows.length === 0) return null;
+                const maxMedium = Math.max(1, ...rows.map((r) => r.count));
+                return (
+                  <>
+                    <Text style={styles.statsSectionLabel}>What You Logged</Text>
+                    {rows.map((r) => (
+                      <View key={r.medium} style={styles.barRow}>
+                        <Text style={styles.barRowLabel}>
+                          {MEDIUM_EMOJI[r.medium]} {MEDIUM_LABELS[r.medium]}
+                        </Text>
+                        <View style={styles.barRowTrack}>
+                          <View style={[styles.barRowFill, { width: `${(r.count / maxMedium) * 100}%` }]} />
+                        </View>
+                        <Text style={styles.barRowCount}>{r.count}</Text>
+                      </View>
+                    ))}
+                  </>
+                );
+              })()}
+
+              {/* Logged per month */}
+              <Text style={styles.statsSectionLabel}>By Month</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.monthScroll}>
-                {stats.books_per_month.map((m) => {
-                  const maxMonth = Math.max(1, ...stats.books_per_month.map((x) => x.count));
+                {statsPerMonth.map((m) => {
+                  const maxMonth = Math.max(1, ...statsPerMonth.map((x) => x.count));
                   const label = MONTH_LABELS[parseInt(m.month.slice(5, 7), 10) - 1] ?? m.month;
                   return (
                     <View key={m.month} style={styles.monthCol}>
@@ -239,7 +317,7 @@ export default function ReadingTrackerScreen() {
               {/* Pace */}
               {Object.values(stats.pace_breakdown).some((v) => v > 0) && (
                 <>
-                  <Text style={styles.statsSectionLabel}>Pace</Text>
+                  <Text style={styles.statsSectionLabel}>Pace · Books only</Text>
                   <View style={styles.paceBar}>
                     {(Object.keys(stats.pace_breakdown) as Pace[]).map((pace) => {
                       const total = Math.max(1, (Object.values(stats.pace_breakdown) as number[]).reduce((s, v) => s + v, 0));
@@ -264,7 +342,7 @@ export default function ReadingTrackerScreen() {
               {/* Moods */}
               {Object.keys(stats.mood_breakdown).length > 0 && (
                 <>
-                  <Text style={styles.statsSectionLabel}>Moods</Text>
+                  <Text style={styles.statsSectionLabel}>Moods · Books only</Text>
                   {(() => {
                     const maxMood = Math.max(1, ...Object.values(stats.mood_breakdown));
                     return Object.entries(stats.mood_breakdown).map(([mood, count]) => (
@@ -283,7 +361,12 @@ export default function ReadingTrackerScreen() {
               {/* Ratings */}
               {Object.values(stats.rating_distribution).some((v) => v > 0) && (
                 <>
-                  <Text style={styles.statsSectionLabel}>Ratings — Your Book Reviews</Text>
+                  <Text style={styles.statsSectionLabel}>
+                    Your ratings
+                    {stats.average_rating != null
+                      ? `  ${stats.average_rating.toFixed(1)} avg across ${stats.rated_count}`
+                      : ""}
+                  </Text>
                   {[5, 4, 3, 2, 1].map((stars) => {
                     const total = Math.max(1, (Object.values(stats.rating_distribution) as number[]).reduce((s, v) => s + v, 0));
                     const count = stats.rating_distribution[String(stars)] ?? 0;
@@ -318,15 +401,43 @@ export default function ReadingTrackerScreen() {
         </View>
       ) : null}
 
-      <View style={styles.tabRow}>
-        {TABS.map((t) => (
+      {mediumChips.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.mediaRow}
+        >
           <TouchableOpacity
-            key={t.key}
-            style={[styles.tab, tab === t.key && styles.tabActive]}
-            onPress={() => setTab(t.key)}
+            style={[styles.mediaChip, medium === "all" && styles.mediaChipActive]}
+            onPress={() => setMedium("all")}
           >
-            <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>
-              {t.label} ({counts[t.key]})
+            <Text style={[styles.mediaChipText, medium === "all" && styles.mediaChipTextActive]}>
+              All ({counts.total})
+            </Text>
+          </TouchableOpacity>
+          {mediumChips.map((m) => (
+            <TouchableOpacity
+              key={m}
+              style={[styles.mediaChip, medium === m && styles.mediaChipActive]}
+              onPress={() => setMedium(m)}
+            >
+              <Text style={[styles.mediaChipText, medium === m && styles.mediaChipTextActive]}>
+                {MEDIUM_EMOJI[m]} {MEDIUM_LABELS[m]} ({counts.byMedium?.[m]?.total ?? 0})
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
+      <View style={styles.tabRow}>
+        {SHELF_STATUSES.map((key) => (
+          <TouchableOpacity
+            key={key}
+            style={[styles.tab, tab === key && styles.tabActive]}
+            onPress={() => setTab(key)}
+          >
+            <Text style={[styles.tabText, tab === key && styles.tabTextActive]}>
+              {statusLabel(key, medium)} ({tabCount(key)})
             </Text>
           </TouchableOpacity>
         ))}
@@ -339,11 +450,11 @@ export default function ReadingTrackerScreen() {
           <Ionicons name="book-outline" size={64} color={c.ghost} style={{ marginBottom: 20 }} />
           <Text style={styles.emptyTitle}>
             {tab === "want_to_read" ? "Nothing on your list yet" :
-             tab === "currently_reading" ? "You're not currently reading anything" :
-             "No finished books yet"}
+             tab === "currently_reading" ? "Nothing in progress right now" :
+             "Nothing logged yet"}
           </Text>
           <TouchableOpacity style={styles.addBookBtn} onPress={() => setAddOpen(true)}>
-            <Text style={styles.addBookBtnText}>+ Add a Book</Text>
+            <Text style={styles.addBookBtnText}>+ Add to your log</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -354,7 +465,7 @@ export default function ReadingTrackerScreen() {
                 <Image source={{ uri: e.thumbnail }} style={styles.cover} />
               ) : (
                 <View style={[styles.cover, styles.coverPlaceholder]}>
-                  <Ionicons name="book" size={28} color={c.ghost} />
+                  <Text style={styles.coverPlaceholderGlyph}>{MEDIUM_EMOJI[e.medium] ?? "✦"}</Text>
                 </View>
               )}
               <Text style={styles.cardTitle} numberOfLines={2}>{e.title}</Text>
@@ -362,10 +473,27 @@ export default function ReadingTrackerScreen() {
               {tab === "read" && e.finishedAt ? (
                 <Text style={styles.cardFinished}>Finished {fmtDate(e.finishedAt)}</Text>
               ) : null}
+              <View style={styles.starRow}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    onPress={() => rate(e.directoryId, e.rating, n)}
+                    hitSlop={{ top: 6, bottom: 6, left: 3, right: 3 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Rate ${n} star${n === 1 ? "" : "s"}`}
+                  >
+                    <Text style={n <= e.rating ? styles.starOn : styles.starOff}>
+                      {n <= e.rating ? "\u2605" : "\u2606"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               <View style={styles.cardActions}>
-                {TABS.filter((t) => t.key !== e.status).map((t) => (
-                  <TouchableOpacity key={t.key} onPress={() => moveShelf(e.directoryId, t.key)}>
-                    <Text style={styles.cardActionText}>→ {t.label}</Text>
+                {SHELF_STATUSES.filter((key) => key !== e.status).map((key) => (
+                  <TouchableOpacity key={key} onPress={() => moveShelf(e.directoryId, key)}>
+                    {/* the card's own medium, not the active filter — a card
+                        always describes itself in its own verbs */}
+                    <Text style={styles.cardActionText}>→ {statusLabel(key, e.medium)}</Text>
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity onPress={() => removeFromShelf(e.directoryId)}>
@@ -380,18 +508,38 @@ export default function ReadingTrackerScreen() {
       <Modal visible={addOpen} animationType="slide" onRequestClose={() => setAddOpen(false)} presentationStyle="pageSheet">
         <SafeAreaView style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Add a book</Text>
+            <Text style={styles.headerTitle}>Add to your log</Text>
             <TouchableOpacity style={styles.backBtn} onPress={() => setAddOpen(false)}>
               <Ionicons name="close" size={22} color={c.ink} />
             </TouchableOpacity>
           </View>
           <View style={{ padding: space[4] }}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.mediaRow}
+            >
+              {MEDIA.map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.mediaChip, addMedium === m && styles.mediaChipActive]}
+                  onPress={() => setAddMedium(m)}
+                >
+                  <Text style={[styles.mediaChipText, addMedium === m && styles.mediaChipTextActive]}>
+                    {MEDIUM_EMOJI[m]} {MEDIUM_LABELS[m]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
             <DirectorySearch
-              onSelect={addBook}
+              // Remount on medium change so the query and results don't carry
+              // over from the previous type's search.
+              key={addMedium}
+              onSelect={addEntry}
               selected={null}
-              typeFilter="book"
-              aboutFieldLabel="Author"
-              externalSource="google_books"
+              typeFilter={MEDIA_SEARCH[addMedium].typeFilter}
+              aboutFieldLabel={MEDIA_SEARCH[addMedium].aboutFieldLabel}
+              externalSource={MEDIA_SEARCH[addMedium].externalSource}
             />
           </View>
         </SafeAreaView>
@@ -412,6 +560,16 @@ function createStyles(c: ColorPalette) {
     backBtn:     { width: 44, height: 44, alignItems: "flex-start", justifyContent: "center" },
     addBtn:      { width: 44, height: 44, alignItems: "flex-end", justifyContent: "center" },
     headerTitle: { fontFamily: fonts.sansBold, fontSize: fontSize.base, color: c.ink },
+
+    mediaRow: { paddingHorizontal: space[3], paddingTop: space[3], gap: 8 },
+    mediaChip: {
+      paddingHorizontal: 13, paddingVertical: 7,
+      borderRadius: radius.full, borderWidth: 1, borderColor: c.ruleDark,
+      backgroundColor: c.paper,
+    },
+    mediaChipActive: { backgroundColor: c.ink, borderColor: c.ink },
+    mediaChipText: { fontFamily: fonts.monoBold, fontSize: 10.5, color: c.ink },
+    mediaChipTextActive: { color: c.paper },
 
     goalCard: {
       backgroundColor: c.paper, marginHorizontal: space[3], marginTop: space[3],
@@ -440,7 +598,7 @@ function createStyles(c: ColorPalette) {
     goalSaveBtnText: { fontFamily: fonts.sansBold, fontSize: 12, color: c.paper },
     goalCancelText: { fontFamily: fonts.sans, fontSize: 12, color: c.mute },
 
-    // Phase 4 — "Your Year in Books" stats section (docs/reading-tracker-plan.md §4).
+    // Phase 4 — "Your Year in Culture" stats section (docs/reading-tracker-plan.md §4).
     statsCard: {
       backgroundColor: c.paper, marginHorizontal: space[3], marginTop: space[3],
       borderRadius: radius.xl, ...shadows.card, overflow: "hidden",
@@ -516,8 +674,12 @@ function createStyles(c: ColorPalette) {
       padding: 12, ...shadows.card,
     },
     cover: { width: "100%", aspectRatio: 2 / 3, borderRadius: radius.md, marginBottom: 8 },
+    coverPlaceholderGlyph: { fontSize: 26 },
     coverPlaceholder: { backgroundColor: c.paperDeep, alignItems: "center", justifyContent: "center" },
     cardTitle:  { fontFamily: fonts.serifBold, fontSize: 14, color: c.ink, lineHeight: 18 },
+    starRow:    { flexDirection: "row", gap: 2, marginTop: 6 },
+    starOn:     { fontSize: 16, color: c.gold },
+    starOff:    { fontSize: 16, color: c.mute },
     cardAuthor: { fontFamily: fonts.sans, fontSize: 12, color: c.mute, marginTop: 2 },
     cardFinished: { fontFamily: fonts.mono, fontSize: 10, color: c.mute, marginTop: 4 },
     cardActions: { marginTop: 8, gap: 4 },

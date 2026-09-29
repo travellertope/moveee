@@ -12,7 +12,7 @@ import "./feed.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Moveee — Community for Global Creatives",
+  title: "Feed",
   description:
     "Where creatives, entrepreneurs, professionals, and culture lovers gather. Pulse feed, member directory, and community membership.",
 };

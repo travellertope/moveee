@@ -1059,6 +1059,27 @@ export async function getLiteraryPieces(tagSlug?: string, first = 24): Promise<a
   }
 }
 
+/**
+ * A "start fresh" reset, per explicit request — every pieces() *listing*
+ * anywhere under /literary (the homepage's hero/Latest/In Translation pools,
+ * a genre archive's main grid, and a single piece's "More In {genre}"/
+ * "Also Like" grids) only ever surfaces work published on or after this
+ * date. Nothing published earlier is unpublished or hidden from a direct
+ * link, search, or the sitemap — this only trims what getLiteraryPieces()
+ * results ever get displayed in a list. Deliberately a fixed date, not a
+ * rolling window (e.g. "last 7 days"), so a quiet week doesn't empty out
+ * these sections. GET_STORIES has no explicit `orderby` and WordPress's own
+ * default post ordering is date DESC, so a plain first-N fetch is already
+ * newest-first — filtering after the fetch (rather than passing a date arg
+ * into the query) never risks an older post displacing a newer one, it just
+ * trims the already-sorted list at the cutoff.
+ */
+export const LITERARY_CUTOFF = new Date("2026-09-14T00:00:00Z");
+
+export function filterLiteraryCutoff<T extends { date?: string | null }>(pieces: T[]): T[] {
+  return pieces.filter((p) => new Date(p?.date || 0) >= LITERARY_CUTOFF);
+}
+
 // ── The Moveee Commons ─────────────────────────────────────────────────────
 // A public-affairs/research vertical at apps/site/app/commons/* — opinions,
 // reports, research and news on politics/environment/academia. Same "reuse
@@ -1668,22 +1689,30 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
     ]);
-    const editorialStories = editData?.posts?.nodes || [];
+    // Commons-qualifying posts (category "commons" or a Basit Jamiu byline —
+    // see isCommonsPost above) never surface anywhere under /magazine, per
+    // explicit request — they're exclusively a Commons-branded destination
+    // now (mirrors the /magazine/[slug] redirect and sitemap.ts's own split,
+    // both already scoped to the same isCommonsPost union). Filtered here,
+    // before any of the per-section slicing below, so it applies uniformly
+    // to every section this function feeds (the homepage and /magazine's
+    // own default view both call this).
+    const editorialStories = (editData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
 
     const topPool = mainPool.filter(
-      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news")
+      (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news") && !isCommonsPost(p)
     );
 
     const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
 
     const opinionStories = (opinionData?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 4);
     const portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 5);
     const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id))
+      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 4);
 
     return { topPool, editorialStories, opinionStories, portraitStories, digestStories };
@@ -2977,6 +3006,27 @@ export interface DirectoryPostsSummary {
   total_posts: number;
   average_rating: number | null;
   by_template: Record<string, number>;
+  /** Quotes attached to this entry (September 2026). Optional because an
+   * un-redeployed plugin won't send it. */
+  total_quotes?: number;
+}
+
+/**
+ * A quote attached to a directory entry — either saved FROM it (a book, film
+ * or album) or SAID BY it (a person). The endpoint unions both, so a person's
+ * entry shows everything they said regardless of source.
+ */
+export interface DirectoryQuote {
+  id: number;
+  slug: string;
+  /** Compound /quotes/{id}-{slug} permalink — a bare slug 404s there. */
+  href: string;
+  text: string;
+  author: string;
+  source: string;
+  quote_type: string;
+  saved_by: { name: string; avatar: string };
+  created_at: string;
 }
 
 export interface DirectoryPost {
@@ -2992,13 +3042,16 @@ export interface DirectoryPost {
 
 export interface DirectoryPostsResponse {
   posts: DirectoryPost[];
+  /** Optional: absent from an un-redeployed plugin's response. */
+  quotes?: DirectoryQuote[];
   summary: DirectoryPostsSummary;
 }
 
 export async function getDirectoryPosts(directoryId: number): Promise<DirectoryPostsResponse> {
   const empty: DirectoryPostsResponse = {
     posts: [],
-    summary: { total_posts: 0, average_rating: null, by_template: {} },
+    quotes: [],
+    summary: { total_posts: 0, average_rating: null, by_template: {}, total_quotes: 0 },
   };
   try {
     const res = await fetch(

@@ -6,7 +6,7 @@ import Link from "next/link";
 import "../../stoop.css";
 
 export const metadata: Metadata = {
-  title: "Stoop — Moveee",
+  title: "Stoop",
   description: "Small, weekly gatherings of Moveee members in your own area.",
 };
 

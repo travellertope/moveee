@@ -10,10 +10,12 @@ import "../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
-import LogEntryPanel from "./LogEntryPanel";
+import EntryLogControl from "./EntryLogControl";
+import SocialProofLine from "./SocialProofLine";
 import SavedLines from "./SavedLines";
 import DirectoryFollowButton from "./DirectoryFollowButton";
 import StoopProximityBanner from "./StoopProximityBanner";
+import { decodeHtml } from "@/lib/decode-html";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -37,11 +39,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   let data: any;
   try { data = await getWPData(GET_DIRECTORY_ENTRY_BY_SLUG, { slug }); } catch {}
   const entry = data?.cultureDirectory;
-  if (!entry) return { title: { absolute: "Culture Directory · The Moveee" } };
+  if (!entry) return { title: { absolute: "Culture Directory | Moveee" } };
   const imageUrl = entry.featuredImage?.node?.sourceUrl || "/og-fallback.png";
   const desc = entry.excerpt?.replace(/<[^>]*>/g, "").slice(0, 160);
   return {
-    title: { absolute: `${entry.title} · Culture Directory · The Moveee` },
+    title: { absolute: `${entry.title} | Culture Directory | Moveee` },
     description: desc,
     openGraph: { title: entry.title, description: desc, images: [{ url: imageUrl, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", title: entry.title, description: desc, images: [imageUrl] },
@@ -66,6 +68,15 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const typeSlug = typeNode?.slug ?? "";
   const typeLabel = TYPE_LABELS[typeSlug] ?? typeNode?.name ?? "Entry";
   const img = entry.featuredImage?.node?.sourceUrl;
+
+  // "Save a line from this" — which of the quote's two optional directory
+  // links this entry fills. A person is the speaker; a work is the source.
+  // Offered on the types lines actually come from, plus any entry that
+  // already has one, so a restaurant doesn't grow a quote composer it has no
+  // use for.
+  const LINE_SOURCE_TYPES: Record<string, string> = { book: "book", film: "film", album: "album", "tv-series": "film" };
+  const quoteLinkRole = typeSlug === "person" ? "author" : "source";
+  const quoteLinkType = typeSlug === "person" ? "" : LINE_SOURCE_TYPES[typeSlug] ?? "";
   const interests: any[] = entry.cultureInterests?.nodes ?? [];
   const works: { title: string; imageUrl: string }[] = entry.selectedWorks ?? [];
 
@@ -110,12 +121,14 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const [communityData, directoryEvents] = await Promise.all([
     entry.databaseId
       ? getDirectoryPosts(entry.databaseId)
-      : Promise.resolve({ posts: [], summary: { total_posts: 0, average_rating: null, by_template: {} } }),
+      : Promise.resolve({ posts: [], quotes: [], summary: { total_posts: 0, average_rating: null, by_template: {}, total_quotes: 0 } }),
     entry.databaseId
       ? getDirectoryEvents(entry.databaseId)
       : Promise.resolve([] as DirectoryEvent[]),
   ]);
   const { posts: communityPosts, summary: communitySummary } = communityData;
+  // Absent from an un-redeployed plugin's response, hence the fallback.
+  const directoryQuotes = communityData.quotes ?? [];
 
   type InfoboxField = { label: string; key: string };
   const INFOBOX_DEFS: Record<string, InfoboxField[]> = {
@@ -250,9 +263,15 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
           )}
 
-          {/* Add to your log + social proof ("Log-First" pass) */}
+          {/* Shelve and rate it from the entry itself, rather than having to
+              find it again from /member/reading's own add-a-thing modal.
+              Renders nothing for an entry with no shelf (person, movement,
+              concept — anything TYPE_MEDIA_MAP maps to 'other'). */}
           {entry.databaseId && (
-            <LogEntryPanel directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
+            <EntryLogControl directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+          )}
+          {entry.databaseId && (
+            <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
 
           {/* Stoop proximity banner (places only, "Log-First" pass) */}
@@ -379,6 +398,58 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Lines saved from this entry — quotes linked to it, either
+              because they came from this work or because this person said
+              them. Sits alongside reviews rather than in its own tab: both
+              are "what members recorded about this thing". */}
+          {(directoryQuotes.length > 0 || typeSlug === "person" || !!quoteLinkType) && (
+            <div className="dir-community-section" style={{ marginTop: "2rem" }}>
+              <div className="dir-community-header">
+                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
+                  {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
+                </h2>
+                {directoryQuotes.length > 0 && (
+                  <span className="dir-community-rating-count">
+                    {directoryQuotes.length} {directoryQuotes.length === 1 ? "line" : "lines"}
+                  </span>
+                )}
+              </div>
+              <div className="dir-quotes">
+                {directoryQuotes.length === 0 && (
+                  <p className="dir-quotes-empty">No lines saved yet.</p>
+                )}
+                {directoryQuotes.map((q) => (
+                  <figure key={q.id} className="dir-quote-card">
+                    <blockquote className="dir-quote-text">{q.text}</blockquote>
+                    <figcaption className="dir-quote-meta">
+                      {/* On a person's own page their name is the page title,
+                          so repeating it on every line is noise — show the
+                          source instead, when there is one. */}
+                      {typeSlug === "person"
+                        ? q.source && <span className="dir-quote-source">{q.source}</span>
+                        : q.author && <span className="dir-quote-source">{q.author}</span>}
+                      <span className="dir-quote-saved">Saved by {q.saved_by.name}</span>
+                      <a href={q.href} className="dir-community-read-more">Open →</a>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+
+              {/* Straight into the real composer with this entry already
+                  picked, rather than a second quote form living here. */}
+              {entry.databaseId && (
+                <a
+                  className="dir-save-line"
+                  href={`/post/new?template=quote&link_id=${entry.databaseId}&link_role=${quoteLinkRole}` +
+                    `&link_title=${encodeURIComponent(decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, ""))}` +
+                    (quoteLinkType ? `&link_type=${quoteLinkType}` : "")}
+                >
+                  {typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
+                </a>
+              )}
             </div>
           )}
 

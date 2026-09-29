@@ -401,9 +401,9 @@ export default function MagazineScreen() {
         {featured ? (
           <TouchableOpacity style={styles.hero} onPress={() => openArticle(featured)} activeOpacity={0.92}>
             {featured.featuredImage ? (
-              <Image source={{ uri: featured.featuredImage }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <Image source={{ uri: featured.featuredImage }} style={StyleSheet.absoluteFill} resizeMode="cover" />
             ) : (
-              <View style={[StyleSheet.absoluteFillObject, styles.heroPlaceholder]} />
+              <View style={[StyleSheet.absoluteFill, styles.heroPlaceholder]} />
             )}
 
             {/* PRO badge top-right */}

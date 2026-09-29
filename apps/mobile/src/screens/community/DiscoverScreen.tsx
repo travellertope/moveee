@@ -103,7 +103,7 @@ export default function DiscoverScreen() {
   // already-seen entries — regenerated only when the screen is remounted.
   const seedRef = useRef(Math.floor(Math.random() * 1_000_000_000) + 1);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const requestIdRef = useRef(0);
 
   // "Recently Added" rail — fetched once per type/region change, independent of search/sort

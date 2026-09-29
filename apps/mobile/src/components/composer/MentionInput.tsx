@@ -32,7 +32,9 @@ let debounceTimer: ReturnType<typeof setTimeout>;
 interface Props extends Omit<TextInputProps, "value" | "onChangeText" | "ref"> {
   value: string;
   onChangeText: (text: string) => void;
-  inputRef?: React.RefObject<TextInput>;
+  // React 19: useRef<T>(null) yields RefObject<T | null>, so the prop must
+  // accept the nullable form or every call site fails to assign.
+  inputRef?: React.RefObject<TextInput | null>;
 }
 
 export default function MentionInput({

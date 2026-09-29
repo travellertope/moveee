@@ -5,7 +5,7 @@ import "../feed/feed.css";
 import "./connect-landing.css";
 
 export const metadata: Metadata = {
-  title: "Literati Connect — Moveee",
+  title: "Literati Connect",
   description:
     "Two ways to meet the people who live for culture the way you do — Literati Connect, a monthly city-wide gathering, and Stoop, a weekly circle in your own area.",
 };
@@ -28,14 +28,14 @@ export default function LiteratiConnectPage() {
             </p>
           </div>
           <div className="mco-hero-cta">
-            <Link href="/connect/people" className="con-btn-primary">Find your Stoop →</Link>
+            <Link href="/connect/stoop" className="con-btn-primary">Find your Stoop →</Link>
             <Link href="/events" className="con-btn-ghost">See Literati Connect events →</Link>
           </div>
         </div>
 
         <nav className="mco-section-nav" aria-label="Connect sections">
           <Link href="/feed" className="mco-nav-link">Pulse Feed</Link>
-          <Link href="/connect/people" className="mco-nav-link">People Near Me</Link>
+          <Link href="/connect/stoop" className="mco-nav-link">Stoop</Link>
           <Link href="/connect/membership" className="mco-nav-link">Membership</Link>
           <span className="mco-nav-link mco-nav-link--active">Literati Connect</span>
         </nav>
@@ -64,7 +64,7 @@ export default function LiteratiConnectPage() {
             a neighbour, hosted by the community — never more than a short
             walk from home.
           </p>
-          <Link href="/connect/people" className="lc-offer-cta">Find your Stoop →</Link>
+          <Link href="/connect/stoop" className="lc-offer-cta">Find your Stoop →</Link>
         </div>
       </section>
 
@@ -155,7 +155,7 @@ export default function LiteratiConnectPage() {
       <section className="lc-cta-band">
         <h2 className="lc-cta-title">Ready to meet <em>your people?</em></h2>
         <div className="lc-cta-row">
-          <Link href="/connect/people" className="lc-cta-btn lc-cta-btn--primary">Find your Stoop →</Link>
+          <Link href="/connect/stoop" className="lc-cta-btn lc-cta-btn--primary">Find your Stoop →</Link>
           <Link href="/events" className="lc-cta-btn lc-cta-btn--ghost">See Literati Connect events →</Link>
         </div>
       </section>

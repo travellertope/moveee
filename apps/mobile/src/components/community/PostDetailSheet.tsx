@@ -92,7 +92,7 @@ function GalleryGrid({ images }: { images: string[] }) {
               return cell(src, idx, { width: hw, height: 160 },
                 isLast ? (
                   <View style={{
-                    ...StyleSheet.absoluteFillObject,
+                    ...StyleSheet.absoluteFill,
                     backgroundColor: "rgba(10,8,5,0.58)",
                     alignItems: "center", justifyContent: "center",
                   }}>

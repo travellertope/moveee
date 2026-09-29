@@ -248,8 +248,13 @@ class Culture_Cron {
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
-                    'key'   => '_culture_membership_tier',
-                    'value' => 'patron',
+                    // Covers both paid tiers — Moveee Pro ('patron') and
+                    // Moveee Lit ('lit', see CLAUDE.md's "Three-tier
+                    // membership" section) — either can have an admin-set
+                    // expiry date that needs to lapse back to Citizen.
+                    'key'     => '_culture_membership_tier',
+                    'value'   => array( 'patron', 'lit' ),
+                    'compare' => 'IN',
                 ),
                 array(
                     'key'     => '_culture_subscription_expiry',
@@ -349,7 +354,7 @@ class Culture_Cron {
                     'cluster_forming_expired',
                     'Your Stoop didn\'t reach activation',
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' didn\'t reach enough members in time. Try joining a nearby Stoop instead.',
-                    '/connect/people',
+                    '/connect/stoop',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
                 );
             }
@@ -441,7 +446,7 @@ class Culture_Cron {
                     'cluster_forming_expired',
                     'Your Stoop has been archived',
                     get_post_meta( $cluster_id, '_cluster_name', true ) . ' had no remaining members for 14 days and has been archived.',
-                    '/connect/people',
+                    '/connect/stoop',
                     array( 'cluster_id' => $cluster_id, 'archived' => true )
                 );
             }

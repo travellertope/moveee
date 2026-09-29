@@ -69,7 +69,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: string |
 try {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
+      // shouldShowAlert is deprecated as of expo-notifications 57; banner +
+      // list together are its replacement and preserve the old behaviour.
+      shouldShowBanner: true,
+      shouldShowList: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
     }),

@@ -51,7 +51,7 @@ export interface CultureUser {
   city: string;
   occupation: string;
   // Membership
-  tier: "citizen" | "patron";
+  tier: "citizen" | "lit" | "patron";
   // Interests (Phase 1)
   interests: string[];
   // Gamification — Phase 2
@@ -146,7 +146,15 @@ export const authOptions: NextAuthOptions = {
               body: JSON.stringify({
                 email: (credentials as any).otpEmail,
                 code: (credentials as any).otpCode,
-                list: (credentials as any).otpList || "getmelit",
+                // Always sent, even when empty: an explicitly-empty list tells
+                // WordPress this code is a credential, not a subscription, so
+                // signing in never joins anyone to a mailing list. The
+                // subscribe widgets pass a real slug; /login and /register
+                // pass "".
+                list: (credentials as any).otpList ?? "",
+                // Only meaningful when this verify actually creates the
+                // account — attributes it to the referrer behind a ?ref= link.
+                referral: (credentials as any).otpReferral ?? "",
               }),
               cache: "no-store",
             });

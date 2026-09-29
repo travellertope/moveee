@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import LiterarySubscribeForm from "@/components/LiterarySubscribeForm";
+import LiteraryLitCheckout from "@/components/LiteraryLitCheckout";
+import { LITERARY_FREE_READ_LIMIT } from "@/lib/literary-access";
+import { getLitCurrency } from "@/lib/lit-currency";
 
 export const metadata: Metadata = {
   title: "Subscribe | The Moveee Literary",
   description:
-    "Get notified on new fiction, poetry, essays, and conversations from The Moveee Literary, plus GetMeLit — daily editor's recommendations of stories and poems.",
+    "Get notified on new fiction, poetry, essays, and conversations from The Moveee Literary, plus GetMeLit — daily editor's recommendations of stories and poems. Or go Moveee Lit for unmetered, full access.",
 };
 
 // The destination for /literary's "Get Updates" ribbon link and "Subscribe"
@@ -12,7 +15,8 @@ export const metadata: Metadata = {
 // things at once: joins GetMeLit (see class-culture-magic-otp.php) and
 // signs the visitor into Moveee, new account or existing one alike — no
 // separate registration step.
-export default function LiterarySubscribePage() {
+export default async function LiterarySubscribePage() {
+  const currency = await getLitCurrency();
   return (
     <div className="lit-submit-wrap">
       <h1>Stay with the work.</h1>
@@ -36,7 +40,44 @@ export default function LiterarySubscribePage() {
         </ul>
       </div>
 
-      <LiterarySubscribeForm />
+      <div className="lit-pricing-intro">
+        <h2>Choose Your Membership.</h2>
+      </div>
+
+      <div className="lit-pricing-grid">
+        <div className="lit-pricing-card">
+          <h3 className="lit-pricing-card-name">Moveee Citizen</h3>
+          <div className="lit-pricing-card-cycle">Free forever — no card required</div>
+          <ul className="lit-pricing-card-perks">
+            <li>{LITERARY_FREE_READ_LIMIT} free reads every 30 days across Fiction, Poetry, Essays, Conversations, In Translation, and Notes</li>
+            <li>GetMeLit &amp; Culture Drop newsletters</li>
+            <li>The rest of Moveee — Pulse Feed, Discover, Games, Stoop, and more</li>
+          </ul>
+          <LiterarySubscribeForm />
+        </div>
+        <div className="lit-pricing-card lit-pricing-card--lit">
+          <h3 className="lit-pricing-card-name">Moveee Lit</h3>
+          <ul className="lit-pricing-card-perks">
+            <li>Everything in Citizen</li>
+            <li>Unmetered, full access to every piece in The Moveee Literary — public and exclusive alike</li>
+            <li>Comment on stories</li>
+            <li>Early news, previews, and event invites — especially to Literati Connect</li>
+            <li>
+              Complimentary TML Originals × The Moveee Literary merch
+              <em>Annual subscribers only</em>
+            </li>
+          </ul>
+          <LiteraryLitCheckout
+            variant="light"
+            returnPath="/literary/lit-welcome"
+            currency={currency}
+            monthlyPrice="₦1,999"
+            yearlyPrice="₦19,990"
+            monthlyPriceUsd="$1"
+            yearlyPriceUsd="$13"
+          />
+        </div>
+      </div>
     </div>
   );
 }
