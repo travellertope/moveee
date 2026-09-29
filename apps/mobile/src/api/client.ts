@@ -29,6 +29,37 @@ let _authToken: string | null = null;
 export function setAuthToken(token: string | null) { _authToken = token; }
 export function getAuthToken(): string | null { return _authToken; }
 
+// Real-device Sentry reports (see the "Auto-logout triggered:" message below)
+// showed authenticated POSTs occasionally going out with literally no
+// Authorization header (WordPress/the Next.js proxy both report this as
+// `no_token`) — meaning `_authToken` was empty at request time even though
+// the session was otherwise clearly still valid (the user was actively
+// composing a post, which only happens once already logged in). `_authToken`
+// is only ever meant to be an in-memory mirror of the real, durable token
+// SecureStore holds; nothing in this codebase should ever be able to clear
+// one without the other (see authStore.ts's logout()/hydrate()), so if the
+// mirror ever comes back empty on its own, re-sync from SecureStore before
+// treating the session as gone — only actually force a logout once the
+// durable store agrees there's no token to recover.
+async function resolveAuthToken(): Promise<string | null> {
+  if (_authToken) return _authToken;
+  try {
+    const stored = await SecureStore.getItemAsync("auth_token");
+    if (stored) {
+      Sentry.addBreadcrumb({
+        category: "auth",
+        message: "In-memory auth token was empty; recovered from SecureStore.",
+        level: "warning",
+      });
+      _authToken = stored;
+      return stored;
+    }
+  } catch {
+    // SecureStore itself unavailable — nothing to recover, fall through.
+  }
+  return null;
+}
+
 // Almost every call site in this app swallows its own errors (try/catch with
 // a silent `catch {}`, ~140 of them across src/) so the UI can fail quietly
 // rather than crashing — but that also meant Sentry.captureException was
@@ -66,7 +97,7 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
   };
 
   if (auth) {
-    const token = _authToken;
+    const token = await resolveAuthToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -115,7 +146,7 @@ async function upload<T>(url: string, uri: string, name: string, type: string): 
   form.append("file", { uri, name, type } as unknown as Blob);
 
   const headers: Record<string, string> = {};
-  const token = _authToken;
+  const token = await resolveAuthToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   let res: Response;

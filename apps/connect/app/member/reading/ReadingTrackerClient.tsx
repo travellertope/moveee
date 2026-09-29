@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import DirectorySearch from "@/components/composer/DirectorySearch";
+import FollowingActivity from "./FollowingActivity";
 import {
   MEDIA,
   MEDIUM_LABELS,
@@ -383,6 +384,8 @@ export default function ReadingTrackerClient() {
           ))}
         </div>
       )}
+
+      <FollowingActivity />
 
       {showAddModal && (
         <div className="rt-modal-overlay" onClick={() => setShowAddModal(false)}>

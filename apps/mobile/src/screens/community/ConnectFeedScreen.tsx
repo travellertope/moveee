@@ -393,6 +393,15 @@ export default function ConnectFeedScreen() {
                 (MemberDashboardScreen.tsx's QUICK_LINKS), reached via the
                 avatar to the right. */}
 
+            {/* Events — no longer its own bottom tab, see navigation/index.tsx */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("EventsList")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="calendar-outline" size={22} color={c.ink} />
+            </TouchableOpacity>
+
             {/* Bell */}
             <TouchableOpacity
               style={styles.iconBtn}

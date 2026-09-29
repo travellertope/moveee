@@ -30,9 +30,34 @@
  * pace, aggregated by mode across every member's vote for that book. This
  * pass adds Phase 4 (§2/§4): the stats dashboard's `get_reading_stats()`
  * aggregation — a pure per-user raw-SQL read, never a WP_Query loop, per
- * CLAUDE.md's "Raw SQL REST endpoints" convention. Buddy Reads prefill and
- * the gamification hook are still later phases and are not implemented
- * here yet.
+ * CLAUDE.md's "Raw SQL REST endpoints" convention.
+ *
+ * September 2026, "Log-First" pass — this generalizes the shelf mechanism
+ * from books-only into a cross-type personal log, per a "Moveee Home —
+ * Log-First" mockup: `set_shelf_status()` never actually restricted
+ * `directory_id` to book-type entries (only `vote_mood_pace()` does), so
+ * Place entries can already use the same three statuses today, just
+ * relabelled client-side ("want_to_read" -> "Want to go", "read" ->
+ * "Been" — "currently_reading" is simply never shown as a button for a
+ * place). `get_goal()` counting every status='read' row with no type filter
+ * means a shelved Film/Place already counts toward the per-year goal for
+ * free — the mockup's "Your year in culture" is this same goal endpoint,
+ * just relabelled once more than one type is in use. Two genuinely new
+ * pieces are added by this pass: **saved lines** (a short quote a member
+ * attaches to any directory entry — book, person, talk — independent of
+ * shelf status, since a Person entry has no "read/watched" concept at all)
+ * and **social proof / also-logged** (which of the viewer's follows have
+ * logged this entry, and what else people who logged it also logged).
+ * Buddy Reads prefill and the gamification hook are still later phases and
+ * are not implemented here yet.
+ *
+ * Stoop proximity banner (follow-up, same month) — get_place_proximity()
+ * below, backed by the new Culture_Geolocation class (a single, fuzzed
+ * lat/lng snapshot per user, captured once from device GPS — see that
+ * class's own docblock for the privacy model). Surfaces "N people within N
+ * miles want to go too" on a Place entry, computed from the same
+ * status='want_to_read' shelf rows the social-proof card already reads,
+ * filtered by real distance instead of by follow graph.
  *
  * Single source of truth for both REST surfaces (mobile JWT + web API-key),
  * same mirrored-endpoint convention as Culture_Community_RSVP/Culture_Follows.
@@ -99,6 +124,11 @@ class Culture_Reading_Tracker {
      * breakdown ratings and no genre array (see get_reading_stats(), which
      * averages them and reads _cuisine_tag instead), and Place stores a flat
      * _star_rating with no genres at all.
+     *
+     * Also doubles as the "which review template goes with which medium" map
+     * for get_following_activity()'s rating/comment enrichment — a superset of
+     * the narrower book/film/place-only mapping that method originally used,
+     * so following-activity now also enriches music-review entries for free.
      */
     const REVIEW_RATING_META = array(
         'book-review'  => '_book_overall_rating',
@@ -127,6 +157,13 @@ class Culture_Reading_Tracker {
         global $wpdb;
         return $wpdb->prefix . 'culture_book_mood_votes';
     }
+
+    public static function saved_lines_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_saved_lines';
+    }
+
+    const MAX_LINE_LENGTH = 500;
 
     public static function create_table() {
         global $wpdb;
@@ -172,6 +209,18 @@ class Culture_Reading_Tracker {
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY directory_user (directory_id, user_id)
+        ) {$charset_collate};" );
+
+        $lines_table = self::saved_lines_table();
+        dbDelta( "CREATE TABLE {$lines_table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            directory_id bigint(20) NOT NULL,
+            user_id bigint(20) NOT NULL,
+            line_text text NOT NULL,
+            source_context varchar(140) DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY directory_created (directory_id, created_at)
         ) {$charset_collate};" );
     }
 
@@ -590,11 +639,13 @@ class Culture_Reading_Tracker {
             $post  = $posts_by_id[ $dir_id ];
             $thumb = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
                 ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
 
             $entries[] = array(
                 'directoryId'   => $post->ID,
                 'title'         => $post->post_title,
                 'slug'          => $post->post_name,
+                'type'          => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
                 'thumbnail'     => $thumb ?: null,
                 'author'        => Culture_Directory::get_first_about_field( $post->ID ),
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
@@ -1073,6 +1124,430 @@ class Culture_Reading_Tracker {
             // widens; drop them once the field has turned over.
             'books_read'          => $entries_logged,
             'books_per_month'     => $per_month_list,
+        );
+    }
+
+    /* ——————————————————————————————————————
+     *  Saved lines ("Log-First" pass, September 2026)
+     *
+     *  A short quote a member attaches to any culture_directory entry —
+     *  book, person, talk-as-source-context — independent of shelf status,
+     *  since a Person entry has no "read/watched" state at all. Public
+     *  read (any authenticated member sees everyone's saved lines on a
+     *  given entry, same as book reviews), owner-only delete.
+     * —————————————————————————————————————— */
+
+    /**
+     * @return array|WP_Error
+     */
+    public static function save_line( int $user_id, int $directory_id, string $line_text, string $source_context = '' ) {
+        $post = get_post( $directory_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return new WP_Error( 'invalid_entry', 'This entry could not be found.', array( 'status' => 400 ) );
+        }
+
+        $line_text = trim( wp_strip_all_tags( $line_text ) );
+        if ( '' === $line_text ) {
+            return new WP_Error( 'empty_line', 'The saved line cannot be empty.', array( 'status' => 400 ) );
+        }
+        if ( mb_strlen( $line_text ) > self::MAX_LINE_LENGTH ) {
+            $line_text = mb_substr( $line_text, 0, self::MAX_LINE_LENGTH );
+        }
+        $source_context = sanitize_text_field( $source_context );
+        if ( mb_strlen( $source_context ) > 140 ) {
+            $source_context = mb_substr( $source_context, 0, 140 );
+        }
+
+        global $wpdb;
+        $wpdb->insert( self::saved_lines_table(), array(
+            'directory_id'   => $directory_id,
+            'user_id'        => $user_id,
+            'line_text'      => $line_text,
+            'source_context' => '' !== $source_context ? $source_context : null,
+            'created_at'     => current_time( 'mysql' ),
+        ) );
+
+        return array( 'id' => (int) $wpdb->insert_id, 'directoryId' => $directory_id );
+    }
+
+    /**
+     * Public — every saved line on this entry, newest first, with the
+     * saving member's display name/avatar. $viewer_user_id (optional) is
+     * only used so the frontend can show a delete affordance on the
+     * viewer's own lines.
+     */
+    public static function get_saved_lines( int $directory_id, int $viewer_user_id = 0, int $limit = 20 ) : array {
+        global $wpdb;
+        $limit = min( 50, max( 1, $limit ) );
+        $rows  = $wpdb->get_results( $wpdb->prepare(
+            "SELECT l.id, l.user_id, l.line_text, l.source_context, l.created_at, u.display_name
+             FROM " . self::saved_lines_table() . " l
+             INNER JOIN {$wpdb->users} u ON u.ID = l.user_id
+             WHERE l.directory_id = %d
+             ORDER BY l.created_at DESC
+             LIMIT %d",
+            $directory_id, $limit
+        ), ARRAY_A );
+
+        $lines = array();
+        foreach ( $rows ?: array() as $row ) {
+            $lines[] = array(
+                'id'            => (int) $row['id'],
+                'lineText'      => $row['line_text'],
+                'sourceContext' => $row['source_context'] ?: null,
+                'createdAt'     => $row['created_at'],
+                'authorId'      => (int) $row['user_id'],
+                'authorName'    => $row['display_name'],
+                'authorAvatar'  => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                'isMine'        => $viewer_user_id > 0 && $viewer_user_id === (int) $row['user_id'],
+            );
+        }
+        return $lines;
+    }
+
+    public static function delete_saved_line( int $user_id, int $line_id ) : bool {
+        global $wpdb;
+        return false !== $wpdb->delete(
+            self::saved_lines_table(),
+            array( 'id' => $line_id, 'user_id' => $user_id ),
+            array( '%d', '%d' )
+        );
+    }
+
+    /* ——————————————————————————————————————
+     *  Social proof + cross-recommendations ("Log-First" pass)
+     * —————————————————————————————————————— */
+
+    /**
+     * How many of $viewer_user_id's follows have logged this entry, split
+     * by "done" (read/watched/been — status='read') vs. "want to" (status=
+     * 'want_to_read'), plus up to 3 example loggers for display. Returns an
+     * all-zero shape (never an error) when the viewer follows no one or
+     * has no follows on this entry — matches this codebase's "degrade
+     * gracefully, never fabricate" convention rather than hiding the
+     * section entirely, since the frontend already treats zero as its own
+     * empty state.
+     */
+    public static function get_social_proof( int $viewer_user_id, int $directory_id ) : array {
+        global $wpdb;
+        $following_ids = wp_list_pluck( Culture_Follows::get_following( $viewer_user_id, 500 ), 'followed_id' );
+        $following_ids = array_map( 'intval', $following_ids );
+
+        if ( empty( $following_ids ) ) {
+            return array( 'doneCount' => 0, 'wantCount' => 0, 'examples' => array() );
+        }
+
+        $ids_in = implode( ',', $following_ids );
+        $table  = self::table();
+
+        $done_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE directory_id = %d AND status = 'read' AND user_id IN ({$ids_in})",
+            $directory_id
+        ) );
+        $want_count = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE directory_id = %d AND status = 'want_to_read' AND user_id IN ({$ids_in})",
+            $directory_id
+        ) );
+
+        $example_rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.user_id, s.status, s.finished_at, u.display_name
+             FROM {$table} s
+             INNER JOIN {$wpdb->users} u ON u.ID = s.user_id
+             WHERE s.directory_id = %d AND s.status = 'read' AND s.user_id IN ({$ids_in})
+             ORDER BY s.finished_at DESC
+             LIMIT 3",
+            $directory_id
+        ), ARRAY_A );
+
+        $examples = array();
+        foreach ( $example_rows ?: array() as $row ) {
+            $examples[] = array(
+                'userId'    => (int) $row['user_id'],
+                'name'      => $row['display_name'],
+                'avatar'    => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                'loggedAt'  => $row['finished_at'],
+            );
+        }
+
+        return array( 'doneCount' => $done_count, 'wantCount' => $want_count, 'examples' => $examples );
+    }
+
+    /**
+     * "People who logged this also logged…" — co-occurrence over the
+     * shelf table: other entries that show up on the "read" shelf of
+     * anyone who has *this* entry on their "read" shelf, ranked by how
+     * many distinct people logged both. Reuses the same card shape as
+     * get_user_shelf()'s entries so the frontend can render both with one
+     * component.
+     */
+    public static function get_also_logged( int $directory_id, int $limit = 4 ) : array {
+        global $wpdb;
+        $table = self::table();
+        $limit = min( 12, max( 1, $limit ) );
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s2.directory_id, COUNT(DISTINCT s2.user_id) AS c
+             FROM {$table} s1
+             INNER JOIN {$table} s2 ON s2.user_id = s1.user_id AND s2.directory_id != s1.directory_id AND s2.status = 'read'
+             WHERE s1.directory_id = %d AND s1.status = 'read'
+             GROUP BY s2.directory_id
+             ORDER BY c DESC
+             LIMIT %d",
+            $directory_id, $limit
+        ), ARRAY_A );
+
+        if ( ! $rows ) {
+            return array();
+        }
+
+        $ids   = array_map( 'intval', wp_list_pluck( $rows, 'directory_id' ) );
+        $posts = get_posts( array(
+            'post_type'      => 'culture_directory',
+            'post__in'       => $ids,
+            'posts_per_page' => count( $ids ),
+            'post_status'    => 'publish',
+            'orderby'        => 'post__in',
+        ) );
+
+        $counts_by_id = array_map( 'intval', array_combine( wp_list_pluck( $rows, 'directory_id' ), wp_list_pluck( $rows, 'c' ) ) );
+
+        $entries = array();
+        foreach ( $posts as $post ) {
+            $thumb = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
+                ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
+            $entries[]  = array(
+                'directoryId' => $post->ID,
+                'title'       => $post->post_title,
+                'slug'        => $post->post_name,
+                'type'        => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
+                'thumbnail'   => $thumb ?: null,
+                'author'      => Culture_Directory::get_first_about_field( $post->ID ),
+                'peopleCount' => $counts_by_id[ $post->ID ] ?? 0,
+            );
+        }
+
+        return $entries;
+    }
+
+    /**
+     * "From people you follow" — the Log home screen's activity rail: the
+     * viewer's follows' most recent finished (status='read') shelf entries.
+     * Public data by construction (who a viewer follows, and what those
+     * people logged, is already visible via their public shelf/profile) but
+     * still scoped to $viewer_user_id's own follow list, same as every
+     * other follow-scoped read in this codebase.
+     *
+     * Enriches each entry with the follow's own rating/comment when they
+     * wrote a linked review (REVIEW_RATING_META — book/film/music/place) for
+     * that entry — the mockup's "★★★★★ 5 of 5 — finished it on the bus" line,
+     * per CLAUDE.md's "Star ratings/comments on the activity feed" follow-up.
+     * A shelf entry with no matching review just gets rating/reviewExcerpt =
+     * null, same plain "X finished this" as before this pass.
+     */
+    public static function get_following_activity( int $viewer_user_id, int $limit = 10 ) : array {
+        $following_ids = array_map( 'intval', wp_list_pluck( Culture_Follows::get_following( $viewer_user_id, 200 ), 'followed_id' ) );
+        if ( empty( $following_ids ) ) {
+            return array();
+        }
+
+        global $wpdb;
+        $ids_in = implode( ',', $following_ids );
+        $table  = self::table();
+        $limit  = min( 30, max( 1, $limit ) );
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.user_id, s.directory_id, s.status, s.finished_at, u.display_name
+             FROM {$table} s
+             INNER JOIN {$wpdb->users} u ON u.ID = s.user_id
+             WHERE s.user_id IN ({$ids_in}) AND s.status = 'read'
+             ORDER BY s.finished_at DESC
+             LIMIT %d",
+            $limit
+        ), ARRAY_A );
+
+        if ( ! $rows ) {
+            return array();
+        }
+
+        $dir_ids = array_map( 'intval', wp_list_pluck( $rows, 'directory_id' ) );
+        $posts   = get_posts( array(
+            'post_type'      => 'culture_directory',
+            'post__in'       => $dir_ids,
+            'posts_per_page' => count( $dir_ids ),
+            'post_status'    => 'publish',
+        ) );
+        $posts_by_id = array();
+        foreach ( $posts as $p ) {
+            $posts_by_id[ $p->ID ] = $p;
+        }
+
+        // One query for every possible review across the four review
+        // templates in REVIEW_RATING_META, keyed by "author-directory" so it
+        // can be matched against each activity row below without an N+1
+        // lookup — same multi-LEFT-JOIN-filtered-by-meta_key shape
+        // get_reading_stats() already uses for exactly this kind of
+        // user-review join.
+        $reviews_by_key = array();
+        $templates_in   = "'" . implode( "','", array_map( 'esc_sql', array_keys( self::REVIEW_RATING_META ) ) ) . "'";
+        $review_rows = $wpdb->get_results(
+            "SELECT p.ID, p.post_author, p.post_content,
+                    pm_template.meta_value AS template_type,
+                    pm_link.meta_value AS directory_id,
+                    pm_book_rating.meta_value AS book_rating,
+                    pm_film_rating.meta_value AS film_rating,
+                    pm_music_rating.meta_value AS music_rating,
+                    pm_gem_rating.meta_value AS gem_rating
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm_template ON pm_template.post_id = p.ID AND pm_template.meta_key = '_template_type' AND pm_template.meta_value IN ({$templates_in})
+             INNER JOIN {$wpdb->postmeta} pm_link ON pm_link.post_id = p.ID AND pm_link.meta_key = '_linked_directory_id'
+             LEFT JOIN {$wpdb->postmeta} pm_book_rating ON pm_book_rating.post_id = p.ID AND pm_book_rating.meta_key = '_book_overall_rating'
+             LEFT JOIN {$wpdb->postmeta} pm_film_rating ON pm_film_rating.post_id = p.ID AND pm_film_rating.meta_key = '_film_overall_rating'
+             LEFT JOIN {$wpdb->postmeta} pm_music_rating ON pm_music_rating.post_id = p.ID AND pm_music_rating.meta_key = '_music_overall_rating'
+             LEFT JOIN {$wpdb->postmeta} pm_gem_rating ON pm_gem_rating.post_id = p.ID AND pm_gem_rating.meta_key = '_star_rating'
+             WHERE p.post_author IN ({$ids_in}) AND p.post_type = 'culture_post' AND p.post_status = 'publish'
+             ORDER BY p.post_date DESC",
+            ARRAY_A
+        );
+        foreach ( $review_rows ?: array() as $rrow ) {
+            $key = $rrow['post_author'] . '-' . $rrow['directory_id'];
+            // ORDER BY post_date DESC above + only-set-if-absent below means
+            // the most recent review wins if someone somehow has more than
+            // one (shouldn't happen — the composer treats a review as one
+            // per directory entry per author — but no unique constraint
+            // enforces that at the DB level).
+            if ( isset( $reviews_by_key[ $key ] ) ) {
+                continue;
+            }
+            $rating = null;
+            if ( 'book-review' === $rrow['template_type'] && '' !== $rrow['book_rating'] ) {
+                $rating = (int) $rrow['book_rating'];
+            } elseif ( 'film-review' === $rrow['template_type'] && '' !== $rrow['film_rating'] ) {
+                $rating = (int) $rrow['film_rating'];
+            } elseif ( 'music-review' === $rrow['template_type'] && '' !== $rrow['music_rating'] ) {
+                $rating = (int) $rrow['music_rating'];
+            } elseif ( 'hidden-gem' === $rrow['template_type'] && '' !== $rrow['gem_rating'] ) {
+                $rating = (int) $rrow['gem_rating'];
+            }
+            $excerpt = trim( wp_strip_all_tags( (string) $rrow['post_content'] ) );
+            if ( mb_strlen( $excerpt ) > 140 ) {
+                $excerpt = mb_substr( $excerpt, 0, 140 ) . '…';
+            }
+            $reviews_by_key[ $key ] = array(
+                'rating'  => $rating,
+                'excerpt' => '' !== $excerpt ? $excerpt : null,
+            );
+        }
+
+        $activity = array();
+        foreach ( $rows as $row ) {
+            $dir_id = (int) $row['directory_id'];
+            if ( ! isset( $posts_by_id[ $dir_id ] ) ) {
+                continue;
+            }
+            $post       = $posts_by_id[ $dir_id ];
+            $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
+            $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
+                ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: null );
+            $review     = $reviews_by_key[ $row['user_id'] . '-' . $dir_id ] ?? array( 'rating' => null, 'excerpt' => null );
+
+            $activity[] = array(
+                'userId'      => (int) $row['user_id'],
+                'userName'    => $row['display_name'],
+                'userAvatar'  => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                'directoryId' => $post->ID,
+                'title'       => $post->post_title,
+                'slug'        => $post->post_name,
+                'type'        => ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : null,
+                'thumbnail'   => $thumb ?: null,
+                'rating'        => $review['rating'],
+                'reviewExcerpt' => $review['excerpt'],
+                'author'      => Culture_Directory::get_first_about_field( $post->ID ),
+                'loggedAt'    => $row['finished_at'],
+            );
+        }
+
+        return $activity;
+    }
+
+    /* ——————————————————————————————————————
+     *  Stoop proximity banner (Place entries only)
+     * —————————————————————————————————————— */
+
+    /**
+     * "N people within N miles want to go too" — how many other members who
+     * have this Place on their "want to go" shelf are within $radius_miles
+     * of the viewer's own saved location. Requires the viewer to have set a
+     * location via Culture_Geolocation first (`hasLocation: false` when they
+     * haven't — the frontend shows a prompt to enable it instead of the
+     * banner in that case). Never returns another user's raw coordinates —
+     * only a count and up to 3 example names/avatars, same shape as
+     * get_social_proof() above.
+     *
+     * @return array|WP_Error
+     */
+    public static function get_place_proximity( int $viewer_user_id, int $directory_id, float $radius_miles = 3.0 ) {
+        $post = get_post( $directory_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status
+            || ! has_term( 'place', 'culture_dir_type', $post ) ) {
+            return new WP_Error( 'invalid_place', 'This place could not be found.', array( 'status' => 400 ) );
+        }
+
+        $viewer_loc = Culture_Geolocation::get_location( $viewer_user_id );
+        if ( null === $viewer_loc['lat'] || null === $viewer_loc['lng'] ) {
+            return array( 'hasLocation' => false, 'count' => 0, 'examples' => array() );
+        }
+
+        global $wpdb;
+        // Single query joining the shelf table to each interested user's
+        // saved lat/lng, filtered by meta_key in the JOIN itself rather than
+        // a meta_query — same "raw SQL, resolve in one pass" convention as
+        // every other user-meta-joined REST endpoint in this codebase.
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.user_id, u.display_name, um_lat.meta_value AS lat, um_lng.meta_value AS lng
+             FROM " . self::table() . " s
+             INNER JOIN {$wpdb->users} u ON u.ID = s.user_id
+             LEFT JOIN {$wpdb->usermeta} um_lat ON um_lat.user_id = s.user_id AND um_lat.meta_key = %s
+             LEFT JOIN {$wpdb->usermeta} um_lng ON um_lng.user_id = s.user_id AND um_lng.meta_key = %s
+             WHERE s.directory_id = %d AND s.status = 'want_to_read' AND s.user_id != %d",
+            Culture_Geolocation::META_LAT, Culture_Geolocation::META_LNG, $directory_id, $viewer_user_id
+        ), ARRAY_A );
+
+        $nearby = array();
+        foreach ( $rows ?: array() as $row ) {
+            if ( '' === $row['lat'] || '' === $row['lng'] || null === $row['lat'] || null === $row['lng'] ) {
+                continue; // this interested member never saved a location — can't place them
+            }
+            $distance = Culture_Geolocation::distance_miles(
+                $viewer_loc['lat'], $viewer_loc['lng'], (float) $row['lat'], (float) $row['lng']
+            );
+            if ( $distance <= $radius_miles ) {
+                $nearby[] = array(
+                    'userId'   => (int) $row['user_id'],
+                    'name'     => $row['display_name'],
+                    'avatar'   => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                    'distance' => $distance,
+                );
+            }
+        }
+
+        usort( $nearby, static function ( $a, $b ) {
+            return $a['distance'] <=> $b['distance'];
+        } );
+
+        $examples = array();
+        foreach ( array_slice( $nearby, 0, 3 ) as $person ) {
+            $examples[] = array(
+                'userId' => $person['userId'],
+                'name'   => $person['name'],
+                'avatar' => $person['avatar'],
+            );
+        }
+
+        return array(
+            'hasLocation' => true,
+            'count'       => count( $nearby ),
+            'examples'    => $examples,
         );
     }
 }

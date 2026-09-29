@@ -38,6 +38,7 @@ const TYPE_EMOJI: Record<string, string> = {
   hub_post_removed:   "🗑️",
   hub_member_removed: "🚪",
   hub_new_post: "📰",
+  directory_new_post: "🔖",
 };
 
 function formatDate(iso: string) {

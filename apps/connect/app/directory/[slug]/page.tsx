@@ -11,6 +11,10 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
 import EntryLogControl from "./EntryLogControl";
+import SocialProofLine from "./SocialProofLine";
+import SavedLines from "./SavedLines";
+import DirectoryFollowButton from "./DirectoryFollowButton";
+import StoopProximityBanner from "./StoopProximityBanner";
 import { decodeHtml } from "@/lib/decode-html";
 
 export const revalidate = 300;
@@ -254,12 +258,25 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             {date && <div className="dir-wiki-date">Added to directory {date}</div>}
           </div>
 
+          {/* Follow this person/place ("Log-First" pass) */}
+          {entry.databaseId && (
+            <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
+          )}
+
           {/* Shelve and rate it from the entry itself, rather than having to
               find it again from /member/reading's own add-a-thing modal.
               Renders nothing for an entry with no shelf (person, movement,
               concept — anything TYPE_MEDIA_MAP maps to 'other'). */}
           {entry.databaseId && (
             <EntryLogControl directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+          )}
+          {entry.databaseId && (
+            <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+          )}
+
+          {/* Stoop proximity banner (places only, "Log-First" pass) */}
+          {entry.databaseId && typeSlug === "place" && (
+            <StoopProximityBanner directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
 
           {/* Body content */}
@@ -273,6 +290,13 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             )
           ) : (
             <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
+          )}
+
+          {/* Lines saved from this ("Log-First" pass) */}
+          {entry.databaseId && (
+            <div style={{ marginTop: "32px" }}>
+              <SavedLines directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+            </div>
           )}
 
           {/* Interests / tags */}

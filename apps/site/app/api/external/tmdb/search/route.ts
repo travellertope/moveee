@@ -22,14 +22,30 @@ const TMDB_GENRE_MAP: Record<number, string> = {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() ?? "";
-  if (q.length < 2 || !TMDB_API_KEY) return NextResponse.json([]);
+  if (q.length < 2) return NextResponse.json([]);
+  if (!TMDB_API_KEY) {
+    console.error(
+      "[tmdb-search] TMDB_API_KEY not set on this deployment — film search will always " +
+      "return empty results until it's added AND a fresh deploy has happened (Vercel " +
+      "snapshots env vars per-deployment). Unlike Google Books, TMDB has no keyless tier."
+    );
+    return NextResponse.json([]);
+  }
 
   const params = new URLSearchParams({ api_key: TMDB_API_KEY, query: q, include_adult: "false" });
   const res = await fetch(`https://api.themoviedb.org/3/search/movie?${params}`, {
     next: { revalidate: 3600 },
-  }).catch(() => null);
+  }).catch((e) => {
+    console.error("[tmdb-search] search request threw a network error:", e instanceof Error ? e.message : e);
+    return null;
+  });
 
-  if (!res || !res.ok) return NextResponse.json([]);
+  if (!res) return NextResponse.json([]);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[tmdb-search] search request rejected: ${res.status} ${res.statusText} — ${body.slice(0, 300)}`);
+    return NextResponse.json([]);
+  }
 
   const data = await res.json().catch(() => null);
   const items: any[] = Array.isArray(data?.results) ? data.results : [];

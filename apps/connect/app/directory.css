@@ -680,6 +680,213 @@
   cursor: pointer;
 }
 
+/* ── Follow this person/place ("Log-First" pass, September 2026) ── */
+.dir-follow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.dir-follow-btn {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper);
+  color: var(--dir-ink);
+  cursor: pointer;
+}
+.dir-follow-btn--active {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper);
+}
+.dir-follow-btn:disabled { opacity: 0.6; cursor: default; }
+.dir-follow-count {
+  font-size: 12px;
+  color: var(--dir-muted);
+}
+
+/* ── Add to your log + social proof ("Log-First" pass) ── */
+.dir-log {
+  margin-top: 12px;
+}
+.dir-log-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dir-log-btn {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper);
+  color: var(--dir-ink);
+  cursor: pointer;
+}
+.dir-log-btn--active {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper);
+}
+.dir-log-btn:disabled { opacity: 0.6; cursor: default; }
+.dir-log-proof {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--dir-muted);
+  line-height: 1.5;
+}
+.dir-log-proof strong { color: var(--dir-ink); }
+
+/* ── Stoop proximity banner (places only, "Log-First" pass) ── */
+.dir-proximity {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--dir-border);
+  border-radius: 8px;
+}
+.dir-proximity-prompt,
+.dir-proximity-text {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--dir-muted);
+  line-height: 1.5;
+}
+.dir-proximity-text strong { color: var(--dir-ink); }
+.dir-proximity-enable,
+.dir-proximity-cta {
+  display: inline-block;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--dir-ink);
+  color: var(--dir-paper);
+  cursor: pointer;
+  text-decoration: none;
+}
+.dir-proximity-enable:disabled { opacity: 0.6; cursor: default; }
+.dir-proximity-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--dir-muted);
+}
+.dir-proximity-turn-off {
+  display: block;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--dir-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Lines saved from this ("Log-First" pass) ── */
+.dir-lines-empty {
+  font-size: 13px;
+  color: var(--dir-muted);
+  font-style: italic;
+  margin-top: 10px;
+}
+.dir-lines-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dir-lines-item {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--dir-border);
+}
+.dir-lines-item:last-child { border-bottom: none; padding-bottom: 0; }
+.dir-lines-text {
+  margin: 0;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--dir-ink);
+  line-height: 1.5;
+}
+.dir-lines-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.dir-lines-author {
+  font-size: 12px;
+  color: var(--dir-muted);
+}
+.dir-lines-delete {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--dir-ochre);
+  cursor: pointer;
+}
+.dir-lines-add {
+  display: block;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--dir-ochre);
+  cursor: pointer;
+  text-align: left;
+}
+.dir-lines-add:hover { text-decoration: underline; }
+.dir-lines-form { margin-top: 12px; }
+.dir-lines-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--dir-ink);
+  background: var(--dir-paper);
+  border: 1px solid var(--dir-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.dir-lines-form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+.dir-lines-submit {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--dir-ink);
+  color: var(--dir-paper);
+  cursor: pointer;
+}
+.dir-lines-submit:disabled { opacity: 0.5; cursor: default; }
+.dir-lines-cancel {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--dir-muted);
+  cursor: pointer;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .dir-wiki-layout {

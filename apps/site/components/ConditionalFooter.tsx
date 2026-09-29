@@ -55,6 +55,12 @@ function isLifestylePath(pathname: string): boolean {
   );
 }
 
+// /stoop renders its own footer (StoopFooter.tsx, via app/stoop/layout.tsx)
+// — same reasoning as Literary/Commons/Lifestyle above, just for one page.
+function isStoopPath(pathname: string): boolean {
+  return pathname === "/stoop" || pathname.startsWith("/stoop/");
+}
+
 export default function ConditionalFooter() {
   const pathname = usePathname();
   if (
@@ -62,7 +68,8 @@ export default function ConditionalFooter() {
     (isNewsletterReaderPath(pathname) ||
       isLiteraryPath(pathname) ||
       isLifestylePath(pathname) ||
-      isCommonsPath(pathname))
+      isCommonsPath(pathname) ||
+      isStoopPath(pathname))
   )
     return null;
   return <Footer />;

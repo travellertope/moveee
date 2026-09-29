@@ -445,6 +445,110 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Saved lines + social proof / also-logged ("Log-First" pass, Sept 2026).
+        register_rest_route( 'culture/v1', '/mobile/reading/saved-lines', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reading_save_line' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id'    => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'line_text'       => array( 'required' => true, 'type' => 'string' ),
+                'source_context'  => array( 'type' => 'string' ),
+            ),
+        ) );
+        // Public read — any authenticated member sees every saved line on
+        // an entry, same as book reviews. $viewer only flags "isMine".
+        register_rest_route( 'culture/v1', '/mobile/reading/saved-lines', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_get_saved_lines' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/reading/saved-lines/(?P<id>\d+)', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_reading_delete_saved_line' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/reading/social-proof', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_social_proof' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        // Public — a co-occurrence property of the entry itself, no viewer scoping needed.
+        register_rest_route( 'culture/v1', '/mobile/reading/also-logged', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_also_logged' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        // "From people you follow" — Log home screen activity rail.
+        register_rest_route( 'culture/v1', '/mobile/reading/following-activity', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_following_activity' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'limit' => array( 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Stoop proximity banner (Place entries) — see Culture_Reading_Tracker::get_place_proximity().
+        register_rest_route( 'culture/v1', '/mobile/reading/place-proximity', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_place_proximity' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Member geolocation — a single, privacy-fuzzed GPS snapshot per
+        // user (see class-culture-geolocation.php). GET/DELETE are scoped to
+        // the caller's own location only, no other-user reads.
+        register_rest_route( 'culture/v1', '/mobile/me/location', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_location' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'lat' => array( 'required' => true, 'type' => 'number' ),
+                'lng' => array( 'required' => true, 'type' => 'number' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/me/location', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_location' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/me/location', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_clear_location' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
+        // Directory-entry follows (Person/Place, gated client-side by entry
+        // type) — see class-culture-directory-follows.php.
+        register_rest_route( 'culture/v1', '/mobile/directory/(?P<id>\d+)/follow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_directory_follow' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/directory/(?P<id>\d+)/unfollow', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_directory_unfollow' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/directory/(?P<id>\d+)/follow-status', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_directory_follow_status' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2294,6 +2398,111 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         $year    = (int) $request->get_param( 'year' ) ?: (int) current_time( 'Y' );
         return rest_ensure_response( Culture_Reading_Tracker::get_reading_stats( $user_id, $year ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Saved lines + social proof / also-logged ("Log-First" pass)
+     * —————————————————————————————————————— */
+
+    public static function handle_reading_save_line( $request ) {
+        $user_id        = get_current_user_id();
+        $directory_id   = (int) $request->get_param( 'directory_id' );
+        $line_text      = (string) $request->get_param( 'line_text' );
+        $source_context = (string) $request->get_param( 'source_context' );
+        $result         = Culture_Reading_Tracker::save_line( $user_id, $directory_id, $line_text, $source_context );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reading_get_saved_lines( $request ) {
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $user_id      = get_current_user_id();
+        return rest_ensure_response( array( 'lines' => Culture_Reading_Tracker::get_saved_lines( $directory_id, $user_id ) ) );
+    }
+
+    public static function handle_reading_delete_saved_line( $request ) {
+        $user_id = get_current_user_id();
+        $line_id = (int) $request->get_param( 'id' );
+        Culture_Reading_Tracker::delete_saved_line( $user_id, $line_id );
+        return rest_ensure_response( array( 'removed' => true ) );
+    }
+
+    public static function handle_reading_social_proof( $request ) {
+        $viewer_user_id = get_current_user_id();
+        $directory_id   = (int) $request->get_param( 'directory_id' );
+        return rest_ensure_response( Culture_Reading_Tracker::get_social_proof( $viewer_user_id, $directory_id ) );
+    }
+
+    public static function handle_reading_also_logged( $request ) {
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        return rest_ensure_response( array( 'entries' => Culture_Reading_Tracker::get_also_logged( $directory_id ) ) );
+    }
+
+    public static function handle_reading_following_activity( $request ) {
+        $user_id = get_current_user_id();
+        $limit   = (int) $request->get_param( 'limit' ) ?: 10;
+        return rest_ensure_response( array( 'activity' => Culture_Reading_Tracker::get_following_activity( $user_id, $limit ) ) );
+    }
+
+    public static function handle_reading_place_proximity( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $result       = Culture_Reading_Tracker::get_place_proximity( $user_id, $directory_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_set_location( $request ) {
+        $user_id = get_current_user_id();
+        $lat     = (float) $request->get_param( 'lat' );
+        $lng     = (float) $request->get_param( 'lng' );
+        $result  = Culture_Geolocation::set_location( $user_id, $lat, $lng );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_get_location( $request ) {
+        $user_id = get_current_user_id();
+        $loc     = Culture_Geolocation::get_location( $user_id );
+        return rest_ensure_response( array(
+            'hasLocation' => null !== $loc['lat'] && null !== $loc['lng'],
+            'updatedAt'   => $loc['updatedAt'],
+        ) );
+    }
+
+    public static function handle_clear_location( $request ) {
+        $user_id = get_current_user_id();
+        Culture_Geolocation::clear_location( $user_id );
+        return rest_ensure_response( array( 'hasLocation' => false ) );
+    }
+
+    public static function handle_directory_follow( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'id' );
+        $result       = Culture_Directory_Follows::follow( $user_id, $directory_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
+    }
+
+    public static function handle_directory_unfollow( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'id' );
+        Culture_Directory_Follows::unfollow( $user_id, $directory_id );
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
+    }
+
+    public static function handle_directory_follow_status( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'id' );
+        return rest_ensure_response( Culture_Directory_Follows::get_status( $user_id, $directory_id ) );
     }
 
     /* ——————————————————————————————————————

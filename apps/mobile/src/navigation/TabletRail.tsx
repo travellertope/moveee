@@ -15,11 +15,11 @@ const LOGO_H = 22;
 const LOGO_W = Math.round((717 / 107) * LOGO_H);
 
 const TAB_ICONS: Record<string, [React.ComponentProps<typeof Ionicons>["name"], React.ComponentProps<typeof Ionicons>["name"]]> = {
+  Home:     ["home", "home-outline"],
   Connect:  ["people", "people-outline"],
   Magazine: ["newspaper", "newspaper-outline"],
   Games:    ["game-controller", "game-controller-outline"],
   Shop:     ["bag", "bag-outline"],
-  Events:   ["calendar", "calendar-outline"],
 };
 
 const TAB_LABELS: Record<string, string> = {

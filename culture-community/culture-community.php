@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '3.5.0' );
+define( 'CULTURE_VERSION', '3.6.0' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -42,8 +42,10 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-webauthn.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-push.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-notifications.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-follows.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-directory-follows.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-community-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-reading-tracker.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-geolocation.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-vendor-shipping.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-clusters.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-hubs.php';
@@ -181,6 +183,7 @@ function culture_community_init() {
     Culture_Tickets_Admin::init();
     Culture_Notifications::init();
     Culture_Follows::init();
+    Culture_Directory_Follows::init();
     Culture_Hubs::init();
     Culture_Country_Cleanup::init();
     Culture_System_Author::init();

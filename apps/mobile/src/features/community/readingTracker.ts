@@ -172,6 +172,81 @@ export interface ReadingStats {
   books_per_month?: { month: string; count: number }[];
 }
 
+// "Log-First" pass (September 2026) — added saved lines and social
+// proof / cross-recommendations on top of the shelf mechanism above (see
+// packages/reading-tracker-plan.md and Culture_Reading_Tracker, PHP source
+// of truth). The shelf itself (ShelfStatus/ShelfEntry/statusLabel above)
+// generalized further in a later pass to cover all five review media, not
+// just books — these types are unaffected by that and slot in on top of it.
+
+export interface SavedLine {
+  id: number;
+  lineText: string;
+  sourceContext: string | null;
+  createdAt: string;
+  authorId: number;
+  authorName: string;
+  authorAvatar: string | null;
+  isMine: boolean;
+}
+
+export interface SocialProofExample {
+  userId: number;
+  name: string;
+  avatar: string | null;
+  loggedAt: string;
+}
+
+export interface SocialProof {
+  doneCount: number;
+  wantCount: number;
+  examples: SocialProofExample[];
+}
+
+// get_user_shelf()'s card shape — shared by ReadingTrackerScreen and the
+// "In progress" rail on the Log home screen.
+export interface ShelfEntry {
+  directoryId: number;
+  title: string;
+  slug: string;
+  type: string | null;
+  thumbnail: string | null;
+  author: string;
+  averageRating: number | null;
+  status: ShelfStatus;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export interface AlsoLoggedEntry {
+  directoryId: number;
+  title: string;
+  slug: string;
+  type: string | null;
+  thumbnail: string | null;
+  author: string | null;
+  peopleCount: number;
+}
+
+// "From people you follow" — the Log home screen's activity rail. rating/
+// reviewExcerpt come from the follow's own linked review post, when they
+// wrote one (Culture_Reading_Tracker::REVIEW_RATING_META — book/film/music/
+// place) — both null for a plain shelf entry with no review attached.
+export interface FollowingActivityItem {
+  userId: number;
+  userName: string;
+  userAvatar: string | null;
+  directoryId: number;
+  title: string;
+  slug: string;
+  type: string | null;
+  thumbnail: string | null;
+  author: string | null;
+  rating: number | null;
+  reviewExcerpt: string | null;
+  loggedAt: string;
+}
+
 export interface ReadingGoal {
   year: number;
   target: number | null;
@@ -181,4 +256,3 @@ export interface ReadingGoal {
   /** @deprecated use `logged` */
   booksRead?: number;
 }
-

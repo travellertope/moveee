@@ -45,6 +45,7 @@ import StoopHomeScreen from "../screens/community/StoopHomeScreen";
 import HubsScreen from "../screens/community/HubsScreen";
 import HubCreateScreen from "../screens/community/HubCreateScreen";
 import HubDetailScreen from "../screens/community/HubDetailScreen";
+import LogHomeScreen from "../screens/community/LogHomeScreen";
 
 // Magazine
 import MagazineScreen from "../screens/magazine/MagazineScreen";
@@ -121,6 +122,12 @@ type FeedStackParams = {
   // Editorial articles opened from the Connect feed stay in this stack
   // so the Magazine tab is never polluted by cross-tab navigation.
   Article:           { slug: string };
+  // Events — no longer its own bottom tab (see MainTabs below); reachable
+  // via a topbar icon on both LogHome and ConnectFeed, registered in every
+  // stack either screen's header can navigate from.
+  EventsList:        undefined;
+  EventDetail:       { eventId: number };
+  MyRSVPs:           undefined;
 };
 
 type MemberStackParams = {
@@ -163,7 +170,65 @@ function ConnectStack() {
       <Stack.Screen name="Article"         component={ArticleScreen} />
       <Stack.Screen name="AuthorArchive"   component={AuthorArchiveScreen} />
       <Stack.Screen name="CategoryArchive" component={CategoryArchiveScreen} />
+      {/* Events — reachable via the topbar icon, not its own bottom tab
+          (see MainTabs below) */}
+      <Stack.Screen name="EventsList"       component={EventsScreen} />
+      <Stack.Screen name="EventDetail"      component={EventDetailScreen} />
+      <Stack.Screen name="MyRSVPs"          component={MyRSVPsScreen} />
       {/* Member screens — accessible via avatar tap in header */}
+      <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
+      <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
+      <Stack.Screen name="Wallet"          component={WalletScreen} />
+      <Stack.Screen name="Coupons"         component={CouponsScreen} />
+      <Stack.Screen name="Perks"           component={PerksScreen} />
+      <Stack.Screen name="Membership"      component={MembershipScreen} />
+      <Stack.Screen name="Analytics"       component={AnalyticsScreen} />
+      <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
+      <Stack.Screen name="Referral"        component={ReferralScreen} />
+      <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
+      <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
+      <Stack.Screen name="ReadingTracker"  component={ReadingTrackerScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// Home tab — LogHomeScreen ("Your log") is the app's new default landing
+// screen (per explicit product direction: Home → Feed → Magazine → Shop →
+// Games). This stack mirrors ConnectStack's full screen list (same
+// duplicate-registration convention MemberStack already uses below for its
+// own overlap with ConnectStack) so every nav.navigate() call LogHomeScreen
+// or any screen it pushes to makes — ConnectFeed, NewPost, DirectoryDetail,
+// Notifications, ReadingTracker, EventsList, and everything reachable from
+// ConnectFeed itself — resolves within this stack's own back-history
+// instead of needing a cross-stack `{ screen, params }` navigate.
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="LogHome"         component={LogHomeScreen} />
+      <Stack.Screen name="ConnectFeed"     component={ConnectFeedScreen} />
+      <Stack.Screen name="PostDetail"      component={PostDetailScreen} />
+      <Stack.Screen name="PulseDetail"     component={PulseDetailScreen} />
+      <Stack.Screen name="NewPost"         component={NewPostScreen} />
+      <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
+      <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
+      <Stack.Screen name="MemberDirectory"   component={MemberDirectoryScreen} />
+      <Stack.Screen name="DirectoryDetail"  component={DirectoryDetailScreen} />
+      <Stack.Screen name="DirectoryPosts"   component={DirectoryPostsScreen} />
+      <Stack.Screen name="Discover"         component={DiscoverScreen} />
+      <Stack.Screen name="ClusterScreen"         component={ClusterScreen} />
+      <Stack.Screen name="HostOnboardingScreen" component={HostOnboardingScreen} />
+      <Stack.Screen name="StartClusterScreen"   component={StartClusterScreen} />
+      <Stack.Screen name="StoopHomeScreen"      component={StoopHomeScreen} />
+      <Stack.Screen name="HubsScreen"           component={HubsScreen} />
+      <Stack.Screen name="HubCreateScreen"      component={HubCreateScreen} />
+      <Stack.Screen name="HubDetail"            component={HubDetailScreen} />
+      <Stack.Screen name="Notifications"   component={NotificationsScreen} />
+      <Stack.Screen name="Article"         component={ArticleScreen} />
+      <Stack.Screen name="AuthorArchive"   component={AuthorArchiveScreen} />
+      <Stack.Screen name="CategoryArchive" component={CategoryArchiveScreen} />
+      <Stack.Screen name="EventsList"       component={EventsScreen} />
+      <Stack.Screen name="EventDetail"      component={EventDetailScreen} />
+      <Stack.Screen name="MyRSVPs"          component={MyRSVPsScreen} />
       <Stack.Screen name="MemberDashboard" component={MemberDashboardScreen} />
       <Stack.Screen name="MemberSettings"  component={MemberSettingsScreen} />
       <Stack.Screen name="Wallet"          component={WalletScreen} />
@@ -189,16 +254,6 @@ function MagazineStack() {
       <Stack.Screen name="MagazineSearch"    component={MagazineSearchScreen} />
       <Stack.Screen name="AuthorArchive"     component={AuthorArchiveScreen} />
       <Stack.Screen name="CategoryArchive"   component={CategoryArchiveScreen} />
-    </Stack.Navigator>
-  );
-}
-
-function EventsStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="EventsList"  component={EventsScreen} />
-      <Stack.Screen name="EventDetail" component={EventDetailScreen} />
-      <Stack.Screen name="MyRSVPs"     component={MyRSVPsScreen} />
     </Stack.Navigator>
   );
 }
@@ -272,9 +327,9 @@ function MainTabs() {
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
+            Home:     ["home",            "home-outline"],
             Magazine: ["newspaper",       "newspaper-outline"],
             Games:    ["game-controller", "game-controller-outline"],
-            Events:   ["calendar",        "calendar-outline"],
             Shop:     ["bag",             "bag-outline"],
           };
           const [active, inactive] = icons[route.name] ?? ["ellipse", "ellipse-outline"];
@@ -282,6 +337,8 @@ function MainTabs() {
         },
       })}
     >
+      {/* Home (LogHomeScreen, "Your log") — the app's default landing tab. */}
+      <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen
         name="Connect"
         component={ConnectStack}
@@ -324,9 +381,8 @@ function MainTabs() {
         }}
       />
       <Tab.Screen name="Magazine" component={MagazineStack} />
-      <Tab.Screen name="Games"    component={GamesStack} />
       <Tab.Screen name="Shop"     component={ShopStack} />
-      <Tab.Screen name="Events"   component={EventsStack} />
+      <Tab.Screen name="Games"    component={GamesStack} />
     </Tab.Navigator>
   );
 }

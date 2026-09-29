@@ -3,6 +3,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { FeedItem } from "../types";
 
 export type AppParamList = {
+  // Home (default landing tab)
+  LogHome: undefined;
   // Connect / Feed
   ConnectFeed: { justPosted?: number } | undefined;
   PostDetail: { item: FeedItem };
@@ -95,11 +97,11 @@ export type AppParamList = {
   EventDetail: { eventId: number };
   MyRSVPs: undefined;
   // Tab-level (for cross-stack navigation)
+  Home: undefined;
   Connect: undefined;
   Magazine: undefined;
   Shop: undefined;
   Games: undefined;
-  Events: undefined;
 };
 
 export type AppNavProp = NativeStackNavigationProp<AppParamList>;

@@ -10000,6 +10000,28 @@ TMDB) are now live — this section is the reference for how the pattern works, 
   mobile hits `apps/site`'s via `PROXY`) and that a fresh deploy happened *after* adding them —
   Vercel snapshots env vars per-deployment, so saving them in the dashboard alone doesn't reach
   an already-running serverless function until the next build.
+  **Follow-up (September 2026): every credential/upstream failure was completely silent, making
+  a real "music search doesn't work, book search does" report undiagnosable from the codebase
+  alone.** `getSpotifyToken()` and all four of `/api/external/{spotify,tmdb}/{search,preview}`'s
+  own fetches (in both `apps/connect` and `apps/site`) collapsed missing env vars, a rejected
+  token/search request, and a genuine network error into the exact same empty array/`null` —
+  indistinguishable from "no results found for this query." Google Books "working" while
+  Spotify/TMDB don't is exactly what you'd see if the latter two's credentials were never
+  correctly reaching this deployment (wrong Vercel project, not redeployed after saving, a
+  swapped/truncated Client ID or Secret) — Google Books is the one source of the three that
+  still makes a real request and gets real results even with **no** key at all, so it can't
+  fail this way. Added `console.error("[spotify]"/"[spotify-search]"/"[spotify-preview]"/
+  "[tmdb-search]" ...)` at every one of these failure branches (missing credentials, the token
+  endpoint rejecting them, a rejected search/preview request, a thrown network error) — the
+  client-visible behavior (empty results, no error surfaced) is unchanged, but this deployment's
+  Vercel Function Logs will now say exactly which step failed. **If this exact symptom recurs,
+  check Function Logs for a `[spotify]`/`[tmdb-search]` line before assuming it's a code bug
+  again** — it will now say whether the env vars are missing on *this* deployment specifically,
+  or whether Spotify/TMDB themselves rejected the configured credentials (wrong pair, expired/
+  regenerated secret, etc.), rather than requiring another round of blind guessing. Not verified
+  against real Spotify/TMDB credentials or a live Vercel deployment from this sandbox — verified
+  via a brace/paren balance check on all 7 touched files. Re-check the real Function Logs the
+  next time a music/film search is attempted before considering this closed.
 - **`DirectorySearch`** (both `packages/shared/components/composer/DirectorySearch.tsx` and
   `apps/mobile/src/components/composer/DirectorySearch.tsx`) takes an optional
   `externalSource?: "google_books" | "spotify" | "tmdb"` prop — when set, it searches the
@@ -10367,6 +10389,329 @@ trip — finish a book, write a Book Review with a rating/genres, vote mood/pace
 books, then confirm every one of the six stats sections reflects it correctly on both platforms —
 in a real environment before considering this fully closed.
 
+### "Log-First" home concept — origin (September 2026, superseded below)
+
+A separate, later ask on top of the four Reading Tracker phases above: the user supplied a
+self-contained mockup export ("Moveee Home — Log-First", 4 frames — Home/the log, Book entry,
+Person entry, Place entry) proposing a StoryGraph-style personal-log home screen, plus redesigned
+Book/Person/Place directory pages (quick "add to your log" buttons, social proof,
+cross-recommendations, and a brand-new "save a line" feature). This section originally documented
+the mobile-only first pass in detail (a book/film/place-only `SHELF_LABELS` map, a
+`LogEntryPanel.tsx` component, a `LogHomeScreen.tsx` not yet wired into navigation) — all of that
+has since been **superseded by the "Generalised from books to all five review media" pass below**,
+which replaced the book/film/place-only shelf with a real five-medium system
+(`MEDIA`/`TYPE_MEDIA_MAP`/`statusLabel()`) and replaced `LogEntryPanel` with `EntryLogControl` +
+a small standalone `SocialProofLine` component on both platforms. Kept here only as a pointer so
+old references to `LogEntryPanel`/`SHELF_LABELS`/`shelfLabelsFor` in git history or elsewhere in
+this doc resolve to *why* they're gone, not because any of that implementation still exists.
+
+The `/stoop` marketing landing page (`themoveee.com/stoop`) is documented once, above, under
+"Stoop marketing landing page (`/stoop`, Site A, September 2026)" — don't duplicate it here.
+
+### Stoop proximity banner + member geolocation (mobile-only, September 2026)
+
+Closes the deferral flagged in the "Log-First" pass above — "N people within 3 miles want to go
+too" on a Place directory entry, with a "Start a Stoop here" CTA. Needed real location data first,
+which the app never collected before this pass (only free-text city/country strings). Two explicit
+decisions were locked in before building, since location is privacy-sensitive: **capture is a
+one-time device GPS snapshot** (never background/continuous tracking — the member re-triggers it
+manually if they move and want the feature to reflect it), and **stored coordinates are fuzzed to
+~2 decimal places (~1.1km at the equator)** before being persisted, so no one's exact home/work
+address is ever stored, regardless of how precise the original GPS fix was.
+
+**Backend — new `Culture_Geolocation` class**
+(`culture-community/includes/core/class-culture-geolocation.php`) — plain usermeta storage, no new
+table: `_culture_geo_lat`/`_culture_geo_lng`/`_culture_geo_updated_at`. `set_location()` is the
+**only** write path and always rounds before storing — there is no way to persist an unrounded
+coordinate through this class. Also owns the haversine `distance_miles()` helper. Required
+alongside `class-culture-reading-tracker.php` in `culture-community.php`.
+
+**`Culture_Reading_Tracker::get_place_proximity( $viewer_user_id, $directory_id, $radius_miles =
+3.0 )`** — reuses the exact same `status = 'want_to_read'` shelf rows the "Log-First" social-proof
+card already reads (see that pass above), just filtered by real distance instead of by follow
+graph. One raw-SQL query joins the shelf table to each interested member's saved lat/lng via two
+`LEFT JOIN`s filtered by `meta_key` in the join condition (not a `meta_query`), per this file's
+"Raw SQL REST endpoints" convention; distance itself is computed in PHP per row since the result
+set is always small (people interested in one specific place). Returns `hasLocation: false` when
+the *viewer* hasn't saved a location yet (frontend shows an opt-in prompt instead of the banner);
+a member who wants to go but never saved a location is simply excluded from the count — there's no
+way to place them. **Never returns another user's raw coordinates** — only a count and up to 3
+example names/avatars, closest-first.
+
+**REST — mirrored on both surfaces, same shape as every other Reading Tracker endpoint**:
+`GET /mobile/reading/place-proximity` (JWT) / `GET /reading/place-proximity` (API key + explicit
+`user_id`) for the read; `POST`/`GET`/`DELETE /mobile/me/location` (JWT) / `.../me/location`
+(API key + explicit `user_id`) for capturing, checking, and clearing a member's own location.
+**The web write routes are unreachable in practice** — there's no web capture UI (no browser GPS
+button was built), but the routes were mirrored anyway per this codebase's standing convention,
+since a web capture flow could be added later for free.
+
+**Mobile**: `expo-location` (`~18.0.4`, matching the SDK 52 pin — see "Expo SDK version" below)
+added with **foreground-only** permission config in `app.config.ts` (`locationAlwaysAndWhenInUsePermission:
+false`, `isAndroidBackgroundLocationEnabled: false`) — there is no background-location entitlement
+anywhere in this feature, consistent with the one-time-snapshot decision. `src/features/location/
+useLocation.ts` wraps the request-permission → get-fix → POST round trip
+(`requestAndSaveLocation()`) plus `clearLocation()`/`fetchLocationState()`.
+`src/components/community/StoopProximityBanner.tsx` renders one of three states on a Place entry:
+an opt-in prompt (no location saved yet), nothing at all (location saved, but a `count` of 0 —
+this is a signal-driven nudge, not always-on copy, per this codebase's "hide the whole section
+when empty" convention), or the real banner (avatars + count + "Start a Stoop here →", which
+navigates to the existing `HostOnboardingScreen` with no prefill — that screen takes no params
+today, so location/city prefill from the directory entry is a real follow-up, not done here) plus
+a small "Turn off" link to clear the saved location. Wired into `DirectoryDetailScreen.tsx`
+directly below `EntryLogControl`/`SocialProofLine`, gated on `entry.entryType === "place"`.
+
+**Not deployment-tested against a live WordPress instance or a real device** — same
+`NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this feature needs
+the plugin redeployed (manual zip+upload) before the new endpoints exist in production, and a real
+EAS build (native module) before `expo-location` can be exercised at all — a JS-only reload won't
+pick up the new permission config. Verified via `php -l` on every touched PHP file and a
+brace/paren/bracket balance check on every new/touched TS/TSX file (no `node_modules` installed in
+this sandbox, so `tsc --noEmit` couldn't run; the lockfile was regenerated out-of-tree per the
+documented process and confirmed to resolve `expo-location` correctly). Re-check the full round
+trip — granting/denying the permission prompt, the banner's three states, and the "Start a Stoop
+here" handoff — on a real device before considering this fully closed.
+
+### "From people you follow" activity feed — real star ratings/comments (mobile-only, September 2026)
+
+Closes the second deferral flagged in the "Log-First" pass above. `Culture_Reading_Tracker::
+get_following_activity()` previously only showed the plain fact "X finished this" — no rating, no
+comment, even when the follow actually wrote a full review. `REVIEW_RATING_META` (a class const —
+originally added narrower, as `REVIEW_TEMPLATE_BY_TYPE`, then folded into the broader
+`REVIEW_RATING_META` map the "Generalised from books to all five review media" pass below builds
+for the stats dashboard) maps each review template to the rating meta key that goes with it —
+`book-review` → `_book_overall_rating`, `film-review` → `_film_overall_rating`, `music-review` →
+`_music_overall_rating`, `hidden-gem` → `_star_rating` (the "Review family" unification's Place
+review, see that section elsewhere in this file — not `food-review`, which isn't linked to the
+shelf mechanism at all). Using the broader map means this feed's rating/comment enrichment covers
+music-review entries too, not just book/film/place.
+
+One extra raw-SQL query (same multi-`LEFT JOIN`-filtered-by-`meta_key` shape
+`get_reading_stats()`'s own `$review_rows` query already uses) finds every review post any of the
+viewer's follows authored across all three templates, keyed by `"{author}-{directory_id}"` so it
+can be matched against each activity row with no N+1 lookup. A matched row gets `rating` (int) and
+`reviewExcerpt` (the review's `post_content`, HTML-stripped and truncated to 140 chars) merged in;
+an entry with no matching review just gets both as `null` — same plain "X finished this" as
+before. `FollowingActivityItem` (`src/features/community/readingTracker.ts`) gained both fields;
+`LogHomeScreen.tsx`'s activity card renders a `★★★★★ N of 5` line and the excerpt (2-line clamp)
+when present, mirroring the mockup's "★★★★★ 5 of 5 — finished it on the bus" treatment. **No web
+mirror of `FollowingActivityItem` exists** — this type was never ported to
+`packages/shared/lib/reading-tracker.ts` in the first place, consistent with the rest of the
+Log-First feature being mobile-only.
+
+Not deployment-tested against a live WordPress instance — same recurring gap as every other pass
+in this file; needs the plugin redeployed before the enriched fields appear in production.
+Verified via `php -l` and a brace/paren/bracket balance check on every touched file (no
+`node_modules` installed in this sandbox). Re-check against a real follow who's actually written a
+Book/Film/Place review before considering this fully closed.
+
+### Directory-entry follows — follow a Person or Place (backend + mobile, September 2026)
+
+A member can now follow a `culture_directory` entry (Person or Place, gated client-side per
+entry type — see `DirectoryDetailScreen.tsx`) and get notified whenever a new community post
+links to it, closing a gap flagged in the "Log-First" pass above. **Deliberately a separate
+relationship from `Culture_Follows`** (member-to-member, real WP user IDs on both sides) — most
+Person directory entries are catalogued public figures with no Moveee account at all, so there's
+no "account" on the followed side to reuse that table for.
+
+- **Backend**: `Culture_Directory_Follows`
+  (`culture-community/includes/core/class-culture-directory-follows.php`) — a small dedicated
+  table, `wp_culture_directory_follows` (`id, user_id, directory_id, created_at`, `UNIQUE KEY
+  (user_id, directory_id)`), wired into `Culture_Activator::create_tables()`;
+  `CULTURE_VERSION` bump already covers this table (no separate bump needed beyond what shipped
+  with the rest of this pass). `follow()`/`unfollow()`/`is_following()`/`followers_count()`/
+  `get_follower_ids()`/`get_status()` are the full public surface — `get_status()` returns
+  `{isFollowing, followersCount}`, the shape every REST handler and the web/mobile UI both
+  consume directly.
+  - **Notification trigger is hook-based, not called from either submit handler** —
+    `on_directory_link_added()` is registered on WordPress core's own `added_post_meta` action
+    (fires once, the first time a given `(post, meta_key)` pair is written — not `update`),
+    watching for `_linked_directory_id` being set on a newly-published `culture_post`. This
+    covers every composer template that can link to a directory entry (Hidden Gem/Place,
+    Book/Film/Music Review, Food Review, Cultural Take, etc.) **and** both write paths — the
+    mobile PHP submit handler and the web submit route, which writes postmeta via native WP
+    REST and bypasses the PHP handler entirely — with one implementation instead of two. Fires
+    only when the link is first created on an already-published post; a post that starts
+    pending/draft and is published later does **not** retroactively notify (known v1
+    limitation, not wired to a status-transition hook — flagged in the class's own docblock).
+- **REST routes**, same mirrored shape as every other feature in this plugin: `POST`/`POST`/`GET
+  /mobile/directory/{id}/follow`, `/unfollow`, `/follow-status` (JWT,
+  `class-culture-mobile-api.php`) and `/directory/{id}/follow`, `/unfollow`, `/follow-status`
+  (API key + explicit `user_id`, `class-culture-rest-api.php`) — both just delegate to
+  `Culture_Directory_Follows::follow()`/`unfollow()`/`get_status()`.
+- **Mobile UI**: `DirectoryFollowButton`-equivalent wired into `DirectoryDetailScreen.tsx`
+  (built in an earlier pass this session, alongside the Stoop proximity banner and the
+  following-activity enrichment below) — gated to Person/Place entry types only, matching the
+  backend's own real-world reasoning for why a Book/Film/Album entry doesn't get a follow
+  affordance (there's no "new content about this book" notion the way there is for a person or
+  a place).
+- **Web UI (this pass, closing the mobile-only gap)**: `apps/connect/app/directory/[slug]/
+  DirectoryFollowButton.tsx` — same `SUPPORTED_TYPES = new Set(["person", "place"])` gate as
+  mobile, calls the new `/api/directory/[id]/follow`, `/unfollow`, `/follow-status` proxy
+  routes (session-resolved `user_id`, same `getServerSession()` → 401-if-absent pattern every
+  other proxy route in this feature uses), wired into `apps/connect/app/directory/[slug]/
+  page.tsx` alongside the rest of the Log-First panel components (see below).
+- Not deployment-tested against a live WordPress instance — same recurring gap as every other
+  pass in this file; needs the plugin redeployed (manual zip+upload, see "Plugin DB table
+  auto-upgrade" above) before the new table/routes exist in production. Verified via `php -l`
+  on the PHP class and a brace/paren/bracket balance check on every touched/new TS/TSX file (no
+  `node_modules` installed in this sandbox). Re-check the full follow → post-with-linked-entry
+  → notification round trip, on both platforms, in a real environment before considering this
+  fully closed.
+
+### `LogHomeScreen` wired in as the mobile default tab; Events dropped from the bottom bar (September 2026)
+
+**Supersedes the "build first, wire up nav after" deferral in the "Log-First" section above** —
+per explicit later direction, `LogHomeScreen` ("Your log") is now a real, reachable screen and
+the app's default landing tab, not just a built-but-unwired file. The bottom tab bar is now
+**Home → Feed (Connect) → Magazine → Shop → Games** — 5 tabs, reordered, with **Events removed
+as its own tab entirely** and moved to a topbar icon instead (see below). This does *not* revive
+the earlier, larger "renamed bottom nav — Log / Discover / Hubs / Stoop / You" concept from the
+section above (that would have dropped Magazine/Games/Shop too) — only Home was added and only
+Events was removed; Magazine/Shop/Games all stay as real tabs, just reordered.
+
+- **`apps/mobile/src/navigation/index.tsx`** — new `HomeStack()` function, mounted as the first
+  `Tab.Screen` (`name="Home"`). It mirrors `ConnectStack()`'s **entire** screen list verbatim
+  (`LogHome` inserted first, so it's the stack's initial route) rather than a minimal subset —
+  same "duplicate registration across stacks" convention `MemberStack` already uses for its own
+  large overlap with `ConnectStack` (Wallet/Coupons/Perks/Membership/Analytics/etc. are each
+  registered in more than one stack today). This matters because `LogHomeScreen.tsx`'s own
+  `nav.navigate(...)` calls (`ConnectFeed`, `NewPost`, `DirectoryDetail`, `Notifications`,
+  `ReadingTracker`) are all plain, same-stack navigates, not cross-stack `{ screen, params }`
+  calls — for those to resolve from the Home tab, every target screen has to exist inside
+  `HomeStack` too, not just `ConnectStack`.
+- **Events tab removed** — `EventsStack()` (the function) was deleted outright, not just
+  unmounted; `EventsList`/`EventDetail`/`MyRSVPs` are registered directly inside both
+  `ConnectStack` and the new `HomeStack` instead. A new calendar-icon button was added to the
+  topbar on both screens that lost their Events tab neighbor: `ConnectFeedScreen.tsx`'s existing
+  Hub/Stoop/Directory/Discover/Bell/Avatar icon row (inserted between Discover and Bell) and
+  `LogHomeScreen.tsx`'s own header (inserted between the "Your log" title and the notification
+  bell) — both navigate to `EventsList`, which now resolves in-stack from either tab.
+  `components/community/EventSpotlightCarousel.tsx`'s "See all →" link — the one place in the
+  codebase that cross-stack-navigated to the old `Events` tab
+  (`nav.navigate("Events", { screen: "EventsList" } as any)`) — was fixed to a plain
+  `nav.navigate("EventsList")`, since that carousel only ever renders inside `ConnectFeedScreen`,
+  which now lives in both stacks that register `EventsList` directly.
+- **`useNav.ts`'s `AppParamList`** gained `LogHome: undefined` (screen) and a tab-level `Home:
+  undefined` entry (for any future cross-stack navigate into the Home tab), and dropped the
+  now-tabless `Events` tab-level entry — `EventsList`/`EventDetail`/`MyRSVPs` (the real screens)
+  were already declared and are untouched.
+- **`TabletRail.tsx`** — `TAB_ICONS` gained a `Home: ["home", "home-outline"]` entry (the rail's
+  icon/label maps are driven by whatever `Tab.Screen`s actually exist via `state.routes`, so
+  removing Events from the bottom `Tab.Navigator` automatically removed it from the tablet rail
+  too — no code change needed there beyond adding the new tab's icon, per this file's own
+  existing "if you add a 6th tab, only the icon/label maps need an entry" note).
+- **If a future pass wants the unread-notification badge to move from the Feed tab icon to the
+  new Home tab (since Home is now the default landing screen)**, that's a deliberate follow-up,
+  not something this pass did — the badge still lives only on the `Connect`/"Feed" tab icon,
+  unchanged.
+- Not tested on a real device/simulator — this sandbox has neither. Verified via a brace/paren/
+  bracket balance check on every touched file (`navigation/index.tsx`, `useNav.ts`,
+  `TabletRail.tsx`, `ConnectFeedScreen.tsx`, `LogHomeScreen.tsx`,
+  `EventSpotlightCarousel.tsx` — no `node_modules` installed in this sandbox, so `tsc --noEmit`
+  couldn't run) and a repo-wide grep confirming no other `navigate("Events"...)` cross-stack call
+  survived the removal. Re-check a cold app launch lands on Home, that both new calendar icons
+  open Events correctly, and that the tablet rail renders 5 items in the right order, on a real
+  device before considering this fully closed.
+
+### Log-First web UI — brings `apps/connect` to parity with the mobile Log Home screen (September 2026)
+
+Closes the "everything above was built mobile-only" gap the "Log-First" section flagged —
+every backend REST route for shelving/saved lines/social proof/also-logged/place-proximity/
+following-activity/directory-follows was already mirrored for web (same "one class, two auth
+surfaces" pattern used everywhere else in this codebase); this pass is purely the `apps/connect`
+pages/components that call them. No backend changes in this pass beyond the directory-follows
+class documented directly above (built in an earlier pass this session).
+
+- **10 new proxy routes** (`apps/connect/app/api/`), all following the established proxy shape
+  (session check → 401 if absent, `user_id` resolved server-side and never trusted from the
+  client, `Authorization: Bearer ${CULTURE_API_SECRET}` to WordPress, `.catch(() => null)` → 502
+  on network failure — see `app/api/reading/shelf/route.ts` for the canonical shape every one of
+  these mirrors): `reading/saved-lines` (GET/POST) + `reading/saved-lines/[id]` (DELETE),
+  `reading/social-proof` (GET), `reading/also-logged` (GET, public — a property of the entry
+  itself, matches the PHP route's own public permission callback), `reading/place-proximity`
+  (GET), `reading/following-activity` (GET), `me/location` (POST/GET/DELETE),
+  `directory/[id]/follow` / `/unfollow` (POST) / `/follow-status` (GET).
+- **Directory entry detail page** (`apps/connect/app/directory/[slug]/page.tsx`) now renders
+  four new panels, mirroring `DirectoryDetailScreen.tsx`'s mobile layout section-for-section:
+  - `EntryLogControl.tsx` — "Add to your log" shelf-status buttons + one-tap rating (rendered only
+    for entry types with a shelf — see the generalized `TYPE_MEDIA_MAP` documented below; renders
+    nothing for a medium of `'other'`) plus `SocialProofLine.tsx`, a small standalone component
+    underneath it showing "N of your follows have logged this" (split out separately during the
+    SDK 57 merge, since `EntryLogControl` itself is mirrored 1:1 with mobile and shouldn't grow a
+    Log-First-only feature onto it).
+  - `SavedLines.tsx` — the "Lines saved from this" list plus an inline "+ Save a line" composer,
+    rendered for **every** entry type (no type gate — a Person entry gets this section the same
+    as a Book, matching the backend's own type-agnostic `save_line()`).
+  - `DirectoryFollowButton.tsx` — see the directory-follows section directly above.
+  - `StoopProximityBanner.tsx` — the web equivalent of the mobile "N people within 3 miles want
+    to go too" banner, gated to `typeSlug === "place"` only. Uses the browser's own
+    `navigator.geolocation.getCurrentPosition()` for a one-time location capture (never
+    continuous/background tracking, matching the mobile capture's own privacy posture — see
+    "Stoop proximity banner + member geolocation" above), POSTing the fix to `/api/me/location`
+    (which itself rounds to ~2 decimal places server-side via `Culture_Geolocation::
+    set_location()` before ever persisting it — the web route never sends an unrounded
+    coordinate anywhere it could be logged unrounded, but the actual privacy guarantee lives in
+    the PHP class, not the client). Three render states, same as mobile: an opt-in prompt (no
+    location saved yet), nothing at all (location saved, `count` is 0 — hide-when-empty, same
+    convention as every other signal-driven nudge in this codebase), or the real banner with a
+    "Start a Stoop here →" link to `/cluster/create`.
+- **`FollowingActivity.tsx`** (`apps/connect/app/member/reading/FollowingActivity.tsx`, new) —
+  the "From People You Follow" activity feed on `/member/reading`, the last missing piece of
+  web parity: mirrors `LogHomeScreen.tsx`'s mobile activity card exactly, including the
+  star-rating/review-excerpt enrichment `get_following_activity()` already computes server-side
+  (see "'From people you follow' activity feed — real star ratings/comments" above for the full
+  backend mechanics — `REVIEW_RATING_META` maps each shelf-supporting review template to its
+  rating meta key, one batched raw-SQL lookup, no N+1). Renders a
+  plain activity row per followed member's recently-finished entry — avatar (or an initial-letter
+  placeholder), "{name} finished {title}", a `★★★★★ N of 5` line when a matching review exists,
+  the review excerpt (already truncated server-side to 140 chars), and a relative timestamp
+  (`timeAgo()`, a small local helper parsing the MySQL-datetime-shaped ISO string PHP returns).
+  Renders nothing (`return null`) when the feed is empty — same "hide the whole section rather
+  than show an empty state with no signal" convention used throughout this codebase. Wired into
+  `ReadingTrackerClient.tsx`, rendered directly below the shelf grid and above the "Add a Book"
+  modal.
+- **`packages/shared/lib/reading-tracker.ts`** extended with the shared TS types every one of
+  these components consumes (`ShelfStatus`, `SavedLine`, `SocialProofExample`, `SocialProof`,
+  `AlsoLoggedEntry`, `FollowingActivityItem` — with `rating: number | null` /
+  `reviewExcerpt: string | null`, `PlaceProximity`, `DirectoryFollowStatus`; `ShelfEntry`/
+  `SHELF_LABELS`/`shelfLabelsFor()` from the original book/film/place-only pass are superseded by
+  the generalized `ShelfEntry`/`statusLabel()` the "all five review media" pass below adds — the
+  old `SHELF_LABELS` pair is left in the file as dead code, harmless since `EntryLogControl`
+  doesn't import it). **No shared source of truth with the mobile TS copy**
+  (`apps/mobile/src/features/community/readingTracker.ts`, since React Native can't import
+  `packages/shared`) or the PHP response shapes — keep all three in sync by hand if any of these
+  shapes ever change, same caveat already documented for `MOOD_TAGS`/`PACES` elsewhere in this
+  file.
+- **New CSS**: `apps/connect/app/directory.css` gained `.dir-follow-*`/`.dir-log-*`/
+  `.dir-proximity-*`/`.dir-lines-*` rules for the four new directory-page panels;
+  `apps/connect/app/member.css` gained a `.rt-activity-*` block (heading, row list, avatar,
+  rating line, excerpt, timestamp) for `FollowingActivity.tsx`, inserted directly before the
+  pre-existing "Reading Tracker stats dashboard" CSS comment — both new blocks reuse the
+  existing design tokens (`var(--ink)`, `var(--mute)`, `var(--rule)`, `var(--paper-deep)`,
+  `var(--gold, #b38238)`, `var(--font-serif, 'Fraunces', serif)`) rather than introducing new
+  literals.
+- **This closes the "Log-First" feature's mobile-only gap** — shelving, saved lines, mood/pace
+  (already had `BookMoodPace.tsx` from an earlier pass), social proof, directory-entry follows,
+  the Stoop proximity banner, and the enriched following-activity feed are all now live on both
+  `apps/mobile` and `apps/connect`. The one piece still deliberately out of scope, per the
+  original "Log-First" section above: `LogHomeScreen.tsx` itself (the dedicated mobile home
+  screen replacing/sitting alongside the Feed tab) has no web equivalent — this pass brought its
+  *constituent* panels to web (shelving lives on `/member/reading`, the directory-page panels
+  live on `/directory/[slug]`), not a single unified "Log home" web page mirroring that mobile
+  screen's own layout. If a dedicated web Log Home page is ever wanted, that's a separate,
+  explicitly-scoped follow-up, not something this pass silently attempted.
+- Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
+  credentials gap as every other pass in this file; this pass needed no new PHP beyond the
+  directory-follows class already covered above, so no additional plugin redeploy is required
+  specifically for these web routes (they call already-shipped-or-just-documented endpoints).
+  Verified via a brace/paren/bracket balance check on all 19 touched/new TS/TSX files and a CSS
+  brace-balance check on `directory.css` (228/228) and `member.css` (634/634) — no `node_modules`
+  installed in this sandbox, so `tsc --noEmit` couldn't run. Re-check the full round trip —
+  shelving a book from the directory page, saving a line, following a Person entry, the Stoop
+  proximity banner's geolocation prompt, and the following-activity feed's rating/excerpt
+  rendering — in a real browser before considering this fully closed.
+
 ### Generalised from books to all five review media — the "Culture Log" (September 2026)
 
 **Supersedes the books-only framing everywhere above.** The tracker now covers the same five
@@ -10548,7 +10893,6 @@ rated. This closes all three on both platforms.
   redeployed before `reading/entry` exists, then a real round trip on both platforms:
   shelve and rate from an entry page, re-tap a star to clear, and save a line from both a
   person and a work and confirm it lands on both pages.
-
 
 ---
 
@@ -11251,6 +11595,66 @@ for `Auto-logout triggered:`** — that message now names the exact endpoint and
 time this fires, instead of the silent-by-design gap this section used to document as
 correct behavior.
 
+**Follow-up (September 2026) — the diagnostic paid off immediately: the very next real
+occurrence's Sentry event was `Auto-logout triggered: POST
+https://themoveee.com/api/directory/quick-create → 401 (no_token)`, and the user separately
+confirmed the same symptom happens "at all types of post creation," not just picking an
+external search result.** `no_token` is emitted by that proxy route's very first check
+(`if (!token) return ... code: "no_token"`, before it ever contacts WordPress) — meaning
+the mobile app's own outgoing request had **no `Authorization` header at all**. That rules
+out every theory this section's earlier passes considered (a masked-401 bug in the proxy,
+a WAF/Cloudflare challenge page, a WordPress-side token check) — the request never got far
+enough to hit any of those. The only way `request()`/`upload()` in `src/api/client.ts` send
+no header on an `auth: true` call is if the in-memory `_authToken` variable was falsy at
+that exact moment.
+
+Traced every place that can clear or set `_authToken` (`setAuthToken()` has exactly five
+call sites, all in `authStore.ts`'s `hydrate()`/`login()`/`loginWithToken()`/`logout()`) and
+confirmed `hydrate()` only ever runs once, at boot (`App.tsx`'s one `useEffect([])`) — so a
+mid-session composer failure can't be a hydrate timing race. That leaves the in-memory
+mirror simply falling out of sync with the real, durable SecureStore-held token for reasons
+this investigation couldn't pin down further from static analysis alone (no live device/
+Sentry-session access from this environment) — but regardless of the exact trigger, an
+in-memory cache disagreeing with its own durable backing store is a class of bug with a
+standard fix: **re-sync from the durable store before concluding the session is gone,
+rather than trusting the cache blindly.**
+
+Fixed in `src/api/client.ts` with a new `resolveAuthToken()` — called from both `request()`
+and `upload()` in place of reading `_authToken` directly. It returns `_authToken` unchanged
+when set; when it's empty, it re-reads `SecureStore.getItemAsync("auth_token")` (the same
+key `authStore.ts` writes) and, if that comes back non-empty, repopulates `_authToken` and
+uses it for this request (with a Sentry breadcrumb noting the recovery, so a future
+investigation can see exactly how often this actually saves a request). Only if SecureStore
+*also* has nothing does the request go out tokenless and legitimately 401/`no_token`/force a
+real logout — this only ever prevents a **false-positive** logout for a session that was
+still genuinely valid; it changes nothing for an actually-expired-or-revoked session. This
+is now the single choke point every authenticated mobile call goes through (same "one
+implementation, not per-endpoint" reasoning as everything else in `client.ts`), so the fix
+automatically covers every post-creation path the user described ("all types") — community
+submit, image upload, and directory quick-create alike — without needing per-endpoint changes.
+
+**A second, related bug fixed in the same pass**: `authStore.ts`'s `hydrate()` used to
+delete the stored token and call `setAuthToken(null)` on **any** exception from its
+boot-time "verify the token" call (`GET /mobile/me`) — including a plain network error or a
+5xx, not just a genuine 401/403 rejection. A network hiccup on cold start (spotty wifi,
+cellular handoff mid-launch) would permanently throw away a perfectly valid token, forcing
+a real session to log back in for no reason — the exact same "collapsing a transient
+upstream failure into a blanket auth rejection" anti-pattern this file's own
+`quick-create/route.ts` comment already warns against, just one layer up, at the client's
+own boot sequence. Fixed to only wipe the stored token when the failure is a genuine
+`ApiError` with `status === 401 || status === 403` (i.e. WordPress itself rejected the
+token); any other failure now just leaves `isLoading` false and skips setting
+`isAuthenticated` for that launch, without destroying the durable credential — so a retry or
+next launch can still recover once the network is back.
+
+**Not verified against a real device** — this sandbox has neither. Verified via a
+brace/paren balance check on both edited files (no `node_modules` installed this session,
+so `tsc --noEmit` couldn't run). Re-check on a real build that the composer's post-creation
+flows no longer force-logout under the conditions that produced the `no_token` Sentry event
+above, and watch for the new "In-memory auth token was empty; recovered from SecureStore."
+breadcrumb — if it never fires in practice, the root cause is elsewhere and this fix, while
+still a correct defensive improvement, isn't the whole story.
+
 ---
 
 ## Passkeys (WebAuthn) — never worked on native, missing platform setup (fixed August 2026)
@@ -11739,7 +12143,9 @@ Current: `expo: ~57.0.0`, `react: 19.2.3`, `react-native: 0.86.3`, and the New A
 is **enabled** (SDK 57's template sets `newArchEnabled=true`; SDK 52's set it to `false`).
 `react-native-passkeys` is `0.4.2` and `react-native-iap` is `^14.7.20` — **both old pins
 below are wrong now**; passkeys `0.4.2` requires `expo >=53`, and the iOS bug that forced the
-exact `12.16.3` pin does not exist in v14.
+exact `12.16.3` pin does not exist in v14. `expo-location` is now `~57.0.20` (used only for a
+one-time GPS snapshot — see "Stoop proximity banner + member geolocation" above — never
+background tracking).
 
 The lockfile is still the source of truth, and the regeneration process below is unchanged
 and still mandatory.
