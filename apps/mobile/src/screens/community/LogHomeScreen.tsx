@@ -397,7 +397,7 @@ export default function LogHomeScreen() {
             ))
           )}
           <TouchableOpacity style={styles.feedOpenBtn} onPress={() => nav.navigate("ConnectFeed")}>
-            <Text style={styles.feedOpenBtnText}>Open Feed →</Text>
+            <Text style={styles.feedOpenBtnText}>Load more →</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
