@@ -468,6 +468,39 @@ class Culture_Mobile_API {
             ),
         ) );
 
+        // Stoop proximity banner (Place entries) — see Culture_Reading_Tracker::get_place_proximity().
+        register_rest_route( 'culture/v1', '/mobile/reading/place-proximity', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_place_proximity' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Member geolocation — a single, privacy-fuzzed GPS snapshot per
+        // user (see class-culture-geolocation.php). GET/DELETE are scoped to
+        // the caller's own location only, no other-user reads.
+        register_rest_route( 'culture/v1', '/mobile/me/location', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_location' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'lat' => array( 'required' => true, 'type' => 'number' ),
+                'lng' => array( 'required' => true, 'type' => 'number' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/me/location', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_location' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/mobile/me/location', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_clear_location' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+        ) );
+
         register_rest_route( 'culture/v1', '/mobile/community/my-events', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_community_my_events' ),
@@ -2342,6 +2375,42 @@ class Culture_Mobile_API {
         $user_id = get_current_user_id();
         $limit   = (int) $request->get_param( 'limit' ) ?: 10;
         return rest_ensure_response( array( 'activity' => Culture_Reading_Tracker::get_following_activity( $user_id, $limit ) ) );
+    }
+
+    public static function handle_reading_place_proximity( $request ) {
+        $user_id      = get_current_user_id();
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $result       = Culture_Reading_Tracker::get_place_proximity( $user_id, $directory_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_set_location( $request ) {
+        $user_id = get_current_user_id();
+        $lat     = (float) $request->get_param( 'lat' );
+        $lng     = (float) $request->get_param( 'lng' );
+        $result  = Culture_Geolocation::set_location( $user_id, $lat, $lng );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_get_location( $request ) {
+        $user_id = get_current_user_id();
+        $loc     = Culture_Geolocation::get_location( $user_id );
+        return rest_ensure_response( array(
+            'hasLocation' => null !== $loc['lat'] && null !== $loc['lng'],
+            'updatedAt'   => $loc['updatedAt'],
+        ) );
+    }
+
+    public static function handle_clear_location( $request ) {
+        $user_id = get_current_user_id();
+        Culture_Geolocation::clear_location( $user_id );
+        return rest_ensure_response( array( 'hasLocation' => false ) );
     }
 
     /* ——————————————————————————————————————

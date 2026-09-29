@@ -1633,6 +1633,50 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Stoop proximity banner (web — API key, explicit user_id param).
+        // Mirrors /mobile/reading/place-proximity — see
+        // Culture_Reading_Tracker::get_place_proximity(). No web capture UI
+        // exists yet (location is only ever set from mobile GPS), but the
+        // read side is mirrored per this file's usual convention.
+        register_rest_route( 'culture/v1', '/reading/place-proximity', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reading_place_proximity' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'      => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'directory_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Member geolocation (web — API key, explicit user_id param).
+        // Mirrors /mobile/me/location — see class-culture-geolocation.php.
+        register_rest_route( 'culture/v1', '/me/location', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_set_location' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'lat'     => array( 'required' => true, 'type' => 'number' ),
+                'lng'     => array( 'required' => true, 'type' => 'number' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/me/location', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_get_location' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/me/location', array(
+            'methods'             => 'DELETE',
+            'callback'            => array( __CLASS__, 'handle_clear_location' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Stoop clusters (web — API key, explicit user_id param).
         // Mirrors /mobile/cluster/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/cluster/create', array(
@@ -2325,6 +2369,42 @@ class Culture_REST_API {
         $user_id = (int) $request->get_param( 'user_id' );
         $limit   = (int) $request->get_param( 'limit' ) ?: 10;
         return rest_ensure_response( array( 'activity' => Culture_Reading_Tracker::get_following_activity( $user_id, $limit ) ) );
+    }
+
+    public static function handle_reading_place_proximity( $request ) {
+        $user_id      = (int) $request->get_param( 'user_id' );
+        $directory_id = (int) $request->get_param( 'directory_id' );
+        $result       = Culture_Reading_Tracker::get_place_proximity( $user_id, $directory_id );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_set_location( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $lat     = (float) $request->get_param( 'lat' );
+        $lng     = (float) $request->get_param( 'lng' );
+        $result  = Culture_Geolocation::set_location( $user_id, $lat, $lng );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_get_location( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        $loc     = Culture_Geolocation::get_location( $user_id );
+        return rest_ensure_response( array(
+            'hasLocation' => null !== $loc['lat'] && null !== $loc['lng'],
+            'updatedAt'   => $loc['updatedAt'],
+        ) );
+    }
+
+    public static function handle_clear_location( $request ) {
+        $user_id = (int) $request->get_param( 'user_id' );
+        Culture_Geolocation::clear_location( $user_id );
+        return rest_ensure_response( array( 'hasLocation' => false ) );
     }
 
     public static function handle_community_event_rsvp( $request ) {

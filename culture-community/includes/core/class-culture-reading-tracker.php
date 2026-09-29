@@ -36,6 +36,14 @@
  * Buddy Reads prefill and the gamification hook are still later phases and
  * are not implemented here yet.
  *
+ * Stoop proximity banner (follow-up, same month) — get_place_proximity()
+ * below, backed by the new Culture_Geolocation class (a single, fuzzed
+ * lat/lng snapshot per user, captured once from device GPS — see that
+ * class's own docblock for the privacy model). Surfaces "N people within N
+ * miles want to go too" on a Place entry, computed from the same
+ * status='want_to_read' shelf rows the social-proof card already reads,
+ * filtered by real distance instead of by follow graph.
+ *
  * Single source of truth for both REST surfaces (mobile JWT + web API-key),
  * same mirrored-endpoint convention as Culture_Community_RSVP/Culture_Follows.
  *
@@ -922,5 +930,86 @@ class Culture_Reading_Tracker {
         }
 
         return $activity;
+    }
+
+    /* ——————————————————————————————————————
+     *  Stoop proximity banner (Place entries only)
+     * —————————————————————————————————————— */
+
+    /**
+     * "N people within N miles want to go too" — how many other members who
+     * have this Place on their "want to go" shelf are within $radius_miles
+     * of the viewer's own saved location. Requires the viewer to have set a
+     * location via Culture_Geolocation first (`hasLocation: false` when they
+     * haven't — the frontend shows a prompt to enable it instead of the
+     * banner in that case). Never returns another user's raw coordinates —
+     * only a count and up to 3 example names/avatars, same shape as
+     * get_social_proof() above.
+     *
+     * @return array|WP_Error
+     */
+    public static function get_place_proximity( int $viewer_user_id, int $directory_id, float $radius_miles = 3.0 ) {
+        $post = get_post( $directory_id );
+        if ( ! $post || 'culture_directory' !== $post->post_type || 'publish' !== $post->post_status
+            || ! has_term( 'place', 'culture_dir_type', $post ) ) {
+            return new WP_Error( 'invalid_place', 'This place could not be found.', array( 'status' => 400 ) );
+        }
+
+        $viewer_loc = Culture_Geolocation::get_location( $viewer_user_id );
+        if ( null === $viewer_loc['lat'] || null === $viewer_loc['lng'] ) {
+            return array( 'hasLocation' => false, 'count' => 0, 'examples' => array() );
+        }
+
+        global $wpdb;
+        // Single query joining the shelf table to each interested user's
+        // saved lat/lng, filtered by meta_key in the JOIN itself rather than
+        // a meta_query — same "raw SQL, resolve in one pass" convention as
+        // every other user-meta-joined REST endpoint in this codebase.
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.user_id, u.display_name, um_lat.meta_value AS lat, um_lng.meta_value AS lng
+             FROM " . self::table() . " s
+             INNER JOIN {$wpdb->users} u ON u.ID = s.user_id
+             LEFT JOIN {$wpdb->usermeta} um_lat ON um_lat.user_id = s.user_id AND um_lat.meta_key = %s
+             LEFT JOIN {$wpdb->usermeta} um_lng ON um_lng.user_id = s.user_id AND um_lng.meta_key = %s
+             WHERE s.directory_id = %d AND s.status = 'want_to_read' AND s.user_id != %d",
+            Culture_Geolocation::META_LAT, Culture_Geolocation::META_LNG, $directory_id, $viewer_user_id
+        ), ARRAY_A );
+
+        $nearby = array();
+        foreach ( $rows ?: array() as $row ) {
+            if ( '' === $row['lat'] || '' === $row['lng'] || null === $row['lat'] || null === $row['lng'] ) {
+                continue; // this interested member never saved a location — can't place them
+            }
+            $distance = Culture_Geolocation::distance_miles(
+                $viewer_loc['lat'], $viewer_loc['lng'], (float) $row['lat'], (float) $row['lng']
+            );
+            if ( $distance <= $radius_miles ) {
+                $nearby[] = array(
+                    'userId'   => (int) $row['user_id'],
+                    'name'     => $row['display_name'],
+                    'avatar'   => get_user_meta( (int) $row['user_id'], '_culture_avatar_url', true ) ?: null,
+                    'distance' => $distance,
+                );
+            }
+        }
+
+        usort( $nearby, static function ( $a, $b ) {
+            return $a['distance'] <=> $b['distance'];
+        } );
+
+        $examples = array();
+        foreach ( array_slice( $nearby, 0, 3 ) as $person ) {
+            $examples[] = array(
+                'userId' => $person['userId'],
+                'name'   => $person['name'],
+                'avatar' => $person['avatar'],
+            );
+        }
+
+        return array(
+            'hasLocation' => true,
+            'count'       => count( $nearby ),
+            'examples'    => $examples,
+        );
     }
 }

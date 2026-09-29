@@ -105,6 +105,19 @@ export default {
             "Allow Moveee to access your camera to scan Stoop check-in codes.",
         },
       ],
+      // One-time GPS snapshot only (see src/features/location/useLocation.ts)
+      // — never background/continuous tracking, so only the foreground
+      // permission string is needed. Powers the Stoop proximity banner on a
+      // Place directory entry.
+      [
+        "expo-location",
+        {
+          locationAlwaysAndWhenInUsePermission: false,
+          isAndroidBackgroundLocationEnabled: false,
+          locationWhenInUsePermission:
+            "Allow Moveee to use your location to show who's nearby, like other members interested in a place you're viewing.",
+        },
+      ],
       "@react-native-community/datetimepicker",
       "expo-asset",
       "expo-font",

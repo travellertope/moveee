@@ -25,6 +25,7 @@ import { decodeHtml } from "../../utils/decodeHtml";
 import BookMoodPace from "../../components/community/BookMoodPace";
 import LogEntryPanel from "../../components/community/LogEntryPanel";
 import SavedLines from "../../components/community/SavedLines";
+import StoopProximityBanner from "../../components/community/StoopProximityBanner";
 import type { AlsoLoggedEntry } from "../../features/community/readingTracker";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -571,6 +572,9 @@ export default function DirectoryDetailScreen() {
 
         {/* ── Add to your log + social proof ("Log-First" pass) ── */}
         <LogEntryPanel directoryId={entry.id} entryType={entry.entryType} />
+
+        {/* ── Stoop proximity banner (places only) ── */}
+        {entry.entryType === "place" && <StoopProximityBanner directoryId={entry.id} />}
 
         <View style={styles.divider} />
 
