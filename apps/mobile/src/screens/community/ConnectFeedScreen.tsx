@@ -399,6 +399,15 @@ export default function ConnectFeedScreen() {
               <Ionicons name="compass-outline" size={22} color={c.ink} />
             </TouchableOpacity>
 
+            {/* Events — no longer its own bottom tab, see navigation/index.tsx */}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => nav.navigate("EventsList")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="calendar-outline" size={22} color={c.ink} />
+            </TouchableOpacity>
+
             {/* Bell */}
             <TouchableOpacity
               style={styles.iconBtn}

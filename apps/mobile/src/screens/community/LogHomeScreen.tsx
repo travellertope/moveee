@@ -253,6 +253,10 @@ export default function LogHomeScreen() {
           )}
         </View>
         <Text style={styles.headerTitle}>Your log</Text>
+        {/* Events — no longer its own bottom tab, see navigation/index.tsx */}
+        <TouchableOpacity style={styles.bellWrap} onPress={() => nav.navigate("EventsList")}>
+          <Ionicons name="calendar-outline" size={22} color={c.ink} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.bellWrap} onPress={() => nav.navigate("Notifications")}>
           <Ionicons name="notifications-outline" size={22} color={c.ink} />
           {unread > 0 && <View style={styles.bellDot} />}

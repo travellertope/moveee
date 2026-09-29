@@ -123,7 +123,10 @@ export default function EventSpotlightCarousel({
     <View style={styles.wrapper}>
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>📅 Upcoming Near You</Text>
-        <TouchableOpacity onPress={() => nav.navigate("Events", { screen: "EventsList" } as any)}>
+        {/* Events is no longer its own bottom tab — EventsList is registered
+            directly in every stack this carousel renders inside (Home/Connect),
+            so a plain in-stack navigate resolves correctly either way. */}
+        <TouchableOpacity onPress={() => nav.navigate("EventsList")}>
           <Text style={styles.seeAll}>See all →</Text>
         </TouchableOpacity>
       </View>
