@@ -9509,6 +9509,28 @@ TMDB) are now live — this section is the reference for how the pattern works, 
   mobile hits `apps/site`'s via `PROXY`) and that a fresh deploy happened *after* adding them —
   Vercel snapshots env vars per-deployment, so saving them in the dashboard alone doesn't reach
   an already-running serverless function until the next build.
+  **Follow-up (September 2026): every credential/upstream failure was completely silent, making
+  a real "music search doesn't work, book search does" report undiagnosable from the codebase
+  alone.** `getSpotifyToken()` and all four of `/api/external/{spotify,tmdb}/{search,preview}`'s
+  own fetches (in both `apps/connect` and `apps/site`) collapsed missing env vars, a rejected
+  token/search request, and a genuine network error into the exact same empty array/`null` —
+  indistinguishable from "no results found for this query." Google Books "working" while
+  Spotify/TMDB don't is exactly what you'd see if the latter two's credentials were never
+  correctly reaching this deployment (wrong Vercel project, not redeployed after saving, a
+  swapped/truncated Client ID or Secret) — Google Books is the one source of the three that
+  still makes a real request and gets real results even with **no** key at all, so it can't
+  fail this way. Added `console.error("[spotify]"/"[spotify-search]"/"[spotify-preview]"/
+  "[tmdb-search]" ...)` at every one of these failure branches (missing credentials, the token
+  endpoint rejecting them, a rejected search/preview request, a thrown network error) — the
+  client-visible behavior (empty results, no error surfaced) is unchanged, but this deployment's
+  Vercel Function Logs will now say exactly which step failed. **If this exact symptom recurs,
+  check Function Logs for a `[spotify]`/`[tmdb-search]` line before assuming it's a code bug
+  again** — it will now say whether the env vars are missing on *this* deployment specifically,
+  or whether Spotify/TMDB themselves rejected the configured credentials (wrong pair, expired/
+  regenerated secret, etc.), rather than requiring another round of blind guessing. Not verified
+  against real Spotify/TMDB credentials or a live Vercel deployment from this sandbox — verified
+  via a brace/paren balance check on all 7 touched files. Re-check the real Function Logs the
+  next time a music/film search is attempted before considering this closed.
 - **`DirectorySearch`** (both `packages/shared/components/composer/DirectorySearch.tsx` and
   `apps/mobile/src/components/composer/DirectorySearch.tsx`) takes an optional
   `externalSource?: "google_books" | "spotify" | "tmdb"` prop — when set, it searches the

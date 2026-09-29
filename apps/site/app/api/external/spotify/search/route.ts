@@ -9,14 +9,24 @@ export async function GET(req: NextRequest) {
   if (q.length < 2) return NextResponse.json([]);
 
   const token = await getSpotifyToken();
+  // getSpotifyToken() already console.error's the real reason (missing env
+  // vars, rejected credentials, network error) — see its own doc comment.
   if (!token) return NextResponse.json([]);
 
   const params = new URLSearchParams({ q, type: "album", limit: "8" });
   const res = await fetch(`https://api.spotify.com/v1/search?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
-  }).catch(() => null);
+  }).catch((e) => {
+    console.error("[spotify-search] search request threw a network error:", e instanceof Error ? e.message : e);
+    return null;
+  });
 
-  if (!res || !res.ok) return NextResponse.json([]);
+  if (!res) return NextResponse.json([]);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[spotify-search] search request rejected: ${res.status} ${res.statusText} — ${body.slice(0, 300)}`);
+    return NextResponse.json([]);
+  }
 
   const data = await res.json().catch(() => null);
   const items: any[] = data?.albums?.items ?? [];

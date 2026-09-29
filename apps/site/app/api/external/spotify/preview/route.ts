@@ -18,9 +18,16 @@ export async function GET(req: NextRequest) {
 
   const res = await fetch(`https://api.spotify.com/v1/albums/${encodeURIComponent(albumId)}/tracks?limit=1`, {
     headers: { Authorization: `Bearer ${token}` },
-  }).catch(() => null);
+  }).catch((e) => {
+    console.error("[spotify-preview] tracks request threw a network error:", e instanceof Error ? e.message : e);
+    return null;
+  });
 
-  if (!res || !res.ok) return NextResponse.json({ previewUrl: null });
+  if (!res) return NextResponse.json({ previewUrl: null });
+  if (!res.ok) {
+    console.error(`[spotify-preview] tracks request rejected: ${res.status} ${res.statusText}`);
+    return NextResponse.json({ previewUrl: null });
+  }
 
   const data = await res.json().catch(() => null);
   const previewUrl = data?.items?.[0]?.preview_url ?? null;
