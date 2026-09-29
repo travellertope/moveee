@@ -13,6 +13,8 @@ import { api, MOBILE_API } from "../../api/client";
 import { useNotificationCount } from "../../features/notifications/useNotificationCount";
 import DirectorySearch, { type DirectoryEntry } from "../../components/composer/DirectorySearch";
 import type { ShelfEntry, FollowingActivityItem } from "../../features/community/readingTracker";
+import { decodeHtml } from "../../utils/decodeHtml";
+import type { FeedItem } from "../../types";
 
 // "Moveee Home — Log-First" — a from-scratch personal-log home screen,
 // built from a user-supplied mockup (see CLAUDE.md's "Log-First" entry).
@@ -27,6 +29,18 @@ import type { ShelfEntry, FollowingActivityItem } from "../../features/community
 // the "From people you follow" activity rail (would need joining to a
 // linked review post, same shape as get_reading_stats()'s review_rows —
 // not built here to keep this pass's scope real).
+//
+// Per explicit user direction (once Log sits alongside, not instead of,
+// Feed), the community Feed is surfaced as the LAST section on this screen
+// rather than a separate destination this screen has no path to — a small
+// preview of the 3 most recent feed items + a "See all in Feed →" link into
+// the real ConnectFeed screen. This is a lightweight, one-shot fetch (not
+// the full paginated useUnifiedFeed hook, which owns its own refresh/
+// pagination state this preview doesn't need) — tapping a card or the
+// header link both just open ConnectFeed itself; this screen doesn't try to
+// reproduce per-item detail sheets/modals for every feed template.
+
+const FEED_PREVIEW_COUNT = 3;
 
 const QUICK_LOG_TYPES: { key: string; label: string; emoji: string; directoryType?: string; template?: string }[] = [
   { key: "book",  label: "Book",  emoji: "📖", directoryType: "book" },
@@ -129,6 +143,23 @@ function createStyles(c: ColorPalette) {
 
     emptyText: { fontFamily: fonts.sans, fontSize: 13, color: c.mute },
 
+    feedSeeAll: { fontFamily: fonts.sansBold, fontSize: 12, color: c.ochre },
+    feedCard: {
+      backgroundColor: c.paper, borderWidth: 1, borderColor: c.ghost,
+      borderRadius: radius.lg, ...shadows.card, padding: 12, marginBottom: 10,
+    },
+    feedCardKicker: {
+      fontFamily: fonts.sansBold, fontSize: 10, color: c.mute,
+      textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4,
+    },
+    feedCardTitle: { fontFamily: fonts.serifBold, fontSize: 15, color: c.ink, lineHeight: 20 },
+    feedCardExcerpt: { fontFamily: fonts.sans, fontSize: 12, color: c.inkSoft, marginTop: 4 },
+    feedOpenBtn: {
+      alignSelf: "flex-start", marginTop: 4, paddingVertical: 10, paddingHorizontal: 16,
+      borderRadius: radius.full, borderWidth: 1, borderColor: c.ghost,
+    },
+    feedOpenBtnText: { fontFamily: fonts.sansBold, fontSize: 13, color: c.ink },
+
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" },
     modalSheet: {
       backgroundColor: c.paper, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
@@ -155,19 +186,22 @@ export default function LogHomeScreen() {
   const [inProgress, setInProgress] = useState<ShelfEntry[]>([]);
   const [goal, setGoal] = useState<{ year: number; targetBooks: number | null; booksRead: number } | null>(null);
   const [activity, setActivity] = useState<FollowingActivityItem[]>([]);
+  const [feedPreview, setFeedPreview] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [logModalType, setLogModalType] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [progressRes, goalRes, activityRes] = await Promise.allSettled([
+    const [progressRes, goalRes, activityRes, feedRes] = await Promise.allSettled([
       api.get<{ entries: ShelfEntry[] }>(`${MOBILE_API}/reading/shelf?status=currently_reading`),
       api.get<{ year: number; targetBooks: number | null; booksRead: number }>(`${MOBILE_API}/reading/goal`),
       api.get<{ activity: FollowingActivityItem[] }>(`${MOBILE_API}/reading/following-activity`),
+      api.get<{ items: FeedItem[] }>(`${MOBILE_API}/feed?page=1&per_page=${FEED_PREVIEW_COUNT}`),
     ]);
     if (progressRes.status === "fulfilled") setInProgress(progressRes.value.entries ?? []);
     if (goalRes.status === "fulfilled") setGoal(goalRes.value);
     if (activityRes.status === "fulfilled") setActivity(activityRes.value.activity ?? []);
+    if (feedRes.status === "fulfilled") setFeedPreview((feedRes.value.items ?? []).slice(0, FEED_PREVIEW_COUNT));
     setLoading(false);
   }, []);
 
@@ -328,6 +362,43 @@ export default function LogHomeScreen() {
               </TouchableOpacity>
             ))
           )}
+        </View>
+
+        {/* ── Community Feed (preview — Feed lives as the last section here, per explicit direction) ── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>Community Feed</Text>
+            <TouchableOpacity onPress={() => nav.navigate("ConnectFeed")}>
+              <Text style={styles.feedSeeAll}>See all →</Text>
+            </TouchableOpacity>
+          </View>
+          {loading ? (
+            <ActivityIndicator size="small" color={c.ochre} />
+          ) : feedPreview.length === 0 ? (
+            <Text style={styles.emptyText}>Nothing new in the feed right now.</Text>
+          ) : (
+            feedPreview.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.feedCard}
+                onPress={() => nav.navigate("ConnectFeed")}
+                activeOpacity={0.8}
+              >
+                {!!(item.communityAuthorUsername || item.type) && (
+                  <Text style={styles.feedCardKicker} numberOfLines={1}>
+                    {item.communityAuthorUsername ? `@${item.communityAuthorUsername}` : item.type}
+                  </Text>
+                )}
+                <Text style={styles.feedCardTitle} numberOfLines={2}>{decodeHtml(item.title) || decodeHtml(item.excerpt)}</Text>
+                {!!item.excerpt && item.title ? (
+                  <Text style={styles.feedCardExcerpt} numberOfLines={2}>{decodeHtml(item.excerpt)}</Text>
+                ) : null}
+              </TouchableOpacity>
+            ))
+          )}
+          <TouchableOpacity style={styles.feedOpenBtn} onPress={() => nav.navigate("ConnectFeed")}>
+            <Text style={styles.feedOpenBtnText}>Open Feed →</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 

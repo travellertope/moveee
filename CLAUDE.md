@@ -9961,11 +9961,18 @@ immediately shelves the pick as `want_to_read`; Music/Food navigate to the exist
 for those two, they just reuse the existing review templates), an "In progress" horizontal rail
 (shelf entries at `status='currently_reading'`, with a one-tap "Finish · rate →" that moves the
 entry straight to `read`), a "Your year in culture" progress bar (the same generalized goal
-endpoint), and a "From people you follow" vertical activity feed. **This screen is not registered
+endpoint), and a "From people you follow" vertical activity feed, closed by a **"Community Feed"
+section as the last thing on the screen** (per explicit user follow-up, once it was decided Log
+sits alongside Feed rather than replacing it) — a lightweight one-shot preview of the 3 most
+recent `GET /mobile/feed` items (not the full paginated `useUnifiedFeed` hook, which owns its own
+refresh/pagination state this preview doesn't need), with every card and a "See all →"/"Open
+Feed →" link all just opening the real `ConnectFeed` screen (`nav.navigate("ConnectFeed")`) —
+this screen doesn't attempt to reproduce per-item detail sheets/modals for every feed template,
+that's what `ConnectFeed`'s own `PostDetailSheet` is for. **This screen is still not registered
 in `useNav.ts`'s `AppParamList` or any navigator, and the bottom tab bar is completely
 untouched** — per the explicit "build first, wire up nav after" scope, deciding when/whether to
-make this reachable (replace the Feed tab? add alongside it? something else) is a separate,
-later decision.
+make `LogHomeScreen` itself reachable (replace the Feed tab? add alongside it? something else) is
+still a separate, later decision — only its own *internal* link to Feed was resolved.
 
 **Explicitly deferred, not built in this pass** — flagged here so a future pass doesn't assume
 these exist: the bottom-nav rename/restructure itself; a "follow this person/topic" affordance
