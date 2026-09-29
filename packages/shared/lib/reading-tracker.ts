@@ -183,32 +183,16 @@ export interface ReadingGoal {
   booksRead?: number;
 }
 
-// "Log-First" pass (September 2026) — generalizes the shelf mechanism from
-// books-only into a cross-type personal log. Mirrors
-// apps/mobile/src/features/community/readingTracker.ts (mobile source of
-// truth for this half, since apps/mobile can't import packages/shared) and
-// Culture_Reading_Tracker (PHP). The backend enum names are still
-// book-shaped (want_to_read/currently_reading/read) — deliberately reused,
-// not renamed, per this codebase's "reuse over new" convention — only the
-// *labels* vary per directory type on the client.
-
-export const SHELF_STATUSES = ["want_to_read", "currently_reading", "read"] as const;
-export type ShelfStatus = (typeof SHELF_STATUSES)[number];
-
-// Entry types that support the shelf/log mechanism, and the label each
-// status wears for that type. A type with no "currently_reading" entry
-// (e.g. place — there's no "currently visiting" state) just never renders a
-// button for it; the backend still accepts the status if ever sent, it's
-// simply not offered in the UI for that type.
-export const SHELF_LABELS: Record<string, Partial<Record<ShelfStatus, string>>> = {
-  book: { want_to_read: "Want to Read", currently_reading: "Reading", read: "Read" },
-  film: { want_to_read: "Want to Watch", currently_reading: "Watching", read: "Watched" },
-  place: { want_to_read: "Want to Go", read: "Been" },
-};
-
-export function shelfLabelsFor(entryType: string): Partial<Record<ShelfStatus, string>> | null {
-  return SHELF_LABELS[entryType] ?? null;
-}
+// "Log-First" pass (September 2026) — added saved lines, social proof,
+// also-logged cross-recommendations, following-activity, Stoop proximity
+// and directory-entry follows on top of the shelf mechanism above (see
+// docs/reading-tracker-plan.md and Culture_Reading_Tracker, PHP source of
+// truth). The shelf itself (ShelfStatus/ShelfEntry/statusLabel above)
+// generalized further in a later pass to cover all five review media, not
+// just books — the types below are additive on top of it, not a second
+// copy of it. Mirrors apps/mobile/src/features/community/readingTracker.ts
+// (mobile source of truth for this half, since apps/mobile can't import
+// packages/shared).
 
 export interface SavedLine {
   id: number;
@@ -232,20 +216,6 @@ export interface SocialProof {
   doneCount: number;
   wantCount: number;
   examples: SocialProofExample[];
-}
-
-// get_user_shelf()'s card shape.
-export interface ShelfEntry {
-  directoryId: number;
-  title: string;
-  slug: string;
-  type: string | null;
-  thumbnail: string | null;
-  author: string;
-  averageRating: number | null;
-  status: ShelfStatus;
-  startedAt: string | null;
-  finishedAt: string | null;
 }
 
 export interface AlsoLoggedEntry {
