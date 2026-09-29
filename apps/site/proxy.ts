@@ -76,6 +76,7 @@ const APP_ROUTES = new Set([
   'author',
   'services',
   'vendor',
+  'stoop',
   'about',
   'contact',
   'privacy',

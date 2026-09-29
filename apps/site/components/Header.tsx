@@ -54,6 +54,11 @@ const Header = () => {
   // masthead/nav/footer (CommonsMasthead.tsx/CommonsFooter.tsx, rendered
   // from app/commons/layout.tsx) — same reasoning as Literary above.
   const isCommonsPage = pathname === "/commons" || pathname.startsWith("/commons/");
+  // /stoop is a single-page marketing/explainer for the Stoop feature — its
+  // own fixed nav (StoopMasthead.tsx, via app/stoop/layout.tsx) replaces the
+  // sitewide pill here too, same reasoning as Literary/Commons above, just
+  // for one page rather than a whole vertical.
+  const isStoopLandingPage = pathname === "/stoop" || pathname.startsWith("/stoop/");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -250,7 +255,7 @@ const Header = () => {
   // own standalone masthead/nav/footer (see the comments above) — every
   // hook above still runs unconditionally (Rules of Hooks), only the
   // render is skipped.
-  if (isLiteraryPage || isLifestylePage || isMakersPage || isCommonsPage) return null;
+  if (isLiteraryPage || isLifestylePage || isMakersPage || isCommonsPage || isStoopLandingPage) return null;
 
   return (
     <>
@@ -315,6 +320,7 @@ const Header = () => {
                 <a href={CONNECT_URL}>Feed</a>
                 <a href={`${CONNECT_URL}/discover`}>Discover</a>
                 <a href={`${CONNECT_URL}/events`}>Events</a>
+                <Link href="/stoop" data-active={active("/stoop") || undefined}>Stoop</Link>
                 <Link href="/magazine" data-active={active("/magazine") || undefined}>Magazine</Link>
                 <Link href="/literary" data-active={active("/literary") || undefined}>The Moveee Literary</Link>
                 <Link href="/commons" data-active={active("/commons") || undefined}>The Moveee Commons</Link>
