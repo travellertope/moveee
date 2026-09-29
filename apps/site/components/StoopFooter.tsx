@@ -13,7 +13,7 @@ export default function StoopFooter() {
           <label htmlFor="stp-email-footer">
             Stay close to culture. Get our weekly dispatch.
           </label>
-          <form className="stp-footer-nl-row" onSubmit={(e) => e.preventDefault()}>
+          <div className="stp-footer-nl-row">
             <SubscribeForm
               placeholder="Your email address"
               buttonLabel="Subscribe"
@@ -21,7 +21,7 @@ export default function StoopFooter() {
               buttonClassName="stp-btn stp-btn-cream"
               list="culture-drop"
             />
-          </form>
+          </div>
         </div>
 
         <div className="stp-footer-cols">
