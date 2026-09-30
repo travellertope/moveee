@@ -8,6 +8,15 @@ const CREATE_URL = `${CONNECT_URL}/cluster/create`;
 const REGISTER_HREF = `${CONNECT_URL}/register?callbackUrl=${encodeURIComponent(STOOP_URL)}`;
 const SIGNIN_HREF = `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent(STOOP_URL)}`;
 
+interface StoopCtasProps {
+  /**
+   * "hero" sits on the light hero section (red primary / dark outline,
+   * .stp-hero-actions wrapper); "cta" sits on the dark closing band (cream
+   * primary / cream outline, .stp-cta-btns wrapper, centered).
+   */
+  variant: "hero" | "cta";
+}
+
 /**
  * The Stoop landing page's CTA pair, as a client island.
  *
@@ -22,30 +31,26 @@ const SIGNIN_HREF = `${CONNECT_URL}/login?callbackUrl=${encodeURIComponent(STOOP
  * it's the common case on a marketing page, so it's the right thing to show
  * during that flicker rather than an empty gap that shifts the layout.
  */
-export default function StoopCtas() {
+export default function StoopCtas({ variant }: StoopCtasProps) {
   const { data: session, status } = useSession();
   const signedIn = status === "authenticated" && !!session?.user;
 
-  if (signedIn) {
-    return (
-      <div className="stp-cta-row">
-        <a className="stp-btn stp-btn--primary" href={STOOP_URL}>
-          Find groups near you
-        </a>
-        <a className="stp-btn stp-btn--ghost" href={CREATE_URL}>
-          Start a group
-        </a>
-      </div>
-    );
-  }
+  const wrapperClass = variant === "hero" ? "stp-hero-actions" : "stp-cta-btns";
+  const primaryClass = variant === "hero" ? "stp-btn stp-btn-red" : "stp-btn stp-btn-cream";
+  const secondaryClass = variant === "hero" ? "stp-btn stp-btn-outline" : "stp-btn stp-btn-outline-cream";
+
+  const primaryLabel = signedIn ? "Find groups near you" : "Get Started";
+  const primaryHref = signedIn ? STOOP_URL : REGISTER_HREF;
+  const secondaryLabel = signedIn ? "Start a group" : "Sign in";
+  const secondaryHref = signedIn ? CREATE_URL : SIGNIN_HREF;
 
   return (
-    <div className="stp-cta-row">
-      <a className="stp-btn stp-btn--primary" href={REGISTER_HREF}>
-        Get Started
+    <div className={wrapperClass}>
+      <a className={primaryClass} href={primaryHref}>
+        {primaryLabel}
       </a>
-      <a className="stp-btn stp-btn--ghost" href={SIGNIN_HREF}>
-        Sign in
+      <a className={secondaryClass} href={secondaryHref}>
+        {secondaryLabel}
       </a>
     </div>
   );
