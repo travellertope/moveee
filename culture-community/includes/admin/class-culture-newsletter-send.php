@@ -88,9 +88,6 @@ class Culture_Newsletter_Send {
         ), 200 );
     }
 
-    const ALLOWED_LISTS    = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
-    const ALLOWED_SEGMENTS = array( '', 'africa', 'us', 'uk', 'ng', 'gh', 'ke', 'za', 'ca', 'au', 'pro' );
-
     /**
      * Save _culture_nl_list and _culture_nl_segment post meta when the newsletter is saved.
      */
@@ -124,14 +121,29 @@ class Culture_Newsletter_Send {
     private static function persist_list_meta( $post_id, $list, $segment, $issue_num = 0 ) {
         if ( null !== $list ) {
             $list = sanitize_key( $list );
-            if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
+            // Validated against the live registry, not a hardcoded snapshot of
+            // its original seed rows — a Hub-auto-provisioned list or anything
+            // created later via Lists & Segments would otherwise render fine
+            // in the dropdown but silently fail to save. Any content or
+            // system list is a valid send target; region rows are segments,
+            // not lists, and aren't picked here.
+            $list_row = Culture_Newsletter_Lists::get_by_slug( $list );
+            if ( $list_row && in_array( $list_row['type'], array( Culture_Newsletter_Lists::TYPE_CONTENT, Culture_Newsletter_Lists::TYPE_SYSTEM ), true ) ) {
                 update_post_meta( $post_id, '_culture_nl_list', $list );
             }
         }
 
         // Segment is optional — empty string means send to all segments of this list.
-        $segment = sanitize_key( $segment );
-        if ( in_array( $segment, self::ALLOWED_SEGMENTS, true ) ) {
+        // 'africa' and 'pro' are virtual filters with no registry row of their
+        // own (see resolve_send_emails()/VIRTUAL_PRO_SLUG) — everything else
+        // must be a real region-type row.
+        $segment       = sanitize_key( $segment );
+        $is_valid_seg  = '' === $segment || in_array( $segment, array( 'africa', Culture_Newsletter_Lists::VIRTUAL_PRO_SLUG ), true );
+        if ( ! $is_valid_seg ) {
+            $region_row   = Culture_Newsletter_Lists::get_by_slug( $segment );
+            $is_valid_seg = $region_row && Culture_Newsletter_Lists::TYPE_REGION === $region_row['type'];
+        }
+        if ( $is_valid_seg ) {
             if ( $segment ) {
                 update_post_meta( $post_id, '_culture_nl_segment', $segment );
             } else {
