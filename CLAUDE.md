@@ -530,6 +530,103 @@ by these meta values at send time (now via `Culture_Subscribers_DB::resolve_send
 not an inline scan of the option array — see above). Batches of 50, 60s
 intervals via WP-Cron.
 
+### Multi-axis segment filters — List vs. Segment is now a real, general-purpose split (September 2026)
+
+Per explicit user request: "Send to Segment" used to be one flat dropdown of Region rows
+(`Culture_Newsletter_Lists::TYPE_REGION`) plus two hardcoded virtual filters (`africa` = an
+OR of ng/gh/ke/za, `pro` = a live `_culture_membership_tier` check) — a single-select,
+single-dimension filter bolted onto one content list. It's now a real multi-axis filter:
+**any number of segment axes (Region, Age, Tier, or a custom one an admin creates) can be
+combined on one send** — check boxes within one axis (OR: "any UK or US subscriber") across
+any number of axes at once (AND: "...who are also Moveee Pro and 25–34"). This is what makes
+List (what someone subscribed to — Culture Drop, GetMeLit, a Hub) and Segment (who they are —
+demographics) two genuinely independent things, per the mental model the user asked for.
+
+**No schema change, no `CULTURE_VERSION` bump** — `Culture_Newsletter_Lists`' `type` column
+already distinguished `content`/`region`/`system`; this generalizes the meaning of "anything
+else" from "must be region" to "is a segment axis, and the type value IS the axis name."
+`Culture_Newsletter_Lists::RESERVED_TYPES` (`content`, `system`) is the only thing still
+special-cased — `region`/`age`/`tier`/any future custom axis just fall out of
+`get_axes()` grouping every non-reserved-type row by its `type`. `create()`'s type validation
+was loosened from a fixed 3-value enum to "any non-empty `sanitize_key()`'d string" — the
+Lists & Segments admin page's Type field is now a free-text input with a `<datalist>` of
+suggestions (Content/Region/Age/Tier/System), so typing a brand-new word (e.g. "interest")
+starts a whole new axis with zero code changes, appearing as its own checkbox group on every
+send immediately.
+
+**Two fundamentally different narrowing mechanisms, both hidden behind one API**
+(`Culture_Subscribers_DB::apply_segment_filters( array $emails, $filters )`, called by both
+`resolve_send_emails()` — one content list — and `Culture_Campaigns::send()` — a union across
+several lists, closing the gap where Campaigns previously had no segment narrowing at all):
+- **Region** narrows via real list membership (a region row is just another list a
+  subscriber's email is/isn't tagged into) — same mechanism as before, just generalized to
+  compose with other axes instead of being the only filter.
+- **Every other axis (Age, Tier, any future one) narrows by reading the linked WP user
+  account** at send time — there's no list-membership row for these, since nobody
+  "subscribes" to being 25–34 or Moveee Pro. `Culture_Newsletter_Lists::age_bracket_for_user()`
+  buckets `_culture_dob` against `AGE_BRACKETS` (Under 18/18–24/25–34/35–44/45–54/55+, seeded
+  as real `type=age` rows so they're editable/orderable like any other segment value); Tier
+  reads `_culture_membership_tier` directly against real `type=tier` rows whose **slugs are
+  the literal tier values** (`citizen`/`patron`/`lit`) — no prefix, so the filter check is a
+  direct `in_array($tier, $filters['tier'])`, no translation table needed. **This lookup is
+  per-email and only ever runs against an already-region-narrowed candidate set**, not the
+  full subscriber table — same cost shape the old `pro` virtual filter already had.
+
+**`Culture_Newsletter_Lists::normalize_segment_filters( $input )`** is the one place that
+understands every shape a filter can arrive in — the new nested array
+(`array( axis_type => array(slugs) )`, from checkboxes/campaign postmeta), or a legacy bare
+string (a real row slug, resolved to its own axis via a registry lookup — no more assuming
+"bare string = region"; or the two pre-existing virtual slugs `pro`/`africa`, still understood
+for any already-saved post or REST automation client passing the old shape). Every resolver
+and every persist-to-postmeta call site goes through this — there's no second copy of the
+shape-detection logic anywhere.
+
+**Storage — two postmeta keys, on purpose, to protect a load-bearing frontend feature.**
+`_culture_nl_segment_filters` (new, JSON-encoded, the multi-axis source of truth going
+forward) is what `Culture_Newsletter_Queue::schedule_send()` actually reads
+(`get_segment_filters_for_post()`, preferring the new key, falling back to the old one). But
+`_culture_nl_segment` (the pre-existing plain-string meta) is **still written too**, whenever
+the selection collapses to one of the shapes it already understood (exactly one region slug,
+the 4-country Africa set, or Tier=Patron alone) — because that field is exposed via GraphQL
+(`nlSegment` on `culture_newsletter`) and is what the `/newsletter/{uk,us,africa}` edition
+pages' region-scoping already depends on (see "Edition story-scoping" elsewhere in this file).
+**Never repoint that GraphQL field at the new JSON key** — a 2+-axis selection (or an Age/Tier-
+only one) simply can't be expressed as a single slug, so `_culture_nl_segment` is cleared in
+that case and the post just shows as "no segment tag" on edition pages, same as any other
+untagged post today. `Culture_Newsletter_Send::legacy_segment_string()` is the one place that
+does this collapse — it's deliberately narrow, not "best effort."
+
+**UI**: both the Send Newsletter meta box (Culture Drop/GetMeLit/`culture_newsletter`) and the
+new Send Campaign meta box render the same thing —
+`Culture_Newsletter_Lists::render_segment_filter_fields( $field_name, $selected )`, one
+scrollable checkbox group per axis from `get_axes()`, posting as
+`{$field_name}[{axis_type}][]`. **The old client-side, fully-precomputed subscriber-count
+lookup table is gone** — it only worked when segment was one flat dropdown (a small, fixed
+set of possible values); with any combination of axes now checkable at once, precomputing
+every combination isn't feasible. Replaced with a debounce-free AJAX round trip
+(`wp_ajax_culture_nl_recount` → `Culture_Newsletter_Send::ajax_recount()`) fired on every list/
+checkbox change (`.js-nl-list-select, .js-nl-segment-check` in `culture-newsletter-send.js`),
+recomputing the live count server-side via the same `resolve_send_emails()`/
+`apply_segment_filters()` path an actual send would use — so the displayed count is never
+stale/approximate the way a precomputed table could be. **If you add a new segment-filter UI
+anywhere else, reuse this AJAX-recount pattern, not a client-side precomputed matrix** — it
+doesn't scale past one flat axis.
+
+**Campaigns gained segment filtering for free** — `_campaign_segment_filters` (new postmeta,
+`register_post_meta`'d in `class-culture-post-types.php`), same checkbox UI, applied via
+`Culture_Subscribers_DB::apply_segment_filters()` right after the existing cross-list union
+(`resolve_emails_for_lists()`) in `Culture_Campaigns::send()` — a campaign can now target
+"Culture Drop + GetMeLit, Nigeria only, Moveee Pro only" in one send, where before it could
+only union whole lists with no narrowing at all.
+
+**Deliberately out of scope for this pass**: the Lists & Segments admin table's Subscribers
+column shows an em-dash (with a tooltip) for Age/Tier rows rather than a count, since those
+axes have no list-membership rows to count — the number only ever exists as a live, per-send
+computation, never a stored figure. `class-culture-nl-analytics.php`/`-admin.php`'s segment
+label display still only reads the legacy single-string mirror — a 2+-axis send just shows no
+segment label there, a cosmetic gap, not a data-correctness one, left for a later pass if it
+ever matters.
+
 ### Multi-edition sends from a single post (September 2026)
 
 Culture Drop (and GetMeLit/`culture_newsletter`) used to require **4 separate posts** for a

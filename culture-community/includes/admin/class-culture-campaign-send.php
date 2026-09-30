@@ -279,7 +279,7 @@ class Culture_Campaign_Send {
         // need two branches.
         if ( ! $campaign ) {
             $campaign = array(
-                'listIds' => array(), 'status' => Culture_Campaigns::STATUS_DRAFT,
+                'listIds' => array(), 'segmentFilters' => array(), 'status' => Culture_Campaigns::STATUS_DRAFT,
                 'sendTotal' => 0, 'sendOffset' => 0, 'percent' => 0, 'sentAt' => null,
             );
         }
@@ -304,7 +304,13 @@ class Culture_Campaign_Send {
             . esc_html__( 'Send to', 'culture-community' ) . '</label>';
         self::render_list_multiselect( Culture_Newsletter_Lists::get_all(), $campaign['listIds'] );
         echo '</p>';
-        echo '<p style="color:#646970;font-size:12px;">' . esc_html__( 'Update/Publish this post to save your list selection before sending.', 'culture-community' ) . '</p>';
+
+        echo '<p><label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">'
+            . esc_html__( 'Segment Filters (optional)', 'culture-community' ) . '</label>';
+        Culture_Newsletter_Lists::render_segment_filter_fields( 'campaign_segment', $campaign['segmentFilters'] );
+        echo '</p>';
+
+        echo '<p style="color:#646970;font-size:12px;">' . esc_html__( 'Update/Publish this post to save your list and segment selection before sending.', 'culture-community' ) . '</p>';
 
         echo '<hr>';
 
@@ -375,6 +381,13 @@ class Culture_Campaign_Send {
 
         $list_ids = array_values( array_filter( array_map( 'intval', (array) $_POST['campaign_list_ids'] ) ) );
         update_post_meta( $post_id, '_campaign_list_ids', wp_json_encode( $list_ids ) );
+
+        $filters = Culture_Newsletter_Lists::normalize_segment_filters( $_POST['campaign_segment'] ?? array() );
+        if ( $filters ) {
+            update_post_meta( $post_id, '_campaign_segment_filters', wp_json_encode( $filters ) );
+        } else {
+            delete_post_meta( $post_id, '_campaign_segment_filters' );
+        }
 
         // A campaign that's never been through Culture_Campaigns::create()
         // (e.g. one started via "Add New" directly in wp-admin rather than

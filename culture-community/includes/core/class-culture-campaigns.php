@@ -156,18 +156,20 @@ class Culture_Campaigns {
     private static function format( WP_Post $post ) {
         $send_total  = (int) get_post_meta( $post->ID, '_campaign_send_total', true );
         $send_offset = (int) get_post_meta( $post->ID, '_campaign_send_offset', true );
+        $raw_filters = json_decode( get_post_meta( $post->ID, '_campaign_segment_filters', true ), true );
         return array(
-            'id'         => $post->ID,
-            'subject'    => $post->post_title,
-            'body'       => $post->post_content,
-            'listIds'    => array_map( 'intval', (array) json_decode( get_post_meta( $post->ID, '_campaign_list_ids', true ), true ) ?: array() ),
-            'status'     => get_post_meta( $post->ID, '_campaign_status', true ) ?: self::STATUS_DRAFT,
-            'sendTotal'  => $send_total,
-            'sendOffset' => $send_offset,
-            'percent'    => $send_total > 0 ? min( 100, (int) round( ( $send_offset / $send_total ) * 100 ) ) : 0,
-            'createdBy'  => (int) $post->post_author,
-            'createdAt'  => $post->post_date,
-            'sentAt'     => get_post_meta( $post->ID, '_campaign_sent_at', true ) ?: null,
+            'id'             => $post->ID,
+            'subject'        => $post->post_title,
+            'body'           => $post->post_content,
+            'listIds'        => array_map( 'intval', (array) json_decode( get_post_meta( $post->ID, '_campaign_list_ids', true ), true ) ?: array() ),
+            'segmentFilters' => is_array( $raw_filters ) ? Culture_Newsletter_Lists::normalize_segment_filters( $raw_filters ) : array(),
+            'status'         => get_post_meta( $post->ID, '_campaign_status', true ) ?: self::STATUS_DRAFT,
+            'sendTotal'      => $send_total,
+            'sendOffset'     => $send_offset,
+            'percent'        => $send_total > 0 ? min( 100, (int) round( ( $send_offset / $send_total ) * 100 ) ) : 0,
+            'createdBy'      => (int) $post->post_author,
+            'createdAt'      => $post->post_date,
+            'sentAt'         => get_post_meta( $post->ID, '_campaign_sent_at', true ) ?: null,
         );
     }
 
@@ -201,6 +203,12 @@ class Culture_Campaigns {
         }
 
         update_post_meta( $post_id, '_campaign_list_ids', wp_json_encode( $list_ids ) );
+        if ( isset( $data['segment_filters'] ) ) {
+            $filters = Culture_Newsletter_Lists::normalize_segment_filters( $data['segment_filters'] );
+            if ( $filters ) {
+                update_post_meta( $post_id, '_campaign_segment_filters', wp_json_encode( $filters ) );
+            }
+        }
         update_post_meta( $post_id, '_campaign_status', self::STATUS_DRAFT );
         update_post_meta( $post_id, '_campaign_send_total', 0 );
         update_post_meta( $post_id, '_campaign_send_offset', 0 );
@@ -231,6 +239,15 @@ class Culture_Campaigns {
         if ( isset( $data['list_ids'] ) ) {
             $list_ids = array_values( array_filter( array_map( 'intval', (array) $data['list_ids'] ) ) );
             update_post_meta( $id, '_campaign_list_ids', wp_json_encode( $list_ids ) );
+        }
+
+        if ( isset( $data['segment_filters'] ) ) {
+            $filters = Culture_Newsletter_Lists::normalize_segment_filters( $data['segment_filters'] );
+            if ( $filters ) {
+                update_post_meta( $id, '_campaign_segment_filters', wp_json_encode( $filters ) );
+            } else {
+                delete_post_meta( $id, '_campaign_segment_filters' );
+            }
         }
 
         return self::get( $id );
@@ -275,8 +292,9 @@ class Culture_Campaigns {
         }
 
         $emails = Culture_Subscribers_DB::resolve_emails_for_lists( $campaign['listIds'] );
+        $emails = Culture_Subscribers_DB::apply_segment_filters( $emails, $campaign['segmentFilters'] );
         if ( ! $emails ) {
-            return new WP_Error( 'no_recipients', 'No subscribers on the selected list(s).', array( 'status' => 400 ) );
+            return new WP_Error( 'no_recipients', 'No subscribers match the selected list(s) and segment filter(s).', array( 'status' => 400 ) );
         }
 
         set_transient( "culture_campaign_job_{$id}", $emails, DAY_IN_SECONDS );

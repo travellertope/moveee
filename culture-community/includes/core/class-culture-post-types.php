@@ -1508,11 +1508,12 @@ class Culture_Post_Types {
         // campaign's meta, same as before (the old admin page only ever
         // gated on manage_options at the page/handler level, not per-field).
         $campaign_meta = array(
-            '_campaign_list_ids'    => 'string', // JSON array of Culture_Newsletter_Lists ids
-            '_campaign_status'      => 'string', // draft|sending|sent
-            '_campaign_send_total'  => 'integer',
-            '_campaign_send_offset' => 'integer',
-            '_campaign_sent_at'     => 'string',
+            '_campaign_list_ids'        => 'string', // JSON array of Culture_Newsletter_Lists ids
+            '_campaign_segment_filters' => 'string', // JSON array( axis_type => array(slugs) ), September 2026
+            '_campaign_status'          => 'string', // draft|sending|sent
+            '_campaign_send_total'      => 'integer',
+            '_campaign_send_offset'     => 'integer',
+            '_campaign_sent_at'         => 'string',
         );
         foreach ( $campaign_meta as $meta_key => $type ) {
             register_post_meta( 'culture_campaign', $meta_key, array(

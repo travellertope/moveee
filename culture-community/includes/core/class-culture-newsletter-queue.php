@@ -82,15 +82,15 @@ class Culture_Newsletter_Queue {
     public static function schedule_send( $post_id ) {
         // Default matches send_to()/send_test() below ('getmelit') — NOT an
         // empty string, so an unset list always resolves to a real list row.
-        $nl_list_slug = self::resolve_nl_list( $post_id, 'getmelit' );
-        $nl_segment   = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
+        $nl_list_slug     = self::resolve_nl_list( $post_id, 'getmelit' );
+        $segment_filters  = Culture_Newsletter_Lists::get_segment_filters_for_post( $post_id );
 
         $list = Culture_Newsletter_Lists::get_by_slug( $nl_list_slug );
         if ( ! $list ) {
             return false;
         }
 
-        $recipients = self::resolve_recipients( $post_id, $list['id'], $nl_segment );
+        $recipients = self::resolve_recipients( $post_id, $list['id'], $segment_filters );
 
         if ( empty( $recipients ) ) {
             return false;
@@ -113,11 +113,13 @@ class Culture_Newsletter_Queue {
     /**
      * Builds the recipient snapshot for a send.
      *
-     * An explicit $nl_segment (the "Send to Segment" dropdown) always wins
-     * and returns the original flat email list, exactly as before — an
-     * editor who picked one segment clearly wants a single, uniform send,
-     * not a multi-edition one, even if edition-appendix fields also happen
-     * to be filled in.
+     * Explicit $segment_filters (the "Segment Filters" checkboxes — any
+     * combination of Region/Age/Tier/a custom axis, see
+     * Culture_Newsletter_Lists::get_axes()) always wins and returns the
+     * original flat email list, exactly as before — an editor who checked at
+     * least one box clearly wants a single, uniformly-filtered send, not a
+     * multi-edition one, even if edition-appendix fields also happen to be
+     * filled in.
      *
      * Otherwise, if the post has at least one non-empty edition-appendix
      * field (see EDITIONS/Culture_ACF_Fields' "Edition Appendix" group),
@@ -131,11 +133,12 @@ class Culture_Newsletter_Queue {
      * Falls back to the original plain-email, no-segment-filter behaviour
      * when neither applies.
      *
+     * @param array $segment_filters Already-normalized array( axis_type => array(slugs) ).
      * @return array String[] of emails, or an array of {email, edition} pairs.
      */
-    private static function resolve_recipients( $post_id, $list_id, $nl_segment ) {
-        if ( $nl_segment ) {
-            return Culture_Subscribers_DB::resolve_send_emails( $list_id, $nl_segment );
+    private static function resolve_recipients( $post_id, $list_id, array $segment_filters ) {
+        if ( $segment_filters ) {
+            return Culture_Subscribers_DB::resolve_send_emails( $list_id, $segment_filters );
         }
 
         $editions_used = self::filled_editions( $post_id );

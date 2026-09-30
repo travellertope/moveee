@@ -63,8 +63,8 @@ class Culture_Newsletter_Lists_Admin {
             </a>
             <hr class="wp-header-end">
 
-            <p style="max-width:640px;color:#646970;">
-                <?php esc_html_e( 'A "content" list is a real newsletter subscribers opt into (GetMeLit, Culture Drop, a Hub, a custom list). A "region" segment narrows a send by geography and is applied alongside a content list, not instead of it. A "system" list is hidden from the public archive and preferences UI (e.g. Announcements).', 'culture-community' ); ?>
+            <p style="max-width:680px;color:#646970;">
+                <?php esc_html_e( 'A "content" list is a real newsletter subscribers opt into (GetMeLit, Culture Drop, a Hub, a custom list) — this is what someone subscribed to. Every other type is a segment axis — who they are, not what they signed up for — narrowing a send alongside a content list, never instead of it: "region" (geography, via real list membership), "age" and "tier" (Membership Tier, read live off the subscriber\'s account, not a list), or any custom axis name you type below. A "system" list is hidden from the public archive and preferences UI (e.g. Announcements). Any send can combine one content list with any number of segment axes at once — see the Send Newsletter / Send Campaign meta boxes.', 'culture-community' ); ?>
             </p>
 
             <?php if ( $notice ) : ?>
@@ -109,11 +109,17 @@ class Culture_Newsletter_Lists_Admin {
                         <tr>
                             <th style="padding:8px 16px 8px 0;font-size:13px;"><?php esc_html_e( 'Type', 'culture-community' ); ?></th>
                             <td>
-                                <select name="type">
+                                <input type="text" name="type" list="culture-nl-type-suggestions" value="content" class="regular-text" style="max-width:260px;">
+                                <datalist id="culture-nl-type-suggestions">
                                     <option value="content"><?php esc_html_e( 'Content — a real newsletter/list', 'culture-community' ); ?></option>
                                     <option value="region"><?php esc_html_e( 'Region — a geographic segment', 'culture-community' ); ?></option>
+                                    <option value="age"><?php esc_html_e( 'Age — a segment axis', 'culture-community' ); ?></option>
+                                    <option value="tier"><?php esc_html_e( 'Tier — a segment axis', 'culture-community' ); ?></option>
                                     <option value="system"><?php esc_html_e( 'System — hidden, opt-out', 'culture-community' ); ?></option>
-                                </select>
+                                </datalist>
+                                <p style="font-size:11px;color:#666;margin:4px 0 0;">
+                                    <?php esc_html_e( 'Pick one of the suggestions, or type any other word (e.g. "interest") to start a brand-new segment axis — it appears as its own checkbox group on every send immediately.', 'culture-community' ); ?>
+                                </p>
                             </td>
                         </tr>
                         <?php else : ?>
@@ -177,7 +183,13 @@ class Culture_Newsletter_Lists_Admin {
                             <td><code><?php echo esc_html( $list['slug'] ); ?></code></td>
                             <td><?php echo esc_html( ucfirst( $list['type'] ) ); ?></td>
                             <td><?php echo esc_html( ucfirst( $list['visibility'] ) ); ?></td>
-                            <td><?php echo esc_html( number_format( Culture_Newsletter_Lists::subscriber_count( $list['id'] ) ) ); ?></td>
+                            <td>
+                                <?php if ( in_array( $list['type'], array( Culture_Newsletter_Lists::TYPE_CONTENT, Culture_Newsletter_Lists::TYPE_SYSTEM, Culture_Newsletter_Lists::TYPE_REGION ), true ) ) : ?>
+                                    <?php echo esc_html( number_format( Culture_Newsletter_Lists::subscriber_count( $list['id'] ) ) ); ?>
+                                <?php else : ?>
+                                    <span title="<?php esc_attr_e( 'Read live off each subscriber\'s account at send time, not stored as list membership.', 'culture-community' ); ?>">—</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <div style="display:flex;gap:6px;">
                                     <a href="<?php echo esc_url( add_query_arg( array( 'page' => 'culture-newsletter-lists', 'edit' => $list['id'] ), admin_url( 'admin.php' ) ) ); ?>" class="button button-small">
