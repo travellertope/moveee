@@ -1464,6 +1464,64 @@ class Culture_Post_Types {
             'rest_base'           => 'hubs',
             'capability_type'     => 'post',
         ) );
+
+        // One-off email campaign CPT (September 2026) — backs Culture_Campaigns,
+        // replacing the old wp_culture_campaigns table as the write target (the
+        // table itself is kept, untouched, as a historical snapshot — see
+        // Culture_Campaigns::maybe_migrate_legacy_table()). Registered with
+        // 'editor' support and show_in_rest so a campaign gets the native
+        // Gutenberg block editor, same as culture_newsletter/getmelit/
+        // culture_drop — the whole point of this CPT is giving Campaigns the
+        // same authoring experience as every other newsletter type, per
+        // explicit user request. Hidden from the admin menu (show_in_menu
+        // false) — same "structured entity, not a rendered page" rationale as
+        // culture_cluster/culture_hub just above: the real entry point is
+        // Culture_Campaigns_Admin's list page (admin.php?page=culture-campaigns),
+        // which links into post.php/post-new.php directly rather than
+        // exposing a second, competing "Campaigns" submenu.
+        register_post_type( 'culture_campaign', array(
+            'labels' => array(
+                'name'               => __( 'Campaigns', 'culture-community' ),
+                'singular_name'      => __( 'Campaign', 'culture-community' ),
+                'add_new'            => __( 'Add New', 'culture-community' ),
+                'add_new_item'       => __( 'New Campaign', 'culture-community' ),
+                'edit_item'          => __( 'Edit Campaign', 'culture-community' ),
+                'view_item'          => __( 'View Campaign', 'culture-community' ),
+                'all_items'          => __( 'Campaigns', 'culture-community' ),
+                'search_items'       => __( 'Search Campaigns', 'culture-community' ),
+                'not_found'          => __( 'No campaigns found', 'culture-community' ),
+            ),
+            'public'              => false,
+            'show_ui'             => true,
+            'show_in_menu'        => false,
+            'menu_icon'           => 'dashicons-email-alt',
+            'supports'            => array( 'title', 'editor', 'custom-fields' ),
+            'show_in_rest'        => true,
+            'rest_base'           => 'campaigns',
+            'capability_type'     => 'post',
+        ) );
+
+        // Campaign meta — list_ids/status/send progress live on the post
+        // itself (subject => post_title, body => post_content) rather than
+        // duplicating them into meta too. auth_callback matches the
+        // cluster/hub meta above: any user who can author posts can manage a
+        // campaign's meta, same as before (the old admin page only ever
+        // gated on manage_options at the page/handler level, not per-field).
+        $campaign_meta = array(
+            '_campaign_list_ids'    => 'string', // JSON array of Culture_Newsletter_Lists ids
+            '_campaign_status'      => 'string', // draft|sending|sent
+            '_campaign_send_total'  => 'integer',
+            '_campaign_send_offset' => 'integer',
+            '_campaign_sent_at'     => 'string',
+        );
+        foreach ( $campaign_meta as $meta_key => $type ) {
+            register_post_meta( 'culture_campaign', $meta_key, array(
+                'type'          => $type,
+                'single'        => true,
+                'show_in_rest'  => true,
+                'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+            ) );
+        }
     }
 
     /**
