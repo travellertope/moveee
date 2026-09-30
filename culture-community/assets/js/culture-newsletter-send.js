@@ -137,6 +137,7 @@
                 test_email:  testEmail,
                 list:        $( '[name="culture_nl_list"]' ).val()    || '',
                 segment:     $( '[name="culture_nl_segment"]' ).val() || '',
+                edition:     $( '#culture-nl-test-edition' ).val()    || '',
             }, function ( res ) {
                 $btn.prop( 'disabled', false ).text( cultureNLSend.i18n.sendTest );
 

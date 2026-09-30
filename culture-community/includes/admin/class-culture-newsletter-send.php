@@ -323,6 +323,39 @@ class Culture_Newsletter_Send {
                 </p>
             </div>
 
+            <?php
+            // ── MULTI-EDITION APPENDIX SUMMARY ──
+            // Purely informational — the fields themselves live in the
+            // "Edition Appendix" box in the main content column (ACF), not
+            // here. See Culture_Newsletter_Queue::EDITIONS/filled_editions().
+            $filled_editions = Culture_Newsletter_Queue::filled_editions( $post->ID );
+            if ( $filled_editions ) :
+            ?>
+            <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
+                <label class="culture-nl-label"><?php esc_html_e( 'Multi-Edition Appendix', 'culture-community' ); ?></label>
+                <?php if ( $nl_segment ) : ?>
+                    <p style="font-size:11px;color:#b32d2e;margin:4px 0 0;">
+                        <?php esc_html_e( 'A specific segment is selected above, so this will send as one uniform email and the per-edition appendix fields below will be ignored. Set "Send to Segment" back to "All segments" to send each edition its own appendix instead.', 'culture-community' ); ?>
+                    </p>
+                <?php else : ?>
+                    <p style="font-size:11px;color:#2271b1;margin:4px 0 0;">
+                        <?php
+                        $ed_names = array();
+                        foreach ( $filled_editions as $ed ) {
+                            $ed_count   = $counts_map[ $nl_list ][ $ed ] ?? 0;
+                            $ed_names[] = Culture_Newsletter_Queue::EDITIONS[ $ed ] . ' (' . number_format( $ed_count ) . ')';
+                        }
+                        printf(
+                            /* translators: %s: comma-separated list of "Edition (count)" */
+                            esc_html__( 'This post has appendix content for: %s. Each region gets the shared body above plus its own appendix. Anyone on this list not in one of those regions will not receive this send.', 'culture-community' ),
+                            esc_html( implode( ', ', $ed_names ) )
+                        );
+                        ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <?php /* ── ISSUE NUMBER ── */ ?>
             <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
                 <label class="culture-nl-label"><?php esc_html_e( 'Issue Number', 'culture-community' ); ?></label>
@@ -336,7 +369,7 @@ class Culture_Newsletter_Send {
                     placeholder="e.g. 12"
                 />
                 <p style="font-size:11px;color:#666;margin:4px 0 0;">
-                    <?php esc_html_e( 'Set the same number on all regional editions of the same issue so the frontend shows only one.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'Only needed if you\'re still using separate posts per region (one post per segment, same issue number on each). If you\'re using the Edition Appendix fields below to send every region from this one post, you can leave this blank.', 'culture-community' ); ?>
                 </p>
             </div>
 
@@ -430,6 +463,16 @@ class Culture_Newsletter_Send {
                         value="<?php echo esc_attr( $current_user->user_email ); ?>"
                         placeholder="test@example.com"
                     >
+                    <?php if ( $filled_editions && ! $nl_segment ) : ?>
+                        <select id="culture-nl-test-edition" style="width:100%;margin-top:6px;">
+                            <option value=""><?php esc_html_e( 'Shared body only (no appendix)', 'culture-community' ); ?></option>
+                            <?php foreach ( $filled_editions as $ed ) : ?>
+                                <option value="<?php echo esc_attr( $ed ); ?>">
+                                    <?php echo esc_html( sprintf( __( 'Preview: %s edition', 'culture-community' ), Culture_Newsletter_Queue::EDITIONS[ $ed ] ) ); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
                     <button type="button" class="button button-secondary js-nl-test-btn" style="margin-top:6px;width:100%;">
                         <span class="dashicons dashicons-email" style="margin-top:3px;"></span>
                         <?php esc_html_e( 'Send Test', 'culture-community' ); ?>
@@ -505,7 +548,12 @@ class Culture_Newsletter_Send {
             self::persist_list_meta( $post_id, $_POST['list'], $_POST['segment'] ?? '' );
         }
 
-        $sent = Culture_Newsletter_Queue::send_test( $post_id, $test_email );
+        $edition = sanitize_key( $_POST['edition'] ?? '' );
+        if ( ! isset( Culture_Newsletter_Queue::EDITIONS[ $edition ] ) ) {
+            $edition = '';
+        }
+
+        $sent = Culture_Newsletter_Queue::send_test( $post_id, $test_email, $edition );
 
         if ( $sent ) {
             wp_send_json_success( array(

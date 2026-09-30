@@ -530,6 +530,57 @@ by these meta values at send time (now via `Culture_Subscribers_DB::resolve_send
 not an inline scan of the option array — see above). Batches of 50, 60s
 intervals via WP-Cron.
 
+### Multi-edition sends from a single post (September 2026)
+
+Culture Drop (and GetMeLit/`culture_newsletter`) used to require **4 separate posts** for a
+US/UK/Australia/Africa regional send — same issue number tag on all 4, each one's
+`_culture_nl_segment` set to a different region, each post's body a full manual copy-paste
+of the shared intro plus that region's own appendix. Per explicit request, one post can now
+carry the shared intro (the native content field, unchanged) plus an optional **per-edition
+appendix** via a new ACF field group, "Edition Appendix" (`class-culture-acf-fields.php`) —
+4 WYSIWYG fields (`edition_appendix_us`/`_uk`/`_au`/`_africa`, plain postmeta, no
+`register_post_meta`/REST exposure needed since only PHP reads them), shown on
+`culture_drop`/`getmelit`/`culture_newsletter` post edit screens, right below the main
+content editor.
+
+- **`Culture_Newsletter_Queue::EDITIONS`** (`us`/`uk`/`au`/`africa`) is the fixed, hardcoded
+  list this covers — deliberately **not** sourced from `Culture_Newsletter_Lists`' full
+  region registry (which can hold arbitrary rows like `ca`/`ke`/`za` with no matching ACF
+  field). Add a 5th entry here **and** a matching ACF field if a 5th edition is ever needed.
+- **Trigger logic, in `resolve_recipients()`**: if the post has an explicit `_culture_nl_segment`
+  picked (the "Send to Segment" dropdown), that always wins and the send is single/uniform,
+  exactly as before — appendix fields are ignored even if filled in. Otherwise, if any
+  `EDITIONS` field is non-empty, it's a **multi-edition send**: for each filled edition,
+  `Culture_Subscribers_DB::resolve_send_emails($list_id, $edition)` resolves that region's
+  recipients (the exact same region-filter mechanism `_culture_nl_segment` already used —
+  no new resolver), unioned/deduped by email across editions (first-listed edition wins a
+  double-membership edge case). A subscriber not in any of the filled regions gets nothing
+  from this send — same effective behavior as the old 4-posts workflow, where such a
+  subscriber wasn't in any of the 4 region lists either.
+- **The send-queue transient now holds `{email, edition}` pairs for a multi-edition send**
+  (plain email strings for every other kind of send, unchanged) — `process_batch()` branches
+  on `is_array($recipient)`; `send_to($email, $post_id, $edition = '')` appends
+  `render_edition_appendix($post, $edition)` after the shared body.
+  `render_content()`/`render_edition_appendix()` both funnel through a new shared
+  `render_html($raw_content, $post)` (extracted from the old `render_content()`, which is now
+  a one-line wrapper) — so an appendix gets identical the_content/block expansion,
+  Optimole-lazy-load-suspension, and CMS→frontend link rewriting as the main body, never
+  appended as raw unfiltered HTML.
+- **Send Test can preview one edition** — a `<select>` (only rendered when editions are
+  filled and no segment is picked) in the Send Newsletter meta box's Send Test section,
+  wired through the existing AJAX call (`edition` param) into
+  `Culture_Newsletter_Queue::send_test($post_id, $test_email, $edition)`.
+- **The meta box shows a read-only summary** ("This post has appendix content for: US (120),
+  UK (85)...", with subscriber counts reused from the box's existing `$counts_map`) — or, if
+  a segment is also picked, a warning that the appendix fields will be ignored. No new UI for
+  *picking* editions — that's just whichever ACF fields an editor filled in.
+- **The old 4-separate-posts workflow still works, unchanged** — this is additive, not a
+  replacement. A team that wants entirely different content per region (not just a shared
+  intro + different appendix) can still use 4 posts with the same issue number, exactly as
+  documented below.
+- No new dbDelta table — plugin header version bumped only, for the standard
+  redeploy-confirmation reason (see "Plugin DB table auto-upgrade" below).
+
 ### Subscriber storage (historical — the option array itself, now migrated)
 Was stored as a single WordPress option: `culture_newsletter_subscribers` —
 an array of objects:
