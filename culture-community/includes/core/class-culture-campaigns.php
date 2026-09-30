@@ -1,12 +1,25 @@
 <?php
 /**
  * One-off email campaigns — a send that is NOT tied to any
- * culture_newsletter/getmelit/culture_drop post, has no CPT, and never
- * appears on the public /newsletter archive. An admin writes a subject +
- * body, picks one or more lists from the registry (Culture_Newsletter_Lists),
- * and sends once. Reuses the exact batching/build_email/unsubscribe/tracking
- * machinery Culture_Newsletter_Queue already has — see that class for the
+ * culture_newsletter/getmelit/culture_drop post at all. An admin writes a
+ * subject + body, picks one or more lists from the registry
+ * (Culture_Newsletter_Lists), and sends once. Reuses the exact
+ * batching/build_email/unsubscribe/tracking machinery
+ * Culture_Newsletter_Queue already has — see that class for the
  * newsletter-issue-based sends this mirrors.
+ *
+ * Backed by the `culture_campaign` CPT (September 2026) — was a plain
+ * $wpdb-table row (wp_culture_campaigns), rewritten so a campaign gets
+ * WordPress's native Gutenberg block editor for its body, same as
+ * culture_newsletter/getmelit/culture_drop, per explicit user request. The
+ * old table is left in place, untouched, as a historical snapshot — see
+ * maybe_migrate_legacy_table() below — never write to it again.
+ *
+ * subject => post_title, body => post_content (native fields, so the block
+ * editor "just works"); everything else (list_ids/status/send progress)
+ * lives on postmeta, since none of it has a native WP_Post equivalent.
+ * created_by => post_author, created_at => post_date — also native, so
+ * these were dropped from postmeta entirely rather than duplicated.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,6 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Culture_Campaigns {
 
+    const POST_TYPE  = 'culture_campaign';
     const CRON_HOOK  = 'culture_campaign_process_batch';
     const BATCH_SIZE = 50;
 
@@ -22,6 +36,12 @@ class Culture_Campaigns {
     const STATUS_SENDING = 'sending';
     const STATUS_SENT    = 'sent';
 
+    /**
+     * The legacy $wpdb table — kept only so maybe_migrate_legacy_table() has
+     * something to read from once, and so an un-migrated site's table isn't
+     * orphaned by a dbDelta call disappearing. Never written to again after
+     * migration; nothing else in this class reads it.
+     */
     public static function table() {
         global $wpdb;
         return $wpdb->prefix . 'culture_campaigns';
@@ -51,35 +71,105 @@ class Culture_Campaigns {
 
     public static function init() {
         add_action( self::CRON_HOOK, array( __CLASS__, 'process_batch' ), 10, 2 );
+        add_action( 'init', array( __CLASS__, 'maybe_migrate_legacy_table' ), 20 );
+    }
+
+    /**
+     * One-time migration of any pre-existing wp_culture_campaigns rows into
+     * real culture_campaign posts — gated so it only ever runs once, same
+     * shape as every other maybe_migrate/maybe_backfill helper in this plugin
+     * (e.g. Culture_Subscribers_DB::maybe_migrate_from_options()). Priority
+     * 20 on 'init' so the culture_campaign post type (registered at the
+     * default priority 10 by Culture_Post_Types::register_post_types(), also
+     * hooked on 'init') is guaranteed to already exist.
+     *
+     * The old table is left in place afterward, untouched — never dropped,
+     * never written to again.
+     */
+    public static function maybe_migrate_legacy_table() {
+        if ( get_option( 'culture_campaigns_migrated_to_cpt' ) ) {
+            return;
+        }
+        if ( ! post_type_exists( self::POST_TYPE ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $table = self::table();
+        // Bail quietly (without setting the gate) if the legacy table doesn't
+        // exist at all yet — e.g. a brand-new install that never ran the old
+        // create_table() before this class was rewritten. The gate only gets
+        // set once we've actually had a chance to read it.
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+            update_option( 'culture_campaigns_migrated_to_cpt', 1 );
+            return;
+        }
+
+        $rows = $wpdb->get_results( "SELECT * FROM {$table}", ARRAY_A );
+        foreach ( $rows as $row ) {
+            $post_id = wp_insert_post( array(
+                'post_type'    => self::POST_TYPE,
+                'post_title'   => $row['subject'],
+                'post_content' => $row['body'],
+                'post_status'  => 'publish',
+                'post_author'  => (int) $row['created_by'],
+                'post_date'    => $row['created_at'],
+            ), true );
+
+            if ( is_wp_error( $post_id ) ) {
+                continue;
+            }
+
+            update_post_meta( $post_id, '_campaign_list_ids', $row['list_ids'] );
+            update_post_meta( $post_id, '_campaign_status', $row['status'] );
+            update_post_meta( $post_id, '_campaign_send_total', (int) $row['send_total'] );
+            update_post_meta( $post_id, '_campaign_send_offset', (int) $row['send_offset'] );
+            if ( $row['sent_at'] ) {
+                update_post_meta( $post_id, '_campaign_sent_at', $row['sent_at'] );
+            }
+        }
+
+        update_option( 'culture_campaigns_migrated_to_cpt', 1 );
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────────
 
     public static function get( $id ) {
-        global $wpdb;
-        $row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . self::table() . " WHERE id = %d", $id ), ARRAY_A );
-        return $row ? self::format( $row ) : null;
+        $post = get_post( $id );
+        if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+            return null;
+        }
+        return self::format( $post );
     }
 
     public static function all() {
-        global $wpdb;
-        $rows = $wpdb->get_results( "SELECT * FROM " . self::table() . " ORDER BY created_at DESC", ARRAY_A );
-        return array_map( array( __CLASS__, 'format' ), $rows ?: array() );
+        $posts = get_posts( array(
+            'post_type'      => self::POST_TYPE,
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'orderby'        => 'date',
+            'order'          => 'DESC',
+        ) );
+        return array_map( array( __CLASS__, 'format' ), $posts );
     }
 
-    private static function format( array $row ) {
+    private static function format( WP_Post $post ) {
+        $send_total  = (int) get_post_meta( $post->ID, '_campaign_send_total', true );
+        $send_offset = (int) get_post_meta( $post->ID, '_campaign_send_offset', true );
+        $raw_filters = json_decode( get_post_meta( $post->ID, '_campaign_segment_filters', true ), true );
         return array(
-            'id'         => (int) $row['id'],
-            'subject'    => $row['subject'],
-            'body'       => $row['body'],
-            'listIds'    => array_map( 'intval', (array) json_decode( $row['list_ids'], true ) ?: array() ),
-            'status'     => $row['status'],
-            'sendTotal'  => (int) $row['send_total'],
-            'sendOffset' => (int) $row['send_offset'],
-            'percent'    => $row['send_total'] > 0 ? min( 100, (int) round( ( $row['send_offset'] / $row['send_total'] ) * 100 ) ) : 0,
-            'createdBy'  => (int) $row['created_by'],
-            'createdAt'  => $row['created_at'],
-            'sentAt'     => $row['sent_at'],
+            'id'             => $post->ID,
+            'subject'        => $post->post_title,
+            'body'           => $post->post_content,
+            'listIds'        => array_map( 'intval', (array) json_decode( get_post_meta( $post->ID, '_campaign_list_ids', true ), true ) ?: array() ),
+            'segmentFilters' => is_array( $raw_filters ) ? Culture_Newsletter_Lists::normalize_segment_filters( $raw_filters ) : array(),
+            'status'         => get_post_meta( $post->ID, '_campaign_status', true ) ?: self::STATUS_DRAFT,
+            'sendTotal'      => $send_total,
+            'sendOffset'     => $send_offset,
+            'percent'        => $send_total > 0 ? min( 100, (int) round( ( $send_offset / $send_total ) * 100 ) ) : 0,
+            'createdBy'      => (int) $post->post_author,
+            'createdAt'      => $post->post_date,
+            'sentAt'         => get_post_meta( $post->ID, '_campaign_sent_at', true ) ?: null,
         );
     }
 
@@ -100,17 +190,30 @@ class Culture_Campaigns {
             return new WP_Error( 'missing_lists', 'Select at least one list to send this campaign to.', array( 'status' => 400 ) );
         }
 
-        global $wpdb;
-        $wpdb->insert( self::table(), array(
-            'subject'    => $subject,
-            'body'       => $body,
-            'list_ids'   => wp_json_encode( $list_ids ),
-            'status'     => self::STATUS_DRAFT,
-            'created_by' => (int) $user_id,
-            'created_at' => current_time( 'mysql' ),
-        ), array( '%s', '%s', '%s', '%s', '%d', '%s' ) );
+        $post_id = wp_insert_post( array(
+            'post_type'    => self::POST_TYPE,
+            'post_title'   => $subject,
+            'post_content' => $body,
+            'post_status'  => 'publish',
+            'post_author'  => (int) $user_id,
+        ), true );
 
-        return (int) $wpdb->insert_id;
+        if ( is_wp_error( $post_id ) ) {
+            return $post_id;
+        }
+
+        update_post_meta( $post_id, '_campaign_list_ids', wp_json_encode( $list_ids ) );
+        if ( isset( $data['segment_filters'] ) ) {
+            $filters = Culture_Newsletter_Lists::normalize_segment_filters( $data['segment_filters'] );
+            if ( $filters ) {
+                update_post_meta( $post_id, '_campaign_segment_filters', wp_json_encode( $filters ) );
+            }
+        }
+        update_post_meta( $post_id, '_campaign_status', self::STATUS_DRAFT );
+        update_post_meta( $post_id, '_campaign_send_total', 0 );
+        update_post_meta( $post_id, '_campaign_send_offset', 0 );
+
+        return $post_id;
     }
 
     public static function update( $id, array $data ) {
@@ -122,31 +225,41 @@ class Culture_Campaigns {
             return new WP_Error( 'not_draft', 'Only draft campaigns can be edited.', array( 'status' => 400 ) );
         }
 
-        global $wpdb;
-        $set    = array();
-        $format = array();
-
+        $post_update = array( 'ID' => $id );
         if ( isset( $data['subject'] ) ) {
-            $set['subject'] = sanitize_text_field( $data['subject'] );
-            $format[]       = '%s';
+            $post_update['post_title'] = sanitize_text_field( $data['subject'] );
         }
         if ( isset( $data['body'] ) ) {
-            $set['body'] = wp_kses_post( $data['body'] );
-            $format[]    = '%s';
+            $post_update['post_content'] = wp_kses_post( $data['body'] );
         }
-        if ( isset( $data['list_ids'] ) ) {
-            $list_ids       = array_values( array_filter( array_map( 'intval', (array) $data['list_ids'] ) ) );
-            $set['list_ids'] = wp_json_encode( $list_ids );
-            $format[]        = '%s';
+        if ( count( $post_update ) > 1 ) {
+            wp_update_post( $post_update );
         }
 
-        if ( $set ) {
-            $wpdb->update( self::table(), $set, array( 'id' => $id ), $format, array( '%d' ) );
+        if ( isset( $data['list_ids'] ) ) {
+            $list_ids = array_values( array_filter( array_map( 'intval', (array) $data['list_ids'] ) ) );
+            update_post_meta( $id, '_campaign_list_ids', wp_json_encode( $list_ids ) );
+        }
+
+        if ( isset( $data['segment_filters'] ) ) {
+            $filters = Culture_Newsletter_Lists::normalize_segment_filters( $data['segment_filters'] );
+            if ( $filters ) {
+                update_post_meta( $id, '_campaign_segment_filters', wp_json_encode( $filters ) );
+            } else {
+                delete_post_meta( $id, '_campaign_segment_filters' );
+            }
         }
 
         return self::get( $id );
     }
 
+    /**
+     * Trashes (not hard-deletes) a draft campaign — recoverable via WP's
+     * native Trash, matching this codebase's standing "never hard-delete"
+     * convention. The old $wpdb-backed version did a real SQL DELETE; a real
+     * post can just go through wp_trash_post() instead now that there's a
+     * post to trash.
+     */
     public static function delete( $id ) {
         $existing = self::get( $id );
         if ( ! $existing ) {
@@ -155,8 +268,7 @@ class Culture_Campaigns {
         if ( self::STATUS_SENDING === $existing['status'] ) {
             return new WP_Error( 'in_progress', 'Cannot delete a campaign while it is sending.', array( 'status' => 400 ) );
         }
-        global $wpdb;
-        $wpdb->delete( self::table(), array( 'id' => $id ), array( '%d' ) );
+        wp_trash_post( $id );
         delete_transient( "culture_campaign_job_{$id}" );
         return true;
     }
@@ -180,18 +292,16 @@ class Culture_Campaigns {
         }
 
         $emails = Culture_Subscribers_DB::resolve_emails_for_lists( $campaign['listIds'] );
+        $emails = Culture_Subscribers_DB::apply_segment_filters( $emails, $campaign['segmentFilters'] );
         if ( ! $emails ) {
-            return new WP_Error( 'no_recipients', 'No subscribers on the selected list(s).', array( 'status' => 400 ) );
+            return new WP_Error( 'no_recipients', 'No subscribers match the selected list(s) and segment filter(s).', array( 'status' => 400 ) );
         }
 
         set_transient( "culture_campaign_job_{$id}", $emails, DAY_IN_SECONDS );
 
-        global $wpdb;
-        $wpdb->update( self::table(), array(
-            'status'      => self::STATUS_SENDING,
-            'send_total'  => count( $emails ),
-            'send_offset' => 0,
-        ), array( 'id' => $id ), array( '%s', '%d', '%d' ), array( '%d' ) );
+        update_post_meta( $id, '_campaign_status', self::STATUS_SENDING );
+        update_post_meta( $id, '_campaign_send_total', count( $emails ) );
+        update_post_meta( $id, '_campaign_send_offset', 0 );
 
         wp_schedule_single_event( time() + 5, self::CRON_HOOK, array( $id, 0 ) );
 
@@ -245,8 +355,7 @@ class Culture_Campaigns {
         }
 
         $new_offset = $offset + count( $batch );
-        global $wpdb;
-        $wpdb->update( self::table(), array( 'send_offset' => $new_offset ), array( 'id' => $id ), array( '%d' ), array( '%d' ) );
+        update_post_meta( $id, '_campaign_send_offset', $new_offset );
 
         if ( $new_offset >= count( $recipients ) ) {
             self::mark_complete( $id );
@@ -284,11 +393,8 @@ class Culture_Campaigns {
     }
 
     private static function mark_complete( $id ) {
-        global $wpdb;
-        $wpdb->update( self::table(), array(
-            'status'  => self::STATUS_SENT,
-            'sent_at' => current_time( 'mysql' ),
-        ), array( 'id' => $id ), array( '%s', '%s' ), array( '%d' ) );
+        update_post_meta( $id, '_campaign_status', self::STATUS_SENT );
+        update_post_meta( $id, '_campaign_sent_at', current_time( 'mysql' ) );
         delete_transient( "culture_campaign_job_{$id}" );
     }
 }

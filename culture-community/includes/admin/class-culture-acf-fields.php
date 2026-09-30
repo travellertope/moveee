@@ -1103,6 +1103,79 @@ class Culture_ACF_Fields {
             'description'           => 'Overrides the displayed article byline with a typed guest writer name/bio — no WordPress account required.',
         ) );
 
+        // ── Edition Appendix (Culture Drop / GetMeLit multi-region sends) ────
+        // Lets one newsletter post carry a shared main body (the native
+        // content editor above — the "intro" every edition gets) plus an
+        // optional per-edition appendix, so a US/UK/Australia/Africa send no
+        // longer needs 4 separate posts tagged with the same issue number
+        // and 4 different _culture_nl_segment values (September 2026). See
+        // Culture_Newsletter_Queue::EDITIONS for the canonical 4 slugs this
+        // covers and render_edition_appendix()/schedule_send() for how a
+        // filled-in field here turns into its own regional send at send
+        // time. Leaving every field blank sends one identical email to
+        // everyone, exactly as before — this is purely additive.
+        acf_add_local_field_group( array(
+            'key'    => 'group_culture_edition_appendix',
+            'title'  => 'Edition Appendix (multi-region send)',
+            'fields' => array(
+                array(
+                    'key'     => 'field_edition_appendix_intro',
+                    'label'   => 'How this works',
+                    'name'    => '',
+                    'type'    => 'message',
+                    'message' => 'The content field above is the shared introduction every edition gets. Fill in an appendix below only for the editions that need one — a blank field sends that edition with no appendix. Leave every field blank to send one identical email to everyone. If you pick a specific "Send to Segment" in the Send Newsletter box instead, these fields are ignored and the send goes out as a single, uniform email.',
+                ),
+                array(
+                    'key'          => 'field_edition_appendix_us',
+                    'label'        => 'US Edition Appendix',
+                    'name'         => 'edition_appendix_us',
+                    'type'         => 'wysiwyg',
+                    'tabs'         => 'all',
+                    'toolbar'      => 'full',
+                    'media_upload' => 1,
+                ),
+                array(
+                    'key'          => 'field_edition_appendix_uk',
+                    'label'        => 'UK Edition Appendix',
+                    'name'         => 'edition_appendix_uk',
+                    'type'         => 'wysiwyg',
+                    'tabs'         => 'all',
+                    'toolbar'      => 'full',
+                    'media_upload' => 1,
+                ),
+                array(
+                    'key'          => 'field_edition_appendix_au',
+                    'label'        => 'Australia Edition Appendix',
+                    'name'         => 'edition_appendix_au',
+                    'type'         => 'wysiwyg',
+                    'tabs'         => 'all',
+                    'toolbar'      => 'full',
+                    'media_upload' => 1,
+                ),
+                array(
+                    'key'          => 'field_edition_appendix_africa',
+                    'label'        => 'Africa Edition Appendix',
+                    'name'         => 'edition_appendix_africa',
+                    'type'         => 'wysiwyg',
+                    'tabs'         => 'all',
+                    'toolbar'      => 'full',
+                    'media_upload' => 1,
+                ),
+            ),
+            'location' => array(
+                array( array( 'param' => 'post_type', 'operator' => '==', 'value' => 'culture_drop' ) ),
+                array( array( 'param' => 'post_type', 'operator' => '==', 'value' => 'getmelit' ) ),
+                array( array( 'param' => 'post_type', 'operator' => '==', 'value' => 'culture_newsletter' ) ),
+            ),
+            'menu_order'            => 1,
+            'position'              => 'normal',
+            'style'                 => 'default',
+            'label_placement'       => 'top',
+            'instruction_placement' => 'label',
+            'active'                => true,
+            'description'           => 'Optional per-region appendix content, appended after the shared body above at send time.',
+        ) );
+
         // ── Connect Directory — User Profile ─────────────────────────────────────
         if ( function_exists( 'acf_add_local_field_group' ) ) {
             acf_add_local_field_group( array(

@@ -12,6 +12,27 @@ class Culture_Newsletter_Queue {
     const CRON_HOOK  = 'culture_nl_process_batch';
     const BATCH_SIZE = 50;
 
+    /**
+     * The 4 region "editions" a single culture_drop/getmelit/culture_newsletter
+     * post can carry its own appendix for (see Culture_ACF_Fields' "Edition
+     * Appendix" group) — a US/UK/Australia/Africa newsletter no longer needs
+     * 4 separate posts tagged with the same issue number and 4 different
+     * _culture_nl_segment values (September 2026). Each slug maps 1:1 onto a
+     * $region_filter value Culture_Subscribers_DB::resolve_send_emails()
+     * already understands (real region-list slugs, plus the 'africa'
+     * aggregate) — deliberately NOT sourced from the full region registry
+     * (Culture_Newsletter_Lists::get_all(TYPE_REGION)), which can carry
+     * arbitrary rows (ca/ke/za/...) with no matching ACF field. Add a 5th
+     * entry here (and a matching field in class-culture-acf-fields.php) if a
+     * 5th edition is ever needed.
+     */
+    const EDITIONS = array(
+        'us'     => 'US',
+        'uk'     => 'UK',
+        'au'     => 'Australia',
+        'africa' => 'Africa',
+    );
+
     public static function init() {
         add_action( self::CRON_HOOK, array( __CLASS__, 'process_batch' ), 10, 2 );
         add_action( 'init', array( __CLASS__, 'handle_unsubscribe' ) );
@@ -61,32 +82,99 @@ class Culture_Newsletter_Queue {
     public static function schedule_send( $post_id ) {
         // Default matches send_to()/send_test() below ('getmelit') — NOT an
         // empty string, so an unset list always resolves to a real list row.
-        $nl_list_slug = self::resolve_nl_list( $post_id, 'getmelit' );
-        $nl_segment   = get_post_meta( $post_id, '_culture_nl_segment', true ) ?: '';
+        $nl_list_slug     = self::resolve_nl_list( $post_id, 'getmelit' );
+        $segment_filters  = Culture_Newsletter_Lists::get_segment_filters_for_post( $post_id );
 
         $list = Culture_Newsletter_Lists::get_by_slug( $nl_list_slug );
         if ( ! $list ) {
             return false;
         }
 
-        $emails = Culture_Subscribers_DB::resolve_send_emails( $list['id'], $nl_segment );
+        $recipients = self::resolve_recipients( $post_id, $list['id'], $segment_filters );
 
-        if ( empty( $emails ) ) {
+        if ( empty( $recipients ) ) {
             return false;
         }
 
         // Snapshot into a transient so changes to the list mid-send don't affect this job.
-        set_transient( "culture_nl_job_{$post_id}", $emails, DAY_IN_SECONDS );
+        set_transient( "culture_nl_job_{$post_id}", $recipients, DAY_IN_SECONDS );
 
         update_post_meta( $post_id, '_culture_nl_send_status', 'sending' );
-        update_post_meta( $post_id, '_culture_nl_send_total', count( $emails ) );
+        update_post_meta( $post_id, '_culture_nl_send_total', count( $recipients ) );
         update_post_meta( $post_id, '_culture_nl_send_offset', 0 );
         delete_post_meta( $post_id, '_culture_nl_sent_at' );
 
         // Fire first batch after 5 seconds to allow the AJAX response to return first.
         wp_schedule_single_event( time() + 5, self::CRON_HOOK, array( $post_id, 0 ) );
 
-        return count( $emails );
+        return count( $recipients );
+    }
+
+    /**
+     * Builds the recipient snapshot for a send.
+     *
+     * Explicit $segment_filters (the "Segment Filters" checkboxes — any
+     * combination of Region/Age/Tier/a custom axis, see
+     * Culture_Newsletter_Lists::get_axes()) always wins and returns the
+     * original flat email list, exactly as before — an editor who checked at
+     * least one box clearly wants a single, uniformly-filtered send, not a
+     * multi-edition one, even if edition-appendix fields also happen to be
+     * filled in.
+     *
+     * Otherwise, if the post has at least one non-empty edition-appendix
+     * field (see EDITIONS/Culture_ACF_Fields' "Edition Appendix" group),
+     * this is a multi-edition send: returns an array of
+     * ['email' => ..., 'edition' => <slug>] pairs (one edition's recipient
+     * pool per filled field, unioned and deduped by email — a subscriber
+     * who happens to be in two region lists gets whichever edition is
+     * listed first in EDITIONS) so send_to()/process_batch() know which
+     * appendix to splice in per recipient.
+     *
+     * Falls back to the original plain-email, no-segment-filter behaviour
+     * when neither applies.
+     *
+     * @param array $segment_filters Already-normalized array( axis_type => array(slugs) ).
+     * @return array String[] of emails, or an array of {email, edition} pairs.
+     */
+    private static function resolve_recipients( $post_id, $list_id, array $segment_filters ) {
+        if ( $segment_filters ) {
+            return Culture_Subscribers_DB::resolve_send_emails( $list_id, $segment_filters );
+        }
+
+        $editions_used = self::filled_editions( $post_id );
+        if ( ! $editions_used ) {
+            return Culture_Subscribers_DB::resolve_send_emails( $list_id, '' );
+        }
+
+        $recipients = array();
+        $seen       = array();
+        foreach ( $editions_used as $edition ) {
+            foreach ( Culture_Subscribers_DB::resolve_send_emails( $list_id, $edition ) as $email ) {
+                if ( isset( $seen[ $email ] ) ) {
+                    continue;
+                }
+                $seen[ $email ] = true;
+                $recipients[]   = array( 'email' => $email, 'edition' => $edition );
+            }
+        }
+        return $recipients;
+    }
+
+    /**
+     * Which of EDITIONS actually have non-empty appendix content on this post.
+     *
+     * @param int $post_id
+     * @return string[] Edition slugs, in EDITIONS' own order.
+     */
+    public static function filled_editions( $post_id ) {
+        $used = array();
+        foreach ( array_keys( self::EDITIONS ) as $edition ) {
+            $raw = get_post_meta( $post_id, "edition_appendix_{$edition}", true );
+            if ( '' !== trim( wp_strip_all_tags( (string) $raw ) ) ) {
+                $used[] = $edition;
+            }
+        }
+        return $used;
     }
 
     /**
@@ -117,8 +205,15 @@ class Culture_Newsletter_Queue {
             return;
         }
 
-        foreach ( $batch as $email ) {
-            self::send_to( $email, $post_id );
+        foreach ( $batch as $recipient ) {
+            // A multi-edition send's transient holds {email, edition} pairs
+            // (see resolve_recipients()); every other send still holds plain
+            // email strings, exactly as before.
+            if ( is_array( $recipient ) ) {
+                self::send_to( $recipient['email'], $post_id, $recipient['edition'] );
+            } else {
+                self::send_to( $recipient, $post_id );
+            }
         }
 
         $new_offset = $offset + count( $batch );
@@ -148,8 +243,11 @@ class Culture_Newsletter_Queue {
      *
      * @param string $email
      * @param int    $post_id
+     * @param string $edition Optional — one of EDITIONS' keys. When set,
+     *                        that edition's appendix (if any) is appended
+     *                        after the shared body. See resolve_recipients().
      */
-    public static function send_to( $email, $post_id ) {
+    public static function send_to( $email, $post_id, $edition = '' ) {
         if ( ! is_email( $email ) ) {
             return;
         }
@@ -172,7 +270,7 @@ class Culture_Newsletter_Queue {
 
         $nl_list    = self::resolve_nl_list( $post_id, 'getmelit' );
         $list_label = self::list_label( $nl_list );
-        $content    = self::render_content( $post );
+        $content    = self::render_content( $post ) . self::render_edition_appendix( $post, $edition );
         $body       = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $list_label, $email );
 
         wp_mail(
@@ -188,9 +286,11 @@ class Culture_Newsletter_Queue {
      *
      * @param int    $post_id
      * @param string $test_email
+     * @param string $edition    Optional — preview one edition's appendix
+     *                           spliced onto the shared body. See EDITIONS.
      * @return bool
      */
-    public static function send_test( $post_id, $test_email ) {
+    public static function send_test( $post_id, $test_email, $edition = '' ) {
         if ( ! is_email( $test_email ) ) {
             return false;
         }
@@ -202,9 +302,12 @@ class Culture_Newsletter_Queue {
 
         $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
         $title        = '[TEST] ' . get_the_title( $post_id );
+        if ( $edition && isset( self::EDITIONS[ $edition ] ) ) {
+            $title .= ' (' . self::EDITIONS[ $edition ] . ' edition)';
+        }
         $permalink    = $frontend_url . '/newsletter/' . $post->post_name;
         $nl_list_test = self::resolve_nl_list( $post_id, 'getmelit' );
-        $content      = self::render_content( $post );
+        $content      = self::render_content( $post ) . self::render_edition_appendix( $post, $edition );
         $body         = self::build_email( $title, $content, $permalink, '#', true, 0, '', self::list_label( $nl_list_test ) );
 
         return wp_mail(
@@ -229,6 +332,25 @@ class Culture_Newsletter_Queue {
      * @return string Rendered HTML, safe for email.
      */
     private static function render_content( $post ) {
+        return self::render_html( $post->post_content, $post );
+    }
+
+    /**
+     * Same rendering pipeline as render_content(), but for an arbitrary HTML
+     * string rather than $post->post_content — lets an edition's ACF
+     * appendix field go through the identical the_content-filter /
+     * image-lazy-load-suspension / CMS-link-rewrite treatment as the main
+     * body, instead of being appended raw. See render_edition_appendix().
+     *
+     * @param string  $raw_content
+     * @param WP_Post $post        Only used for the transient $GLOBALS['post']/
+     *                             setup_postdata() context the_content filters
+     *                             may rely on (e.g. shortcodes reading the
+     *                             current post) — its own post_content is
+     *                             never read here.
+     * @return string Rendered HTML, safe for email.
+     */
+    private static function render_html( $raw_content, $post ) {
         global $more, $page, $pages, $multipage, $preview;
         $prev_more      = $more;
         $prev_page      = isset( $page )      ? $page      : 1;
@@ -237,7 +359,7 @@ class Culture_Newsletter_Queue {
 
         $more      = 1;
         $page      = 1;
-        $pages     = array( $post->post_content );
+        $pages     = array( $raw_content );
         $multipage = false;
 
         $prev_post       = isset( $GLOBALS['post'] ) ? $GLOBALS['post'] : null;
@@ -248,7 +370,7 @@ class Culture_Newsletter_Queue {
         // images are rendered with their real src URLs, not JS placeholders.
         $suspended = self::suspend_image_filters();
 
-        $content = apply_filters( 'the_content', $post->post_content );
+        $content = apply_filters( 'the_content', $raw_content );
 
         // Immediately restore so normal page rendering is unaffected.
         self::restore_image_filters( $suspended );
@@ -280,6 +402,28 @@ class Culture_Newsletter_Queue {
         }
 
         return $content;
+    }
+
+    /**
+     * Renders one edition's ACF appendix field (see Culture_ACF_Fields'
+     * "Edition Appendix" group) through the same pipeline as the shared
+     * body, so it gets identical block/shortcode expansion and image
+     * handling — never appended as raw, unfiltered HTML.
+     *
+     * @param WP_Post $post
+     * @param string  $edition One of EDITIONS' keys, or '' for none.
+     * @return string Rendered HTML, or '' when there's no edition, or the
+     *                 field is empty.
+     */
+    private static function render_edition_appendix( $post, $edition ) {
+        if ( ! $edition ) {
+            return '';
+        }
+        $raw = get_post_meta( $post->ID, "edition_appendix_{$edition}", true );
+        if ( '' === trim( wp_strip_all_tags( (string) $raw ) ) ) {
+            return '';
+        }
+        return self::render_html( $raw, $post );
     }
 
     /**

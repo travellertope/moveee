@@ -500,53 +500,109 @@ class Culture_Subscribers_DB {
      * @param string $region_filter
      * @return string[] Emails.
      */
-    public static function resolve_send_emails( $content_list_id, $region_filter = '' ) {
+    /**
+     * @param int          $content_list_id
+     * @param array|string $filters  Either the new multi-axis shape
+     *                               (array( axis_type => array(slugs) )) or a
+     *                               legacy bare string (a real region/age/tier
+     *                               slug, or the 'pro'/'africa' virtuals) —
+     *                               see Culture_Newsletter_Lists::normalize_segment_filters().
+     * @return string[]
+     */
+    public static function resolve_send_emails( $content_list_id, $filters = '' ) {
         global $wpdb;
-        $sl_table   = self::sub_lists_table();
-        $subs_table = self::subscribers_table();
-
         $emails = $wpdb->get_col( $wpdb->prepare(
-            "SELECT s.email FROM {$subs_table} s
-             INNER JOIN {$sl_table} sl ON sl.subscriber_id = s.id
+            "SELECT s.email FROM " . self::subscribers_table() . " s
+             INNER JOIN " . self::sub_lists_table() . " sl ON sl.subscriber_id = s.id
              WHERE sl.list_id = %d",
             $content_list_id
         ) );
 
-        if ( ! $region_filter ) {
+        return self::apply_segment_filters( $emails, $filters );
+    }
+
+    /**
+     * Narrows a candidate email list by a multi-axis segment filter — the
+     * shared engine behind resolve_send_emails() (one content list) and
+     * Culture_Campaigns (a union across several lists, see
+     * resolve_emails_for_lists()), so a Campaign's "Send to" can be filtered
+     * by Region/Age/Tier exactly the same way a Culture Drop/GetMeLit issue
+     * can. Region narrows via real list membership (a region row is just
+     * another list a subscriber's email is/isn't tagged into, same mechanism
+     * as the content list itself); every other axis (Age, Tier, any future
+     * custom one) narrows by reading the linked WP user account instead,
+     * since there's no list-membership row for those — a per-email lookup
+     * that's cheap here because it only ever runs against an
+     * already-narrowed candidate set, not the full subscriber table.
+     *
+     * @param string[]     $emails
+     * @param array|string $filters
+     * @return string[]
+     */
+    public static function apply_segment_filters( array $emails, $filters = '' ) {
+        if ( ! $emails ) {
             return $emails;
         }
 
-        if ( 'pro' === $region_filter ) {
-            return array_values( array_filter( $emails, function ( $email ) {
+        $filters = Culture_Newsletter_Lists::normalize_segment_filters( $filters );
+        if ( ! $filters ) {
+            return $emails;
+        }
+
+        if ( ! empty( $filters[ Culture_Newsletter_Lists::TYPE_REGION ] ) ) {
+            global $wpdb;
+            $region_ids = array();
+            foreach ( $filters[ Culture_Newsletter_Lists::TYPE_REGION ] as $slug ) {
+                $row = Culture_Newsletter_Lists::get_by_slug( $slug );
+                if ( $row ) {
+                    $region_ids[] = $row['id'];
+                }
+            }
+            if ( ! $region_ids ) {
+                return array();
+            }
+
+            $placeholders  = implode( ',', array_fill( 0, count( $region_ids ), '%d' ) );
+            $region_emails = $wpdb->get_col( $wpdb->prepare(
+                "SELECT s.email FROM " . self::subscribers_table() . " s
+                 INNER JOIN " . self::sub_lists_table() . " sl ON sl.subscriber_id = s.id
+                 WHERE sl.list_id IN ({$placeholders})",
+                $region_ids
+            ) );
+            $emails = array_values( array_intersect( $emails, $region_emails ) );
+            if ( ! $emails ) {
+                return array();
+            }
+        }
+
+        $account_axes = array_diff( array_keys( $filters ), array( Culture_Newsletter_Lists::TYPE_REGION ) );
+        if ( $account_axes ) {
+            $emails = array_values( array_filter( $emails, function ( $email ) use ( $filters, $account_axes ) {
                 $user = get_user_by( 'email', $email );
-                return $user && 'patron' === get_user_meta( $user->ID, '_culture_membership_tier', true );
+                if ( ! $user ) {
+                    return false;
+                }
+                foreach ( $account_axes as $axis ) {
+                    if ( 'tier' === $axis ) {
+                        $tier = get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen';
+                        if ( ! in_array( $tier, $filters['tier'], true ) ) {
+                            return false;
+                        }
+                    } elseif ( 'age' === $axis ) {
+                        $bracket = Culture_Newsletter_Lists::age_bracket_for_user( $user->ID );
+                        if ( ! $bracket || ! in_array( $bracket, $filters['age'], true ) ) {
+                            return false;
+                        }
+                    }
+                    // A future custom axis with no known account attribute
+                    // to check is silently ignored here rather than
+                    // excluding everyone.
+                }
+                return true;
             } ) );
         }
 
-        $region_slugs = ( 'africa' === $region_filter )
-            ? array( 'ng', 'gh', 'ke', 'za' )
-            : array( $region_filter );
-
-        $region_ids = array();
-        foreach ( $region_slugs as $slug ) {
-            $list = Culture_Newsletter_Lists::get_by_slug( $slug );
-            if ( $list ) {
-                $region_ids[] = $list['id'];
-            }
-        }
-        if ( ! $region_ids ) {
-            return array();
-        }
-
-        $placeholders  = implode( ',', array_fill( 0, count( $region_ids ), '%d' ) );
-        $region_emails = $wpdb->get_col( $wpdb->prepare(
-            "SELECT s.email FROM {$subs_table} s
-             INNER JOIN {$sl_table} sl ON sl.subscriber_id = s.id
-             WHERE sl.list_id IN ({$placeholders})",
-            $region_ids
-        ) );
-
-        return array_values( array_intersect( $emails, $region_emails ) );
+        return $emails;
     }
 
     /**

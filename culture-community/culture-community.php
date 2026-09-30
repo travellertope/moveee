@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     2.6.11
+ * Version:     2.6.14
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -82,6 +82,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-send.
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-subscribers.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-lists-admin.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-campaigns-admin.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-campaign-send.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-games-subscribers.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-newsletter-importer.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-nl-analytics-admin.php';
@@ -160,6 +161,7 @@ function culture_community_init() {
     Culture_Subscribers::init();
     Culture_Newsletter_Lists_Admin::init();
     Culture_Campaigns_Admin::init();
+    Culture_Campaign_Send::init();
     Culture_Games_Subscribers::init();
     Culture_NL_Analytics::init();
     Culture_NL_Analytics_Admin::init();

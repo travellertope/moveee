@@ -23,6 +23,7 @@ class Culture_Newsletter_Send {
         add_action( 'wp_ajax_culture_nl_send_test',  array( __CLASS__, 'ajax_send_test' ) );
         add_action( 'wp_ajax_culture_nl_send_issue', array( __CLASS__, 'ajax_send_issue' ) );
         add_action( 'wp_ajax_culture_nl_get_status', array( __CLASS__, 'ajax_get_status' ) );
+        add_action( 'wp_ajax_culture_nl_recount',    array( __CLASS__, 'ajax_recount' ) );
 
         add_action( 'rest_api_init', array( __CLASS__, 'register_rest_routes' ) );
     }
@@ -88,9 +89,6 @@ class Culture_Newsletter_Send {
         ), 200 );
     }
 
-    const ALLOWED_LISTS    = array( 'getmelit', 'culture-drop', 'culture-narratives-digest', 'vendor-letter', 'origins-field-notes', 'announcements' );
-    const ALLOWED_SEGMENTS = array( '', 'africa', 'us', 'uk', 'ng', 'gh', 'ke', 'za', 'ca', 'au', 'pro' );
-
     /**
      * Save _culture_nl_list and _culture_nl_segment post meta when the newsletter is saved.
      */
@@ -107,36 +105,63 @@ class Culture_Newsletter_Send {
             ? null
             : ( $_POST['culture_nl_list'] ?? 'getmelit' );
 
-        self::persist_list_meta( $post_id, $list, $_POST['culture_nl_segment'] ?? '', (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
+        self::persist_list_meta( $post_id, $list, $_POST['culture_nl_segment'] ?? array(), (int) ( $_POST['culture_nl_issue_num'] ?? 0 ) );
     }
 
     /**
      * Validate and persist the target list/segment for a newsletter post.
      * Shared by save_list_meta() (on post save) and the Send Test / Send Issue
      * AJAX handlers (so a send always targets whatever is currently selected
-     * in the dropdowns, even if the post hasn't been saved yet).
+     * in the meta box, even if the post hasn't been saved yet).
      *
-     * @param int         $post_id
-     * @param string|null $list    Pass null to leave _culture_nl_list untouched
-     *                             (used for getmelit/culture_drop, where the
-     *                             post type is the list and there's nothing to save).
+     * @param int          $post_id
+     * @param string|null  $list     Pass null to leave _culture_nl_list untouched
+     *                                (used for getmelit/culture_drop, where the
+     *                                post type is the list and there's nothing to save).
+     * @param array|string $segment  The posted checkbox groups
+     *                                (array( axis_type => array(slugs) )) or a
+     *                                legacy bare string — see
+     *                                Culture_Newsletter_Lists::normalize_segment_filters().
      */
     private static function persist_list_meta( $post_id, $list, $segment, $issue_num = 0 ) {
         if ( null !== $list ) {
             $list = sanitize_key( $list );
-            if ( in_array( $list, self::ALLOWED_LISTS, true ) ) {
+            // Validated against the live registry, not a hardcoded snapshot of
+            // its original seed rows — a Hub-auto-provisioned list or anything
+            // created later via Lists & Segments would otherwise render fine
+            // in the dropdown but silently fail to save. Any content or
+            // system list is a valid send target; segment axes aren't lists
+            // and aren't picked here.
+            $list_row = Culture_Newsletter_Lists::get_by_slug( $list );
+            if ( $list_row && in_array( $list_row['type'], array( Culture_Newsletter_Lists::TYPE_CONTENT, Culture_Newsletter_Lists::TYPE_SYSTEM ), true ) ) {
                 update_post_meta( $post_id, '_culture_nl_list', $list );
             }
         }
 
-        // Segment is optional — empty string means send to all segments of this list.
-        $segment = sanitize_key( $segment );
-        if ( in_array( $segment, self::ALLOWED_SEGMENTS, true ) ) {
-            if ( $segment ) {
-                update_post_meta( $post_id, '_culture_nl_segment', $segment );
-            } else {
-                delete_post_meta( $post_id, '_culture_nl_segment' );
-            }
+        // Segment filters — normalize_segment_filters() sanitizes every axis
+        // and slug against the live registry, so an unknown/stale value from
+        // a stale form submission is silently dropped rather than saved.
+        $filters = Culture_Newsletter_Lists::normalize_segment_filters( $segment );
+        if ( $filters ) {
+            update_post_meta( $post_id, '_culture_nl_segment_filters', wp_json_encode( $filters ) );
+        } else {
+            delete_post_meta( $post_id, '_culture_nl_segment_filters' );
+        }
+
+        // Legacy single-string mirror, kept for the frontend edition-scoping
+        // GraphQL field (nlSegment on culture_newsletter — see
+        // class-culture-post-types.php) which expects a plain region slug or
+        // empty string. Only representable when the filter collapses to
+        // exactly one axis in one of the shapes that field already
+        // understood before multi-axis filters existed; anything else (two+
+        // axes, or a Tier/Age-only pick) clears it — those posts simply show
+        // as "no segment tag" on the /newsletter/{edition} pages, same as
+        // any other post with no _culture_nl_segment set today.
+        $legacy = self::legacy_segment_string( $filters );
+        if ( $legacy ) {
+            update_post_meta( $post_id, '_culture_nl_segment', $legacy );
+        } else {
+            delete_post_meta( $post_id, '_culture_nl_segment' );
         }
 
         // Issue number — 0/empty means not set; positive integer means a canonical issue number
@@ -147,6 +172,65 @@ class Culture_Newsletter_Send {
         } else {
             delete_post_meta( $post_id, '_culture_nl_issue_num' );
         }
+    }
+
+    /**
+     * Collapses a normalized multi-axis filter back into the one legacy
+     * shape _culture_nl_segment ever held, when possible — see
+     * persist_list_meta()'s own comment for why this mirror exists at all.
+     *
+     * @param array $filters Already-normalized array( axis_type => array(slugs) ).
+     * @return string Empty when the filter has no single-string representation.
+     */
+    private static function legacy_segment_string( array $filters ) {
+        if ( 1 !== count( $filters ) ) {
+            return '';
+        }
+        $axis  = array_key_first( $filters );
+        $slugs = $filters[ $axis ];
+
+        if ( 'tier' === $axis && array( 'patron' ) === array_values( $slugs ) ) {
+            return Culture_Newsletter_Lists::VIRTUAL_PRO_SLUG;
+        }
+        if ( Culture_Newsletter_Lists::TYPE_REGION === $axis ) {
+            if ( 1 === count( $slugs ) ) {
+                return $slugs[0];
+            }
+            $sorted = $slugs;
+            sort( $sorted );
+            if ( array( 'gh', 'ke', 'ng', 'za' ) === $sorted ) {
+                return 'africa';
+            }
+        }
+        return '';
+    }
+
+    /**
+     * AJAX: recompute the live subscriber count for whatever list/segment
+     * combination is currently checked in the meta box — replaces the old
+     * client-side lookup table (feasible when "segment" was one flat
+     * dropdown; not feasible now that any combination of Region/Age/Tier/a
+     * custom axis can be checked at once).
+     */
+    public static function ajax_recount() {
+        check_ajax_referer( 'culture_nl_send_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error();
+        }
+
+        $list_row = Culture_Newsletter_Lists::get_by_slug( sanitize_key( $_POST['list'] ?? '' ) );
+        if ( ! $list_row ) {
+            wp_send_json_success( array( 'count' => 0 ) );
+        }
+
+        $filters = Culture_Newsletter_Lists::normalize_segment_filters( is_array( $_POST['segment'] ?? null ) ? wp_unslash( $_POST['segment'] ) : array() );
+        $count   = count( Culture_Subscribers_DB::resolve_send_emails( $list_row['id'], $filters ) );
+
+        wp_send_json_success( array(
+            'count'   => $count,
+            'summary' => Culture_Newsletter_Lists::describe_segment_filters( $filters ),
+        ) );
     }
 
     /**
@@ -220,15 +304,17 @@ class Culture_Newsletter_Send {
         $sent_at      = $status_data['sent_at'];
         $current_user = wp_get_current_user();
 
-        $nl_list      = Culture_Newsletter_Queue::resolve_nl_list( $post->ID, 'getmelit' );
-        $nl_segment   = get_post_meta( $post->ID, '_culture_nl_segment',   true ) ?: '';
-        $nl_issue_num = (int) ( get_post_meta( $post->ID, '_culture_nl_issue_num', true ) ?: 0 );
-        $list_locked  = in_array( get_post_type( $post->ID ), array( 'getmelit', 'culture_drop' ), true );
+        $nl_list         = Culture_Newsletter_Queue::resolve_nl_list( $post->ID, 'getmelit' );
+        $segment_filters = Culture_Newsletter_Lists::get_segment_filters_for_post( $post->ID );
+        $nl_issue_num    = (int) ( get_post_meta( $post->ID, '_culture_nl_issue_num', true ) ?: 0 );
+        $list_locked     = in_array( get_post_type( $post->ID ), array( 'getmelit', 'culture_drop' ), true );
 
-        // Lists (content + system) and segments (region + the virtual 'pro'
-        // filter) are now sourced from the real list registry — a Hub list
-        // or a custom list an admin creates shows up here immediately, with
-        // no code change (September 2026; see Culture_Newsletter_Lists).
+        // Lists (content + system) are sourced from the real list registry —
+        // a Hub list or a custom list an admin creates shows up here
+        // immediately, with no code change (September 2026; see
+        // Culture_Newsletter_Lists). Segments are now a full multi-axis
+        // filter (Region/Age/Tier/any custom axis, see get_axes()) rendered
+        // further down, not a single flat dropdown.
         $lists_config = array();
         foreach ( array_merge(
             Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_CONTENT ),
@@ -237,41 +323,12 @@ class Culture_Newsletter_Send {
             $lists_config[ $l['slug'] ] = $l['name'];
         }
 
-        $segments_config = array( '' => 'All segments' );
-        foreach ( Culture_Newsletter_Lists::get_all( Culture_Newsletter_Lists::TYPE_REGION ) as $l ) {
-            $segments_config[ $l['slug'] ] = $l['name'];
-        }
-        $segments_config['africa'] = 'Africa (All — NG, GH, KE, ZA + more)';
-        $segments_config['pro']    = 'Moveee Pro Members';
-
-        // Build counts[list][segment] — empty string segment = whole list total.
-        $counts_map = array();
-        foreach ( $lists_config as $slug => $label ) {
-            $list_row = Culture_Newsletter_Lists::get_by_slug( $slug );
-            if ( ! $list_row ) {
-                continue;
-            }
-            $counts_map[ $slug ] = array( '' => Culture_Newsletter_Lists::subscriber_count( $list_row['id'] ) );
-            foreach ( $segments_config as $seg_slug => $seg_label ) {
-                if ( '' === $seg_slug ) {
-                    continue;
-                }
-                $counts_map[ $slug ][ $seg_slug ] = count( Culture_Subscribers_DB::resolve_send_emails( $list_row['id'], $seg_slug ) );
-            }
-        }
-
-        // Determine the count for the currently saved list/segment selection.
-        if ( $nl_segment ) {
-            $sub_count = $counts_map[ $nl_list ][ $nl_segment ] ?? 0;
-        } else {
-            $sub_count = $counts_map[ $nl_list ][''] ?? 0;
-        }
+        $nl_list_row = Culture_Newsletter_Lists::get_by_slug( $nl_list );
+        $sub_count   = $nl_list_row ? count( Culture_Subscribers_DB::resolve_send_emails( $nl_list_row['id'], $segment_filters ) ) : 0;
         ?>
         <div class="culture-nl-box"
             data-post-id="<?php echo esc_attr( $post->ID ); ?>"
-            data-counts="<?php echo esc_attr( wp_json_encode( $counts_map ) ); ?>"
             data-list-labels="<?php echo esc_attr( wp_json_encode( $lists_config ) ); ?>"
-            data-seg-labels="<?php echo esc_attr( wp_json_encode( $segments_config ) ); ?>"
         >
 
             <?php /* ── LIST ASSIGNMENT ── */ ?>
@@ -279,6 +336,7 @@ class Culture_Newsletter_Send {
                 <label class="culture-nl-label"><?php esc_html_e( 'Newsletter List', 'culture-community' ); ?></label>
                 <?php wp_nonce_field( 'culture_nl_list_' . $post->ID, 'culture_nl_list_nonce' ); ?>
                 <?php if ( $list_locked ) : ?>
+                    <input type="hidden" name="culture_nl_list" class="js-nl-list-select" value="<?php echo esc_attr( $nl_list ); ?>">
                     <p style="margin:4px 0 0;font-weight:600;">
                         <?php echo esc_html( $lists_config[ $nl_list ] ?? $nl_list ); ?>
                     </p>
@@ -286,7 +344,7 @@ class Culture_Newsletter_Send {
                         <?php esc_html_e( 'Fixed by post type — this post is a GetMeLit or Culture Drop issue.', 'culture-community' ); ?>
                     </p>
                 <?php else : ?>
-                    <select name="culture_nl_list" style="width:100%;margin-top:4px;">
+                    <select name="culture_nl_list" class="js-nl-list-select" style="width:100%;margin-top:4px;">
                         <?php foreach ( $lists_config as $lk => $ln ) : ?>
                             <option value="<?php echo esc_attr( $lk ); ?>"<?php selected( $nl_list, $lk ); ?>>
                                 <?php echo esc_html( $ln ); ?>
@@ -296,20 +354,47 @@ class Culture_Newsletter_Send {
                 <?php endif; ?>
             </div>
 
-            <?php /* ── SEGMENT FILTER ── */ ?>
-            <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
-                <label class="culture-nl-label"><?php esc_html_e( 'Send to Segment', 'culture-community' ); ?></label>
-                <select name="culture_nl_segment" style="width:100%;margin-top:4px;">
-                    <?php foreach ( $segments_config as $sk => $sn ) : ?>
-                        <option value="<?php echo esc_attr( $sk ); ?>"<?php selected( $nl_segment, $sk ); ?>>
-                            <?php echo esc_html( $sn ); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <p style="font-size:11px;color:#666;margin:4px 0 0;">
-                    <?php esc_html_e( 'Leave on "All segments" to send to everyone on this list.', 'culture-community' ); ?>
+            <?php /* ── SEGMENT FILTERS ── */ ?>
+            <div class="culture-nl-section js-nl-segment-filters" style="margin-top:12px;margin-bottom:0;">
+                <label class="culture-nl-label"><?php esc_html_e( 'Segment Filters', 'culture-community' ); ?></label>
+                <p style="font-size:11px;color:#666;margin:2px 0 8px;">
+                    <?php esc_html_e( 'Optional — narrow this list to a demographic slice. A List is who subscribed (Culture Drop, GetMeLit…); a Segment is who they are (Region, Age, Tier…).', 'culture-community' ); ?>
                 </p>
+                <?php Culture_Newsletter_Lists::render_segment_filter_fields( 'culture_nl_segment', $segment_filters ); ?>
             </div>
+
+            <?php
+            // ── MULTI-EDITION APPENDIX SUMMARY ──
+            // Purely informational — the fields themselves live in the
+            // "Edition Appendix" box in the main content column (ACF), not
+            // here. See Culture_Newsletter_Queue::EDITIONS/filled_editions().
+            $filled_editions = Culture_Newsletter_Queue::filled_editions( $post->ID );
+            if ( $filled_editions ) :
+            ?>
+            <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
+                <label class="culture-nl-label"><?php esc_html_e( 'Multi-Edition Appendix', 'culture-community' ); ?></label>
+                <?php if ( $segment_filters ) : ?>
+                    <p style="font-size:11px;color:#b32d2e;margin:4px 0 0;">
+                        <?php esc_html_e( 'A segment filter is checked above, so this will send as one uniform email and the per-edition appendix fields below will be ignored. Uncheck every box above to send each edition its own appendix instead.', 'culture-community' ); ?>
+                    </p>
+                <?php else : ?>
+                    <p style="font-size:11px;color:#2271b1;margin:4px 0 0;">
+                        <?php
+                        $ed_names = array();
+                        foreach ( $filled_editions as $ed ) {
+                            $ed_count   = $nl_list_row ? count( Culture_Subscribers_DB::resolve_send_emails( $nl_list_row['id'], $ed ) ) : 0;
+                            $ed_names[] = Culture_Newsletter_Queue::EDITIONS[ $ed ] . ' (' . number_format( $ed_count ) . ')';
+                        }
+                        printf(
+                            /* translators: %s: comma-separated list of "Edition (count)" */
+                            esc_html__( 'This post has appendix content for: %s. Each region gets the shared body above plus its own appendix. Anyone on this list not in one of those regions will not receive this send.', 'culture-community' ),
+                            esc_html( implode( ', ', $ed_names ) )
+                        );
+                        ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
 
             <?php /* ── ISSUE NUMBER ── */ ?>
             <div class="culture-nl-section" style="margin-top:12px;margin-bottom:0;">
@@ -324,7 +409,7 @@ class Culture_Newsletter_Send {
                     placeholder="e.g. 12"
                 />
                 <p style="font-size:11px;color:#666;margin:4px 0 0;">
-                    <?php esc_html_e( 'Set the same number on all regional editions of the same issue so the frontend shows only one.', 'culture-community' ); ?>
+                    <?php esc_html_e( 'Only needed if you\'re still using separate posts per region (one post per segment, same issue number on each). If you\'re using the Edition Appendix fields below to send every region from this one post, you can leave this blank.', 'culture-community' ); ?>
                 </p>
             </div>
 
@@ -334,9 +419,10 @@ class Culture_Newsletter_Send {
                 <span class="culture-nl-stat-num js-nl-count-num"><?php echo esc_html( number_format( $sub_count ) ); ?></span>
                 <span class="culture-nl-stat-label js-nl-count-label">
                     <?php
-                    $label = $lists_config[ $nl_list ] ?? '';
-                    if ( $nl_segment && isset( $segments_config[ $nl_segment ] ) ) {
-                        $label .= ' · ' . $segments_config[ $nl_segment ];
+                    $label       = $lists_config[ $nl_list ] ?? '';
+                    $seg_summary = Culture_Newsletter_Lists::describe_segment_filters( $segment_filters );
+                    if ( $seg_summary ) {
+                        $label .= ' · ' . $seg_summary;
                     }
                     echo esc_html( sprintf( __( '%s Subscribers', 'culture-community' ), $label ) );
                     ?>
@@ -418,6 +504,16 @@ class Culture_Newsletter_Send {
                         value="<?php echo esc_attr( $current_user->user_email ); ?>"
                         placeholder="test@example.com"
                     >
+                    <?php if ( $filled_editions && ! $segment_filters ) : ?>
+                        <select id="culture-nl-test-edition" style="width:100%;margin-top:6px;">
+                            <option value=""><?php esc_html_e( 'Shared body only (no appendix)', 'culture-community' ); ?></option>
+                            <?php foreach ( $filled_editions as $ed ) : ?>
+                                <option value="<?php echo esc_attr( $ed ); ?>">
+                                    <?php echo esc_html( sprintf( __( 'Preview: %s edition', 'culture-community' ), Culture_Newsletter_Queue::EDITIONS[ $ed ] ) ); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
                     <button type="button" class="button button-secondary js-nl-test-btn" style="margin-top:6px;width:100%;">
                         <span class="dashicons dashicons-email" style="margin-top:3px;"></span>
                         <?php esc_html_e( 'Send Test', 'culture-community' ); ?>
@@ -493,7 +589,12 @@ class Culture_Newsletter_Send {
             self::persist_list_meta( $post_id, $_POST['list'], $_POST['segment'] ?? '' );
         }
 
-        $sent = Culture_Newsletter_Queue::send_test( $post_id, $test_email );
+        $edition = sanitize_key( $_POST['edition'] ?? '' );
+        if ( ! isset( Culture_Newsletter_Queue::EDITIONS[ $edition ] ) ) {
+            $edition = '';
+        }
+
+        $sent = Culture_Newsletter_Queue::send_test( $post_id, $test_email, $edition );
 
         if ( $sent ) {
             wp_send_json_success( array(

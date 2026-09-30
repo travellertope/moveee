@@ -68,44 +68,69 @@
     }
 
     /**
-     * Update the subscriber count display when the list or segment dropdown changes.
+     * Gathers every checked segment-filter checkbox into
+     * { axisType: [slug, slug, ...], ... } — the shape both the recount AJAX
+     * call and the Send Test / Send Issue calls post as `segment`.
+     */
+    function currentSegmentFilters() {
+        var filters = {};
+        $( '.js-nl-segment-filters input[type="checkbox"]:checked' ).each( function () {
+            // name="culture_nl_segment[axis][]" — pull "axis" out of it.
+            var match = /\[([^\]]+)\]\[\]$/.exec( this.name );
+            if ( ! match ) {
+                return;
+            }
+            var axis = match[ 1 ];
+            filters[ axis ] = filters[ axis ] || [];
+            filters[ axis ].push( this.value );
+        } );
+        return filters;
+    }
+
+    /**
+     * Recomputes the subscriber count via AJAX whenever the list or any
+     * segment-filter checkbox changes — a client-side lookup table (the old
+     * approach) only worked when "segment" was one flat dropdown; it can't
+     * cover every combination of Region/Age/Tier/a custom axis someone might
+     * check at once.
      */
     function updateCountDisplay() {
         var $box       = $( '.culture-nl-box' );
-        var counts     = $box.data( 'counts' )     || {};
         var listLabels = $box.data( 'list-labels' ) || {};
-        var segLabels  = $box.data( 'seg-labels' )  || {};
+        var list       = $( '.js-nl-list-select' ).val() || Object.keys( listLabels )[ 0 ] || 'getmelit';
 
-        var list    = $( '[name="culture_nl_list"]' ).val()    || 'getmelit';
-        var segment = $( '[name="culture_nl_segment"]' ).val() || '';
+        $.post( cultureNLSend.ajaxUrl, {
+            action:  'culture_nl_recount',
+            nonce:   cultureNLSend.nonce,
+            list:    list,
+            segment: currentSegmentFilters(),
+        }, function ( res ) {
+            if ( ! res.success ) {
+                return;
+            }
+            var count = res.data.count;
+            var label = listLabels[ list ] || list;
+            if ( res.data.summary ) {
+                label += ' · ' + res.data.summary;
+            }
+            label += ' Subscribers';
 
-        var listCounts = counts[ list ] || {};
-        var count      = segment ? ( listCounts[ segment ] || 0 ) : ( listCounts[ '' ] || 0 );
+            $( '.js-nl-count-num' ).text( count.toLocaleString() );
+            $( '.js-nl-count-label' ).text( label );
 
-        var label = listLabels[ list ] || list;
-        if ( segment && segLabels[ segment ] ) {
-            label += ' · ' + segLabels[ segment ];
-        }
-        label += ' Subscribers';
+            $( '.js-nl-notice-count' ).text( count.toLocaleString() );
+            $( '.js-nl-notice-list' ).text( listLabels[ list ] || list );
 
-        $( '.js-nl-count-num' ).text( count.toLocaleString() );
-        $( '.js-nl-count-label' ).text( label );
+            if ( 0 === count ) {
+                $( '.js-nl-notice-empty' ).show();
+                $( '.js-nl-notice-full' ).hide();
+            } else {
+                $( '.js-nl-notice-empty' ).hide();
+                $( '.js-nl-notice-full' ).show();
+            }
 
-        // Keep the "Send to All Subscribers" notice + buttons in sync too.
-        var listLabel = listLabels[ list ] || list;
-
-        $( '.js-nl-notice-count' ).text( count.toLocaleString() );
-        $( '.js-nl-notice-list' ).text( listLabel );
-
-        if ( 0 === count ) {
-            $( '.js-nl-notice-empty' ).show();
-            $( '.js-nl-notice-full' ).hide();
-        } else {
-            $( '.js-nl-notice-empty' ).hide();
-            $( '.js-nl-notice-full' ).show();
-        }
-
-        $( '.js-nl-send-btn' ).prop( 'disabled', 0 === count );
+            $( '.js-nl-send-btn' ).prop( 'disabled', 0 === count );
+        } );
     }
 
     $( function () {
@@ -115,8 +140,12 @@
             startPolling();
         }
 
-        // Live-update count when list or segment changes.
-        $( document ).on( 'change', '[name="culture_nl_list"], [name="culture_nl_segment"]', updateCountDisplay );
+        // Live-update count when the list select or any segment-filter
+        // checkbox changes — .js-nl-segment-check is on every checkbox
+        // regardless of which axis it belongs to (name="culture_nl_segment[axis][]",
+        // which a plain [name="culture_nl_segment"] attribute selector would
+        // never exact-match).
+        $( document ).on( 'change', '.js-nl-list-select, .js-nl-segment-check', updateCountDisplay );
 
         // ── Send Test ──────────────────────────────────────────────
         $( document ).on( 'click', '.js-nl-test-btn', function () {
@@ -135,8 +164,9 @@
                 nonce:       cultureNLSend.nonce,
                 post_id:     cultureNLSend.postId,
                 test_email:  testEmail,
-                list:        $( '[name="culture_nl_list"]' ).val()    || '',
-                segment:     $( '[name="culture_nl_segment"]' ).val() || '',
+                list:        $( '.js-nl-list-select' ).val() || '',
+                segment:     currentSegmentFilters(),
+                edition:     $( '#culture-nl-test-edition' ).val()    || '',
             }, function ( res ) {
                 $btn.prop( 'disabled', false ).text( cultureNLSend.i18n.sendTest );
 
@@ -170,8 +200,8 @@
                 action:  'culture_nl_send_issue',
                 nonce:   cultureNLSend.nonce,
                 post_id: cultureNLSend.postId,
-                list:    $( '[name="culture_nl_list"]' ).val()    || '',
-                segment: $( '[name="culture_nl_segment"]' ).val() || '',
+                list:    $( '.js-nl-list-select' ).val() || '',
+                segment: currentSegmentFilters(),
             }, function ( res ) {
                 if ( res.success ) {
                     showFeedback( '✓ ' + res.data.message, 'success' );
