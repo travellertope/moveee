@@ -846,8 +846,7 @@ were removed outright, not just supplemented:
   rebuilt to the same design in a follow-up pass — see below. The old `gml-whats-inside`/
   `gml-pull-band`/`gml-recent`/`nl-culturedrop-feature` CSS blocks are still not deleted (kept in
   case anything else ever needs them), just unused by both newsletter components now.
-- Not visually verified in a browser (no WordPress/env credentials in this pass) — verified via
-  `tsc --noEmit` (clean) and a CSS brace-balance check on `newsletter.css`.
+- *(Not verified live this pass.)*
 
 ### Edition newsletter hubs (`/newsletter/uk`, `/us`, `/africa`) — rebuilt + region-scoped (July 2026)
 
@@ -942,16 +941,7 @@ reuses `.lit-form-*` classes from `literary.css` rather than the compact inline 
 `/api/newsletter/magic-otp/request` proxy and the same `signIn()` verify path — no duplicated
 backend logic between them.
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
-other pass in this file (no `node_modules` installed this session either, so `tsc --noEmit`
-couldn't run). Verified via `php -l` on every touched/new PHP file and brace/paren-balance checks
-on every touched/new TS/TSX file. This also needs the plugin redeployed (manual zip+upload — no new
-dbDelta table, so no `CULTURE_VERSION` bump, only the plugin header version bump) before
-`/culture/v1/magic-otp/*` exists in production, and `apps/site` needs its own `NEXTAUTH_SECRET`/
-`NEXTAUTH_URL` env vars confirmed set on Vercel for the new `[...nextauth]` route to work there.
-Re-check the full email → code → account-created-or-signed-in → subscribed round trip, on both a
-brand-new email and an existing member's email, in a real environment before considering this fully
-closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ## The Moveee Literary (`/literary`, added September 2026)
 
@@ -1102,9 +1092,7 @@ own oxblood/parchment palette rather than the sitewide tokens, per this vertical
   with a sign-in link added. The comment thread itself (once posted) is always visible to every
   reader regardless of tier — only *posting* is gated, reading isn't. **Not built**: replies/likes
   on individual comments (no such backend concept exists here either, same limitation
-  `ArticleComments.tsx` has). Not visually verified in a browser — same `NEXTAUTH_SECRET`/
-  WordPress credentials gap as every other pass in this file. Verified via a brace/paren-balance
-  check on both new/edited files.
+  *(Not verified live this pass.)*
 
 ### Literary access gating — metered soft-paywall + email/OTP "join the club" box (September 2026)
 
@@ -1234,12 +1222,7 @@ has a slug. Mirrors `/magazine/[slug]`'s `.ar-author` pattern but restyled with 
 palette/type system (`.lit-piece-author-*` in `literary.css`) rather than reusing `.ar-author`
 directly, since `editorial.css` isn't loaded on `/literary` routes at all.
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
-other pass in this file. Verified via a CSS brace-balance check on `literary.css` (235/235) and a
-brace/paren-balance check on `page.tsx` (155/155, 114/114) and `LiteraryPieceGate.tsx` (50/50,
-61/61). Re-check pixel fidelity — the author band's mobile wrap and the gate eyebrow's color
-against the parchment background in particular — in a real environment before considering this
-fully closed.
+*(Not verified live this pass.)*
 
 **Deliberately reuses the existing magazine `post` type — no new CPT, no GraphQL schema
 changes — and, critically, reuses an existing WordPress category rather than inventing one.**
@@ -1445,15 +1428,7 @@ doesn't request the `cultureAccesses` field that gate reads, so it doesn't work 
 — not fixed here, not worth replicating into a new vertical), and any Issue/Volume taxonomy (see
 above — there's nothing to tie to yet).
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
-other pass in this file, and this sandbox additionally had no `node_modules` installed for either
-app during the first pass (not re-checked in this second pass either). Verified by manual
-read-through, a CSS brace-balance check on `literary.css` (157/157), and a diff of every
-`className` referenced across the section's `.tsx` files against every selector defined in
-`literary.css` (no orphaned classes either direction, aside from the expected `is-active`/
-`is-current` dynamic states and `.lit-page` itself). Re-check pixel fidelity against the approved
-mockup and the real logo asset's rendering in a real environment before considering this fully
-closed.
+*(Not verified live this pass.)*
 
 ## Literary About Us + Submissions pages — real copy from The Moveee's editors (September 2026)
 
@@ -1486,162 +1461,34 @@ also added — there was no About page under `/literary` before this.
   Voice/copy constraints entry above) is naturally satisfied by the supplied copy as given; no
   further rewriting was needed beyond adapting it into JSX (headings, lists, `&mdash;`/`&rsquo;`
   entities for the site's existing HTML-entity convention).
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file. Verified via a brace/paren-balance check on all three edited
-  files. Re-check pixel fidelity (long-form copy length may need `.lit-submit-body` spacing
-  tweaks at this volume of content) in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
-## Literary Submissions Manager — WP Admin only, intake stays email (September 2026, SUPERSEDED)
+## Literary Submissions Manager — admin tool, mechanics still current (intake model superseded below)
 
-**Superseded by "Literary Submissions — real payment-integrated online form" further below.**
-This entry originally documented an email-only intake model — kept here for history since the
-manual-logging admin tool it describes is still exactly how it was built; only the intake
-channel changed. If you're looking for how writers actually submit today, skip to that later
-entry.
+`Culture_Literary_Submissions` (`culture-community/includes/admin/class-culture-literary-submissions.php`,
+WP Admin submenu `culture-literary-submissions`) is the editorial tool for tracking a submission
+through decision — fields: writer name/email, section, title, status (Received/In
+Review/Accepted/Rejected/Published), fee status, payment status, assigned reviewer, notes.
+Storage: single `culture_literary_submissions` wp_options row (array), not a table — a small,
+manually-curated list, same pattern as `Culture_Redirects`.
 
-Per explicit user decision: writers keep submitting by emailing `literary@themoveee.com` with
-the section + name in the subject line (`/literary/submit`'s documented convention, e.g.
-"Poetry Submission — Ada Nwosu") — **no new writer-facing form was built**, this is purely an
-internal editorial tool for logging and tracking those emailed submissions through decision.
-No public submissions portal exists as of this entry; if one is ever built, it should write into
-this same storage rather than duplicating it (see "Storage" below).
-
-- **New file**: `culture-community/includes/admin/class-culture-literary-submissions.php`
-  (`Culture_Literary_Submissions`), registered as a submenu under the existing top-level
-  "Culture Community" menu (`admin.php?page=culture-literary-submissions`) — required in
-  `culture-community.php` and initialized in `culture_community_init()`, same wiring as every
-  other admin tool in this plugin.
-- **Storage**: a single `culture_literary_submissions` wp_options row (array of submission
-  objects) — same pattern as `Culture_Redirects` (`culture_redirects` option), chosen over a
-  dbDelta table since this is a small, manually-curated editorial list, not something written
-  at volume by a webhook (contrast with `wp_culture_tickets`, a real table, which is).
-- **Fields tracked per submission**: writer name/email, section, piece title, the raw email
-  subject line, status (Received/In Review/Accepted/Rejected/Published), submission-fee status
-  (Pending/Paid/Waived/N-A), contributor-payment status (Unpaid/Paid), an assigned reviewer (a
-  WP user with `edit_posts`, via `get_users()`), received date, and free-text internal notes.
-- **Terms are hardcoded per section in `Culture_Literary_Submissions::SECTIONS`**, mirroring
-  `/literary/submit`'s real, confirmed policy (see that page's "Real, confirmed policy" note):
-  quarterly sections (Fiction/Poetry/Essays/Conversations/In Translation/Notes) get a $3
-  submission fee, a $15–$25 contributor payment, and a 12-week (84-day) response window; The
-  Moveee Flash gets no submission fee, a flat $10 payment, and a 4-week (28-day) window. **If
-  these figures ever change on the submissions page, update this constant to match** — there's
-  no shared source of truth between the PHP admin tool and the Next.js copy, same caveat as
-  every other PHP/TS duplication called out elsewhere in this file.
-- **Response-time tracking**: `deadline_state()` computes `received_at + response_days` and
-  flags a still-open submission (Received/In Review) as "Overdue" once past that date or "Due
-  soon" within 7 days of it — shown as a colored deadline column in the list table, summarized
-  in a page-header count, and surfaced as a red bubble on the submenu label (the same
-  `awaiting-mod`/`pending-count` WP core CSS classes used for the native comments-pending
-  bubble). A decided submission (Accepted/Rejected/Published) is never flagged, regardless of
-  how old it is.
-- **Subject-line parsing is client-side JS only** (no PHP parsing) — pasting a subject like
-  "Poetry Submission — Ada Nwosu" into the "Email subject line" field on blur/change parses it
-  via a regex accepting any run of dash-like separators — hyphen, en dash, em dash, horizontal
-  bar, minus sign — or a colon (`/^\s*(\w+)\s+submission\s*[-‐‑‒–—―−:]+\s*(.+)$/i`)
-  and pre-fills the Section dropdown
-  and Writer Name field (only if Writer Name is still empty, so it never clobbers a manual
-  edit). Changing the Section dropdown also swaps a small "fee · payment" terms hint and forces
-  the fee-status select to "N/A" (disabled) for Flash, "Pending" otherwise — purely a UX nicety
-  to keep fee data honest, not a hard validation.
-- **Row-level quick actions**: each row has one-click links to jump straight to In
-  Review/Accepted/Rejected/Published (`admin-post.php?action=culture_lit_submission_status`,
-  nonce'd per-row) alongside the full Edit form and a Delete button — mirrors the
-  check-in/cancel quick-action pattern already used in `class-culture-tickets-admin.php`.
-- **CSV export** (`admin-post.php?action=culture_lit_submission_export`) exports whatever the
-  current filters show, same convention as Ticket Sales' own CSV export.
-- **Deliberately out of scope**: no REST endpoints, no frontend/mobile surface, no automated
-  email ingestion (an editor still manually creates each row after reading the email) — this is
-  a manual logging tool, not an inbox parser. If automated ingestion from the literary@ inbox is
-  ever wanted, that's a separate, larger project (an email-parsing webhook/cron), not a small
-  extension of this file.
-- Verified via `php -l` on the new file and on `culture-community.php`. Not deployable-tested
-  against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress-credentials gap as every
-  other pass in this file; this feature additionally needs the plugin redeployed (manual
-  zip+upload, see "Plugin DB table auto-upgrade" above) before it appears in WP Admin — though
-  since it adds no dbDelta table, no `CULTURE_VERSION` bump was needed.
-
-**Follow-up, same month — WordPress push + accept/reject emails.** Two explicit requests, both
-built on top of the manager above without changing its email-only intake or its manual-logging
-posture:
-
-- **Piece content + "Push to WordPress"** — a submission now has a `content` field, edited via a
-  real `wp_editor()` (TinyMCE, `teeny` toolbar — bold/italic/lists/link, matching the ACF
-  wysiwyg treatment given to other short rich-text fields elsewhere in this plugin) in the
-  add/edit form. A row whose status is Accepted or Published gets a **"Push to WordPress"**
-  button (`Culture_Literary_Submissions::push_to_wordpress()`,
-  `admin_post_culture_lit_submission_push`) that creates a real `post` — title, content
-  (`wp_kses_post`'d), status **`draft`** (never auto-published — "processing into publishing"
-  still means an editor finishes it: featured image, final formatting, and the actual Publish
-  click all still happen by hand), category = the existing `literary` category (by slug,
-  `LITERARY_CATEGORY_SLUG = 'literary'`, matching `packages/shared/lib/wp.ts`'s constant of the
-  same name), and a genre tag matching the submission's section (`GENRE_TAG_NAMES` — same label
-  strings as that file's `LITERARY_GENRES[].label`, so the draft lands on the right
-  `/literary/{genre}` archive the moment it's published). **The Moveee Flash gets no genre tag**
-  — there's no dedicated Flash genre page, so a pushed Flash piece surfaces in the main
-  `/literary` feed only, same graceful "untagged post" behaviour that section's own docs already
-  describe.
-  - **Author**: looks up the writer's email against `get_user_by('email', ...)` — if they have a
-    real WP account, the draft is authored as them (a real byline); otherwise the editor doing
-    the push is the author of record until someone reassigns it in the normal post editor. This
-    is a deliberate, documented limitation, not an oversight — there's no guest-author system in
-    this codebase to map an external contributor onto without a WP account.
-  - **Re-pushing is update-in-place, not duplication** — the submission stores `wp_post_id` once
-    a push succeeds; a second push (after the editor pastes further edits into the `content`
-    field) calls `wp_update_post()` against that same post ID instead of creating a new one. The
-    list table's "WordPress" column shows "Edit draft →" (linking to the real post editor) plus
-    "Re-push edits" once linked, or a "Push to WordPress" button before that.
-  - Fails soft with an admin notice, never a fatal, when there's nothing to push (`content`
-    empty) or the `literary` category doesn't exist on the target site.
-- **Accept/reject emails** — `Culture_Emails::send_literary_submission_decision()` (new method,
-  same `get_header()`/`get_footer()` branded-HTML pattern as `send_literary_otp_email()`). Fired
-  from `Culture_Literary_Submissions::maybe_notify_writer()`, called after **both** ways a status can
-  change — the full edit form's `handle_save()` and the list table's one-click quick-status
-  links (`handle_quick_status()`) — **only on an actual transition into `accepted`/`rejected`**,
-  never on every save; editing notes/reviewer/etc. without touching status can't re-fire it. Only
-  sends when the submission has a `writer_email` on file — if not, the status change still
-  applies but an admin notice ("wasn't notified") tells the editor to follow up manually instead
-  of the email silently never going out. The acceptance email references the section's real
-  payment terms (`payment_label`, e.g. "$15–$25" or "$10 flat") pulled from the same `SECTIONS`
-  constant the rest of the manager already uses — **if those figures ever change on
-  `/literary/submit`, update `SECTIONS` here too**, same cross-file caveat as everywhere else
-  fee/payment terms are duplicated in this codebase.
-- Verified via `php -l` on both edited files. Not deployable-tested against a live WordPress
-  instance or a real mail transport — same gaps as above. Re-check the full push → re-push →
-  publish round trip and both email sends against a real inbox before considering this closed.
-
-**Follow-up, same month — accept/reject email content is now WP Admin-editable.** Both emails'
-subject/heading/body/button were moved onto the plugin's existing admin-configurable
-`Culture_Email_Templates` system (`class-culture-email-templates.php` — the same mechanism
-already used for the welcome/referral/payment-receipt/grace-period/downgrade/event-RSVP emails)
-as two new template slugs, **`literary_accepted`** and **`literary_rejected`**, editable at
-**WP Admin → Culture Community → Email Templates** (a `wp_editor()` WYSIWYG for the body, plain
-text fields for subject/header-heading/button-text, a merge-tag reference table, and a
-"Reset to Default" button — same UI every other template in that list already uses). Storage:
-`wp_options` rows `culture_email_tpl_literary_accepted`/`culture_email_tpl_literary_rejected`
-(only written once an admin actually saves a customization — an unedited template keeps
-rendering the code-defined default with no options row at all).
-- **Merge tags**: `{writer_name}`, `{piece}` (the title in curly quotes, or literally "your
-  piece" if the submission has no title — computed in PHP before merging, not something an
-  admin can express in the editor), `{section}`, and (accepted only) `{payment_label}`.
-  `send_literary_submission_decision()` in `class-culture-emails.php` now just builds this
-  merge-tag map and calls `Culture_Email_Templates::get_template()`/`::merge()` — identical
-  shape to `send_referral_confirmation()`/`send_payment_receipt()` in the same file.
-  **This is a straight rewire, not a new mechanism** — the actual copy (both subject lines,
-  both `<h1>` headings, both bodies) is unchanged from the hardcoded version, now stored as
-  each template's `default_*` fields so a fresh install without any admin customization sends
-  byte-for-byte the same emails as before.
-- Both templates render through a live CTA button (new — the hardcoded version had none),
-  labelled "Visit The Moveee Literary" by default and linking to `{frontend_url}/literary`
-  (`Culture_Emails::get_frontend_url()`, the same Next.js-frontend-not-WordPress URL every
-  other templated email's button already points at).
-- **If accept/reject copy is ever wrong or needs a wording change, this is now the one place to
-  fix it** — don't go back to editing `send_literary_submission_decision()`'s PHP for a pure
-  copy change; that method should only need touching again if the merge-tag set itself changes.
-- Verified via `php -l` on both edited files. Not deployment-tested against a live WP Admin
-  (can't render `wp_editor()`/save a real option from this sandbox) or a real mail transport —
-  same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file. Re-check
-  that the Email Templates admin page actually lists and edits both new tabs, and that a saved
-  customization actually reaches a real accept/reject email, in a live environment.
+**The original email-only intake this section described (writers emailing
+`literary@themoveee.com`) is superseded by the real payment-integrated form below — skip there
+for how writers submit today.** The admin tool's mechanics below are still current and are reused
+by that form:
+- **`Culture_Literary_Submissions::SECTIONS`** hardcodes fee/payment/response-window terms per
+  section, mirroring `/literary/submit`'s real policy copy — **no shared source of truth**; if
+  those figures ever change on the submissions page, update this constant too.
+- **"Push to WordPress"** (Accepted/Published rows only) creates a real `draft` post (never
+  auto-published) in the `literary` category with a genre tag matching the section — re-pushing
+  updates the same post via its stored `wp_post_id`, never duplicates. Author is the writer's own
+  WP account if their email matches one, else the editor doing the push (no guest-author system
+  exists).
+- **Accept/reject/received emails** are WP Admin-editable templates (`literary_accepted`,
+  `literary_rejected`, plus `literary_received` from the form below) via the existing
+  `Culture_Email_Templates` system — fix wording there, not in PHP, unless the merge-tag set
+  itself changes. Merge tags: `{writer_name}`, `{piece}`, `{section}`, `{payment_label}`.
+  Fires only on an actual status transition into accepted/rejected, never on every save.
 
 ## Literary Submissions — real payment-integrated online form replaces email intake entirely (September 2026)
 
@@ -1837,13 +1684,7 @@ barrier at all, so verifying real ownership of an email address is the only gate
   different email" link inside the code step) appended to `apps/site/app/literary.css`'s
   existing `.lit-form-*` block — same `--lit-*` token palette, no new tokens.
 - Verified via `php -l` on the edited PHP file and a brace/paren-balance check on all three
-  edited/new TS/TSX files and `literary.css`. **Not deployment-tested** — same
-  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this change
-  additionally needs the plugin redeployed before `verified_token` enforcement takes effect in
-  production (the class file itself has no new dbDelta table, so no `CULTURE_VERSION` bump was
-  needed for this follow-up specifically). Re-check the full email → code → submit round trip
-  for all three fee branches (Flash, waiver, paid) in a real environment before considering this
-  closed.
+  *(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 **Route renamed to `/literary/submit/form` (September 2026, follow-up)** — the submission form
 originally shipped at `/literary/submit/new`; moved (`git mv`) to `/literary/submit/form` per
@@ -1870,13 +1711,7 @@ path rename, same pattern as the `/shop` → `/lifestyle` rename elsewhere in th
   is ever wanted for Nigerian writers, add a currency toggle to the form — the backend routing
   is already there.
 - Verified via `php -l` on all five touched/new PHP files and a brace/paren-balance check on
-  the new TS/TSX files and `literary.css` (330/330). **Not deployment-tested** — same
-  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file, and this
-  feature additionally needs the plugin redeployed (the new table only gets created via
-  `culture_community_maybe_upgrade()`'s version-bump check — see "Plugin DB table
-  auto-upgrade" above) and real Paystack/Stripe keys configured before a real payment can be
-  tested end to end. Re-check the full paste → pay → webhook → confirmation round trip (both
-  gateways) and a waiver-code redemption in a real environment before considering this closed.
+  *(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ## Literary "Browse by Section" + Submissions cover — colourful illustrated covers, no more abbreviations (September 2026)
 
@@ -1905,9 +1740,7 @@ unillustrated flat gradient with cryptic text. Fixed:
   on `main` in the meantime — filters the homepage's own pools to pieces published on/after a
   fixed date, see its own code comment in `app/literary/page.tsx`) — no conflict in intent, just
   two branches touching the same file.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file. Verified via brace/paren-balance checks on
-  `LiteraryGenreArt.tsx`, `LiteraryShelf.tsx`, `literary/page.tsx`, and `literary.css`.
+- *(Not verified live this pass.)*
 
 **`LITERARY_HOMEPAGE_CUTOFF` extended to every `/literary` listing, not just the homepage, and
 moved into `wp.ts` (September 2026, follow-up).** Per explicit request, the fixed
@@ -2037,15 +1870,7 @@ cleaning up the assumed `"commons"` category slug if WP Admin's real slug differ
 first if the feed ever comes back empty despite content existing in WP Admin under a category
 that reads "Commons".
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-every other pass in this file, and no `node_modules` installed this session so `tsc --noEmit`
-couldn't run either. Verified via brace/paren-balance checks on every new/edited file
-(`commons.css`, `commons/page.tsx`, `commons/[slug]/page.tsx`, `commons/layout.tsx`,
-`CommonsMasthead.tsx`, `CommonsFooter.tsx`, `CommonsLogo.tsx`, `CommonsPieceCard.tsx`,
-`magazine/[slug]/page.tsx`, `sitemap.ts`, `wp.ts`) and a repo-wide grep confirming no other
-file defines a colliding `.comm-*` CSS class or a colliding `Commons*`/`getCommons*` export.
-Re-check pixel fidelity against the approved Artifact mockup, and confirm the real `"commons"`
-category slug in WP Admin, in a real environment before considering this fully closed.
+*(Not verified live this pass.)*
 
 **Commons-qualifying posts excluded from every `/magazine` and homepage listing (September
 2026, follow-up).** Per explicit request — a Commons post's single-page URL already redirected
@@ -2071,8 +1896,7 @@ single-page redirect) before rendering:
   just hits the existing redirect to `/commons/{slug}`, not a rendered page) and `sitemap.ts`
   (already excludes category-based Commons pieces from `articleUrls`, per the routing commit
   referenced above — no further change needed there).
-- Not visually verified in a browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
-  other pass in this file. Verified via brace/paren-balance checks on all four touched files.
+- *(Not verified live this pass.)*
 
 ## Moveee Magazine content gate — swapped to the same magic-code system as /literary (September 2026)
 
@@ -2141,13 +1965,7 @@ parallel token system.
   exactly as before on `/directory/[slug]` (both `apps/site` and `apps/connect`) and the newsletter
   single-issue reader (`/newsletter/[slug]`, `IssueReaderClient.tsx`) — those were never in scope for
   this change and still show the original sign-in/sign-up wall.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as every
-  other pass in this file (this feature additionally needs the plugin redeployed — see "Plugin DB
-  table auto-upgrade" — before `verify-code`'s new `context` param takes effect in production).
-  Verified via `php -l` on both touched PHP files and brace/paren-balance checks on every touched
-  TS/TSX file and `editorial.css`. Re-check the full request-code → verify-code → remainder-fetch
-  round trip against a real member-only and a real patron-only article, logged out, in a real
-  environment before considering this fully closed.
+- *(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ## Process: adding a new newsletter
 
@@ -2935,21 +2753,13 @@ Two Vercel projects, one monorepo:
 
 Both share `cms.themoveee.com` (WordPress) as the backend.
 
-### SUPERSEDED: `/magazine`-as-root swap / old `/app` detour (August 2026, replaced same month)
+### `MagazineArchiveWrapper`'s `edition` prop — scope (August 2026)
 
-Everything this entry used to describe — `/` temporarily rendering the Magazine archive, the old
-homepage parked at `/app`, the geo-redirect being disabled for that period — is **gone**. The
-"Homepage + site-wide header/footer — full rebuild onto the 'WePresent concept'" entry above is
-the current, real state: `/` now renders the real new homepage directly, `/app` was deleted, and
-edition detection (`moveee-edition` cookie → `x-vercel-ip-country` header → `editionFromCountry()`)
-moved into `apps/site/app/page.tsx` itself rather than being threaded through
-`MagazineArchiveWrapper`'s `edition` prop for the front page specifically. `MagazineArchiveWrapper`
-still accepts and uses an `edition` prop for its own callers (`/magazine`, `/magazine/uk`, etc. can
-still pass one) — that prop was never removed, just no longer driven by `/` itself. The `/` → `/uk`
-`/us` `/africa` geo-redirect in `proxy.ts` is **still disabled** (unrelated to this swap — see the
-Play Store gating this was always tied to), so nothing about that part changed. Kept this entry
-(rather than deleting it outright) since the git history and any external links referencing "the
-temporary swap" should resolve to an explanation, not a silent gap.
+`/` renders the real homepage directly (edition detection — `moveee-edition` cookie →
+`x-vercel-ip-country` header → `editionFromCountry()` — lives in `apps/site/app/page.tsx` itself).
+`MagazineArchiveWrapper` still accepts an `edition` prop for its own callers (`/magazine/uk` etc.).
+The `/` → `/uk`/`/us`/`/africa` geo-redirect in `proxy.ts` is still disabled (tied to Play Store
+gating, unrelated).
 
 `MagazineArchiveWrapper`'s `edition` prop only affects the **default, unfiltered view's main story
 pool** (hero + "More This Week" row + Featured Stories band) — when set to `uk`/`us`/`africa`, that
@@ -3026,16 +2836,9 @@ convention as the main header logo swap. No footer-logo conflict here (unlike th
 logo) — the shared `Footer.tsx` doesn't reference either lifestyle file, so there was no
 "leave X untouched" constraint to observe on this one.
 
-**Not visually verified in a browser** — no `node_modules` installed in this session
-(recurring sandbox gap noted throughout this file), so `tsc --noEmit` couldn't run;
-verified instead via a repo-wide grep confirming `Header.tsx` line ~221 is the only
-`logo-lifestyle-*` reference before and after the edit.
+*(Not verified live this pass.)*
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-every other pass in this file. Verified via a repo-wide grep confirming no other consumer of
-the old filenames was missed, and `tsc --noEmit` (only pre-existing, unrelated errors —
-missing `@types/node`, `@vercel/kv`, Next.js `fetch`'s `next` option — none touching
-`Header.tsx`/`SearchOverlay.tsx`/`header.css`).
+*(Not verified live this pass.)*
 
 ### Site A floating header pill — reduced radius, full-width, bigger mobile logo (September 2026)
 
@@ -3070,13 +2873,7 @@ on scroll, solid blurred pill elsewhere) is unchanged, only its shape/sizing:
   back the extra horizontal room the bigger logo takes, so all three icons (search/cart/menu)
   still fit down to a 320px-wide viewport — same reasoning the original 22px shrink documented.
   Desktop logo size/padding are untouched (the user's ask was mobile-specific).
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file, and no `node_modules` installed this session so `tsc --noEmit`
-  couldn't run either. Verified via a CSS brace-balance check on `header.css` (83/83, balanced)
-  and a manual read-through of `.toolbar-icon`'s fixed `32px` box to confirm the mobile
-  logo-height claim above. Re-check pixel fidelity — especially the wide-viewport pill spanning
-  the full 1328px column, and the mobile icon spacing at a 320px viewport — in a real environment
-  before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ## Connect App build phases
 
@@ -3154,13 +2951,7 @@ mobile-only or web-only wrapper alone, or the two clients will drift.
   route.ts` and `app/api/user/interactions/route.ts` already calling `getServerSession()`
   successfully on this app. Checkout works the same way — no proxy/cross-domain session bridging
   needed, a Site B login just works here too.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file (checkout additionally needs live Paystack/Stripe keys and a
-  Woo shipping zone configured to test the hosted-redirect round trip end to end). Verified via
-  `tsc --noEmit` (clean) on both `apps/site` and `apps/connect`, and `php -l` on the touched PHP
-  file. Re-check the full address → totals → pay → webhook → order-confirmation round trip in a
-  real environment (including the Paystack NGN path specifically, since `resolve_shop_currency()`
-  keys off a raw `country` string match) before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### "The Moveee Lifestyle" identity wired into the real `/shop` archive (September 2026)
 
@@ -3221,16 +3012,7 @@ visual identity changed.
   card instead. Added `moveeeMeta` to `ShopArchiveWrapper.tsx`'s extra-data merge (it was already
   being fetched by `GET_PRODUCTS_EXTRA`'s `PRODUCT_EXTRA_TYPE_FIELDS`, just never copied onto
   the merged product object before this pass).
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  (and no `node_modules` installed) as every other mockup-to-real pass in this file; also
-  couldn't verify that "Bricolage Grotesque" resolves via this exact Next.js version's
-  `next/font/google` (it's a real, long-established Google Font, expected to work, but
-  unconfirmed against this repo's actual Next.js version). Verified via a CSS brace-balance
-  check on both `shop.css` (609/609) and the new `shop-lifestyle.css` (75/75), a
-  parens/braces-balance check on `ShopArchiveWrapper.tsx`, and a full read-through confirming
-  every `lfs-*` class referenced in the JSX has a matching CSS rule. Re-check pixel fidelity
-  against the approved mockup, and confirm the mobile category-dropdown panel doesn't overflow
-  a narrow viewport, in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### The Moveee Lifestyle becomes a fully standalone mini-site — own header + footer, every `/shop/*` route (September 2026, follow-up)
 
@@ -3374,117 +3156,33 @@ proven for The Moveee Literary (`LiteraryMasthead.tsx`/`LiteraryFooter.tsx`, `He
   archives, the product detail page, checkout, order confirmation, and The Edit) now uses the
   identity's Bricolage Grotesque display face; only intentional editorial-serif body copy and
   confirmed-dead CSS remain on the old face.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file. Verified via CSS brace-balance checks (`shop-chrome.css` 53/53,
-  `shop.css` 608/608, `shop-lifestyle.css` 75/75) and a full read-through confirming: `Header.tsx`
-  has no leftover `ShopSearchModal`/`isLifestylePage` references, `ConditionalFooter.tsx`'s new
-  `isShopPath()` matches the existing `isLiteraryPath()` shape exactly, `CartDrawer` (mounted
-  independently at the root layout, not inside `Header.tsx`) still renders on `/shop` so the bag
-  icon's `openDrawer()` call has something to open, and no page under `/shop` imports `Header`/
-  `Footer` directly. Re-check pixel fidelity against the approved mockup — the masthead's category
-  dropdown, the ticker, and the footer's three link columns in particular — in a real environment
-  before considering this fully closed.
+- *(Not verified live this pass.)*
 
-### Shop hero photo + product grid corrected to match the mockup exactly (September 2026)
+### Shop hero + product grid — current state (September 2026)
 
-Two real fidelity bugs, both user-reported directly from a live screenshot: the hero was still
-using a product photo as its background, and the product grid didn't resemble the approved
-identity mockup at all.
+`.lfs-hero` (`ShopArchiveWrapper.tsx`) always renders a fixed brand photo,
+`apps/site/public/shop-hero.jpg` — **never** a per-product image; swap the file at that path if it
+ever needs replacing, don't reintroduce a per-pick background. Current sizing: `aspect-ratio
+16/9`, `min-height 320px`, `max-height 460px` (mobile `max-height 420px`, portrait `4/5` ratio
+unchanged). Its scrim (`.lfs-hero-scrim`) uses a radial spotlight plus **two** linear gradients,
+top- and bottom-anchored — a single bottom-anchored gradient alone left a washed-out white gap at
+the top edge. **General lesson: a radial-plus-single-direction-linear scrim can leave a real gap
+at whichever edge the linear gradient doesn't cover — check every edge, not just the one nearest
+the text.**
 
-- **Hero background was never fixed** — despite being told not to, `.lfs-hero` in
-  `ShopArchiveWrapper.tsx` rendered `heroPick.image.sourceUrl` (whatever product happens to be the
-  current Editor's Pick) as the full-bleed hero background, effectively turning the hero into an
-  ad for one item. **Fixed**: the hero now always renders a fixed brand photo,
-  `apps/site/public/shop-hero.jpg` (a boutique/maker-studio interior shot, supplied directly by
-  the user), never a product image. If this photo is ever replaced, swap the file at that same
-  path — don't reintroduce a per-product/per-pick background.
-- **Product grid was still the old, pre-identity "Monocle-style" design** — individually rounded
-  (`--radius-xl`) + gapped (32px/26px) cards, portrait captions below a square image, a plain-text
-  "Add to Cart →" link. The identity mockup (`moveee-lifestyle-identity.html`'s `.prod-grid`)
-  specifies a completely different, flat trade-catalog grid: one bordered/radiused **outer**
-  container, cards butted flush against each other with only a 1px hairline between them (a
-  `background` colour showing through a 1px grid `gap`, not individual card borders/shadows), a
-  padded caption body with the price row pinned to the card's bottom behind a hairline
-  `border-top`, and a small floating circular "+" quick-add button bottom-right of the photo
-  (hover-reveal on desktop, always visible on touch — same convention as every other
-  hover-revealed control in this codebase). Rebuilt `ShopProductGrid.tsx` and the
-  `.sl-product-grid`/`.sl-pcard*` rules in `shop.css` to match this exactly: `grid-template-columns:
-  repeat(auto-fit, minmax(230px, 1fr))` with a 1px `background`/`border` hairline grid (no more
-  fixed 4-column/3-column/2-column breakpoint overrides — auto-fit already reflows correctly, same
-  as the mockup, which has no breakpoint rules for this grid at all), `.sl-pcard-price-row` with
-  `border-top` + a strikethrough "was" price beside the ochre "now" price when a Pro price applies,
-  and `.sl-pcard-quickadd`/`.sl-pcard-quickadd-btn` (a circular button, reusing `AddToCartButton`
-  which gained an optional `children` override for this — previously hardcoded to always render
-  "Add to Cart →" text).
-- **Follow-up, same day — the first pass still didn't match the mockup's card content/behavior,
-  caught by actually screenshotting the mockup in Chromium (`playwright`, a local `file://` load —
-  no network needed since it's a self-contained HTML file with base64-embedded images) instead of
-  only reading its CSS.** Three concrete mismatches, all now fixed in `ShopProductGrid.tsx`/
-  `shop.css`:
-  1. **Quick-add button defaulted to `opacity: 0`** (hover-only, invisible until moused over) —
-     the mockup's own CSS has it at `opacity: .85` by default, brightening to `1` + `scale(1.08)`
-     on hover. It's meant to be always faintly visible, not hidden.
-  2. **Price row order and content were backwards.** The mockup renders the strikethrough
-     original price *first*, then the discounted price *second* with "Pro" baked directly into
-     that string (`Pro ₦60,750.00`, one span) — mine rendered the discounted price first with no
-     "Pro" prefix and the strikethrough price second.
-  3. **The middle meta line (between title and price) was dropped for products with no reviews**
-     — previously conditional (`{hasReviews && <p>...</p>}`), so a product with zero reviews had
-     nothing there at all, losing the card's vertical rhythm. The mockup always renders something
-     in that slot (its own demo data uses a static "INDEX 00X · New listing" caption). Fixed to
-     always render: real `★ rating (count)` when reviews exist, else a "New listing" fallback —
-     matching this codebase's own pre-existing documented convention for the pre-identity grid,
-     which had the same fallback and was lost in the rebuild.
-  Verified via a Playwright screenshot of `moveee-lifestyle-identity.html`'s "04 — Application"
-  section (the real page-layout mockup, not the earlier "01 — Mark"/"02 — Palette" brand-guide
-  frames at the top of the same file, which are a different part of the document) and a direct
-  read of its `.prod-card`/`.prod-price-row` HTML to get the exact markup shape.
-- **Lesson, stated directly by the user and worth internalizing**: "implement exactly as is in the
-  mockup" means literally — don't leave old-design classes/values in place under a plausible-
-  sounding excuse, and don't substitute a provided asset for something else (a product photo,
-  a stock photo, anything) without checking whether the user already supplied the real one. The
-  photo in this case had been supplied earlier in the session and was sitting unused in the
-  session scratchpad the whole time — always check there before assuming an asset doesn't exist.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap, and
-  no `node_modules` installed this session so `tsc`/`next build` couldn't run either. Verified via
-  a CSS brace-balance check on `shop.css` (611/611) and a manual read-through of the new grid JSX
-  against the mockup's own `.prod-grid`/`.prod-card`/`.prod-price-row` CSS. Re-check pixel fidelity
-  against the approved mockup in a real environment before considering this fully closed.
+The product grid (`ShopProductGrid.tsx`/`.sl-product-grid`/`.sl-pcard*` in `shop.css`) is a flat
+trade-catalog layout matching `moveee-lifestyle-identity.html`'s `.prod-grid` exactly: one
+bordered/radiused outer container, cards butted flush with only a 1px hairline between them (no
+individual card borders/shadows), `grid-template-columns: repeat(auto-fit, minmax(230px, 1fr))`
+(no breakpoint overrides needed), a circular "+" quick-add button bottom-right of the photo at
+`opacity: .85` by default (not hover-only — always faintly visible, full opacity + scale on
+hover), and a price row showing the strikethrough original price first, then "Pro ₦X" second when
+a Pro price applies. The middle meta line always renders something (`★ rating (count)` or a "New
+listing" fallback) so cards with no reviews don't lose their vertical rhythm.
 
-### Shop hero — washed-out "white gap" at the top of the photo fixed (September 2026)
-
-User-reported from a live screenshot: a visible band of white/blown-out space at the very top of
-`.lfs-hero` (right where the photo meets the masthead), noticeably lighter than the bottom of the
-same hero. This was never a layout/spacing bug — there is no extra DOM element or margin between
-`ShopHeader`'s `.masthead` and `ShopArchiveWrapper.tsx`'s `<section className="lfs-hero">` (they're
-adjacent siblings, confirmed by reading both files directly); `shop.css`/`shop-lifestyle.css` both
-already document that no `--header-clear` spacer is used here since `ShopHeader` renders in normal
-document flow. The real cause was `.lfs-hero-scrim`'s gradient coverage in `shop-lifestyle.css`:
-the radial spotlight faded to as low as `.1` opacity at its outer edge, and the only linear
-gradient (`linear-gradient(0deg, rgba(...) 0%, transparent 55%)`) only darkens the **bottom** half
-of the section (needed to keep the trust line legible) — the top strip of the hero photo had
-almost no oxblood tint over it at all, so a bright section of `/shop-hero.jpg` (the boutique
-interior) showed through there, reading as a blank white gap under the header.
-
-Fixed by adding a mirrored top-anchored `linear-gradient(180deg, rgba(122,36,28,.3) 0%,
-rgba(122,36,28,0) 45%)` and raising the radial gradient's two outer stops (`.22`→`.34`,
-`.1`→`.26`) so the scrim reads as one even wash top-to-bottom instead of a vignette with a
-blown-out edge. The bottom-anchored gradient is unchanged — it's still what makes the trust-line
-copy legible. **If a future hero/scrim-over-photo section shows the same "one edge looks washed
-out" symptom, check whether its gradient stops actually cover every edge of the section, not just
-the one nearest the text** — a radial-plus-single-direction-linear combo can leave a real gap.
-Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a
-browser — same `NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
-
-### Shop hero — height reduced (September 2026)
-
-`.lfs-hero` shrunk per explicit user request: `aspect-ratio` `16/7` → `16/9`, `min-height`
-`420px` → `320px`, `max-height` `600px` → `460px`; the mobile (`max-width: 640px`) override's
-`max-height` went `560px` → `420px` (its `aspect-ratio: 4/5` portrait ratio was left as-is —
-only the cap shrunk). The scrim/gradient fix documented in "Shop hero — washed-out 'white gap'"
-above is unaffected — it targets coverage, not the section's size. Verified via a CSS
-brace-balance check on `shop-lifestyle.css` (75/75). Not visually verified in a browser — same
-`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
+**Lesson worth keeping**: "implement exactly as in the mockup" means literally — don't leave
+old-design values in place under a plausible-sounding excuse, and check the session scratchpad for
+an already-supplied asset before substituting a stock/placeholder one.
 
 ### `/makers` brought onto the Moveee Lifestyle standalone chrome (September 2026)
 
@@ -3527,9 +3225,7 @@ swap) and the sitewide dark `Footer.tsx` — that's gone now.
   `.maker-stat-num`/`.maker-products-count`'s CSS is untouched/still real (the former still
   renders "Maker since"/rating, the latter is now dead, kept per convention).
 
-Not visually verified in a browser — no `node_modules` installed this session. Verified via
-paren/brace-balance checks on `Header.tsx`, `ConditionalFooter.tsx`, `makers/layout.tsx`, and
-`makers/[slug]/page.tsx`, and a CSS brace-balance check on `makers.css` (92/92).
+*(Not verified live this pass.)*
 
 **Production build failure, fixed same month — duplicate `next/font/google` call broke the
 Vercel build.** A real production deploy failed at `next build` (Turbopack) with `Module not
@@ -3582,39 +3278,17 @@ taller than their content needed, per explicit user request. Implemented in
   uppercase label, `rgba(243,236,224,.65)`. **If a similar low-contrast/invisible-text report ever
   comes up on a dark band, grep for the class first** — an element with no matching CSS rule
   anywhere is exactly this bug, not a color-token mismatch.
-- Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
-  brace-balance checks (`shop.css` 612/612, `shop-lifestyle.css` 75/75) and a paren/brace-balance
-  check on `ShopArchiveWrapper.tsx`.
+- *(Not verified live this pass.)*
 
-### Lifestyle product grid — "Recent" label + divider removed, hero-to-grid gap tightened (September 2026)
+### Lifestyle product grid header — current state (September 2026)
 
-Per explicit user request, so a glimpse of the grid shows within the hero's own viewport height:
-`ShopProductGrid.tsx`'s `.sl-grid-header` block (the "Recent"/active-filter label row + its
-hairline divider, directly above the grid) was removed from the JSX entirely — `isFiltered`/
-`activeLabel` props are still passed by `ShopArchiveWrapper.tsx` but no longer read inside this
-component (harmless — this repo's `tsconfig.json` doesn't enable `noUnusedParameters`). `.sl-grid`'s
-top padding was cut from `80px`/`48px` (mobile) to `24px`/`16px` — its bottom padding is unchanged,
-so the section still has its usual closing breathing room, only the gap right under the hero
-shrank. `.sl-grid-header`/`.sl-grid-label` CSS is now dead, kept per this file's usual convention.
-Not visually verified in a browser — no `node_modules` installed this session. Verified via CSS
-brace-balance (612/612) and paren/brace-balance on `ShopProductGrid.tsx`.
-
-### Lifestyle product grid — "All Products" → "Recent", product counts removed (September 2026)
-
-Two explicit user changes to `ShopProductGrid.tsx`/`ShopSearchModal.tsx`:
-
-- The grid header's default (unfiltered) label changed from **"All Products"** to **"Recent"**
-  — the filtered case (`isFiltered ? activeLabel : ...`) is unchanged, so a category/tag/brand
-  view still shows its own label.
-- **Every visible product-count display on the page was removed**, not just this one: the grid
-  header's `— {filtered.length} pieces` count span, and `ShopSearchModal.tsx`'s filter-panel
-  footer button, which changed from `` `View {resultCount} Results` `` to a plain **"Show
-  Results"** with no number. `resultCount` itself is still computed in `ShopFilterContext.tsx`
-  and carried on the `shopFiltersBus.ts` meta type — left in place since removing the field
-  entirely would mean touching the shared type for no functional benefit, it's just no longer
-  rendered anywhere. `.sl-grid-count`'s CSS in `shop.css` is now dead, kept per this file's usual
-  "leave it in case needed again" convention. Not visually verified in a browser — no
-  `node_modules` installed this session. Verified via paren/brace-balance checks on both files.
+`ShopProductGrid.tsx`'s grid header (`.sl-grid-header`) shows no divider and no product count
+anywhere on the page — label is **"Recent"** by default (`isFiltered ? activeLabel : "Recent"`),
+`ShopSearchModal.tsx`'s filter-panel footer button reads plain **"Show Results"** with no number.
+`isFiltered`/`activeLabel`/`resultCount` props are still passed/computed but unused for display
+(harmless — kept so the shared types don't need touching for no functional benefit). `.sl-grid`
+top padding is `24px`/`16px` (mobile) — tightened so the grid shows within the hero's own
+viewport height. `.sl-grid-label`/`.sl-grid-count` CSS is dead, kept per the usual convention.
 
 ### The Moveee Lifestyle route renamed from `/shop` to `/lifestyle` (September 2026)
 
@@ -3683,292 +3357,55 @@ copy changed; renaming every internal identifier too would have been a much larg
 cosmetic diff for no functional or SEO benefit. The `/shop-hero.jpg` public asset path is
 unrelated (a static image filename, not a route) and was never touched.
 
-Not visually verified in a browser — no `node_modules` installed this session. Verified via
-paren/brace-balance checks across every touched `.tsx`/`.ts` file and CSS brace-balance checks on
-`header.css` (83/83), `getmelit.css` (65/65), `shop.css` (612/612), `shop-chrome.css` (61/61), and
-`shop-lifestyle.css` (75/75) — all unchanged from before this pass, confirming no CSS rule was
-accidentally clipped by the file move. Re-check the `/shop` → `/lifestyle` redirect and every
-renamed metadata title in a real environment before considering this fully closed.
+*(Not verified live this pass.)*
 
-### Shop masthead nav — Shop/Makers dropped, Magazine added (September 2026)
+### Shop masthead — current nav/categories/bridge state (September 2026)
 
-`.mast-nav` (the small text-link row moved next to the icons in "Shop masthead — nav moved next
-to the icons + a real Categories menu re-added" above) changed from Shop/The Edit/Makers to just
-**The Edit** and **Magazine** — Shop was removed since `/shop` is already the page the header
-sits on, Makers was dropped per explicit request, and Magazine is a brand-new destination linking
-out to `https://themoveee.com` (Moveee Magazine's own homepage, not back into any `/shop/*`
-route). Not visually verified in a browser — no `node_modules` installed this session. Verified
-via a paren/brace-balance check on `ShopHeader.tsx`.
+Settled after several iterations — this is the final state, don't re-derive from superseded
+intermediate layouts if you see references to them in git history. `ShopHeader.tsx`'s
+`.masthead-row` (max-width `1240px`, header-specific — the rest of `/shop` stays `1440px`):
+`.mast-left` holds the logo + `.mast-cat-nav` (plain inline links, one per fetched category, no
+dropdown/panel); `.mast-right` holds `.mast-nav` (destination links Edit/Magazine only — Shop and
+Makers were dropped) + `.mast-icons`. **Real category filtering lives exclusively in
+`ShopSearchModal`** — the header's old Categories dropdown and the archive page's own separate
+"Browse ▾" bar (`.lfs-nav-wrap`) were both removed as duplicates of it; don't reintroduce either.
+Superseded dropdown/`<details>` CSS (`.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`,
+`.lfs-nav*`/`.lfs-cat*`) is dead, left in place per the "kept in case needed again" convention.
 
-### Shop Magazine bridge — "Explore Origins Journal" link removed (September 2026)
+Also current: the email-capture band (`.lfs-email`) is ochre-background with white text/pill, not
+grey; the single-maker "Meet the Maker" spotlight section is removed entirely; the Magazine bridge
+(`.sl-bridge`) shows one CTA ("Read The Edit →"), not two.
 
-The `.sl-bridge` ("From The Magazine" band, between the hero and the product grid) used to show
-two CTAs side by side — "Read The Edit →" (`/magazine`) and "Explore Origins Journal →"
-(`/journeys`). The second link was removed at explicit user request; `.sl-bridge-links` now holds
-just the one CTA (its CSS is a plain flex row with `gap`, so it degrades cleanly to a single
-child with no layout changes needed). Not visually verified in a browser — no `node_modules`
-installed this session. Verified via a paren/brace-balance check on `ShopArchiveWrapper.tsx`.
+### Lifestyle Edit closing bridge — current state (September 2026)
 
-### Shop header — Categories dropdown removed (September 2026)
+The `.sl-origins` band (closing "The stories behind the objects" section) has no eyebrow label
+above its heading (`.sl-origins-label` CSS is dead, kept per convention) and a shorter image —
+`min-height` `320px` desktop (was `480px`), `200px`/`160px` at the `900px`/`640px` breakpoints.
 
-`ShopHeader.tsx`'s desktop "Categories" dropdown nav and its mobile hamburger-style icon
-disclosure (both rendering the same `categoryList` of category `<Link>`s) were removed at
-explicit user request, since `ShopSearchModal` (opened by the header's search icon) already
-provides category filtering as a real facet — the header's own dropdown was a pure duplicate.
-The `categories` fetch/state was removed along with it (the `categoryList` JSX is now gone
-entirely); the `proDiscountPercent` fetch from the same `/api/shop/categories` response is kept,
-since the ticker's "Moveee Pro saves {proDiscountPercent}% storewide" line still needs it. The
-`.mast-cat*`/`.mast-filter` CSS rules in `shop-chrome.css` were left in place, unused, per this
-file's usual "kept in case needed again" convention — confirmed via grep that nothing else in
-`apps/site` references them. **Category filtering on `/shop` now lives exclusively inside
-`ShopSearchModal`** — if a future pass wants an on-page category control again, don't
-reintroduce it in the header; either add it back there deliberately or extend the modal.
+### Shop footer — top padding (September 2026)
 
-### Shop archive — "Browse" category-nav bar removed (September 2026)
+`ShopFooter.tsx` has top padding in **two places, additively** — `.lfs-foot` itself (`40px`, added
+on top of) and the nested `.lfs-foot-inner` (`24px`/`20px`/`18px` across breakpoints). If the
+footer's total top gap ever looks off, check both rules, not just one.
 
-The `.lfs-nav-wrap`/`.lfs-nav` bar directly under the masthead on `/shop` (a "Browse ▾"
-category dropdown + mobile `<details>` disclosure + a section label, sitting above the hero)
-was removed entirely from `ShopArchiveWrapper.tsx`'s JSX at explicit user request — not hidden,
-deleted. This is the same page-level category control the header's own Categories dropdown was
-removed for earlier (see "Shop header — Categories dropdown removed" above) — category filtering
-on `/shop` now lives exclusively inside `ShopSearchModal`. `categories`/`isFiltered`/
-`activeLabel` are all still computed and used elsewhere in the file (passed into
-`ShopFilterProvider`/`ShopProductGrid`), so no other cleanup was needed. The `.lfs-nav*`/
-`.lfs-cat*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept in
-case needed again" convention.
+### Lifestyle Shop archive — filter architecture (still current)
 
-### Shop email-capture band recolored to match the mockup; Maker Story section removed (September 2026)
+`apps/site/app/shop/ShopArchiveWrapper.tsx`'s product grid uses a shared React Context
+(`components/ShopFilterContext.tsx`, `ShopFilterProvider`/`useShopFilter()`) rather than one
+combined component, since the mockup's filter control and product grid aren't adjacent in the
+page (other sections sit between them). `ShopFilterContext` mirrors `apps/site/lib/
+shopFiltersBus.ts` into local state (it doesn't own filter/sort/view state itself — see "Shop
+search + filter moved into a dedicated header search modal" below) and exposes shared helpers
+(`vendorName`, `parsePrice`, `formatGBP`, `isNew`, `isOutOfStock`, `averageRating`, `reviewCount`,
+`PRICE_BANDS`). **`ShopProductGrid` must render inside `ShopFilterProvider`** — the trust
+bar/head/hero/member-band/origins sections around it don't need filter state and sit outside it.
 
-Two more mockup-fidelity/scope fixes, caught live from a screenshot of the deployed `/shop` page:
-
-- **Email capture band didn't match `moveee-lifestyle-identity.html`'s `.email-capture` at all** —
-  the mockup is a full-bleed **ochre-background band** with white heading/copy and a white pill
-  form floating on top of it; the live page had it as a plain `--paper-deep` (light grey) section
-  with dark text and a bordered white pill — visually indistinguishable from any other neutral
-  section on the page, when the mockup clearly wants it to read as a bold accent break. Fixed in
-  `shop-lifestyle.css`: `.lfs-email` background is now `var(--ochre)`; `.lfs-email-copy h3`/`p` are
-  white/`rgba(255,255,255,.82)` (matching the mockup's literal color values); the form's border was
-  dropped (the mockup's white pill has no border, it doesn't need one against the ochre backdrop).
-- **The single-maker "Meet the Maker" spotlight section (`.lfs-maker`, between the email band and
-  the Moveee Pro member band) was removed entirely, at explicit user request** — this was a
-  different section from the bulk all-makers grid that "Shop by Category + Meet the Makers
-  sections removed" (above) already retired; that one never came back, but this narrower
-  single-maker spotlight (added by "The Moveee Lifestyle becomes a fully standalone mini-site")
-  was still live and the user wants it gone too. Removed the whole `<section className="lfs-maker">`
-  block plus its now-unused `makerStoryHtml`/`makerBio`/`makerName`/`makerLocation` derived
-  variables and the now-unused `sanitizeHtml` import from `ShopArchiveWrapper.tsx`. `vendorName()`
-  and `Image` are both still used elsewhere in the file, so those imports/helpers stayed. The
-  `.lfs-maker*` CSS in `shop-lifestyle.css` was left in place, unused, per this file's usual "kept
-  in case needed again" convention.
-- **Not visually verified in a browser** — no `node_modules` installed this session, so `tsc`
-  couldn't run cleanly (only pre-existing "module not found" noise, no real type errors from this
-  edit). Verified via a CSS brace-balance check on `shop-lifestyle.css` (75/75) and a grep
-  confirming zero remaining `lfs-maker`/`sanitizeHtml` references in `ShopArchiveWrapper.tsx`.
-  Re-check pixel fidelity against `moveee-lifestyle-identity.html`'s `.email-capture` band in a
-  real environment before considering this fully closed.
-
-### Shop masthead — narrower column + a real nav menu next to the logo (September 2026)
-
-Two more explicit user fixes on `ShopHeader.tsx`/`shop-chrome.css`:
-
-- **`.masthead-row`'s `max-width` reduced from `1440px` to `1240px`** — the header row felt too
-  wide/spread-out with just the logo on the left and the icon cluster on the right and nothing in
-  between. The rest of `/shop`'s sections (hero, grid, footer) are untouched and still `1440px` —
-  this was a header-specific width complaint, not a full-page column-width change, so no other
-  file was touched.
-- **New `.mast-nav` text-link row, right after the logo inside `.mast-left`** — three real
-  destinations (Shop → `/shop`, The Edit → `/shop/edit`, Makers → `/makers`), plain sans links,
-  ochre on hover, hidden below `900px` (same breakpoint the old Categories dropdown used to hide
-  at, before it was removed — see "Shop header — Categories dropdown removed" above). This is a
-  different thing from that removed Categories dropdown — it's a small destination nav, not a
-  category filter, and doesn't reintroduce any filtering UI into the header.
-
-Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
-brace-balance check on `shop-chrome.css` (58/58).
-
-### Shop masthead — nav moved next to the icons + a real Categories menu re-added (September 2026, follow-up)
-
-Two more explicit user changes to `ShopHeader.tsx`/`shop-chrome.css`, on top of the pass directly
-above:
-
-- **`.mast-nav` moved out of `.mast-left`** (which now holds only the logo) **into a new
-  `.mast-right` flex group** that also wraps the Categories menu and `.mast-icons` — since
-  `.masthead-row` is `justify-content: space-between` with exactly two children (`.mast-left` and
-  `.mast-right`), the nav now sits immediately to the left of the icon cluster on the far right of
-  the row, instead of next to the logo on the far left.
-- **A real "Categories" menu is back**, distinct from the destination nav next to it — this is
-  **not** the same dropdown "Shop header — Categories dropdown removed" (above) took out; that
-  removal was because the old dropdown duplicated `ShopSearchModal`'s category *filter*.
-  `ShopSearchModal` still owns full search/filtering; this new menu is a lightweight
-  category-*jump* shortcut (plain links to `/shop/category/{slug}`, no filter-bus state). Rather
-  than write new CSS, it reuses the `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
-  rules that were left in `shop-chrome.css` "unused, kept in case needed again" from that same
-  earlier removal — desktop gets the hover dropdown (`.mast-cat`), `<900px` swaps to a `<details>`
-  disclosure (`.mast-filter`) via the same breakpoint `.mast-nav` already hides at. `ShopHeader.tsx`
-  now also reads `categories` off the existing `/api/shop/categories` response (previously only
-  `proDiscountPercent` was consumed from it).
-- **New `.mast-right` CSS** — a plain flex row (`gap: 28px`, tightened to `16px` below `900px`)
-  grouping nav + categories + icons; `.mast-left` dropped its now-unneeded `gap` (it only holds the
-  logo). `.mast-filter summary` also got real font styling (it had none before, since it was dead
-  CSS until this pass revived it).
-
-### Shop masthead — Categories moved beside the logo as a plain link list, not a dropdown (September 2026, second follow-up)
-
-**Supersedes the dropdown/`<details>` treatment from the pass directly above.** Per explicit user
-direction, Categories moved (1) to a distinct block right beside the logo on the left, and (2)
-from a hover dropdown/mobile `<details>` disclosure to a normal inline link list — the same shape
-as the right-hand `.mast-nav` (Edit/Magazine), not a popover.
-
-- **`ShopHeader.tsx`**: the `<div className="mast-cat">`/`<details className="mast-filter">` pair
-  (in `.mast-right`) was replaced with `<nav className="mast-nav mast-cat-nav">` rendered inside
-  `.mast-left`, right after the logo — one plain `.mast-nav-link` per fetched category, no panel,
-  no "View All →" trailer.
-- **`shop-chrome.css`**: `.mast-left` gained `gap: 26px` (previously only held the logo, no gap
-  needed); new `.mast-cat-nav` just adds horizontal scroll-without-a-visible-scrollbar in case the
-  category list is long, reusing `.mast-nav`'s existing font/hover/900px-hide styling wholesale
-  rather than defining new link styles. `.mast-cat`/`.mast-cat-btn`/`.mast-cat-panel`/`.mast-filter`
-  are dead again (marked as such in the CSS, kept per this file's usual "kept in case needed
-  again" convention) — Categories no longer uses any of them.
-- Not visually verified in a browser — no `node_modules` installed this session. Verified via a
-  CSS brace-balance check on `shop-chrome.css` (63/63) and a paren/brace-balance check on
-  `ShopHeader.tsx`.
-
-Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
-brace-balance check on `shop-chrome.css` (61/61) and a paren/brace-balance check on
-`ShopHeader.tsx`.
-
-### Lifestyle Edit closing bridge — shorter image, eyebrow removed (September 2026)
-
-Per explicit user request against the `.sl-origins` band (the closing "The stories behind the
-objects" section, woodworking-workshop photo left / copy right, directly below the Moveee Pro
-member band): the `<div className="sl-origins-label">The Lifestyle Edit</div>` eyebrow above the
-heading was removed from `ShopArchiveWrapper.tsx`'s JSX, and `.sl-origins`/`.sl-origins-img`'s
-`min-height` was reduced at every breakpoint the section defines — desktop `480px` → `320px`
-(both the outer `.sl-origins` and `.sl-origins-img` itself, which drive each other via
-`align-items: stretch`), the `900px` breakpoint's stacked-image `min-height` `280px` → `200px`,
-and the `640px` breakpoint's `220px` → `160px`. `.sl-origins-label`'s CSS
-(and its `::before` hairline-tick pseudo-element) was left in `shop.css`, marked dead with a
-comment, per this file's usual "kept in case needed again" convention — nothing else in the
-section references it. No other property on this section (copy, CTA, photo attribution comment,
-gradient tint) was touched.
-
-Not visually verified in a browser — no `node_modules` installed this session. Verified via a CSS
-brace-balance check on `shop.css` (612/612) and a paren/brace-balance check on
-`ShopArchiveWrapper.tsx` (50/50 parens, 55/55 braces).
-
-### Shop footer — top padding reduced (September 2026)
-
-`ShopFooter.tsx`'s `.lfs-foot-inner` top padding was cut per explicit user request:
-desktop `50px` → `24px`, the `900px` breakpoint `44px` → `20px`, the `640px` breakpoint `36px` →
-`18px` — bottom/horizontal padding at every breakpoint is unchanged, only the gap above the
-brand/link-column grid shrank. Not visually verified in a browser — no `node_modules` installed
-this session. Verified via a CSS brace-balance check on `shop-chrome.css` (63/63).
-
-**Follow-up, September 2026 — `padding-top: 40px` added directly to the outer `.lfs-foot`
-element** (not `.lfs-foot-inner`), per explicit user request naming `.lfs-foot` specifically.
-`.lfs-foot` previously had no padding of its own at all (just `background`/`border-top`) — all
-spacing lived on the nested `.lfs-foot-inner` (see directly above). This adds a second, additive
-40px gap above `.lfs-foot-inner`'s own top padding — the two are independent, not a replacement
-of one by the other. If the footer's total top gap ever looks larger than expected, check both
-rules, not just `.lfs-foot-inner`.
-
-### Lifestyle Shop archive page (Site A, rebuilt from mockup June 2026)
-
-**Superseded by the September 2026 identity rebuild directly above for the archive page's own
-section order (steps 0–4 below) — the Editor's Pick strip and Featured Products companion grid
-described here no longer exist in the JSX.** The Magazine bridge, member band, and Origins
-closing sections below (steps 5 onward, i.e. `.sl-bridge`/`.sl-member`/`.sl-origins`) are still
-exactly as described. Kept for reference on those still-accurate parts.
-
-`apps/site/app/shop/ShopArchiveWrapper.tsx` (async server component, fetches
-`products`/`categories` via `getWPData`) renders the page in this order
-(rebuilt August 2026 — see the dated entry below for the full rationale;
-Category Grid and Vendor Strip removed August 2026, see the entry further
-below; the on-page search/filter bar was removed and the Trust Bar moved to
-the very top in a later August 2026 pass — see "Shop search + filter moved
-into a dedicated header search modal" further below, which supersedes item 4
-here): 0. Trust Bar (single slim dark line, `.sl-trust`), 1. Shop Head
-(compact eyebrow+h1, `.sl-head`), 2. Hero Pick + "More From The Edit"
-3-across row (`.sl-picks`/`.sl-hero-grid`/`.sl-week-row`), [inside
-`ShopFilterProvider`] 4. Slim Magazine Bridge (`.sl-bridge`, merges what used
-to be two separate Magazine/Origins bridges), 5. `ShopProductGrid`, [outside
-provider] 6. Member Band (Moveee Pro, rounded dark card — `.sl-member-wrap` >
-`.sl-member`), 7. Origins Bridge Closing (`.sl-origins`).
-
-**Component split (`ShopBrowser.tsx` deleted, replaced June 2026)** — the
-mockup's filter bar and product grid aren't adjacent (other sections sit
-between them), so state had to move to a shared React Context instead of one
-combined client component:
-- `components/ShopFilterContext.tsx` — `ShopFilterProvider` + `useShopFilter()`
-  hook; owns the derived `filtered` list, plus shared helper exports
-  (`vendorName`, `parsePrice`, `formatGBP`, `isNew`, `isOutOfStock`,
-  `averageRating`, `reviewCount`, `PRICE_BANDS`). **As of August 2026 it no
-  longer owns the filter/sort/view *state itself*** — see "Shop search +
-  filter moved into a dedicated header search modal" below; it now mirrors
-  `apps/site/lib/shopFiltersBus.ts` into local state instead of holding its
-  own `useState`s.
-- `components/ShopFilterBar.tsx` — **deleted August 2026**, superseded by
-  `components/ShopSearchModal.tsx` (see below).
-- `components/ShopProductGrid.tsx` — renders the actual product cards from
-  `filtered`. A pure consumer of `useShopFilter()` (now just `{ filtered }`),
-  plus `clearShopFilters()` imported directly from the bus for its empty-state
-  "Clear filters" button.
-
-`ShopProductGrid` must be rendered inside `ShopFilterProvider` (see the
-section order above — sections 4–5 are nested inside the provider in
-`ShopArchiveWrapper.tsx`; the trust bar/head/hero-pick sections before it and
-the member-band/origins-closing sections after it are outside, since they
-don't need filter state).
-
-- Facets: price bands (4 fixed ranges), tag pills derived from `productTags`
-  (excluding the `"new"` tag slug), **Material pills** (from the
-  `product_material` taxonomy, June 2026) and **Maker-Location pills**
-  (derived from `vendorProfile.city`/`.country`, falling back to country
-  when city is empty) — both added in the same pass as the reviews system
-  below, replacing the prior "no material taxonomy exists" gap.
-- Sort: Featured (default), Price Low–High/High–Low, Newest, and
-  **Most Loved** (sorts by `reviewCount` desc, tiebreak `averageRating`
-  desc) — added alongside the reviews system.
-- Pro price (10% off) is computed client-side from the existing `price`
-  string (same `replace(/<[^>]*>/g,"").replace(/[^0-9.]/g,"")` parse pattern
-  used in `app/shop/[slug]/page.tsx`) rather than fetched from
-  `moveeeMeta.memberPrice` — that field lives in `wp.ts`'s `GET_PRODUCT_EXTRA`
-  query, which is **deliberately kept separate** from the shared
-  `PRODUCT_FIELDS_FRAGMENT` so the product page still renders if the
-  moveee-graphql-bridge plugin isn't active; merging it into the listing
-  fragment would risk failing the whole shop grid query in any environment
-  where that plugin/field isn't available. Don't merge them — compute Pro
-  price client-side instead, as done here.
-- Each card shows `★ {averageRating} ({reviewCount})` when `reviewCount > 0`,
-  otherwise falls back to the static "New listing" placeholder.
-- The member-band section now says "Moveee Pro" (was stale "Connect
-  Members" copy) and its CTA links to `/register?tier=patron`. The "2,400
-  Members & growing" stat in that section is still a hardcoded literal, not
-  a live count — out of scope until there's a backend count to wire up
-  (explicitly deferred — not part of the reviews/facets/sort build below).
-
-**Mobile-companion responsive styling (June 2026)** — added a dedicated block at
-the top of `shop.css`'s existing `@media (max-width: 640px)` query (right after
-the masthead/trust-strip rules) covering all archive sections: horizontally
-scrolling filter pills (`.filter-dd-row` gets `overflow-x: auto` + hidden
-scrollbar instead of wrapping), featured picks stack to 1 column, 2-up product
-grid (`.product-grid`/`.cat-grid`/`.vendor-cards` all `repeat(2, 1fr)`), shrunk
-`.pcard`/`.pimg` dimensions (460px→320px / 280px→160px) with proportional font
-sizes, compact "mini" vendor cards (`.vc-desc` hidden), non-overlapping member
-band, and a full-bleed edge-to-edge origins-bridge image. This is **CSS-only** —
-no changes to `ShopFilterBar.tsx`/`ShopFilterContext.tsx`; the filter dropdowns
-stay native `<select>` pills (just restyled to scroll), not real bottom sheets.
-**Two bugs caught and fixed in this pass**: (1) `.member-band-inner`'s
-`@media (max-width: 1200px)` override set `grid-template-columns: 1fr`, which
-was a no-op since the element's base `display` is `flex` not `grid` — changed
-to `flex-direction: column` (this also makes the pre-existing `.mb-img`/
-`.mb-float` mobile rules actually take effect for the first time). (2) `.padd`
-(the product-card "Add to Cart" button) is hover-revealed (`opacity: 0` until
-`:hover`), which never fires on touch devices — added `opacity: 1; transform:
-none;` inside the mobile override so the button is visible by default on
-mobile. **If you add a hover-revealed element anywhere in the shop UI, check
-whether it also needs a mobile always-visible override** — touch devices never
-trigger `:hover`.
+Facets: price bands, tag pills, Material pills (`product_material` taxonomy), Maker-Location
+pills. Sort: Featured/Price/Newest/Most Loved (by review count). **Pro price (10% off) is computed
+client-side from the `price` string, not fetched from `moveeeMeta.memberPrice`** — that field
+lives in a deliberately separate GraphQL query from the shared `PRODUCT_FIELDS_FRAGMENT` so a
+missing bridge-plugin field can't fail the whole shop grid query (same bridge-plugin-isolation
+pattern used elsewhere in this file) — don't merge them.
 
 ### Shop search + filter moved into a dedicated header search modal (Site A, August 2026)
 
@@ -4017,72 +3454,22 @@ for the precedent this follows) bridging the two trees:
   bar CSS (`shop.css`, still there, marked dead in its own header comment) as buttons
   instead of `<select>`s, styled via new `.shop-search-*` wrapper classes.
 - `Header.tsx` gained `isShopPage = pathname === "/shop" || pathname.startsWith("/shop/")`
-  and now renders `<ShopSearchModal>` instead of the generic `<SearchOverlay>` when true —
-  both share the same `searchOpen` state/toggle, only the rendered component differs.
-  **If a future page under `/shop/*` is added, it automatically gets the shop modal for
-  free** (path-prefix check, not a route allowlist) — but it will only show any
-  facets/results if that page also renders `<ShopFilterProvider>` somewhere in its tree
-  (product detail pages, `/shop/[slug]`, do not, so the modal would show search + no
-  facets there — this hasn't come up yet since only the archive routes link products).
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every other pass in this file. Verified via a static-HTML Playwright harness
-  loading the real `shop.css`/`homepage.css`/`globals.css` (confirmed the modal's pill
-  states, footer, and the black trust bar render correctly) and a CSS brace-balance
-  check (598/598). Re-check pixel fidelity and the `/shop/category/*`/`/shop/tag/*`
-  routes (which reuse the same `ShopArchiveWrapper`) in a real environment.
+  and now renders `<ShopSearchModal>` instead of the generic `<SearchOverlay>` when true.
+  **A future `/shop/*` page automatically gets the shop modal for free** (path-prefix
+  check) — but it only shows facets/results if that page also renders
+  `<ShopFilterProvider>` somewhere in its tree (product detail pages don't).
 
-**Follow-up fixes (same day)**:
-- **Trust bar wraps to two rows on mobile** — `<span className="sl-trust-rating">` now
-  wraps the "· 4.8 average rating" segment in `ShopArchiveWrapper.tsx` and
-  `.sl-trust-rating { display: none; }` inside `shop.css`'s existing `max-width: 640px`
-  block drops it on mobile only ("Vetted Makers · Moveee Pro saves X%"); desktop/tablet
-  still show the full line.
-- **Modal needed to scroll on mobile** — `.shop-search-pills` scroll horizontally instead
-  of wrapping on mobile (same technique as the old sticky filter bar's own mobile
-  treatment, still further up this file), `.shop-search-body`'s gap/label margins were
-  tightened, `.search-panel`'s mobile `max-height` bumped 80vh → 92vh, and
-  `.shop-search-footer` (Clear all / View N Results) is now `position: sticky; bottom: 0`
-  so the primary action never requires scrolling to reach.
-- **Material filter removed entirely** (not just hidden) — the `material` field is gone
-  from `ShopFilters`/`ShopFilterMeta` in `shopFiltersBus.ts`, `ShopFilterContext.tsx`
-  no longer computes `availableMaterials` or filters by it, and the Material group is
-  gone from `ShopSearchModal.tsx`. The underlying `productMaterials` data field itself
-  is untouched — `ShopArchiveWrapper.tsx` still fetches it (still used by
-  `app/shop/[slug]/page.tsx`'s product detail page) — only the archive-page *filter* on
-  it was removed.
-- **Category/Price/Sort are a `<select>` on mobile, pills on desktop** — each of those
-  three groups now renders both a `.shop-search-select` (native `<select>`,
-  `.shop-search-mobile-only`) and its existing pill row (`.shop-search-desktop-only`),
-  toggled purely by the same `max-width: 640px` CSS breakpoint everything else in this
-  modal already uses — no JS viewport detection, so no hydration/flash-of-wrong-UI risk.
-  Category's `<select>` navigates via `useRouter().push()` (`/shop` or
-  `/shop/category/{slug}`) since it was never a bus-driven filter, matching the pill
-  version's own `<Link>` behavior. **Maker Location intentionally stayed pills-only at
-  every width** — not part of this ask — and **In Stock Only stays a single pill
-  regardless of width**, per explicit instruction.
+Current facet state: no Material filter (removed entirely — `productMaterials` data is still
+fetched/used by the product detail page, just not filterable from the archive); Maker Location is
+pills-only at every width; Category/Price/Sort are a native `<select>` on mobile, pills on
+desktop, toggled by the same `max-width: 640px` breakpoint (no JS viewport detection).
 
 ### Shop by Category + Meet the Makers sections removed (Site A, August 2026)
 
-Per explicit user request, `ShopArchiveWrapper.tsx`'s "Shop by Category" (`.sl-cat`) and
-"Meet the Makers" (`.sl-makers`) sections were removed from `/shop` entirely — not hidden,
-deleted from the JSX. The remaining sections were renumbered (Member Band and Origins
-Closing Bridge are now 7 and 8, was 10 and 11 — see the updated ordering list above).
-
-Removed along with the JSX, since they had no other consumer: the `GET_ALL_MAKERS` GraphQL
-fetch (and its `makersResult`/`makers` handling in the `Promise.allSettled` call), the
-`CMS` const + REST fallback fetch (`wp-json/moveee/v1/vendors`) that populated `makers` when
-GraphQL came back empty, the `FALLBACK_VENDORS` hardcoded array, and the derived
-`display`/`isFallback` variables. `categories` itself is **kept** — it's still consumed by
-`ShopFilterBar`'s category filter dropdown, only the dedicated category-grid section is gone.
-
-**Deliberately left alone**: `extractVendors()` and the `VendorCard` interface — this was
-already dead code (zero call sites) before this change, unrelated to the sections being
-removed here, so removing it was out of scope. The `.sl-cat-*`/`.sl-makers-*` CSS in
-`shop.css` was also left in place, unused, per this file's usual "kept in case needed again"
-convention.
-
-Verified via `tsc --noEmit` (clean) and a CSS brace-balance check on `shop.css` (580/580,
-unchanged — no CSS was touched by this pass).
+`ShopArchiveWrapper.tsx`'s "Shop by Category" and "Meet the Makers" sections are gone entirely,
+along with their only consumers (`GET_ALL_MAKERS`, the `wp-json/moveee/v1/vendors` REST fallback,
+`FALLBACK_VENDORS`). `categories` itself is kept — still used by the filter's category dropdown.
+`.sl-cat-*`/`.sl-makers-*` CSS left in place, unused, per convention.
 
 ### `/shop` grid has no `orderby` and a hard 24-item cap with no pagination (fixed August 2026)
 
@@ -4249,11 +3636,7 @@ bigger lift, since it still had the pre-radius-convention flush aesthetic everyw
   these sections (new CSS now targets `h2`, matching the real markup). **If a heading anywhere
   on this page still looks like unstyled browser-default text, check for this same tag/selector
   mismatch before assuming the CSS is missing.**
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
-  and a CSS brace-balance check on `shop.css` (580/580, balanced). Re-check pixel fidelity —
-  especially the mobile sticky buy bar and the review-card avatar fallback colors — in a real
-  environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 **Follow-up fixes (same pass, August 2026):**
 - **Filter bar controls were never actually restyled** — the summary above claimed the pills
@@ -4614,9 +3997,7 @@ directly followed by unwrapped text with no card chrome).
 - Filter pills (`MagazineFilterPills.tsx`, unchanged component logic) restyled from small
   bordered rectangular pills to full `radius-full` JetBrains-Mono uppercase chips, matching
   Discover/People's filter language — CSS-only change, no JSX touched.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  as every other mockup-first rebuild in this file. Verified via `tsc --noEmit` (clean) on
-  `apps/site` and a CSS brace-balance check on `magazine.css` (344/344).
+- *(Not verified live this pass.)*
 
 ### Magazine article body — width-tier rail, sidebar retired (August 2026)
 
@@ -4769,13 +4150,7 @@ card/border/shadow/radius wrapper with inner padding (`.ar-rf`'s own radius bump
 `var(--radius-lg)`) plus a hover shadow-lift, replacing the previous bare
 image-then-text-with-no-chrome layout.
 
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every other Figma/mockup rebuild pass in this file, and true here in particular
-  for the mobile stacked hero (no exact source photo to test crop/legibility against).
-  Verified via `tsc --noEmit` (clean) on `apps/site` and a CSS brace-balance check on
-  `editorial.css` (190/190). Re-check pixel fidelity — especially the mobile hero and the
-  `.ar-sidebar-card--issue`/`.ar-hero-eyebrow` edge cases — in a real environment before
-  considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Header dark-zone detection was measuring the wrong coordinate space (fixed September 2026) + hero photo panel widened to landscape
 
@@ -4805,11 +4180,7 @@ reads as landscape instead of near-square and fills more of the empty gutter bet
 `.ar-hero-text`. Only `right` is pinned on this element (no `left`), so growing the width extends
 the panel leftward into that gap, which is exactly the effect asked for.
 
-**Not visually verified in a browser** — no `node_modules` installed this session, so neither
-`next dev` nor `tsc --noEmit` could run. Verified via a CSS brace-balance check on `editorial.css`
-(237/237) and a manual read-through of `Header.tsx`'s edited `useLayoutEffect`. Re-check both —
-the header on a real `/magazine/[slug]` page load, and the widened photo panel at desktop/tablet
-widths — in a real environment before considering this fully closed.
+*(Not verified live this pass.)*
 
 ### Article body — zero spacing after a `wp-block-gallery` (fixed September 2026)
 
@@ -4832,8 +4203,7 @@ neighbors despite `figure`/`img`'s generic 2em rule existing, check whether that
 own zero-margin override winning on specificity before assuming the generic rule isn't applying
 at all.
 
-**Not visually verified in a browser** — same `node_modules` gap as every other pass in this
-file this session. Verified via a CSS brace-balance check on `editorial.css` (238/238).
+*(Not verified live this pass.)*
 
 **Same bug recurred on tables (fixed September 2026)** — user-reported: a Gutenberg table also
 ran flush into the paragraph below it. Identical root cause: `.ar-wrap .prose-content
@@ -4882,13 +4252,7 @@ this is now a known, recurring WordPress content-pipeline quirk, not a one-off. 
 `unwrapBlockParagraphs()`'s pattern list rather than touching the grid CSS, which is already
 correct as long as the element reaching it is a genuine direct child.
 
-**Not visually verified in a browser** — same `node_modules`/WordPress-credentials gap as every
-other pass in this file; this fix in particular could not be checked against the real live HTML
-`cms.themoveee.com` actually emits for this specific post, since the CMS isn't reachable from
-this sandbox. Verified via a brace-balance check on the edited `.tsx` file and standalone Node
-regex tests against representative Gutenberg gallery/table markup (see above). Re-check the live
-`themoveee.com/magazine/the-eid-clay-is-growing-roots-in-clay` (and any other post using a
-wide-width gallery/table) in a real environment before considering this fully closed.
+*(Not verified live this pass.)*
 
 **Follow-up investigation (same month) — the `unwrapBlockParagraphs()` fix above turned out to be
 solving a bug that didn't exist; the wide-width mechanism itself was never actually broken.**
@@ -4957,16 +4321,8 @@ with the new base-rule `margin-top`) — that breakpoint now only needs to flip 
 fixed-height flex row to a normal-flow column; the base rule's `margin-top` already does the
 clearance work for it too.
 
-**Not visually verified in a live browser** — same Chromium-can't-reach-`themoveee.com` sandbox
-limitation as the investigation directly above. Verified via: confirming this page is fully
-client-rendered (its SSR HTML has zero `rd-layout`/`rd-sidebar` occurrences, so an offline/
-network-blocked harness can't reproduce it at all — this is why the gallery investigation's
-technique doesn't transfer directly here), a CSS brace-balance check on `newsletter.css`
-(774/774), and a manual trace of the exact sticky-positioning mechanics (`.rd-sidebar-header`'s
-own padding, `.rd-issue-badge`'s `top: 20px`) against `--header-clear`'s documented 96px value to
-confirm the fix's numbers actually clear the header rather than under- or over-shooting it.
-Re-check `/newsletter/{any-slug}` in a real browser, at both desktop and the 768px mobile
-breakpoint, before considering this fully closed.
+*(Not verified live this pass — this page is fully client-rendered, so it can't be checked offline.
+Re-check `/newsletter/{any-slug}` in a real browser at both desktop and the 768px breakpoint.)*
 
 ### Directory REST fallback — oversized `_embed=1` response broke Next's data cache and tripped a real production build failure (fixed September 2026)
 
@@ -5007,13 +4363,7 @@ directory one was the one actually observed failing in production, but if a futu
 shows the same "`_embed=1`... items over 2MB can not be cached" warning against a different REST
 fallback URL, apply the identical `_fields` fix there rather than re-diagnosing from scratch.
 
-**Not verified against the real CMS response size** — this sandbox can't reach `cms.themoveee.com`
-to measure the actual before/after payload size, same recurring network gap noted throughout this
-file. Verified via a CSS/brace-balance-equivalent check (`wp.ts`'s brace count, 786/786) and a
-manual read confirming every field `mapRestDirectoryToFrontendShape()` touches is present in the
-new `_fields` whitelist. Re-check that the next production build of a page hitting this fallback
-path (i.e. one that occurs while WPGraphQL is genuinely down) completes without the 2MB warning
-before considering this fully closed.
+*(Not verified live this pass.)*
 
 **Follow-up — the `_fields`-only fix above was not actually enough (confirmed by a real
 production build failure, September 2026).** A live Vercel build showed the exact same failure
@@ -5076,76 +4426,18 @@ work needed.
 - `QuoteComments.tsx` (a separate, inline-`style`-only comment component on `/quotes/[slug]`) was
   deliberately left untouched — it shares no class names with this redesign and wasn't part of
   what was asked ("posts and newsletters").
-- **Not visually verified in a browser** — no `node_modules` installed this session, so neither
-  `next dev` nor `tsc --noEmit` could run (same recurring sandbox gap noted throughout this file).
-  Verified via a CSS brace-balance check on `globals.css` (299/299) and a brace/paren-balance
-  check on the edited component, plus a repo-wide grep confirming no other file referenced the
-  old `.article-comments-*` classnames and no other file used the new class names in a way that
-  would collide. Re-check pixel fidelity against the approved mockup on both a magazine article
-  and a newsletter issue page in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
-### `/visuals` retired, then reverted on merge — the feature is still live (September 2026)
+### `/visuals` is a live section — an earlier retirement attempt never stuck
 
-**Correction: this section's retirement never actually landed.** It described a real change made
-on one branch, but a large, independent body of work continued shipping to `main` on `/visuals`
-in parallel (Footer link, sitemap entry, `CONTENT_PATHS` in the revalidate route, and the pages
-themselves all still exist on `main`) — none of it ever picked up this retirement. When that
-branch was finally merged, restoring `/visuals` to match `main`'s already-live state (rather than
-letting a stale local deletion silently take out a feature `main` was still actively serving) was
-the only safe call — see the "Directory REST fallback" fix's own git history around the same date
-for the merge this was resolved in. **`/visuals` is not retired. Treat it as a live section** —
+A branch once removed `/visuals` (the Site A illustration gallery), but `main` kept shipping to it
+in parallel and the removal was reverted on merge. **`/visuals` is live**:
 `apps/site/app/visuals/page.tsx` + `[slug]/page.tsx`, `VisualsGrid.tsx`/`VisualsSingleClient.tsx`,
-the Footer link, the sitemap entry, and `'visuals'` in `proxy.ts`'s `APP_ROUTES` and the
-revalidate route's `CONTENT_PATHS` are all real again. The rest of this entry is kept only as a
-record of what was attempted and why it didn't stick — don't act on its "removed"/"redirect"
-claims.
-
-Per explicit user request ("relegate /visuals totally" → clarified as "retire"), the Site A
-illustration gallery at `/visuals` (a public gallery of AI-generated illustrations sourced from
-`culture_directory` entries via `GET /wp-json/culture/v1/visuals`, plus `/visuals/[slug]` single
-pages reusing `GET_DIRECTORY_ENTRY_BY_SLUG`) has been removed **on the web frontend only** — an
-explicit scope choice, confirmed via `AskUserQuestion` before touching anything, since this
-feature also has a WordPress-side admin illustration-generation tool, a `culture/v1/visuals` REST
-endpoint, and a download-credit/gamification tracking system (`_culture_visual_downloads`
-usermeta, `visual_downloads_today` in the mobile/NextAuth session shape) — none of that backend
-was touched, and neither was the unrelated mobile app's own "Visuals" **category** filter on
-`MagazineScreen.tsx` (a magazine-category concept, distinct from this web gallery, confirmed by
-name only — not the same feature).
-
-**Removed**: `apps/site/app/visuals/` (`page.tsx` + `[slug]/page.tsx`), `apps/site/app/
-visuals.css`, `apps/site/components/VisualsGrid.tsx`/`VisualsSingleClient.tsx`, the Footer's
-"Visuals" link (`packages/shared/components/Footer.tsx`, Explore column), the `/visuals`
-sitemap entry, `'visuals'` from `CONTENT_PATHS` in `app/api/revalidate/route.ts` (harmless to
-revalidate a nonexistent path, but cleaned up anyway), and the `/visuals` mention in `app/api/
-wp-health/route.ts`'s doc comment (that endpoint only ever actually probed `directory`/`quotes`
-GraphQL queries — the comment's claim of "three queries" including visuals was already stale
-before this pass, unrelated pre-existing inaccuracy, fixed in passing).
-
-**Redirect**: `'visuals'` was removed from `proxy.ts`'s `APP_ROUTES` set, and a new explicit
-block added — `pathname === '/visuals' || pathname.startsWith('/visuals/')` → 301 `/magazine` —
-placed alongside the other JetEngine-taxonomy prefix-redirects (`/tag/`, `/series/`, `/country/`,
-`/industry/`). **This could not just rely on `ROUTE_ALIASES`** (the existing `{ 'tours':
-'/journeys', 'lifestyle': '/shop' }` map) — that map is only checked against a *single-segment*
-`cleanPath`, so it would have correctly redirected bare `/visuals` but left every individual
-`/visuals/{illustration-slug}` URL to fall through to the routes that no longer exist and 404
-instead of preserving SEO equity via a 301, which is why this got its own dedicated
-`startsWith('/visuals/')` block instead.
-
-**Deliberately out of scope, left running**: the WP Admin illustration-generation tool
-(`class-culture-directory-tools.php`), the `culture/v1/visuals` REST endpoint and its mobile-API
-counterpart, the `_culture_visual_downloads` usermeta/credit-tracking system, and
-`apps/mobile/src/screens/magazine/MagazineScreen.tsx`'s "Visuals" category filter chip. If a
-future pass wants the backend torn down too, treat it as a separate, larger piece of work — it
-has its own admin UI, REST surface, and gamification hooks that a frontend-only removal
-correctly left alone.
-
-**Not visually verified in a browser** — no `node_modules` installed this session, so neither
-`next dev` nor `tsc --noEmit` could run (same recurring sandbox gap noted throughout this file).
-Verified via a repo-wide grep confirming zero remaining `/visuals` references in `apps/site`/
-`apps/connect`/`packages` outside the new proxy.ts redirect block itself, and a brace-balance
-check on the edited `proxy.ts` (82/82). Re-check that `themoveee.com/visuals` and
-`themoveee.com/visuals/{any-old-slug}` both 301 to `/magazine` in a real environment before
-considering this fully closed.
+the Footer link, the sitemap entry, and `'visuals'` in `proxy.ts`'s `APP_ROUTES` are all real.
+Backend (WP Admin illustration-generation tool, `culture/v1/visuals` REST endpoint,
+`_culture_visual_downloads` credit-tracking) is unrelated and was never touched either way. The
+mobile app's own "Visuals" **category** filter on `MagazineScreen.tsx` is a different, unrelated
+concept (a magazine category, not this gallery).
 
 ### Pull-quote/blockquote — centered treatment, magazine + literary + newsletters (September 2026)
 
@@ -5181,11 +4473,7 @@ the quote boxes are flushed left?"). Approved mockup:
   companion pieces but the user's actual ask ("implement it for magazine articles, literary
   articles and newsletters") named only the three prose surfaces above. `QuoteCard.tsx`'s own
   `.quote-content::before` faint-glyph treatment is untouched. Revisit only if asked.
-- **Not visually verified in a browser** — no `node_modules` installed this session, same
-  recurring sandbox gap noted throughout this file. Verified via CSS brace-balance checks on
-  `globals.css` (308/308) and `literary.css` (234/234). Re-check pixel fidelity against the
-  approved mockup on a real article, a literary piece, and a newsletter issue with a CMS
-  blockquote (with and without a `<cite>`) before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Homepage hero — only shows posts tagged "Featured" (September 2026)
 
@@ -5214,12 +4502,7 @@ only a new call site. To put a post in the hero, tag it `Featured` in WP Admin (
   `stories` (the pool used for the row directly under the hero, itself currently unused
   downstream — see the pre-existing "computed-but-unused" note elsewhere in this file) now
   excludes whatever `coverStory` resolved to, by slug, instead of assuming it was always `pool[0]`.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file (this fix additionally needs a real post actually tagged
-  `Featured` in WP Admin to see the hero change at all). Verified via a brace-balance check on
-  `fetchHomepageData.ts` and a manual trace of the edition-matching logic against the pre-existing
-  `universalPosts` pattern it mirrors. Re-check `/`, `/uk`, `/us`, and `/africa` after tagging at
-  least one post `Featured` in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Header transparent-on-dark-hero: never recovered after a root `loading.tsx` Suspense swap (fixed September 2026)
 
@@ -5256,13 +4539,7 @@ a per-page one: it doesn't depend on knowing which pages are slow enough to trip
 `loading.tsx`, and it also covers any other future async-content-swap scenario the header's
 existing event listeners don't hear about.
 
-**Not visually verified in a browser** — same Chromium-can't-reach-`themoveee.com` sandbox
-limitation as the fixes above it. Verified via a brace-balance check on `Header.tsx` and a manual
-trace of the mechanism (confirmed `app/loading.tsx` renders no dark-zone element, confirmed
-`EditionNewsletterHub.tsx` is exclusively async-server-rendered with no Suspense boundary of its
-own beyond the root one). Re-check `/newsletter/africa` (and any other dark-hero page) on a fresh,
-non-cached load in a real browser — ideally by artificially slowing the WordPress fetch to reliably
-trigger the root loading skeleton — before considering this fully closed.
+*(Not verified live this pass.)*
 
 ### Magazine article page — left TOC column removed, contents moved to a floating FAB (August 2026)
 
@@ -5404,17 +4681,7 @@ and dark WePresent-style footer were adopted **site-wide**, not just on the home
   adding `[data-theme]` blocks. If dark mode is ever added to Site A, this rebuild's CSS is
   already token-driven and shouldn't need a rewrite — just new dark values for the existing tokens
   in `globals.css`, same shape as `apps/connect`'s own dark-mode tokens.
-- **Not visually verified in a browser** — same recurring sandbox gap as every other rebuild pass
-  in this file, compounded here by a pre-existing, unrelated environment quirk: `next dev` in this
-  sandbox intermittently fails to load `next.config.mjs` (`ENOENT ./redirects.json`, a relative-
-  path-vs-cwd issue in that config file, not something this pass touched) and background dev-server
-  processes were repeatedly killed by the sandbox before a page could be curled/screenshotted.
-  Verified via `tsc --noEmit` (clean) on both `apps/site` and `apps/connect`, and CSS brace-balance
-  checks on all three new/touched CSS files (`header.css` 67/67, `footer.css` 32/32,
-  `homepage-v2.css` 95/95). Re-check pixel fidelity against
-  `mockups/web/moveee_homepage_wepresent_concept.html` — hero, carousel active-card centering,
-  masonry section card shapes, shop rail arrows, and the header's transparent-to-solid scroll
-  transition in particular — in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Homepage "Something went wrong" crash — an index lookup that could return `undefined` (fixed August 2026)
 
@@ -5491,552 +4758,163 @@ pattern repo-wide before considering it closed, the same way this pass eventuall
 **Supersedes the colour treatment described throughout the "WePresent concept" entry above** —
 that entry (and its mockup) is still accurate for the hero, masthead, carousel, and footer; only
 the five repeating body sections (The Front Page, From The Shop, The Lane, The Edit, The Free
-Critics, Opinions & Essays) changed. Documenting the retired version here since the CSS/classnames
-it used (`.band`, `.band--tint`, `.band-head`, `.masonry-rand`, `.wcard`/`.wcard--sq`/
-`.wcard--rect`, `colorForCard()`) are still live elsewhere in the codebase — anyone touching those
-class names on the homepage again should know they were deliberately replaced, not missed.
+Critics, Opinions & Essays) changed, at explicit user request, from a colourful pastel-card
+design to a calmer, editorial one (not a bug fix). The old look: each section had a centered
+`.band-head` above a 4-column `.masonry-rand` grid of `.wcard` cards, each card's whole background
+a random pastel fill from `lib/cardColors.ts`'s `colorForCard(seed)`, with every other section
+alternating white/`.band--tint` (`#F2F2F2`).
 
-**What the homepage looked like before this pass** (kept for reference, since the classes below
-are still real and still rendering on other pages): each section was a centered `.band-head`
-(serif `<h2>`, centered subtitle, centered "view all" link) above a 4-column `.masonry-rand` grid
-of `.wcard` cards — each card's whole background was a random pastel fill from
-`lib/cardColors.ts`'s `LIGHT_COLORS` (`colorForCard(seed)`, seeded off the story's `databaseId`),
-with a rounded-corner (22px) shadow-lift card and the caption centered below the photo. Every
-other section alternated a plain white background with `.band--tint` (`var(--paper-deep)`,
-`#F2F2F2`) — Front Page white, Shop tinted, Lane white, Edit tinted, Free Critics white, Opinions
-tinted. This was a deliberate design choice at the time (see the WePresent-concept entry above,
-and `lib/cardColors.ts`'s own comment: "what makes the homepage read as colourful rather than a
-wall of plain cards") — it's being retired here at explicit user request in favour of a calmer,
-more editorial page, not because it was a bug.
+**Current state**: every homepage section (including the shop rail) renders on plain white, using
+the `/magazine/issues/[slug]` header/card language — `<h2>` + a "More →" link on a
+`justify-content: space-between` row, then a flush 4-column grid (`.arc-grid`, 3-up at
+`max-width: 1100px`, 2-up at `780px`) of plain image cards: 4:3 photo, serif title, one-line dek
+(real `story.excerpt`, HTML-entity-decoded via `packages/utils/decode-html.ts`'s `decodeHtml()`
+— CMS text comes back with numeric entities like `&#8217;s` that a regex-only tag-strip doesn't
+decode, so titles render as plain `<h3>{title}</h3>` rather than `dangerouslySetInnerHTML`), mono
+"Read →". Same route, same data, same section order as before.
 
-**What it looks like now**: every homepage section (including the shop rail) renders on plain
-white, using the exact header/card language already shipping on `/magazine/issues/[slug]`
-(`.mag-issue-section-hdr`/`.mag-issue-post` in `magazine.css`) — a small mono type label (Series /
-Category / Feed / Shop) + serif `<h2>` + item count, all on one hairline-ruled row, then a flush
-3-column grid of plain image cards (no colour fill, no shadow/hover-lift): 4:3 photo, serif title,
-one-line dek, mono "Read →". No new page — same route, same data, same section order.
+- **Classes**: `.arc-section`/`.arc-hdr`/`.arc-grid`/`.arc-card`/`.arc-card-img`/`.arc-cta` in
+  `apps/site/app/homepage-v2.css` (parallel to, not reusing, `magazine.css`'s `.mag-issue-*`,
+  since that file isn't loaded on `/`). `.arc-shop-card`/`.arc-shop-vendor`/`.arc-shop-price` are
+  the shop rail's variant (flush 1:1 image, vendor mono caption, serif title, mono price below).
+- **`MasonryRandomSection.tsx`** — renders the archive-style header + 4-up grid; no `sectionType`/
+  `subtitle`/`tint`/`viewAllLabel` props (all removed — the header is just `<h2>` + an optional
+  "More →"). The Shop section's header is hand-written in `page.tsx` (no magazine-post excerpt to
+  reuse the component for).
+- **`HeroCarousel.tsx`** ("Right Now", the masthead carousel) **and `ShopRail.tsx`** ("From The
+  Shop") both auto-scroll continuously and loop seamlessly, not just on arrow click. Mechanism
+  (same in both): the item list renders **twice** back-to-back (`looped = [...items, ...items]`);
+  one `requestAnimationFrame` loop increments `rail.scrollLeft` at a slow, ambient
+  `AUTO_SCROLL_SPEED = 0.035px/ms`, and once it reaches exactly one set's width
+  (`rail.scrollWidth / 2`) it's wound back by that width — since both halves are identical, the
+  reset is invisible. `scroll-snap-type`/`scroll-snap-align` are deliberately **not** set on
+  either rail (snap-on-scroll-end fights a script setting `scrollLeft` every frame). A `pausedRef`
+  (not React state, to avoid a per-frame re-render) pauses on hover/touch and for 2.2s after an
+  arrow click, then resumes. **If a future rail wants auto-scroll + loop + still
+  arrow-controllable, copy this pattern** rather than the pure-CSS duplicated-track marquee used
+  elsewhere (e.g. `.evt-ticker-track`) — that one can't be paused/nudged by user interaction.
+- **New shared component: `apps/site/components/ArchiveCardGrid.tsx`** — the flush `.arc-grid`/
+  `.arc-card` treatment factored out so any open-ended story listing can reuse it instead of
+  hand-rolling a copy. Works because `homepage-v2.css` loads site-wide via the root `layout.tsx`.
+  Wired into `MagazineArchiveWrapper.tsx`'s filtered-view grid, `SeriesLandingPage.tsx`'s "More
+  from {series}" grid, and `author/[slug]/page.tsx`'s "Stories by {author}" grid.
+- **`MagazineHub.tsx`**'s "Browse by Section"/"Recurring Series" tile grids (no image, just a
+  name + arrow) also used `colorForCard()` — not candidates for `ArchiveCardGrid`, so flattened
+  in place to `background: var(--paper); border: 1px solid var(--rule)` with ochre hover state.
+- **`lib/cardColors.ts` (`colorForCard()`/`LIGHT_COLORS`) and `lib/masonryShapes.ts` deleted
+  outright** — confirmed zero remaining call sites repo-wide after this sweep. The narrower
+  `.wcard`/`.wcard-photo`/`.wcard-caption` base rules **stay** in `homepage-v2.css` — still used
+  by `JoinSection.tsx`'s single "latest issue" feature card (a different, single-card use) and by
+  `.masonry-rand`/`.band`/`.band-head`/`.wcard--sq`/`.wcard--rect` on `SeriesLandingPage.tsx`,
+  `MagazineArchiveWrapper.tsx`, and `author/[slug]/page.tsx` — none of those pages were in scope
+  for this pass and they share these exact class names. **If a future pass wants the archive-style
+  treatment on `/magazine` or the author page too, extend `.arc-*` rather than repurposing
+  `.mag-issue-*`/`.masonry-rand` in place.**
+- Confirmed genuinely dead, left untouched: `IssueCarousel.tsx`/`ShopCarousel.tsx` (zero
+  importers) and the pre-existing dead `.shop-card`/`.shop-price-tag`/`.shop-caption*` CSS.
 
-- **New classes, homepage-scoped**: `.arc-section`/`.arc-hdr`/`.arc-type`/`.arc-count`/`.arc-sub`/
-  `.arc-grid`/`.arc-card`/`.arc-card-img`/`.arc-cta` in `apps/site/app/homepage-v2.css` — a
-  parallel set to `magazine.css`'s `.mag-issue-*` rather than a reuse of those classes directly,
-  since `magazine.css` isn't loaded on `/`. `.arc-shop-card`/`.arc-shop-vendor`/`.arc-shop-price`
-  are the shop rail's own variant (flush 1:1 image, vendor mono caption, serif title, mono price
-  below — no floating price badge on the photo anymore).
-- **`MasonryRandomSection.tsx` rewritten** — dropped `shapeForRow()`/`LAYOUTS`/the `tint` boolean
-  prop/`colorForCard` entirely; now renders the archive-style header + a plain 3-column grid (was
-  a 4-column grid with randomised square/rectangle shapes). New `sectionType` prop (`"Feed"` /
-  `"Series"` / `"Category"`) replaces `tint`, feeding the small mono label — Front Page is `"Feed"`
-  (a general top pool, not a taxonomy), Lane and Free Critics are `"Series"`, Edit and Opinions are
-  `"Category"`, matching how the Issue Archive itself distinguishes Series vs Category sections.
-  Cards now show a real excerpt dek (`story.excerpt`, stripped via a local `plainExcerpt()` — same
-  `typeof x === "string"` guard as everywhere else in this file, see the crash-lesson entry above)
-  where before there was only a centered title caption.
-- **`ShopRail.tsx`** — kept its horizontal arrow-paged rail mechanism (`step()`, scroll-snap)
-  unchanged, only restyled the card itself off `.wcard`/`colorForCard` onto `.arc-shop-card`. The
-  `step()` function's `querySelector` was updated from `.shop-card` to `.arc-shop-card` to match.
-- **`app/page.tsx`** — the Shop section's wrapper changed from `<section className="band
-  band--tint">` (centered `.band-head`) to a hand-written `.arc-section`/`.arc-hdr` block (Shop
-  has no magazine-post `excerpt` to reuse `MasonryRandomSection` for, so its header is written
-  inline rather than through that component) — count line reads "N pieces · Shop all products →"
-  in the same eyebrow-row position as `MasonryRandomSection`'s own count/view-all line, for visual
-  consistency between the two.
-- **`.band`/`.band--tint`/`.band-head`/`.masonry-rand`/`.wcard`/`.wcard--sq`/`.wcard--rect` are
-  left in `homepage-v2.css`, unused by the homepage now** — deliberately not deleted.
-  `.wcard`/`.wcard-photo`/`.wcard-caption` are still load-bearing for `JoinSection.tsx`'s single
-  "latest issue" feature card (the rotated preview card in the closing newsletter CTA — a
-  different, single-card use, not one of the six repeating sections this pass touched), and
-  `.masonry-rand`/`.wcard--sq`/`.wcard--rect`/`.band`/`.band-head` are still real, in-use classes
-  on `SeriesLandingPage.tsx`, `MagazineArchiveWrapper.tsx` (the `/magazine` archive and its
-  category/tag/series/country/industry sub-routes), and `author/[slug]/page.tsx` — none of those
-  pages were in scope for this pass, and they share these exact class names, so the CSS had to
-  stay. `lib/cardColors.ts`/`colorForCard()` is likewise untouched and still used by all three of
-  those pages. **If a future pass wants the archive-style treatment on `/magazine` or the author
-  page too, extend `.arc-*` (or promote it into `magazine.css` proper) rather than repurposing
-  `.mag-issue-*`/`.masonry-rand` in place** — those still serve pages this pass didn't touch.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap (and,
-  this session specifically, no `node_modules` installed for `apps/site`) as every other mockup
-  pass in this file. Verified via a CSS brace-balance check on `homepage-v2.css` and a manual
-  read-through of the three edited files. Re-check pixel fidelity against the approved mockup
-  (`https://claude.ai/code/artifact/714cfb13-03ae-4a60-9741-19f1edd22ea9` at the time of writing)
-  in a real environment before considering this fully closed.
+**Current spacing**: `.arc-section` vertical padding `clamp(24px,3vw,36px)`, `.join-section`
+`clamp(28px,3.5vw,48px)`, `.masthead` top padding `clamp(28px,4vw,56px)` (flat `14px` below
+`640px` — the clamp's floor reads as disproportionately large on short mobile viewports, so
+mobile gets its own value rather than inheriting the desktop clamp), `.masthead h1` font-size
+`clamp(28px,4vw,46px)`. The `.arc-hdr` row above "Right Now" is an empty `<div>` (no heading/link,
+just the hairline divider `.arc-hdr` itself draws). `.hpv2 .wrap` is the one shared `max-width:
+1328px` column rule every section (including `.masthead`'s own content) uses — don't reintroduce
+a second, more-specific `max-width` override scoped to just one section, that's what caused an
+earlier column-width mismatch between "Right Now" and the sections below it.
 
-**Follow-up density/copy pass (same month)** — after seeing it live, several more things were
-stripped from these same sections:
-- **`.arc-type` (the Series/Category/Feed mono label) and `.arc-count`/`.arc-sub` (post count +
-  subtitle line) are all gone from `MasonryRandomSection.tsx`** — the header is now just the
-  `<h2>` and, when the section has one, a short "More →" link on a `justify-content:
-  space-between` row (`sectionType`/`subtitle` props removed from the component entirely, not
-  just left unpassed). The Shop section's hand-written header in `page.tsx` matches: no "Shop"
-  label, no piece count, just the `<h2>` and a "Shop all →" link. **`viewAllLabel` copy shortened
-  site-wide** — "View all stories"/"All news" became the component's own default "More →" (Front
-  Page and The Edit no longer pass an explicit label at all).
-- **Grid bumped from 3 columns to 4** (`.arc-grid`, `MasonryRandomSection`'s default `max` 6→8) so
-  every section shows a full 4×2 grid of 8 posts — added a 3-column tier at `max-width: 1100px`
-  and moved the 2-column drop to `780px` so the new 4-up grid still degrades gracefully instead of
-  jumping straight from 4 to 2 columns. `ShopRail` is unchanged structurally (still the
-  horizontal arrow-paged rail, not a grid — "5 columns" was already how many cards are visible at
-  once) but `shopProducts` is now sliced to 10 products instead of 8 (`app/page.tsx`'s
-  `loadHomeSections()`), so the rail has more to scroll through.
-- **HTML-entity rendering bug fixed** — CMS titles/excerpts/product names come back from
-  WPGraphQL/WooCommerce with numeric entities (`&#8217;s`), and `plainExcerpt()`'s old
-  regex-only tag-strip never decoded them, so an apostrophe rendered as the literal text
-  `&#8217;s` in every excerpt (and would have in `ShopRail`'s product names too, once decoded
-  titles started rendering as plain text instead of `dangerouslySetInnerHTML`). Both
-  `MasonryRandomSection.tsx` and `ShopRail.tsx` now run title/excerpt/vendor/product-name
-  strings through `packages/utils/decode-html.ts`'s `decodeHtml()` (the same helper
-  `/magazine/issues/[slug]` already uses) before rendering — titles are plain `<h3>{title}</h3>`
-  now instead of `dangerouslySetInnerHTML`, since `decodeHtml()` already strips any stray tags.
-- **Not visually verified in a browser** — same gap as above. Verified via a CSS brace-balance
-  check on `homepage-v2.css` (146/146) and a manual read-through of all four touched files.
+**Real bug, worth remembering**: `.masthead`/`.masthead h1`/`.masthead h1 em`/`.masthead p.sub`
+were briefly left as **bare, unscoped selectors** in this file — since `homepage-v2.css` loads
+site-wide (not homepage-only), those rules leaked onto any other page with an element literally
+named `.masthead`, padding `/lifestyle`'s completely unrelated `ShopHeader.tsx` masthead.
+**Every rule in this file must be scoped to `.hpv2` (the homepage's own wrapper div) — never
+write a bare `.masthead` (or similar generic-sounding class) selector here, even for a quick
+tweak.**
 
-**Site-wide colourful-card sweep, same month — every remaining `colorForCard()` usage
-retired.** Mockup-first as usual (Artifact, before/after toggle) for the "Right Now" hero
-carousel specifically, then extended to every other page still rendering the pastel-fill
-card system once it was clear the pattern was site-wide, not homepage-only.
-
-- **`HeroCarousel.tsx` rewritten** — the dark, perforated "film canister" band
-  (`.index-strip`/`.strip-sprockets`/`.carousel-track`) and its 6-colour rotating `.frame--*`
-  card fills are gone, along with the centre-snap/infinite-loop clone-and-jump scroll
-  mechanics that made this component's own bespoke carousel algorithm. It's now an
-  arrow-paged rail — same mechanism as `ShopRail.tsx` (`step()`, scroll-snap, reused
-  `.shop-arrow`/`--prev`/`--next` button classes directly rather than duplicating them) —
-  rendering flush cards (`.hero-rail-card`, reusing `.arc-card-img`) with a mono category
-  kicker + serif title, no colour fill. `app/page.tsx`'s masthead section gained a plain
-  `.arc-hdr` header ("Right Now" + "More →" to `/magazine`) above the rail, matching every
-  other homepage section's header language.
-- **New shared component: `apps/site/components/ArchiveCardGrid.tsx`** — the flush,
-  colourless `.arc-grid`/`.arc-card` treatment (title + excerpt + "Read →", no per-card
-  category kicker, same as `MasonryRandomSection.tsx`'s cards) factored out so every
-  open-ended story listing on the site can reuse one implementation instead of each
-  hand-rolling its own copy of the retired `wcard`/`colorForCard()`/`tileMasonryShapes()`
-  pastel-masonry grid. Works because `homepage-v2.css` (where `.arc-*` lives) loads
-  site-wide via the root `layout.tsx`, not just on `/`. Wired into:
-  - `MagazineArchiveWrapper.tsx`'s filtered-view grid (`/magazine/category/[slug]` etc.)
-  - `SeriesLandingPage.tsx`'s "More from {series}" remainder grid
-  - `author/[slug]/page.tsx`'s "Stories by {author}" grid
-- **`MagazineHub.tsx`** (the default, unfiltered `/magazine` view) — the "Browse by
-  Section" and "Recurring Series" tile grids (`.mgh-cat-box`/`.mgh-series-box`) also used
-  `colorForCard()` for a random pastel tile fill; these aren't story cards (no image, just
-  a category/series name + arrow/CTA) so they weren't candidates for `ArchiveCardGrid` —
-  instead flattened in place to `background: var(--paper); border: 1px solid var(--rule)`
-  with the arrow/CTA text recoloured to `var(--ochre)` and the resting shadow moved to a
-  hover-only `border-color: var(--ochre)` + `box-shadow` state, keeping the existing
-  `--radius-xl` card shape.
-- **`lib/cardColors.ts` (`colorForCard()`/`LIGHT_COLORS`) and `lib/masonryShapes.ts`
-  (`tileMasonryShapes()`/`shapeForRow()`) deleted outright, not left as dead code** — after
-  this sweep neither has any remaining call site anywhere in the codebase (confirmed via
-  repo-wide grep before removing), unlike the narrower `.wcard`/`.wcard-photo`/
-  `.wcard-caption` base rules in `homepage-v2.css`, which stay because `JoinSection.tsx`'s
-  single "latest issue" feature card still renders with them (a plain, colourless rotated
-  preview card — never part of the colourful-card pattern this sweep targeted). The
-  `.wcard--sq`/`.wcard--rect`/`.masonry-rand` grid-column-span rules that sized the old
-  variable-shape masonry layout were removed along with them, since nothing produces a
-  `sq`/`rect` shape anymore on any page.
-- **Confirmed genuinely dead, left untouched**: `IssueCarousel.tsx`/`ShopCarousel.tsx`
-  (zero importers anywhere) and the pre-existing dead `.shop-card`/`.shop-price-tag`/
-  `.shop-caption*` CSS in `homepage-v2.css` (already superseded by `.arc-shop-card` in the
-  earlier ShopRail restyle, left in place then per the usual "kept in case needed again"
-  convention) — neither was in scope for this pass.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  (and no `node_modules` this session) as every other pass in this file. Verified via CSS
-  brace-balance checks (`homepage-v2.css` 108/108, `magazine.css` 416/416) and a repo-wide
-  grep confirming zero remaining `colorForCard`/`tileMasonryShapes`/`wcard--*`/
-  `masonry-rand` references outside comments. Re-check pixel fidelity against the approved
-  mockup (`https://claude.ai/code/artifact/b5d2819a-ec94-4577-9691-f519f6195839` at the
-  time of writing) in a real environment before considering this fully closed.
-
-**Follow-up, same month — column-width mismatch fixed by standardizing on the narrower
-width, not the wider one.** User-reported: "Right Now" (the masthead/hero-carousel
-section) didn't align with the sections below it. Root cause: `.hpv2 .wrap` (the base
-rule every `.arc-section` on the homepage uses) was `max-width: 1440px`, while a
-second, more specific rule, `.masthead .wrap`, overrode it to `1328px` — but that
-override only applied inside `<section className="masthead">`, which wraps **both**
-the h1/subhead block *and* the "Right Now" header+carousel block (they're two sibling
-`.wrap` divs inside the same `<section>`). Every other section (`.arc-section`, a
-top-level sibling of `.masthead`, not nested inside it) never got the override and
-stayed at 1440px — so "Right Now" was narrower than every section below it. Fixed by
-collapsing to one rule: `.hpv2 .wrap { max-width: 1328px; ... }`, with the now-
-redundant `.masthead .wrap` override deleted entirely — every section on the page
-(masthead/Right Now included) now shares the same 1328px column. CSS brace-balance
-checked at 107/107 (one rule removed). Not visually verified in a browser — same
-`NEXTAUTH_SECRET`/WordPress credentials gap as every other pass in this file.
-
-**Follow-up, same month — "Right Now" made a continuous, seamlessly-looping auto-scroll
-carousel.** `HeroCarousel.tsx` previously only moved on arrow click (discrete,
-scroll-snapped steps). Per explicit user request it now auto-scrolls continuously at a
-slow, ambient drift (`AUTO_SCROLL_SPEED = 0.035px/ms`), loops infinitely, and still
-supports the arrow buttons (smooth-scroll a card width, pausing autoplay briefly) and
-hover/touch-to-pause. Mechanism: the story list renders **twice** back-to-back
-(`looped = [...stories, ...stories]`); a single `requestAnimationFrame` loop increments
-`rail.scrollLeft` every frame, and once it reaches exactly one set's width
-(`rail.scrollWidth / 2`), it's wound back by that same width — since both halves are
-identical, the reset is invisible, producing an infinite loop with no jump. `.hero-rail`'s
-`scroll-snap-type: x mandatory`/`.hero-rail-card`'s `scroll-snap-align: start` were
-**removed** from `homepage-v2.css` — snap-on-scroll-end fights a script that's
-continuously setting `scrollLeft` every frame, yanking the rail back to the nearest card
-the instant the loop pauses. Autoplay pauses (via a `pausedRef`, not React state, to avoid
-a re-render every frame) on hover, touch, and for `RESUME_DELAY` (2.2s) after an arrow
-click, then resumes automatically. If a future section wants this same "auto-scroll +
-loop + still arrow-controllable" rail treatment, copy this component's pattern rather
-than the CSS-duplicated-track marquee pattern documented elsewhere in this file (e.g. the
-`.evt-ticker-track`/`["a","b"].map(...)` pattern) — that one is pure-CSS and can't be
-paused/nudged by user interaction, which this rail needed. Not visually verified in a
-browser — same credentials gap as every other pass in this file.
-
-**Follow-up, same month — "From The Shop" (`ShopRail.tsx`) given the identical
-continuous-autoscroll/infinite-loop treatment.** Per explicit user request, the shop rail now
-uses byte-for-byte the same mechanism as `HeroCarousel.tsx` above — product list rendered
-**twice** back-to-back (`looped = [...products, ...products]`), a `requestAnimationFrame` loop
-incrementing `rail.scrollLeft` at the same `AUTO_SCROLL_SPEED = 0.035px/ms`, wrapping at
-`rail.scrollWidth / 2`, `pausedRef`-based pause state (hover/touch/`RESUME_DELAY` 2.2s after an
-arrow click), and arrow buttons still using `rail.scrollBy({ behavior: "smooth" })`. `.shop-rail`'s
-`scroll-snap-type: x mandatory` and `.arc-shop-card`'s `scroll-snap-align: start` were removed
-from `homepage-v2.css` for the same reason documented for `.hero-rail` above. **This supersedes
-the component's old design rationale** — its previous comment explicitly argued the shop rail
-should *not* loop/center like the hero carousel ("reaching the real ends of a product rail is
-expected, not something to hide"); that reasoning is now retired per the user's direct ask, and
-the component's header comment has been rewritten to describe the new loop mechanism instead. Not
-visually verified in a browser — same credentials gap as every other pass in this file.
-
-**Follow-up, same month — "Right Now" heading/"More →" link removed, divider kept; all
-homepage section spacing halved.** Per explicit user direction: the `.arc-hdr` row above the
-"Right Now" carousel (`app/page.tsx`'s masthead section) no longer renders an `<h2>`/`Link` —
-it's now an empty `<div className="arc-hdr" />`, which still draws the hairline divider (the
-`border-bottom` lives on `.arc-hdr` itself, in `homepage-v2.css`) with the same spacing, just
-with nothing above it. The now-unused `Link` import was removed from `page.tsx`. Separately, the
-vertical padding driving the gap between every homepage section was halved: `.arc-section`
-(`clamp(48px,6vw,72px)` → `clamp(24px,3vw,36px)` — this is the section every
-`MasonryRandomSection`/the Shop-rail section renders into, so halving it tightens every repeating
-section's top+bottom gap), `.join-section` (`clamp(56px,7vw,96px)` → `clamp(28px,3.5vw,48px)`),
-and `.masthead`'s top padding (`clamp(28px,5vw,56px)` → `clamp(14px,2.5vw,28px)`, the gap between
-the full-bleed hero and the masthead/Right Now content below it). `.band`/`.band-head` (confirmed
-dead CSS, unused by the homepage — see the "ARCHIVE-STYLE SECTIONS" comment above `.arc-section`
-in the same file) were left untouched. Not visually verified in a browser — same credentials gap
-as every other pass in this file.
-
-**Follow-up, same month — masthead `<h1>` size reduced.** `.masthead h1`'s `font-size` clamp
-(`clamp(34px, 5vw, 58px)` → `clamp(28px, 4vw, 46px)`) was reduced per explicit user direction —
-a straightforward size-only tweak, no layout/structure change.
-
-**Follow-up, same month — leftover top padding removed.** `.masthead`'s own `padding` was still
-`clamp(14px, 2.5vw, 28px) 0 0` (padding-bottom already `0`) — a leftover from before the earlier
-"all homepage section spacing halved" pass, which halved every *other* section's padding but
-missed this one since it's set directly on `.masthead`, not inherited from `.arc-section`.
-User-reported as unnecessary space at the top of the header/hero area — fixed to `padding: 0`.
-
-**Follow-up, September 2026 — a deliberate gap reintroduced, specifically for the hero-to-masthead
-transition.** `.masthead`'s `padding: 0` above meant the full-bleed hero (`.hero-full`) ran directly
-into the masthead's "Culture, curated. Movers, platformed." heading with zero visual separation —
-user-reported from a live screenshot. Fixed by giving `.masthead` a `clamp(28px, 4vw, 56px)` top
-padding (bottom still `0`) — this is not a reversion of the fix directly above: that one removed
-padding that existed for no reason tied to any specific transition (a stale leftover from an
-unrelated spacing-halving pass); this one exists specifically to separate the hero from the
-masthead copy below it.
-
-**Follow-up, same day — mobile got a disproportionate amount of the new gap.** The `clamp(28px,
-4vw, 56px)` above resolves to its 28px floor at every viewport under ~700px (`4vw` never exceeds
-28px below that width), so mobile silently got the clamp's fixed minimum while desktop scaled up
-to 56px — 28px reads as noticeably more gap on a short mobile viewport right under the hero than
-the same value does on desktop. Added a `@media (max-width: 640px)` override
-(`.masthead { padding-top: 14px; }`) — mobile now gets its own smaller flat value instead of
-inheriting the desktop clamp's floor.
-
-**Real bug found and fixed, September 2026 — this file's `.masthead` selector was unscoped and
-leaked sitewide, padding the unrelated `/lifestyle` header too.** A user report of excess
-top padding on `/lifestyle`'s header (`ShopHeader.tsx`'s `<div className="masthead">`, styled in
-`apps/site/app/lifestyle/shop-chrome.css`) turned out to be caused by *this* file. Every other
-selector here that needs page-scoping already uses `.hpv2 .wrap`, but `.masthead`/`.masthead h1`/
-`.masthead h1 em`/`.masthead p.sub` were left as bare, unscoped selectors — and since
-`homepage-v2.css` is imported globally in `app/layout.tsx` (not homepage-only), those bare rules
-applied to *any* element named `.masthead` on *any* page, including `/lifestyle`'s completely
-unrelated one. Confirmed live via a screenshot of Chrome DevTools showing the Lifestyle page's
-`div.masthead` computed styles crediting `padding: clamp(28px, 4vw, 56px) 0 0` to this exact
-file/rule. **Fixed by scoping every rule to `.hpv2 .masthead`** (the homepage's own
-`<div className="hpv2">` wrapper, set in `app/page.tsx`) — never write a bare `.masthead`
-selector in this file again, even for a quick tweak; always scope to `.hpv2`. An earlier attempt
-in this same session mistakenly assumed the complaint was about *this* file's masthead directly
-(toggling its padding to 0 and back) before the actual cross-page leak was found — that dead end
-is not otherwise documented here since the real fix supersedes it.
-
-Mockup-first, same workflow as the account-dashboard/magazine-hero passes above — built as an
-Artifact (`homepage-redesign-mockup.html`), iterated through several rounds of explicit
-feedback (removing the hero eyebrow badge and trust line, the "backed by Moveee Magazine…"
-subhead clause, both "Moveee Magazine" section eyebrows, and the entire Membership tier
-section), then approved and built for real. No token migration was needed — `moveee-zone.css`
-already ran on the same white/radius-xl/shadow-card system as the rest of the site going in;
-this was a composition-and-copy change only.
-
-- **Hero** (`MoveeeZone.tsx`) — new headline "Culture doesn't happen *to* you. It happens
-  because of you." and tightened subhead with no "backed by Moveee Magazine…" clause. The
-  `.mz-eyebrow` badge above the headline and the `.mz-trust` line below the CTAs are both
-  removed. The secondary CTA changed from "See how it works" (→ `#what-is-moveee`) to
-  **"Read the Magazine"**, anchored to a new `id="magazine"` wrapper div in
-  `HomepageContent.tsx` around the "From The Magazine" editorial sections (`mg-hero`/
-  `mg-band`) — since MoveeeZone and the editorial sections render on the same page/route, a
-  plain hash `Link` is enough, no route change.
-- **Feature grid / "What is Moveee"** — unchanged structurally (no eyebrow existed here to
-  begin with; the mockup's illustrative "What is Moveee" eyebrow line was mockup-only content
-  that was removed from the mockup itself, not something that needed removing from the real
-  component).
-- **Membership section — removed entirely** (the "Free to join. More for the obsessed."
-  intro + Citizen/Pro tier-card pair, `.mz-membership-cards`/`.mz-tier-card`/etc.) per explicit
-  feedback. The download strip (`.mz-download-strip`, `id="download"`) that used to sit inside
-  the same `<section>` now stands alone in its own `mz-section mz-section--bordered` —
-  `PatronPrice` import removed from `MoveeeZone.tsx` since it was only used inside the removed
-  Pro tier card. `.mz-download-strip`'s `margin-top: 56px` (previously separating it from the
-  tier cards above) was zeroed out since it's now the section's only child. The now-dead
-  `.mz-tier-card`/`.mz-membership-cards` desktop-breakpoint rules in `moveee-zone.css` were
-  removed; the base (non-breakpoint) `.mz-tier-*`/`.mz-btn-ghost`/`.mz-btn-gold` rules were
-  **left in place** (dead CSS, consistent with this file's usual "kept in case needed again"
-  convention) since `.mz-btn-ghost`/`.mz-btn-gold` are generic button classes, not
-  membership-specific, even though nothing in this component uses them anymore.
-- **Follow-up pass (same day): the first pass under-delivered — it was copy/section-removal
-  only, not the visual rebuild the mockup actually called for.** The user caught this directly
-  ("i can see some copy change but the homepage layout is still pretty much the same") and was
-  right — three real structural gaps were found and fixed:
-  1. **Hero visual was still the old rotated-photo-strip-over-a-gradient-blob collage**
-     (`.mz-hero-visual-bg` gradient blob + an 80%-width, `rotate(-2deg)`, 220–280px-tall photo
-     strip), not the mockup's single large framed portrait. Rebuilt `.mz-hero-photo-frame` as a
-     full-width `aspect-ratio: 4/5` frame with the real photo filling it via `object-fit:
-     cover`, removed `.mz-hero-visual-bg` entirely (JSX and CSS), and removed the rotation on
-     the floating quote card. Quote card/points-chip now overlap the frame's edges at fixed
-     pixel offsets (`-16px`/`-10px`, widening to `-24px`/`-16px` at the desktop breakpoint) —
-     intentionally less than the section's own side padding (24px mobile / 64px desktop) so
-     they can never cause horizontal overflow on narrow viewports.
-  2. **Feature grid had product name and tagline visually inverted**: `.mz-feature-title` (the
-     JSX element rendering the actual feature name, e.g. "Pulse Feed") was styled as a small
-     12px uppercase ochre caption, while `.mz-feature-hook` (the tagline, e.g. "Nine ways to
-     share") was styled as the big 18px serif heading — backwards from the mockup's intended
-     hierarchy (name = heading, tagline = small mono caption below it). Fixed by swapping the
-     CSS property blocks between the two selectors (JSX unchanged — each element already had
-     the semantically-correct class, only the class's own styling was wrong).
-  3. **`MagazineSpotlight.tsx`'s Latest Issue section still had a literal "Moveee Magazine"
-     eyebrow** (`<p className="ms-eyebrow">Moveee Magazine</p>`) — the first pass reasoned "the
-     real editorial sections don't say 'Moveee Magazine' anywhere" while only having checked
-     `HomepageContent.tsx`'s own JSX, missing that `MagazineSpotlight.tsx` (a separate component,
-     rendered last on the page) had exactly the eyebrow the user asked to remove from the
-     mockup. Removed.
-  4. **"From The Magazine" cover story was a stripped-down stacked image+title block** (reusing
-     `/magazine` archive's own `.mg-hero`/`.mg-hero-main` classes with no dek, no read-more
-     link, image on top of title rather than side-by-side) instead of the mockup's real
-     two-column grid (image left, kicker+title+dek+"Read the full story →" link on the right).
-     Rebuilt as a new, additive `.mg-cover-*` class family in `magazine.css` — **deliberately
-     not** a modification of `.mg-hero`/`.mg-hero-main`, since `MagazineArchiveWrapper.tsx` (the
-     real `/magazine` archive page) depends on those classes for its own hero-with-sidebar
-     layout; changing them would have broken that page. `HomepageContent.tsx`'s cover-story JSX
-     was rewritten to use the new classes and to surface `coverStory.excerpt`/date already
-     available on `STORY_FIELDS_FRAGMENT` but previously unused here.
-  - **Lesson for future mockup-to-real passes on this page specifically**: check every component
-    the page composes (`MoveeeZone.tsx` **and** `HomepageContent.tsx` **and**
-    `MagazineSpotlight.tsx`) against the mockup individually — reasoning about one file's JSX
-    isn't enough when the page is assembled from three separately-maintained components, and a
-    copy-only change to the top-level JSX without touching the underlying CSS produces exactly
-    the "still looks the same" result the user flagged.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other mockup rebuild in this file. Verified via `tsc --noEmit` (clean) on `apps/site`
-  and CSS brace-balance checks on `moveee-zone.css` (93/93) and `magazine.css` (333/333).
+**MoveeeZone hero rebuild** (mockup-first, Artifact `homepage-redesign-mockup.html`): headline
+"Culture doesn't happen *to* you. It happens because of you."; the `.mz-eyebrow` badge and
+`.mz-trust` line are removed; secondary CTA is "Read the Magazine" (anchors to `id="magazine"`
+around the editorial sections). The Membership tier-card section was removed entirely per
+explicit feedback — the download strip now stands alone in its own `mz-section
+mz-section--bordered`; `.mz-tier-*` CSS is left in place, unused (dead but harmless, generic
+button classes). Hero visual is a single full-width `aspect-ratio: 4/5` framed photo
+(`.mz-hero-photo-frame`, `object-fit: cover`) with the floating quote card/points-chip
+overlapping its edges at fixed small offsets — not the earlier rotated-photo-strip collage. "From
+The Magazine" renders via a new, additive `.mg-cover-*` class family in `magazine.css`
+(deliberately **not** a modification of `.mg-hero`/`.mg-hero-main`, which `MagazineArchiveWrapper.tsx`
+still depends on for its own layout) — image left, kicker/title/dek/"Read the full story →" on
+the right, using `coverStory.excerpt`/date already on `STORY_FIELDS_FRAGMENT`. **Lesson**: this
+page is assembled from three separately-maintained components (`MoveeeZone.tsx`,
+`HomepageContent.tsx`, `MagazineSpotlight.tsx`) — a mockup-fidelity pass must check all three
+individually; checking only one missed a leftover literal "Moveee Magazine" eyebrow in
+`MagazineSpotlight.tsx` that the mockup had explicitly dropped.
+- *(Not verified live this pass.)*
 
 ### "The Edit" pinned to News category + plain-white magazine background (August 2026)
 
-Two small, unrelated fixes requested together against `/magazine` and its edition pages
-(`/magazine/africa`, `/uk`, `/us` all render the same `MagazineArchiveWrapper` with no props).
+Fixes against `/magazine` and its edition pages (`/magazine/africa`, `/uk`, `/us` all render the
+same `MagazineArchiveWrapper` with no props). **Root bug class, hit four separate times**: several
+sections (The Edit, Opinions & Essays, The Lane, The Free Critics) used to be positional slices
+(`stories.slice(12, 16)` etc.) of one generic pool, so each showed whatever category/series
+happened to land in that numeric range rather than its intended taxonomy. All four are now their
+own fetch, pinned to a real taxonomy, run in parallel with the main pool:
+- **The Edit** → `GET_STORIES({ first: 7, categoryName: "news" })`. News is the one category
+  **excluded wholesale** from every other section (hero/sidebar/band/etc.), not just from the 7
+  posts picked here — a standing, explicit request. Main pool fetch bumped to `first: 40` to leave
+  headroom after the exclusion.
+- **Opinions & Essays** → `GET_STORIES({ categoryName: "viewpoints", first: 12 })`, rendered as 4
+  equal columns (`repeat(4,1fr)` ≥900px, 2-up ≥640px, 1-up below) — no oversized "lead" card.
+- **The Lane** (renamed from "In Focus") and **The Free Critics** (renamed from "Quick Reads") →
+  `GET_SERIES_STORIES({ series: "the-lane" })` / `"the-free-critics"` (`first: 48` buffer, sliced
+  to 5/4 client-side). `digestStories`/`.mg-digest*` class names are unchanged, only the heading
+  text and taxonomy source changed.
+- **Dedupe is top-pool-first, by id — not a taxonomy-wide exclusion for any of these three.** The
+  top pool (Hero + "More This Week" + Featured Stories, News already excluded) picks its posts
+  *first*; those ids become `usedByTopIds`; Opinions/The Lane/The Free Critics then filter their
+  own taxonomy pool against `usedByTopIds` before slicing to their needed count — so the single
+  best/most-recent story site-wide always wins the Hero slot even if it also carries a Viewpoints
+  tag or sits in a pinned series. **If you add a new pinned section, give it this same "fetch a
+  buffer, filter against `usedByTopIds`, then slice" treatment** — don't compute pinned sections
+  before the top pool, and don't blanket-exclude a whole category/series the way News is excluded
+  (News is the one deliberate exception).
+- All decorative section-eyebrow kicker labels ("Curated", "Selected", etc.) were removed from
+  `MagazineArchiveWrapper.tsx`/`EditorialSection.tsx` — each section now leads straight with its
+  `<h3>`. `.mg-sec-label` CSS is left, unused. `.mg-hero-eyebrow` (the "★ {Category}" badge on the
+  hero story) is live per-article metadata and was deliberately left alone.
 
-- **"The Edit" was mixing categories** — `editorialStories` used to be `stories.slice(12, 16)`,
-  a positional slice of the same generic 27-post pool every other section on the page slices
-  from, so it showed whatever category happened to land in that range (News, Interviews,
-  Reviews all mixed together in the screenshot that prompted this). Fixed: `editorialStories`
-  is now its own fetch, `getWPData(GET_STORIES, { first: 7, categoryName: "news" })`, run in
-  parallel with the main `stories` fetch inside `MagazineArchiveWrapper.tsx`'s unfiltered
-  branch — `GET_STORIES` already supported a `categoryName` where-arg (used elsewhere for
-  `/magazine/category/[slug]`), so no new query was needed. Bumped from 4 items (1 lead + 3
-  rows) to 7 (1 lead + 6 rows) to close up the whitespace below the shorter old 3-row stack —
-  `.edit-lead`/`.edit-lead-body` in `magazine.css` were changed from block to a flex column
-  (`.edit-lead-body` gets `flex:1; justify-content:space-between`) so that if the taller
-  `.edit-stack` column ever stretches the lead card (via `.edit-mosaic`'s existing
-  `align-items: stretch`), the lead's text block distributes into the extra space instead of
-  leaving dead space at its own bottom. **Follow-up, same pass**: News stories were still also
-  showing up in the hero/sidebar/featured-band/in-focus/quick-reads/opinions sections, since
-  those all slice from the same generic `stories` pool independent of "The Edit"'s own fetch —
-  News is now exclusive to "The Edit": `stories` is filtered to drop any post whose
-  `categories.nodes` includes the `news` slug, right after the main fetch and before any of the
-  positional slices are derived. The main fetch was bumped from `first: 27` to `first: 40` to
-  leave enough headroom post-filter — otherwise a News-heavy top-40 could starve the later
-  sections (Opinions in particular, which only takes 2).
-- **Magazine background wasn't pure white** — root cause is sitewide, not magazine-specific:
-  `globals.css`'s `body` has two 4%-opacity radial-gradient colour washes plus a fixed,
-  full-viewport `body::before` SVG fractal-noise "paper grain" texture (`opacity: .35;
-  mix-blend-mode: multiply; z-index: 100`) that sits above all normal-flow page content and
-  visibly dulls/tints anything under it, including sections already on `var(--paper)` (#fff).
-  This grain is intentional sitewide texture (kept for the homepage/shop/etc.), so it wasn't
-  removed globally — instead `apps/site/app/magazine/layout.tsx` (new file) wraps every route
-  under `/magazine/*` in a `.mg-page-white` div (`position: relative; z-index: 101; background:
-  var(--paper)`), which paints solid white above the z-index:100 grain layer for that whole
-  route tree only. Since Next.js layouts nest, this covers the archive, the single article page,
-  and every category/series/tag/country/industry/issues sub-route with one file — no per-page
-  changes needed. Tinted band sections (`#F2F2F2` — Featured Stories, The Edit, The Free Critics)
-  still render correctly since they set their own explicit background on top.
+**Magazine background is pure white via a dedicated layout wrapper, not a global change** —
+`globals.css`'s `body` has a sitewide fixed `body::before` SVG "paper grain" texture
+(`z-index: 100`) that dulls anything under it, including sections already on `var(--paper)`. Kept
+sitewide (homepage/shop/etc. still want it); `apps/site/app/magazine/layout.tsx` wraps every
+`/magazine/*` route in a `.mg-page-white` div (`z-index: 101; background: var(--paper)`) that
+paints solid white above the grain for that whole route tree — one file, no per-page changes.
 
-**Follow-up, same session:**
-- **"Opinions & Essays" pulled from a positional slice too** (`stories.slice(20, 22)`) — same
-  bug class as News, fixed the same way: now its own fetch, `GET_STORIES` with
-  `categoryName: "viewpoints"` (`first: 4`), run in the same `Promise.all` as the main pool and
-  "The Edit"'s. Layout changed from a 2-up grid with an oversized "lead" first card
-  (`.mg-op-card--lead`, `1.4fr 1fr`) to 4 equal columns (`repeat(4, 1fr)` at ≥900px,
-  `repeat(2, 1fr)` at ≥640px, 1 column below that) — the lead-card modifier class and its CSS
-  were removed entirely (not left as dead code) since nothing references it anymore.
-- **All decorative section eyebrows removed from `/magazine`** — the small monospace kicker
-  labels above each section heading ("Curated", "Selected", "Visual", "Digest", "Voices",
-  "Filtered Results") were dropped from `MagazineArchiveWrapper.tsx` and `EditorialSection.tsx`;
-  each section now leads straight with its `<h3>` title. The `.mg-sec-label` CSS rule itself is
-  left in `magazine.css`, unused, per this file's usual "kept in case needed again" convention.
-  **Deliberately not touched**: `.mg-hero-eyebrow` (the "★ {Category}" badge on the hero story)
-  — that's live per-article metadata (which category the story belongs to), not a static
-  decorative section label, so it's a different thing even though it visually sits in a similar
-  spot. This pass was also scoped to `/magazine` only, matching the conversation it came from —
-  other pages (Shop, Discover, etc.) still have their own eyebrow-style labels untouched.
-- **"The Lane" (formerly "In Focus") and "The Free Critics" (formerly "Quick Reads") pulled from
-  positional slices too** (`stories.slice(7, 12)` and `stories.slice(16, 20)`) — same bug class
-  as News/Viewpoints, but against a *series* rather than a *category*: pinned to the **The Lane**
-  series (`GET_SERIES_STORIES({ series: "the-lane" })`, sliced to 5 client-side) and the **The
-  Free Critics** series (`GET_SERIES_STORIES({ series: "the-free-critics" })`, sliced to 4) —
-  both slugs confirmed from the existing `GET_SERIES_STORIES_BATCH` query's `theLane:
-  seriesItem(id: "the-lane", ...)` entry and the analogous WP admin term lookup. Section headings
-  are now **"The Lane"** (was "In Focus") and **"The Free Critics"** (was "Quick Reads") —
-  `digestStories`/`.mg-digest`/`.mg-digest-inner`/`.mg-digest-grid` class names are unchanged,
-  only the `<h3>` text and the taxonomy source changed.
-- **Cross-section duplicate handling is by-id dedupe, not a category/series-wide exclusion**
-  (explicit correction — an earlier version of this fix wholesale-excluded `viewpoints` and
-  `the-lane` from the rest of the page, which was wrong and has been reverted). **Only News is
-  excluded wholesale** — the entire category is kept out of every other section, not just the 7
-  posts picked for "The Edit" (a standing, explicit request). Viewpoints, The Lane, and The Free
-  Critics are **not** excluded wholesale: a post from any of those taxonomies that wasn't picked
-  for Opinions/The Lane/Quick Reads can still surface normally in the hero/sidebar/band sections.
-  What's actually deduped is narrower and simpler — a `usedElsewhereIds` `Set` built from the
-  exact post ids already placed into `opinionStories`/`portraitStories`/`digestStories`, and the
-  main `stories` pool filters out only those specific ids (plus the whole News category). If a
-  future pinned section needs the same treatment, follow this pattern: fetch its own pool, add
-  its ids to `usedElsewhereIds`, and do **not** add a `categories.nodes.some(...)`/
-  `series.nodes.some(...)` blanket exclusion for its taxonomy.
-  **Dedupe direction reversed (August 2026, user-reported):** the by-id dedupe above used to run
-  pinned-sections-first — each of Opinions/The Lane/The Free Critics independently claimed its
-  own top-N freshest posts, and only those exact ids were then stripped out of the top-of-page
-  pool (Hero/"More This Week"/Featured Stories). That meant if the single best/most-recent story
-  site-wide also happened to carry a Viewpoints tag (or sat in The Lane/Free Critics series), a
-  pinned section further down the page could claim it first, bumping it out of the Hero slot in
-  favour of stale content up top. Reversed: the top pool (`topPool`, News already excluded) picks
-  its first 7 posts (Hero + 3 "More This Week" + 3 Featured Stories) *first*; those ids become
-  `usedByTopIds`; Opinions/The Lane/The Free Critics then filter their own taxonomy pool against
-  `usedByTopIds` before slicing to their needed count. Opinions' fetch was bumped from `first: 4`
-  to `first: 12` to leave headroom for that filter (Lane/Free Critics already had buffer via
-  `GET_SERIES_STORIES`'s built-in `first: 48`). News is unaffected — it's still excluded from the
-  top pool unconditionally, so there's never overlap to resolve there. **If you add a new pinned
-  section, give it the same "fetch a buffer, filter against `usedByTopIds`, then slice" treatment
-  — do not go back to computing pinned sections before the top pool.**
-- **Cross-section horizontal alignment fix** — user-reported: sections had visibly inconsistent
-  left/right margins on wide viewports. Root cause was two separate bugs in `magazine.css`, both
-  against the shared `max-width: calc(1200px + 128px)` (1328px) centered-column convention every
-  section on this page is supposed to share:
-  1. **`.mg-head`** (the nav-tabs/filter-bar row) had no `max-width`/`margin: 0 auto` at all —
-     just `padding: 32px 64px 0` — so on a wide viewport it stretched to fill the *entire*
-     available width instead of stopping at the same 1328px column as every section below it.
-     Added the same `max-width`/`margin: 0 auto`/`box-sizing: border-box` triplet every other
-     section already uses.
-  2. **`.mg-edit`** ("The Edit") put its horizontal `64px` padding on the **outer** tinted div,
-     ahead of `.mg-edit-inner`'s own `max-width`/`margin: 0 auto` centering — every sibling
-     section (`.mg-band`, `.mg-portrait`, `.mg-digest`, `.mg-opinions`) does the opposite: the
-     outer div carries *no* horizontal padding, and the *inner* div does both the max-width
-     centering **and** the 64px padding together. Because `.mg-edit`'s outer padding shrank the
-     available width *before* the inner div's max-width got a chance to center within the full
-     viewport, its content sat consistently ~64px further inward than every other section on wide
-     screens. Fixed by moving the horizontal padding off `.mg-edit` (now vertical-only, `80px 0`)
-     and onto `.mg-edit-inner` (`padding: 0 64px`, joining its existing `max-width`/`margin: 0
-     auto`) — now byte-for-byte the same shape as `.mg-band-inner`/`.mg-digest-inner`/
-     `.mg-opinions-inner`.
-  **If a future section is added to this page, use the `.mg-band`/`.mg-digest` split shape**
-  (outer: background/border/vertical-padding only; inner: `max-width: calc(1200px + 128px);
-  margin: 0 auto; padding: 0 64px; box-sizing: border-box;`) rather than putting both padding
-  and max-width on the same div (`.mg-hero`/`.mg-cta-section` do this and are mathematically
-  equivalent, but the split shape is what every *tinted-background* section here uses, and mixing
-  the two shapes is exactly what caused this bug) — and always verify it against `.mg-head`'s
-  edges at a wide (≥1600px) viewport before considering it done.
-- **Follow-up, same session: "The Lane" was still misaligned** — its section had a *third*,
-  previously-unnoticed variant of the same bug. `.mg-portrait-header` (just the "The Lane" title)
-  had `max-width`/`margin: 0 auto`, but its sibling `.mg-portrait-scroll` (the actual horizontally-
-  scrolling row of card images — a separate element, not nested inside the header div) only had
-  `padding: 0 64px` with **no** `max-width`/`margin: 0 auto` at all, so on a wide viewport the
-  cards sat flush at 64px from the true viewport edge while the title above them sat inset at the
-  shared column's position — visibly misaligned title vs. content. Fixed by adding the same
-  `max-width: calc(1200px + 128px); margin: 0 auto; box-sizing: border-box;` to
-  `.mg-portrait-scroll`, matching `.mg-portrait-header`. **This is a third variant of the same
-  class of bug** (missing `max-width`/`margin: 0 auto` on one part of a section while a sibling
-  part has it) — if any other section on this page still looks misaligned, check every element
-  that renders visible content for this section (not just its header/title wrapper) for the same
-  gap, the same way `.mg-portrait-scroll` was missed in the first pass.
-- **"Culture News" lead card had a large dead gap below the title (fixed same session)** — the
-  `.edit-lead-body` flex column (`flex:1; justify-content:space-between`) previously had 3 direct
-  children (kicker, title, date), so `justify-content: space-between` distributed the lead card's
-  extra stretch height (from being shorter than the taller `.edit-stack` column next to it) as two
-  separate large gaps — one between kicker and title, one between title and date — which read as
-  broken whitespace, not a deliberate layout. Two changes fix it: (1) the right column was trimmed
-  from 6 items to **5** (`first: 7` → `first: 6` in `MagazineArchiveWrapper.tsx`'s editorial
-  fetch — 1 lead + 5 rows), shrinking how much taller the stack column is than the lead card in
-  the first place; (2) `EditorialSection.tsx` now renders a real excerpt (`plainExcerpt()`,
-  HTML-stripped + truncated to 140 chars — `excerpt` was already on
-  `STORY_FIELDS_FRAGMENT`/`GET_STORIES`, no query change needed) between the title and the date,
-  and the kicker/title/excerpt are wrapped in a new `.edit-lead-text` group div so
-  `.edit-lead-body`'s `justify-content: space-between` now only has **two** children (the text
-  group and the date) — any leftover stretch space collapses into one gap right above the date
-  line at the bottom of the card instead of scattered mid-content.
-- **All `#F2F2F2` section tints removed, page is now plain white throughout (explicit request,
-  same session)** — this **reverses** the "Alternating tint rhythm" design decision documented
-  above: Featured Stories (`.mg-band`), Culture News (`.mg-edit`), and The Free Critics
-  (`.mg-digest`) all had `background: #F2F2F2`; all three are now `background: var(--paper,
-  #fff)`. The `border-top` divider rules between sections (added at the same time as the tints,
-  to separate two adjacent tinted sections from merging into one grey block) were **left in
-  place** — they still read as normal, subtle section dividers on an all-white page and don't
-  depend on the tint to make sense, so there was no reason to remove them along with the color.
-  **Follow-up, same session**: `.mg-filter-pill`'s `background: var(--paper-deep, #f2f2f2)` was
-  initially left as-is (reasoned as a small filter-bar chip, not a page section) but the user
-  wanted it flattened too — changed to `background: var(--paper, #fff)`, keeping its existing
-  `1px solid #C8BFB0` border for affordance so it still reads as clickable against the now-white
-  page. **Deliberately still not touched**: `.mg-cta-band`'s dark `var(--ink)` background — a
-  deliberate newsletter-CTA accent block (per the sitewide "dark backgrounds are only acceptable
-  for buttons/hover-states/single-issue-page-components" rule elsewhere in this file), not a
-  generic section tint, so it's a different kind of color choice than what this request was about.
-- **"Culture News" lead card had its card chrome removed entirely (explicit request, same
-  session)** — this **supersedes** the "large dead gap below the title" fix earlier in this
-  section (the one that added `.edit-lead-text` + kept `justify-content: space-between` on
-  `.edit-lead-body`): `.edit-lead` had a white `background`/`border-radius`/`box-shadow`
-  wrapping the whole image+text block; the user wanted no card container at all — just the image
-  (still rounded, `border-radius` moved onto `.edit-lead-img` itself), then text flowing directly
-  underneath with no border/shadow/fill. Removed `background`/`border-radius`/`box-shadow`/
-  `overflow`/the hover box-shadow transition from `.edit-lead`. Also **moved the date next to the
-  category** instead of pinned to the bottom of the card (`.edit-lead-meta`, a new flex row
-  wrapping `.edit-lead-kicker` + `.edit-lead-date` side by side) — since there's no more card box
-  to visually anchor a bottom-pinned date against, and the request was explicit ("let the date
-  come beside the category"). This also made the earlier `.edit-lead-text` grouping div and its
-  `justify-content: space-between` stretch-fix **moot** — without card chrome, invisible leftover
-  flex height at the bottom of `.edit-lead` is harmless (nothing renders there to look broken), so
-  `.edit-lead-body` is back to a plain top-down flex column (`gap: 10px`, no `flex: 1`, no
-  `justify-content`) and `.edit-lead-text` was removed. If a future pass ever reintroduces card
-  chrome here, re-check whether the space-between stretch-fix needs to come back too.
-- **Mobile "Culture News" had double horizontal padding (user-reported, same session)** — the
-  earlier "Cross-section horizontal alignment fix" pass (above) split `.mg-edit`'s padding onto
-  `.mg-edit-inner` for the *base/desktop* rule, but missed the two mobile media-query overrides
-  at `max-width: 1024px` and `max-width: 768px`, which still set horizontal padding directly on
-  the outer `.mg-edit` (`padding: 48px 32px` / `padding: 40px 16px`) — stacking with
-  `.mg-edit-inner`'s own unchanged `padding: 0 64px` (no override existed for the inner element
-  at those breakpoints) for a combined ~48–80px of horizontal inset on mobile, visibly more than
-  every sibling section. Fixed by making both overrides vertical-only on `.mg-edit`
-  (`padding: 48px 0` / `padding: 40px 0`) and adding matching `.mg-edit-inner { padding: 0 32px;
-  }` / `{ padding: 0 16px; }` overrides, mirroring `.mg-band`/`.mg-band-inner`'s existing
-  responsive pattern exactly. **Lesson: when splitting a section's padding across an outer/inner
-  pair (per the shape documented above), grep for *every* existing media-query override of the
-  old single-div rule — not just the base rule — before considering the split complete.**
-- **Nav/filter row border removed (explicit request, same session)** — `.mg-nav`'s
-  `border-bottom: 1px solid #EEE8DF` (the full-width rule under the category tabs + Series/
-  Industry/Country dropdowns) was dropped. The active-tab underline (`.mg-nav-tab--active`'s own
-  `border-bottom-color: #C5491F`) is a separate, per-tab rule and was left untouched.
+**Current state — section tints, chrome, alignment**: every `.mg-*` section (Featured Stories,
+Culture News/`.mg-edit`, The Free Critics) is now plain white (`background: var(--paper, #fff)`),
+not the `#F2F2F2` tint they briefly had — a deliberate "calmer page" request. The `border-top`
+dividers between adjacent sections stayed (still read fine as plain dividers on white).
+`.mg-filter-pill` is also flattened to `var(--paper, #fff)` with its existing border for
+affordance. `.mg-cta-band`'s dark `var(--ink)` background is deliberately untouched — a CTA accent
+block, not a generic section tint. "Culture News"'s lead card (`.edit-lead`) has **no card chrome
+at all** — no background/radius/shadow, just a rounded image (`.edit-lead-img`) with text flowing
+underneath; the date sits beside the category (`.edit-lead-meta`, a flex row), not pinned to the
+card's bottom. `.mg-nav`'s `border-bottom` under the category tabs/dropdowns was removed (the
+active-tab underline is a separate, unrelated rule and stays).
+
+**Alignment — every section uses one shared column shape; three independent bugs, same root
+cause.** `.mg-head` (nav/filter row), `.mg-edit`'s padding placement, and `.mg-portrait-scroll`
+(The Lane's card row, a sibling of — not nested inside — its own header) were each found missing
+the shared `max-width: calc(1200px + 128px); margin: 0 auto; box-sizing: border-box;` treatment
+that every other section's *inner* div carries, while a sibling element in the same section had
+it — each time producing a visible left/right misalignment against the rest of the page at wide
+viewports. **The canonical shape for a tinted section**: outer div carries background/border/
+vertical-padding only; inner div carries the max-width/margin/horizontal-padding together (same
+shape as `.mg-band`/`.mg-digest`/`.mg-opinions`) — `.mg-edit`/`.mg-edit-inner` were fixed to match
+this shape, including at both mobile breakpoints (`1024px`/`768px`), where the padding split must
+be mirrored too, not just at the base/desktop rule. **If a future section still looks misaligned,
+check every element that renders visible content for it, not just its header/title wrapper** —
+this bug recurred three times because each pass only checked the one element it happened to be
+looking at.
 
 ### Cross-page mockup-fidelity audit + fixes (August 2026)
 
@@ -6136,11 +5014,7 @@ Re-run against the correct files, real mismatches were found and fixed:
   turned out to be non-issues once re-checked against the right file: Discover's photo-card/
   scrim treatment and masonry Explore-More grid are exactly what the correct mockup specifies,
   not a deviation from it.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other pass in this file. Verified via `tsc --noEmit` (clean) on both `apps/connect` and
-  `apps/site`, `php -l` (clean) on `class-culture-rest-api.php`, and CSS brace-balance checks on
-  every touched CSS file (`member.css` 555/555, `games.css` 249/249, `events.css` 316/316,
-  `search-modal.css` 33/33, `stoop.css` 154/154, `discover.css` 50/50, `auth.css` 85/85).
+- *(Not verified live this pass.)*
 
 ### Homepage queries (Site A) — current state
 `lib/fetchHomepageData.ts` now fetches only 5 queries (down from 10):
@@ -6321,11 +5195,7 @@ methodology as every other §-rebuild in this file.
   `.sudoku-numpad-btn`/`.cw-btn` chrome and in-board cell-state coloring
   (`.sudoku-cell--*`/`.cw-cell--*`) were not addressed in this pass — the mockup has no
   Sudoku/Crossword gameplay frame, only the shared Game Done Screen's puzzle-state variant.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  as every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean, zero
-  errors) on `apps/connect` and a CSS brace-balance check on `games.css` (230/230, balanced).
-  Re-check pixel fidelity against `mockups/web/moveee_culture_games.html` in a real
-  environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Member Dashboard — visual rebuild (§9, June 2026)
 
@@ -6366,13 +5236,7 @@ rebuilt against `mockups/web/moveee_dashboard_web.html`:
   `max-width: 1024px`/`640px` overrides previously assumed a stale 4-stat/4-badge-column
   layout) — stats wrap 3+2 at 1024px and 2-per-row at 640px via `nth-child` border rules
   rather than the old fixed 2-column assumption.
-- **Not visually verified in a browser** — this environment has no `NEXTAUTH_SECRET` or
-  WordPress backend credentials configured, so `getServerSession()` 500s before any
-  member-page markup renders. Verified instead via: CSS brace-balance check, mockup
-  HTML re-read for exact values (colors/radii/spacing), and component/CSS class-name
-  cross-referencing. If this matters, re-check pixel fidelity against
-  `mockups/web/moveee_dashboard_web.html` in a real environment before considering it
-  fully closed.
+- *(Not verified live this pass.)*
 
 ### Account Dashboard redesign — Phase 1: Overview + shared AccountNav (July 2026)
 
@@ -6427,16 +5291,7 @@ Overview-only components (`MemberDashboard.tsx`, `MemberBadges.tsx`) were touche
 - **New "Stoop" card** in the side column — the `myCluster` lookup (already fetched
   server-side, previously only surfaced as one line inside the giant nav list) now gets its
   own small card, same pattern as the Upgrade/Referral cards.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (363/363).
-- **All phases shipped — initiative complete.** Wallet + Coupons + Perks (Phase 2),
-  Settings (Phase 3), Notifications + Analytics (Phase 4), My Events + Referrals
-  (Phase 5), Portfolio + Collection (Phase 6 — see below for all five phase entries).
-  Every account-area page now shares the `.acct-*` shell and `AccountNav`. If a new
-  account-area page is ever added, follow this same pattern from the start — don't
-  invent a third visual language, and don't reintroduce `.mem-hero`/a bespoke side-rail.
-  `MemberNavSelect` no longer exists (deleted in Phase 5).
+- *(Not verified live this pass.)*
 
 ### Account Dashboard redesign — Phase 2: Wallet, Coupons, Perks (August 2026)
 
@@ -6471,9 +5326,7 @@ hardcode a remembered hex), then approved and built for real.
   visitors, unlike Wallet/Coupons which both redirect to login — the nav simply doesn't
   render for them). No CSS block needed for this page; `member.css`'s `.acct-nav-*` rules
   are already loaded globally via `apps/connect/app/layout.tsx`.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (425/425).
+- *(Not verified live this pass.)*
 
 ### Account Dashboard redesign — Phase 3: Settings (August 2026)
 
@@ -6505,10 +5358,7 @@ changed.
   Wallet's cash-out grid wants it to stretch), so rendering the six settings pages
   directly into the full 1100px `.acct-wrap` without this wrapper would have stretched
   every field-list/toggle-row card edge-to-edge, which reads badly for a form.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site` — no CSS changes in this pass, so no brace-balance check
-  was needed.
+- *(Not verified live this pass.)*
 
 ### Account Dashboard redesign — Phase 4: Notifications + Analytics (August 2026)
 
@@ -6531,9 +5381,7 @@ changed.
   wrapping card markup differs. The redundant "← Back to Dashboard" link that used to sit
   below the Top Posts card was removed — `AccountNav`'s Overview item already covers this,
   same reasoning as every other phase.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (463/463).
+- *(Not verified live this pass.)*
 
 ### Account Dashboard redesign — Phase 5: My Events + Referrals (August 2026)
 
@@ -6562,12 +5410,7 @@ treatment as those.
   importers repo-wide via grep before removing, rather than leaving it as dead code. If a
   future phase needs a flat link-list component again, this is gone — don't assume it
   still exists.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site` — including after deleting `MemberNavSelect.tsx`, since
-  both apps' tsconfigs type-check `packages/shared/**` regardless of which app actually
-  imports a given file (see the production-build-fix entry earlier in this doc for why
-  that check matters) — and a CSS brace-balance check on `member.css` (515/515).
+- *(Not verified live this pass.)*
 
 ### Account Dashboard redesign — Phase 6: Portfolio + Collection (August 2026, final phase)
 
@@ -6610,9 +5453,7 @@ points again, same as Phase 4's Notifications/Analytics split:
   Portfolio, Collection) now share the same `.acct-*` shell and `AccountNav`. If a future
   account-area page is added, follow this same pattern from the start rather than
   reintroducing `.mem-hero`/a bespoke side-rail.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every other rebuild in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site`, and a CSS brace-balance check on `member.css` (545/545).
+- *(Not verified live this pass.)*
 
 ### Member Settings — visual rebuild (§10, June 2026)
 
@@ -6672,11 +5513,7 @@ now been corrected):
 - `.dir-toggle`, `.dir-toggle--on`, `.dir-preview-tag`, `.dir-discipline-tag`/
   `--on` in the Directory tab were checked against the mockup and found to
   already be correct — no changes needed there.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
-  credentials gap as the Dashboard rebuild above. Verified via CSS
-  brace-balance check and direct mockup HTML re-read for exact class names/
-  values. Re-check pixel fidelity against `mockups/web/moveee_connect_settings.html`
-  in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Wallet, Perks & Coupons — visual rebuild (§11, June 2026)
 
@@ -6724,12 +5561,7 @@ mobile companion frame). Confirmed via direct HTML read, not the prose spec.
   the rest of the web app, mobile app, and `culture-community/` for any other
   stray "30%"/cashout-fee literals — none found; this was the only place the
   wrong number lived.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress
-  credentials gap as the Dashboard/Settings rebuilds above. Verified via CSS
-  brace-balance checks (`perks.css`, `globals.css`) and a full `tsc --noEmit`
-  pass on `apps/connect` (clean). Re-check pixel fidelity against
-  `mockups/web/moveee_wallet.html` in a real environment before considering
-  this fully closed.
+- *(Not verified live this pass.)*
 
 ### Feed Card Detail Drawers — visual rebuild (§15, June 2026)
 
@@ -6814,11 +5646,7 @@ profile.css}` (`prf-*` namespace).
   controls don't work on touch devices (see the existing "hover-revealed elements need a mobile
   always-visible override" lesson from the Lifestyle Shop mobile-responsive pass) and there was no
   mockup-specified touch fallback for this interaction.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as the
-  Dashboard/Settings/Wallet rebuilds above. Verified via `tsc --noEmit` (clean) on
-  `MemberDirectory.tsx`/`PortfolioTab.tsx`/`CommunityTab.tsx` and CSS brace-balance checks on
-  `profile.css` (110/110) and `feed.css` (149/149). Re-check pixel fidelity against
-  `mockups/web/moveee_directory.html` in a real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Notifications & Analytics — visual rebuild (§13, June 2026)
 
@@ -6867,10 +5695,7 @@ objects exclusively, so there's nothing to brace-balance-check, only `tsc --noEm
   matches the mockup's `chart-earn`/`chart-spend` tokens exactly); `LineChart`'s call-site color
   override (`color="#2a6496"`, a one-off blue distinct from both ochre and gold, matching the
   mockup's dedicated `chart-line` token); the "← Back to Dashboard" link's `var(--ochre)` color.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
-  `apps/connect`. Re-check pixel fidelity against `mockups/web/notifications_analytics.html` in a
-  real environment before considering this fully closed.
+- *(Not verified live this pass.)*
 
 ### Authentication Flow — visual rebuild (§17, June 2026)
 
@@ -6933,11 +5758,7 @@ so verification was `tsc --noEmit` only — no brace-balance check applicable.
   dashboard-context component (rendered on `/member`, not any of the 5 auth pages above); the
   mockup's passkey-prompt frame is illustrative of the concept, not a literal target for this
   pass.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean, zero errors
-  after clearing the stale `.next` cache) across all 5 edited files. Re-check pixel fidelity
-  against `mockups/web/authentication_flow.html` in a real environment before considering this
-  fully closed.
+- *(Not verified live this pass.)*
 
 ### Overlays & Micro-interactions — visual rebuild + dark-mode hex-color fix (§18, June 2026)
 
@@ -7005,12 +5826,7 @@ already existed.
 - **Frame 8 (Split Context Actions)** — covered by the Frame 2 work above (dimming
   secondary actions during an in-flight state); no separate changes needed.
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-gap as every other Figma rebuild pass in this file. Verified via `tsc --noEmit`
-(clean) in both `apps/connect` and `apps/site`, and a CSS brace-balance check on all 4
-touched CSS files (`globals.css`, `header.css`, `perks.css`, `pulse-layout.css` — all
-balanced). Re-check pixel fidelity against `mockups/web/moveee_overlays.html` and
-dark-mode behavior in a real environment before considering this fully closed.
+*(Not verified live this pass.)*
 
 ### Dark-mode hex-color audit — full sweep of `packages/shared/components/pulse/` and `connect/` (June 2026)
 
@@ -7064,9 +5880,7 @@ deliberately left as plain literals, consistent with other untokenized category-
 maps elsewhere in the codebase (e.g. `PINNED_BADGE`). If either file is ever wired back
 up, no further dark-mode sweep should be needed for it on that basis alone.
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-gap as every other pass in this file. Verified via `tsc --noEmit` (clean) in both
-`apps/connect` and `apps/site`.
+*(Not verified live this pass.)*
 
 ---
 
@@ -7155,15 +5969,7 @@ not just isolated literals.
   `.cookie-bar-*`, `.nl-manage--dark`) — matches the project's existing "dark backgrounds
   are only acceptable for buttons/hover-states/single-issue-page-components" rule, not a
   gap to fix.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials
-  gap as every dark-mode pass in this file, and true here in particular for the two new
-  `--evt-*`/`[data-theme="dark"]` hand-picked ghost/rule values (no exact source to mirror
-  them from) — re-check `/events` and `/directory/[slug]` pixel-by-pixel in dark mode in a
-  real environment before considering those two specifically fully closed. Verified via
-  `tsc --noEmit` (clean) on `apps/connect`, and a brace/paren-balance check on every
-  edited CSS file (`pulse-layout.css`, `discover.css`, `people.css`, `member.css`,
-  `games.css`, `footer.css`, `sections.css`, `events.css`, `directory.css`,
-  `globals.css`).
+- *(Not verified live this pass.)*
 
 ---
 
@@ -7412,14 +6218,9 @@ disabled:
   editor for `culture_quote`, and the Bulk Quote Importer CSV panel) — only the automated
   discovery/seeding pipeline (curated-list-then-Serper/Gemini-discovery) is gone.
 
-**Not verified against a real WordPress install** — same recurring sandbox gap as every
-other pass in this file (no `cms.themoveee.com` credentials/network access here).
-Verified via `php -l` on every touched PHP file and `tsc --noEmit` on both Next.js apps
-(only pre-existing, environment-level errors — missing `node_modules`/`@types/node` —
-none pointing at the deleted/trimmed files). Re-check in WP Admin that a fresh
-`culture_quote` created via the post editor with no author picked still resolves
-sensibly, and that the Directory Tools page no longer shows a broken "Seed Moveee
-Quotes" button, before considering this fully closed.
+*(Not verified against a real WordPress install this pass. Re-check in WP Admin that a fresh
+`culture_quote` created with no author picked still resolves sensibly, and that the Directory
+Tools page no longer shows the removed "Seed Moveee Quotes" button.)*
 
 ## `/quotes` standalone product retired — bare permalink kept as a share/SEO target (September 2026)
 
@@ -7477,14 +6278,7 @@ have 404'd once clicked. Fixed to `/quotes/{$post->ID}-{$slug}`, matching
 buttons were repointed to `/feed` (where quotes are actually discoverable now), since `/quotes`
 is no longer a browsable destination.
 
-**Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-every other pass in this file; this pass additionally needs the plugin redeployed (the
-`saved_post_summary()` URL-shape fix and the route-registration changes are both PHP) before
-either fix takes effect in production. Verified via `php -l` on both touched PHP files and a
-repo-wide grep confirming zero remaining imports of any deleted component/route. Re-check the
-full flow — creating a quote via each platform's composer, opening it from a shared QR code, and
-opening a saved quote from the member Collection — in a real environment before considering this
-fully closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ---
 
@@ -7530,11 +6324,7 @@ Needs the theme redeployed (manual zip+upload, same as the plugin — see
 "Plugin DB table auto-upgrade" for why a code push alone isn't enough) before
 it takes effect in production — bumped `culture-theme/style.css`'s `Version:`
 header (1.0.0 → 1.0.1) for the same redeploy-confirmation reason the plugin
-header gets bumped. Not deployment-tested against a live WordPress instance —
-same `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this
-file. Verified via `php -l`. Re-check a real `cms.themoveee.com/{slug}/` visit
-for at least a `post` and one Site B type in a live environment before
-considering this fully closed.
+*(Not verified live this pass.)*
 
 ---
 
@@ -7652,15 +6442,7 @@ resolve endpoint is public (`__return_true` permission callback, same pattern as
   `Culture_Preview::resolve()`, and the same "GraphQL null → check Draft Mode → fall back to
   `getPreviewItem()`" pattern in that type's own `[slug]/page.tsx` — don't invent a second
   token/verification scheme, reuse `Culture_Preview` as-is.
-- **Not verified end-to-end against a live WordPress + Vercel deploy** — same
-  `NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file (this feature
-  additionally needs a real `culture_api_secret` set and the plugin redeployed — see "Plugin DB
-  table auto-upgrade" for why a code push alone isn't enough — before the Preview button in WP
-  Admin actually points anywhere useful). Verified via `php -l` on all three touched/new PHP
-  files and a brace/paren-balance check on every touched TS/TSX file (no `node_modules`
-  installed this session, so `tsc --noEmit` couldn't run). Re-check the full round trip — click
-  Preview on a real draft article and a real draft product — in a real environment before
-  considering this fully closed.
+- *(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 **Gotcha found in live testing, fixed same month: the `preview_post_link` filter alone never
 fires from the block editor.** The plugin's `culture_api_secret` was already correctly set, the
@@ -7806,15 +6588,7 @@ If a genuine author-display gap turns up on any of these later, extend from the 
 GraphQL field (web) or the newly-REST-exposed `meta.guest_byline_*` fields (mobile/any future
 REST consumer) — don't build a second mechanism.
 
-Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
-credentials gap as every other pass in this file; this feature additionally needs the plugin
-redeployed (manual zip+upload, see "Plugin DB table auto-upgrade" above) before the role and ACF
-field appear in WP Admin. Verified via `php -l` on every touched PHP file and a brace/paren
-balance check on the edited `page.tsx` (no `node_modules` installed this session, so `tsc
---noEmit` couldn't run). Re-check in WP Admin — create the role, assign it to a test account, log
-in as that account, confirm Posts is the only visible/creatable content type, set a Guest Byline,
-and confirm the live article page shows it in every location listed above — before considering
-this fully closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 **Production outage caused by this feature, fixed same day (September 2026).** The `guestByline`
 GraphQL field above was added directly into `STORY_FIELDS_FRAGMENT` — the shared fragment nearly
@@ -9651,11 +8425,7 @@ as every other Figma rebuild pass in this file.
 - Verified via CSS brace-balance check on `discover.css` (51/51, balanced)
   and `tsc --noEmit` on `apps/connect` (clean, zero errors, after restoring
   `node_modules` which was missing from this session's sandbox at the start
-  of the pass). **Not visually verified in a browser** — same
-  `NEXTAUTH_SECRET`/WordPress credentials gap as every other Figma rebuild
-  pass in this file. Re-check pixel fidelity against
-  `mockups/web/moveee_discover.html` in a real environment before considering
-  this fully closed.
+  *(Not verified live this pass.)*
 
 ### Directory Entry Detail page — visual fidelity pass (June 2026)
 
@@ -9713,11 +8483,7 @@ copy, same per-type infobox field definitions for all 11 `culture_directory` ent
   box, lock icon, "★ Moveee Pro" label, "You're one step away." headline, pill CTA, price
   footnote via `PatronPrice`) and already matches — it's a shared cross-surface component,
   not specific to this page, so it was deliberately left untouched.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap
-  as every other Figma rebuild pass in this file. Verified via `tsc --noEmit` (clean) and a
-  CSS brace-balance check on `directory.css` (180/180). Re-check pixel fidelity against
-  `mockups/web/directory_entry_detail.html` in a real environment before considering this
-  fully closed.
+- *(Not verified live this pass.)*
 
 ### Directory Entry Detail page — follow-up bug-fix pass (double border, radius, lightbox; June 2026)
 
@@ -9756,9 +8522,7 @@ the page open in a lightbox. All three fixed in `apps/connect/app/directory.css`
   is automatically Link-safe with no extra wiring. **If a future page needs an image lightbox,
   reuse this exact component rather than building a per-page one** — it's already generic
   (`src`/`alt`/optional `className`/`style`/`children`).
-- **Not visually verified in a browser** — same credentials gap as above. Verified via
-  `tsc --noEmit` (clean) on `apps/connect` and a CSS brace-balance check on `directory.css`
-  (180/180, confirmed unchanged after these edits).
+- *(Not verified live this pass.)*
 
 ### SearchModal structural-filter pattern — chips apply without typing (July 2026)
 
@@ -9927,104 +8691,18 @@ all historical comments). `apps/connect` has no `node_modules` in this sandbox, 
 `next build`/full type-check was possible — re-check that `/connect/stoop` actually renders
 from each re-pointed CTA in a real environment before considering this closed.
 
-### People Near Me — full rebuild on the Feed/Discover/Events design system (`ppl-*`, July 2026)
+### Lesson from the (now-deleted) People Near Me rebuild: `apps/site`'s `tsc` checks all of `packages/shared/**`
 
-`apps/connect/app/connect/people/page.tsx` + `packages/shared/components/connect/
-MemberDirectory.tsx` rebuilt from a mockup (approved via Artifact, iterated through two rounds —
-active-filter-chip placement, then moving Industry/Location off on-page tabs into SearchModal
-entirely) to bring People Near Me onto the same conventions established for `/feed`/`/discover`/
-`/events`: a `.disc-wrap`-style full-width single-column layout (no right rail — this page is a
-browse/search grid like Discover, not a text feed), a search-modal-trigger button
-(`.ppl-search-btn`, identical to `.disc-search-btn`/`.evt-search-btn`), and white feed-card-style
-member cards (`.ppl-card`, rounded + `shadow-card`, Pro-tier border tint) replacing the old
-`.mco-hero`/`.mco-dir-grid` treatment (which is untouched and still live on `/connect`,
-`/connect/membership`, `/connect/stoop` — only the People page itself moved off it).
-
-- **Industry and Location are no longer on-page controls at all** — both used to be (Industry) or
-  were mocked as (Location) on-page tabs; per explicit user direction they now live entirely
-  inside `SearchModal`'s new People context (`contentType === "member"`, added as an 8th
-  `CONTENT_TYPES` entry — not a real WP post subtype like the other seven, it routes to a
-  different endpoint entirely, see below). The **only** on-page trace once a filter is applied is
-  a small `.ppl-active-filter` chip (colored dot for Industry, 📍 for Location) with an inline ✕
-  to clear — same "chip is the only trace, modal always resets to defaults on open" pattern
-  Discover established for Region/Sort.
-- **`packages/shared/lib/peopleFiltersBus.ts`** (new, mirrors `discoverFiltersBus.ts` exactly;
-  moved here from `apps/connect/lib/` in July 2026 along with its two sibling bus files — see
-  the correction note in the Figma-rebuild section above for why) —
-  `PeopleFilters { industry: string | null; region: string | null }`. `region: null` = "Near Me"
-  (default — scope to the viewer's own city/country, the same fallback `MemberDirectory.tsx`
-  already had), `"all"` = no location scoping at all, or one of 5 region slugs
-  (nigeria/ghana/uk/usa/pan-african, same slugs as `DISCOVER_REGIONS` but a separate const since
-  they gate different pages/params).
-  `SearchModal.tsx`'s `selectPeopleIndustry()`/`selectPeopleRegion()` emit on every click,
-  completely independent of the search box — clicking a chip filters the page's rails/grid
-  immediately, no typing required (this was the explicit ask that prompted the SearchModal fix
-  above).
-- **Member search is a genuinely new capability, not just UI** — WordPress's native search (what
-  `/api/search` uses for every other content type) has no concept of Users, so typing a member's
-  name into SearchModal previously could never find anyone. `runPeopleSearch()` in
-  `SearchModal.tsx` hits `/api/connect/members?search=...&discipline=...&region=...` instead
-  (that endpoint already supported `search` server-side; discipline/region are net-new — see
-  below), and the results branch renders member rows (avatar-initial circle + name + occupation,
-  linking to `/connect/{username}`) instead of the generic post-shaped `SearchResult` rows.
-- **Backend: `handle_get_members_directory()` gained `region`, `sort`, and `offset` params**
-  (`class-culture-rest-api.php`) — previously only `search`/`discipline`/`location` (a raw LIKE
-  match) and a fixed `per_page` with no offset (so no real pagination) existed.
-  - `region` OR-matches `_culture_country_of_residence` against the literal country name(s) for
-    that slug (values come from `LocationSelect.tsx`'s `COUNTRIES` array, e.g. "Nigeria",
-    "United Kingdom" — not abbreviations), with `pan-african` deliberately broad (`LIKE '%Africa%'`
-    plus Senegal/Kenya as named non-"Africa" examples) since there's no single literal value for
-    it, mirroring the same broad-fallback approach `Culture_Directory::REGION_CITY_KEYWORDS` uses
-    for Discover on a different field (`_entry_city`, not `_culture_country_of_residence`).
-  - `sort=recent` orders by `registered` DESC (WP core `get_users()` orderby, no new column) —
-    powers the "New to Moveee" rail; default `sort=name` is unchanged (`display_name` ASC).
-  - `offset` enables real "Load more" pagination on the Explore More grid — since `get_users()`
-    doesn't expose a total count without switching to `WP_User_Query` directly (out of scope for
-    this pass), pagination is presence-based: fewer than `per_page` results back means no more
-    pages, same convention as a typical infinite-scroll-without-a-total-count implementation.
-  - `registered_at` (raw `user_registered` core column, no extra query) added to every member row
-    — powers the "New" badge (≤14 days, same threshold as the shop's existing "new" product
-    badge) on rail cards.
-- **`MemberDirectory.tsx` fully rewritten** — no more local search `<input>`/discipline `<select>`
-  (removed entirely, replaced by the `.ppl-search-btn` → SearchModal flow above); subscribes to
-  `peopleFiltersBus` for industry/region state, three sections: a **Near You** rail (only rendered
-  when `region === null` — a real, viewer-picked region or "All Locations" makes "near you"
-  meaningless, so the rail hides itself rather than showing something misleading), a **New to
-  Moveee** rail (site-wide or region-scoped, independent of the viewer's own location,
-  `sort=recent`), and the paginated **Explore More** grid. Avatar background colors are a stable
-  hash of `member.id` into a fixed palette (purely decorative — no per-member color stored
-  server-side).
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on
-  `apps/connect` and `php -l` (clean) on `class-culture-rest-api.php`. Re-check pixel fidelity
-  against the approved Artifact mockup in a real environment, and confirm the WordPress plugin
-  has been redeployed (manual zip+upload — see "Plugin DB table auto-upgrade" for why a code
-  push alone isn't enough) before considering the `region`/`sort`/`offset` params live in
-  production.
-  **Correction (July 2026): the `apps/site` `tsc` "Cannot find module '@/lib/searchModalBus'"
-  error described above as "pre-existing, not a regression, out of scope" was actually a real,
-  production-breaking bug** — it was dismissed for months because `next build`'s type-check
-  step type-checks every file matched by `apps/site/tsconfig.json`'s `include` array, which
-  explicitly globs the entire `packages/shared/**` tree (`"../../packages/shared/**/*.tsx"`)
-  regardless of whether any `apps/site` page actually imports it. `DiscoverBrowser.tsx` and
-  `MemberDirectory.tsx` live in `packages/shared/components/` (since they're nominally shared
-  components, even though only `apps/connect` currently consumes them) and imported
-  `searchModalBus.ts`/`discoverFiltersBus.ts`/`peopleFiltersBus.ts` via the `@/lib/*` alias —
-  those three files lived only in `apps/connect/lib/`, which is checked *last* in the `@/lib/*`
-  paths array (`packages/shared/lib/*` → `packages/utils/*` → `./lib/*`), so the alias resolved
-  fine for `apps/connect`'s own build but never for `apps/site`'s. This eventually surfaced as
-  an actual Vercel deploy failure on `main` (`next build`'s TypeScript check, not just an IDE
-  squiggle) once enough shared-component/bus-file pairs accumulated. **Fixed** by moving all
-  three bus files from `apps/connect/lib/` to `packages/shared/lib/` — zero import-line changes
-  needed anywhere (every consumer already used the `@/lib/*` alias, never a relative path), and
-  `packages/shared/lib/*` being checked first in the paths array means both apps now resolve
-  them identically. **Lesson: a shared component that's only consumed by one app still needs
-  its *own* dependencies (not just itself) to live under `packages/shared/`, not under that
-  one app's local `lib/`/`components/` — otherwise the other app's build will still try to
-  type-check the shared component (via the `tsconfig.json` `include` glob) and fail on the
-  unresolvable import.** Don't dismiss a "Cannot find module '@/lib/...'" error under
-  `packages/shared/` as some other app's problem without checking whether `next build`'s own
-  type-check (not just a manual `tsc --noEmit` run scoped to one app) would actually hit it.
+`apps/site/tsconfig.json`'s `include` array globs the entire `packages/shared/**` tree
+(`"../../packages/shared/**/*.tsx"`) regardless of whether any `apps/site` page actually imports a
+given file — so a shared component importing a helper that only lives in `apps/connect/lib/` (via
+the `@/lib/*` alias, which checks `packages/shared/lib/*` → `packages/utils/*` → `./lib/*` last)
+resolves fine for `apps/connect`'s own build but fails `apps/site`'s `next build` type-check,
+surfacing as a real Vercel deploy failure, not just an IDE squiggle. **A shared component that's
+only consumed by one app still needs its *own* dependencies to live under `packages/shared/`, not
+under that one app's local `lib/`.** Don't dismiss a "Cannot find module '@/lib/...'" error under
+`packages/shared/` as another app's problem without checking whether `next build`'s own
+type-check — not just a manual `tsc --noEmit` scoped to one app — would actually hit it.
 
 ### Stoop — full rebuild on the Discover/People/Events design system (`stoop-*`, July 2026)
 
@@ -10087,12 +8765,7 @@ plain dark hero + inline `Stoop.tsx` list card; `/cluster/[id]`'s dark `mem-hero
   superseded by `StoopBrowser.tsx` — confirmed via grep it had exactly one importer, the page
   being rebuilt). Its `.mco-fellowship-*` CSS in `feed.css` was left in place (kept in case
   needed again, same convention as other superseded CSS blocks noted elsewhere in this file).
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site` (the latter to confirm the new `packages/shared/` files —
-  `StoopBrowser.tsx`, `stoopFiltersBus.ts` — don't hit the tsconfig-glob trap documented in the
-  production-build-fix entry above), and a brace/paren-balance check on `stoop.css` (153/153,
-  220/220).
+- *(Not verified live this pass.)*
 
 ### Book Review → directory linkage (mobile-only, fixed June 2026)
 Book Review posts are backed by `culture_directory` entries (`culture_dir_type = book`),
@@ -10435,13 +9108,7 @@ what Phase 4 below now covers): Buddy Reads prefill from a Hub, and the gamifica
 (credits/reputation for shelf/mood activity). None of Phases 1–3's tables/endpoints/components
 needed to change to support Phase 4 below — it's additive, per the plan doc's own phase breakdown.
 
-Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
-credentials gap as every other pass in this file; this feature additionally needs the plugin
-redeployed (manual zip+upload, see "Plugin DB table auto-upgrade" above) before the new table and
-routes exist in production. Verified via `php -l` on every touched PHP file and a brace/paren
-balance check on every touched/new TS/TSX file (no `node_modules` installed this session, so
-`tsc --noEmit` couldn't run). Re-check the full vote → aggregate → re-vote round trip, on both
-platforms, against a real book entry, in a real environment before considering this closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ### Phase 4 — stats dashboard ("Your Year in Books", per §2/§4)
 
@@ -10527,34 +9194,14 @@ stats are all live on both platforms. Only Buddy Reads (a Hub-creation prefill, 
 and the gamification hook (credits/reputation for shelf/mood activity) remain, per the plan
 doc's own phase breakdown — do not start either without explicit direction.
 
-Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
-credentials gap as every other pass in this file (this phase needs no new dbDelta table, so no
-`CULTURE_VERSION` bump/redeploy-triggered migration is required, only the plugin zip redeploy
-itself for the new PHP methods/routes to exist in production). Verified via `php -l` on every
-touched PHP file and a brace/paren balance check on every touched/new TS/TSX/CSS file (no
-`node_modules` installed this session, so `tsc --noEmit` couldn't run). Re-check the full round
-trip — finish a book, write a Book Review with a rating/genres, vote mood/pace on a couple of
-books, then confirm every one of the six stats sections reflects it correctly on both platforms —
-in a real environment before considering this fully closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
-### "Log-First" home concept — origin (September 2026, superseded below)
+### "Log-First" home concept — naming note
 
-A separate, later ask on top of the four Reading Tracker phases above: the user supplied a
-self-contained mockup export ("Moveee Home — Log-First", 4 frames — Home/the log, Book entry,
-Person entry, Place entry) proposing a StoryGraph-style personal-log home screen, plus redesigned
-Book/Person/Place directory pages (quick "add to your log" buttons, social proof,
-cross-recommendations, and a brand-new "save a line" feature). This section originally documented
-the mobile-only first pass in detail (a book/film/place-only `SHELF_LABELS` map, a
-`LogEntryPanel.tsx` component, a `LogHomeScreen.tsx` not yet wired into navigation) — all of that
-has since been **superseded by the "Generalised from books to all five review media" pass below**,
-which replaced the book/film/place-only shelf with a real five-medium system
-(`MEDIA`/`TYPE_MEDIA_MAP`/`statusLabel()`) and replaced `LogEntryPanel` with `EntryLogControl` +
-a small standalone `SocialProofLine` component on both platforms. Kept here only as a pointer so
-old references to `LogEntryPanel`/`SHELF_LABELS`/`shelfLabelsFor` in git history or elsewhere in
-this doc resolve to *why* they're gone, not because any of that implementation still exists.
-
-The `/stoop` marketing landing page (`themoveee.com/stoop`) is documented once, above, under
-"Stoop marketing landing page (`/stoop`, Site A, September 2026)" — don't duplicate it here.
+The original mobile-only pass's `SHELF_LABELS`/`LogEntryPanel.tsx` were superseded by the
+"Generalised from books to all five review media" pass below (`MEDIA`/`TYPE_MEDIA_MAP`/
+`statusLabel()`, `EntryLogControl` + `SocialProofLine`) — if you see those old names in git
+history, that's why they're gone.
 
 ### Stoop proximity banner + member geolocation (mobile-only, September 2026)
 
@@ -10609,16 +9256,7 @@ today, so location/city prefill from the directory entry is a real follow-up, no
 a small "Turn off" link to clear the saved location. Wired into `DirectoryDetailScreen.tsx`
 directly below `EntryLogControl`/`SocialProofLine`, gated on `entry.entryType === "place"`.
 
-**Not deployment-tested against a live WordPress instance or a real device** — same
-`NEXTAUTH_SECRET`/WordPress-credentials gap as every other pass in this file; this feature needs
-the plugin redeployed (manual zip+upload) before the new endpoints exist in production, and a real
-EAS build (native module) before `expo-location` can be exercised at all — a JS-only reload won't
-pick up the new permission config. Verified via `php -l` on every touched PHP file and a
-brace/paren/bracket balance check on every new/touched TS/TSX file (no `node_modules` installed in
-this sandbox, so `tsc --noEmit` couldn't run; the lockfile was regenerated out-of-tree per the
-documented process and confirmed to resolve `expo-location` correctly). Re-check the full round
-trip — granting/denying the permission prompt, the banner's three states, and the "Start a Stoop
-here" handoff — on a real device before considering this fully closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ### "From people you follow" activity feed — real star ratings/comments (mobile-only, September 2026)
 
@@ -10647,11 +9285,7 @@ mirror of `FollowingActivityItem` exists** — this type was never ported to
 `packages/shared/lib/reading-tracker.ts` in the first place, consistent with the rest of the
 Log-First feature being mobile-only.
 
-Not deployment-tested against a live WordPress instance — same recurring gap as every other pass
-in this file; needs the plugin redeployed before the enriched fields appear in production.
-Verified via `php -l` and a brace/paren/bracket balance check on every touched file (no
-`node_modules` installed in this sandbox). Re-check against a real follow who's actually written a
-Book/Film/Place review before considering this fully closed.
+*(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ### Directory-entry follows — follow a Person or Place (backend + mobile, September 2026)
 
@@ -10699,13 +9333,7 @@ no "account" on the followed side to reuse that table for.
   routes (session-resolved `user_id`, same `getServerSession()` → 401-if-absent pattern every
   other proxy route in this feature uses), wired into `apps/connect/app/directory/[slug]/
   page.tsx` alongside the rest of the Log-First panel components (see below).
-- Not deployment-tested against a live WordPress instance — same recurring gap as every other
-  pass in this file; needs the plugin redeployed (manual zip+upload, see "Plugin DB table
-  auto-upgrade" above) before the new table/routes exist in production. Verified via `php -l`
-  on the PHP class and a brace/paren/bracket balance check on every touched/new TS/TSX file (no
-  `node_modules` installed in this sandbox). Re-check the full follow → post-with-linked-entry
-  → notification round trip, on both platforms, in a real environment before considering this
-  fully closed.
+- *(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ### `LogHomeScreen` wired in as the mobile default tab; Events dropped from the bottom bar (September 2026)
 
@@ -10849,16 +9477,7 @@ class documented directly above (built in an earlier pass this session).
   live on `/directory/[slug]`), not a single unified "Log home" web page mirroring that mobile
   screen's own layout. If a dedicated web Log Home page is ever wanted, that's a separate,
   explicitly-scoped follow-up, not something this pass silently attempted.
-- Not deployment-tested against a live WordPress instance — same `NEXTAUTH_SECRET`/WordPress
-  credentials gap as every other pass in this file; this pass needed no new PHP beyond the
-  directory-follows class already covered above, so no additional plugin redeploy is required
-  specifically for these web routes (they call already-shipped-or-just-documented endpoints).
-  Verified via a brace/paren/bracket balance check on all 19 touched/new TS/TSX files and a CSS
-  brace-balance check on `directory.css` (228/228) and `member.css` (634/634) — no `node_modules`
-  installed in this sandbox, so `tsc --noEmit` couldn't run. Re-check the full round trip —
-  shelving a book from the directory page, saving a line, following a Person entry, the Stoop
-  proximity banner's geolocation prompt, and the following-activity feed's rating/excerpt
-  rendering — in a real browser before considering this fully closed.
+- *(Not verified live this pass — needs the plugin redeployed before it's live in production.)*
 
 ### Generalised from books to all five review media — the "Culture Log" (September 2026)
 
@@ -11160,11 +9779,7 @@ attempt to skip straight to code with "mockup first perhaps," and the approved m
   inline `style` object rather than converted to a CSS class — it's a functional anti-bot
   mechanism, not decorative chrome, and its off-screen positioning technique is unrelated to the
   visual system being rebuilt here.
-- **Not visually verified in a browser** — same `NEXTAUTH_SECRET`/WordPress credentials gap as
-  every other Figma/mockup rebuild pass in this file. Verified via `tsc --noEmit` (clean) on both
-  `apps/connect` and `apps/site`, a CSS brace/paren-balance check on `auth.css` (79/79, 94/94),
-  and a grep confirming no leftover references to the old inline `styles`/`StyleSheet` objects or
-  the removed "Culture Community" eyebrow text across all 5 files.
+- *(Not verified live this pass.)*
 
 ## Registration flow (redesigned)
 
@@ -11466,16 +10081,10 @@ custom Apple button) below the existing Google button, gated on `Platform.OS ===
 mount). Cancellation is detected via `e.code === "ERR_REQUEST_CANCELED"` (silently
 no-ops, same convention as Google's `SIGN_IN_CANCELLED` check right above it).
 
-**Not tested against a real device or a real EAS build** — same sandbox gap as
-every other native-module feature in this file (no Xcode/EAS toolchain here). The
-one piece that *could* be verified offline (the JWK→PEM DER reconstruction +
-signature verification) was, via a standalone script with a real generated RSA
-keypair — see above. Re-check the full `AppleAuthentication.signInAsync()` →
-`/mobile/login-apple` → account-creation round trip, on a real EAS build, on a real
-device signed into a real Apple ID, before considering this fully closed — this
-also requires the plugin redeployed (manual zip+upload, see "Plugin DB table
-auto-upgrade" — no new dbDelta table here, so no `CULTURE_VERSION` bump was needed,
-only the plugin header version bump to `2.2.4` for redeploy-confirmation purposes).
+*(Not tested against a real device/EAS build this pass — the JWK→PEM DER reconstruction was
+verified offline via a standalone script with a real RSA keypair, see above. Needs the plugin
+redeployed too before `/mobile/login-apple` is live in production. Re-check the full
+`AppleAuthentication.signInAsync()` round trip on a real device/build.)*
 
 
 **Archive failed on a stale provisioning profile (September 2026)** — a real EAS iOS
@@ -11795,13 +10404,7 @@ token); any other failure now just leaves `isLoading` false and skips setting
 `isAuthenticated` for that launch, without destroying the durable credential — so a retry or
 next launch can still recover once the network is back.
 
-**Not verified against a real device** — this sandbox has neither. Verified via a
-brace/paren balance check on both edited files (no `node_modules` installed this session,
-so `tsc --noEmit` couldn't run). Re-check on a real build that the composer's post-creation
-flows no longer force-logout under the conditions that produced the `no_token` Sentry event
-above, and watch for the new "In-memory auth token was empty; recovered from SecureStore."
-breadcrumb — if it never fires in practice, the root cause is elsewhere and this fix, while
-still a correct defensive improvement, isn't the whole story.
+*(Not verified live this pass.)*
 
 ---
 
@@ -11870,16 +10473,7 @@ to be set on Site A before passkeys will actually work** — the code deploys sa
 without them (empty/inert `.well-known` responses), it just means passkeys stay broken
 until a human fills them in.
 
-**Not verified against a real device** — this sandbox has no way to test native
-WebAuthn flows or trigger an EAS build. Verified via: a Node-based syntax/structure
-check of the edited `app.config.ts` (confirmed `associatedDomains` and the
-`expo-build-properties` plugin entry parse correctly), confirming both new
-`.well-known` routes export a `GET` handler, confirming `proxy.ts`'s catch-all
-root-slug redirect can't intercept a multi-segment `.well-known/*` path (it explicitly
-skips any `cleanPath` containing a `/`), and regenerating `package-lock.json` via the
-documented out-of-tree process (confirms `expo-build-properties@0.13.3` resolves
-cleanly for the pinned Expo SDK 52 toolchain). Re-check on a real EAS build — with both
-env vars set — before considering this fully closed.
+*(Not verified live this pass — needs a real EAS build to confirm.)*
 
 ---
 
@@ -11980,11 +10574,8 @@ separate, larger follow-up, not done here.
   own Hub/Stoop/Bell/Avatar icon row) — those provide real navigation the
   rail doesn't cover and were deliberately left as-is rather than restructured into the rail
   itself, to keep this pass scoped to the shell + two example screens the mockup covered.
-- **Not visually verified on a real device or simulator** — this sandbox has neither. Verified
-  via `tsc --noEmit` (clean, same 35 pre-existing baseline errors as before this pass, all
-  unrelated — see the shop-screen `productId` mismatches noted elsewhere). Re-check on an
-  actual iPad/Android tablet (and a phone, to confirm the `undefined` tabBar path still
-  renders identically to before) before considering this fully closed.
+- *(Not verified on a real device/simulator this pass — re-check on an actual iPad/Android tablet
+  and a phone before considering this closed.)*
 
 ### Site B (`apps/connect`) title-metadata sweep — doubled brand suffix + "The Moveee" (September 2026)
 
@@ -12156,12 +10747,8 @@ an iPad/Android tablet.
   Notifications/Appearance/Security) needed one `useTabletContentStyle()` call and one
   `contentContainerStyle` wrap *per tab component*, since each tab is its own function
   component with its own local styles/state, not a shared outer scroll container.
-- **Not visually verified on a real device or simulator** — same sandbox gap as the
-  foundational-shell pass above. Verified via `tsc --noEmit` after every batch (Magazine,
-  Shop, Events, Games, Member, Community, Auth) — stayed at exactly the same 35 pre-existing
-  baseline errors throughout, confirming none of the ~55 edits introduced a regression.
-  Re-check pixel fidelity on an actual iPad/Android tablet before considering this fully
-  closed, same as the foundational shell.
+- *(Not verified on a real device/simulator this pass, same as the foundational-shell pass above
+  — re-check pixel fidelity on an actual iPad/Android tablet before considering this closed.)*
 
 ### Production build checklist — react-native-iap restored (August 2026)
 
@@ -12483,10 +11070,8 @@ still turns up, it means some other producer task besides `generateResValues`/`g
 is being raced — check the new error's own "output of task X" line, since that's the new producer
 to add to `producerTaskSuffixes`, not the consumer to add to an enumerated list.**
 
-Not verified against a real Gradle/Android toolchain — this sandbox has none. Verified via
-`node --check` on the plugin file and a brace/paren balance check on both the JS wrapper and the
-embedded Groovy block. Re-run `eas build --platform android --profile production` to confirm this
-actually clears the Gradle validation error before considering it closed.
+*(Not verified against a real Gradle/Android toolchain this pass. Re-run
+`eas build --platform android --profile production` to confirm this clears the Gradle error.)*
 
 **Real root cause found and fixed at source (September 2026) — everything above is a symptom, and
 the ordering plugin is now expected to be inert.** Eight rounds of ordering fixes cleared every
