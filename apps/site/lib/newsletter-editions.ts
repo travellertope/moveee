@@ -53,6 +53,29 @@ export function deduplicateEditions(issues: any[], segment: string): any[] {
   });
 }
 
+// Map the edition URL slugs to the nlSegment codes used in WP post meta.
+// "africa" covers NG + GH; we try ng first, then gh, then the untagged fallback.
+const EDITION_TO_SEGMENTS: Record<string, string[]> = {
+  uk:     ["uk"],
+  us:     ["us"],
+  ng:     ["ng"],
+  gh:     ["gh"],
+  ca:     ["ca"],
+  au:     ["au"],
+  africa: ["ng", "gh"],
+};
+
+// Pick the best issue for a given edition out of a deduplicated issue list.
+// Tries each candidate segment in order; falls back to an untagged issue.
+export function pickEditionIssue(issues: any[], edition: string): any | null {
+  const segments = EDITION_TO_SEGMENTS[edition] ?? [];
+  for (const seg of segments) {
+    const match = issues.find((n) => (n.nlSegment || "") === seg);
+    if (match) return match;
+  }
+  return issues.find((n) => (n.nlSegment || "") === "") ?? issues[0] ?? null;
+}
+
 // Issue numbers per list, not one shared counter across both newsletters.
 // The archive on /newsletter and the edition hubs used to number every row
 // by its position in the combined (both-lists) array, so "All" counted

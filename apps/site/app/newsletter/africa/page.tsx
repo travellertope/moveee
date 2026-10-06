@@ -1,7 +1,9 @@
-import EditionNewsletterHub from "@/components/EditionNewsletterHub";
+import { getNewslettersWithFallback } from "@/lib/wp";
+import { redirect } from "next/navigation";
+import { deduplicateEditions, pickEditionIssue } from "@/lib/newsletter-editions";
 import type { Metadata } from "next";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { absolute: "Africa Edition | Moveee Magazine" },
@@ -19,6 +21,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function NewsletterAfricaPage() {
-  return <EditionNewsletterHub edition="africa" />;
+export default async function NewsletterAfricaPage() {
+  let newsletters: any[] = [];
+  try {
+    newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
+  } catch {}
+
+  // Africa covers NG + GH editions; pickEditionIssue tries ng → gh → untagged.
+  const issues = deduplicateEditions(
+    newsletters.filter((n: any) => (n.nlList || "") === "culture-drop"),
+    "ng"
+  );
+  const latest = pickEditionIssue(issues, "africa");
+  if (latest?.slug) redirect(`/newsletter/${latest.slug}`);
+  redirect("/newsletter");
 }
