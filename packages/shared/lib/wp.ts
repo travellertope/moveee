@@ -697,6 +697,10 @@ function mapRestNewsletterToFrontendShape(item: any) {
     nlList: item?.meta?.["_culture_nl_list"] || item?.["_culture_nl_list"] || null,
     nlSegment: item?.meta?.["_culture_nl_segment"] || item?.["_culture_nl_segment"] || "",
     nlIssueNum: parseInt(String(item?.meta?.["_culture_nl_issue_num"] || item?.["_culture_nl_issue_num"] || 0), 10) || null,
+    editionAppendixUs:     String(item?.meta?.["edition_appendix_us"]     || item?.["edition_appendix_us"]     || ""),
+    editionAppendixUk:     String(item?.meta?.["edition_appendix_uk"]     || item?.["edition_appendix_uk"]     || ""),
+    editionAppendixAu:     String(item?.meta?.["edition_appendix_au"]     || item?.["edition_appendix_au"]     || ""),
+    editionAppendixAfrica: String(item?.meta?.["edition_appendix_africa"] || item?.["edition_appendix_africa"] || ""),
     featuredImage: embeddedMedia?.source_url
       ? { node: { sourceUrl: embeddedMedia.source_url, altText: embeddedMedia.alt_text || "" } }
       : null,
@@ -2122,7 +2126,7 @@ export const GET_NEWSLETTERS = `
 `;
 
 export const GET_NEWSLETTER_BY_SLUG = `
-  query GetNewsletterBySlug($slug: ID!) {
+  query GetNewsletterBySlugFull($slug: ID!) {
     cultureNewsletter(id: $slug, idType: SLUG) {
       ...NewsletterFields
       content
@@ -2239,7 +2243,7 @@ const GET_CULTUREDROP_ISSUES = `
 `;
 
 const GET_GETMELIT_ISSUE_BY_SLUG = `
-  query GetGetMeLitIssueBySlug($slug: ID!) {
+  query GetGetMeLitIssueBySlugFull($slug: ID!) {
     getMeLitIssue(id: $slug, idType: SLUG) {
       ...GetMeLitFields
     }
@@ -2248,7 +2252,7 @@ const GET_GETMELIT_ISSUE_BY_SLUG = `
 `;
 
 const GET_CULTUREDROP_ISSUE_BY_SLUG = `
-  query GetCultureDropIssueBySlug($slug: ID!) {
+  query GetCultureDropIssueBySlugFull($slug: ID!) {
     cultureDropIssue(id: $slug, idType: SLUG) {
       ...CultureDropFields
     }
