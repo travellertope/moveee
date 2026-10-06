@@ -7,6 +7,7 @@ import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
 import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
 import MasonryRandomSection from "@/components/MasonryRandomSection";
+import CultureNewsSection from "@/components/CultureNewsSection";
 import ShopRail from "@/components/ShopRail";
 import JoinSection from "@/components/JoinSection";
 
@@ -208,11 +209,7 @@ export default async function Home() {
         stories={portraitStories}
       />
 
-      <MasonryRandomSection
-        eyebrowTitle={<>Culture <em>News</em></>}
-        viewAllHref="/magazine/category/news"
-        stories={editorialStories}
-      />
+      <CultureNewsSection stories={editorialStories} />
 
       <MasonryRandomSection
         eyebrowTitle={<>The Free <em>Critics</em></>}

@@ -1684,7 +1684,7 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
   try {
     const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
       getMagazineMainPool(edition),
-      getWPData(GET_STORIES, { first: 8, categoryName: "news" }),
+      getWPData(GET_STORIES, { first: 12, categoryName: "news" }),
       getWPData(GET_STORIES, { first: 12, categoryName: "cultural-viewpoints" }),
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
