@@ -211,7 +211,6 @@ function HomeStack() {
       <Stack.Screen name="NewPost"         component={NewPostScreen} />
       <Stack.Screen name="DirectorySubmit" component={DirectorySubmitScreen} />
       <Stack.Screen name="MemberProfile"   component={MemberProfileScreen} />
-      <Stack.Screen name="MemberDirectory"   component={MemberDirectoryScreen} />
       <Stack.Screen name="DirectoryDetail"  component={DirectoryDetailScreen} />
       <Stack.Screen name="DirectoryPosts"   component={DirectoryPostsScreen} />
       <Stack.Screen name="Discover"         component={DiscoverScreen} />
