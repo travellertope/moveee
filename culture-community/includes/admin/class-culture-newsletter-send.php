@@ -387,7 +387,7 @@ class Culture_Newsletter_Send {
                         }
                         printf(
                             /* translators: %s: comma-separated list of "Edition (count)" */
-                            esc_html__( 'This post has appendix content for: %s. Each region gets the shared body above plus its own appendix. Anyone on this list not in one of those regions will not receive this send.', 'culture-community' ),
+                            esc_html__( 'This post has appendix content for: %s. Each region gets the shared body above plus its own appendix. Anyone on this list not in one of those regions will receive the Africa edition.', 'culture-community' ),
                             esc_html( implode( ', ', $ed_names ) )
                         );
                         ?>

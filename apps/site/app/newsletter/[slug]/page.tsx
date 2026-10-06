@@ -235,8 +235,9 @@ export default async function GmlIssuePage({
     ng: "editionAppendixAfrica",
     gh: "editionAppendixAfrica",
   };
-  const appendixField = viewerSegment ? SEGMENT_TO_APPENDIX_FIELD[viewerSegment] : undefined;
-  const appendixHtml = appendixField ? (issue[appendixField] as string | undefined) : undefined;
+  // Fall back to Africa appendix for any segment not in the map (e.g. unsegmented, ca).
+  const appendixField = SEGMENT_TO_APPENDIX_FIELD[viewerSegment] ?? "editionAppendixAfrica";
+  const appendixHtml = issue[appendixField] as string | undefined;
   const sanitisedAppendix = appendixHtml ? sanitiseContent(appendixHtml) : "";
 
   const contentSlot = (
