@@ -30,6 +30,7 @@ class Culture_Subscribers {
         add_action( 'admin_post_culture_bulk_import_emails',   array( __CLASS__, 'handle_bulk_import' ) );
         add_action( 'admin_post_culture_edit_subscriber',      array( __CLASS__, 'handle_edit' ) );
         add_action( 'admin_post_culture_bulk_action_subscribers', array( __CLASS__, 'handle_bulk_action' ) );
+        add_action( 'admin_post_culture_add_single_subscriber',  array( __CLASS__, 'handle_add_single_subscriber' ) );
 
         // Auto-subscribe new registrations if the option is enabled.
         if ( get_option( 'culture_nl_auto_subscribe', '0' ) === '1' ) {
@@ -447,13 +448,37 @@ class Culture_Subscribers {
             return in_array( $l['type'], array( 'content', 'hub' ), true );
         } );
 
-        $notice = '';
-        if ( isset( $_GET['imported'] ) ) {
-            $n      = absint( $_GET['imported'] );
-            $notice = sprintf(
-                _n( '%s new subscriber imported.', '%s new subscribers imported.', $n, 'culture-community' ),
-                number_format( $n )
-            );
+        $notice      = '';
+        $notice_type = 'success';
+        if ( isset( $_GET['error'] ) && 'invalid_email' === $_GET['error'] ) {
+            $notice      = __( 'Invalid email address. Please enter a valid email.', 'culture-community' );
+            $notice_type = 'error';
+        } elseif ( isset( $_GET['added'] ) && '1' === $_GET['added'] ) {
+            $notice = __( 'Subscriber added.', 'culture-community' );
+        } elseif ( isset( $_GET['imported'] ) ) {
+            $n          = absint( $_GET['imported'] );
+            $list_added = absint( $_GET['list_added'] ?? 0 );
+            if ( $n > 0 && $list_added > 0 ) {
+                $notice = sprintf(
+                    /* translators: 1: new count, 2: list-added count */
+                    _n( '%1$s new subscriber imported. %2$s subscriber(s) added to the list.', '%1$s new subscribers imported. %2$s subscriber(s) added to the list.', $n, 'culture-community' ),
+                    number_format( $n ), number_format( $list_added )
+                );
+            } elseif ( $n > 0 ) {
+                $notice = sprintf(
+                    _n( '%s new subscriber imported.', '%s new subscribers imported.', $n, 'culture-community' ),
+                    number_format( $n )
+                );
+            } elseif ( $list_added > 0 ) {
+                $notice = sprintf(
+                    /* translators: number of subscribers assigned to a list (they already existed) */
+                    _n( 'No new subscribers (all already existed). %s subscriber added to the list.', 'No new subscribers (all already existed). %s subscribers added to the list.', $list_added, 'culture-community' ),
+                    number_format( $list_added )
+                );
+            } else {
+                $notice      = __( 'No new subscribers were imported (all emails already exist).', 'culture-community' );
+                $notice_type = 'warning';
+            }
         }
         ?>
         <div class="wrap">
@@ -461,8 +486,63 @@ class Culture_Subscribers {
             <hr class="wp-header-end">
 
             <?php if ( $notice ) : ?>
-                <div class="notice notice-success is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
+                <div class="notice notice-<?php echo esc_attr( $notice_type ); ?> is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
             <?php endif; ?>
+
+            <?php /* ── ADD SINGLE SUBSCRIBER ── */ ?>
+            <h2 style="font-size:15px;font-weight:600;margin:24px 0 8px;"><?php esc_html_e( 'Add Single Subscriber', 'culture-community' ); ?></h2>
+            <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:32px;">
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                    <input type="hidden" name="action" value="culture_add_single_subscriber">
+                    <?php wp_nonce_field( 'culture_add_single_subscriber' ); ?>
+                    <table class="form-table" style="margin:0 0 16px;">
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;width:140px;">
+                                <?php esc_html_e( 'Email *', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <input type="email" name="single_email" class="regular-text" required placeholder="email@example.com">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;">
+                                <?php esc_html_e( 'Name', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <input type="text" name="single_name" class="regular-text" placeholder="<?php esc_attr_e( 'Optional', 'culture-community' ); ?>">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;">
+                                <?php esc_html_e( 'Location', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <input type="text" name="single_location" class="regular-text" placeholder="<?php esc_attr_e( 'Optional', 'culture-community' ); ?>">
+                            </td>
+                        </tr>
+                        <?php if ( $all_lists ) : ?>
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;">
+                                <?php esc_html_e( 'Add to list', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <select name="single_list_id" style="font-size:13px;">
+                                    <option value="0"><?php esc_html_e( '— No list —', 'culture-community' ); ?></option>
+                                    <?php foreach ( $all_lists as $list ) : ?>
+                                        <option value="<?php echo esc_attr( $list['id'] ); ?>">
+                                            <?php echo esc_html( $list['name'] ); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                    </table>
+                    <button type="submit" class="button button-primary">
+                        <?php esc_html_e( 'Add Subscriber', 'culture-community' ); ?>
+                    </button>
+                </form>
+            </div>
 
             <?php /* ── BULK IMPORT ── */ ?>
             <h2 style="font-size:15px;font-weight:600;margin:24px 0 8px;"><?php esc_html_e( 'Bulk Import — CSV or Paste', 'culture-community' ); ?></h2>
@@ -850,21 +930,30 @@ class Culture_Subscribers {
 
         $count = Culture_Subscribers_DB::subscribe_many( $items );
 
-        // If a target list was chosen, add every successfully imported subscriber to it.
+        // Add every subscriber (new OR already existing) to the chosen list.
+        // The old guard ($count > 0) meant that if all emails already existed,
+        // no one got list-assigned even though the admin chose a list.
         $import_list_id = absint( $_POST['import_list_id'] ?? 0 );
-        if ( $import_list_id && $count > 0 ) {
+        $list_added     = 0;
+        if ( $import_list_id ) {
             foreach ( $items as $item ) {
                 $sub = Culture_Subscribers_DB::find_by_email( $item['email'] );
                 if ( $sub ) {
                     Culture_Subscribers_DB::add_subscriber_to_list_id( $sub['id'], $import_list_id );
+                    $list_added++;
                 }
             }
         }
 
-        wp_safe_redirect( add_query_arg( array(
+        $redirect = array(
             'page'     => 'culture-subscribers-import',
             'imported' => $count,
-        ), admin_url( 'admin.php' ) ) );
+        );
+        if ( $list_added ) {
+            $redirect['list_added'] = $list_added;
+        }
+
+        wp_safe_redirect( add_query_arg( $redirect, admin_url( 'admin.php' ) ) );
         exit;
     }
 
@@ -942,20 +1031,64 @@ class Culture_Subscribers {
 
         $imported = Culture_Subscribers_DB::subscribe_many( $items );
 
-        // Optionally add all imported users to a chosen list.
+        // Add every user (new OR already existing) to the chosen list.
         $import_list_id = absint( $_POST['import_list_id'] ?? 0 );
-        if ( $import_list_id && $imported > 0 ) {
+        $list_added     = 0;
+        if ( $import_list_id ) {
             foreach ( $items as $item ) {
                 $sub = Culture_Subscribers_DB::find_by_email( $item['email'] );
                 if ( $sub ) {
                     Culture_Subscribers_DB::add_subscriber_to_list_id( $sub['id'], $import_list_id );
+                    $list_added++;
                 }
             }
         }
 
-        wp_safe_redirect( add_query_arg( array(
+        $redirect = array(
             'page'     => 'culture-subscribers-import',
             'imported' => $imported,
+        );
+        if ( $list_added ) {
+            $redirect['list_added'] = $list_added;
+        }
+
+        wp_safe_redirect( add_query_arg( $redirect, admin_url( 'admin.php' ) ) );
+        exit;
+    }
+
+    /**
+     * Handle Add Single Subscriber POST action.
+     */
+    public static function handle_add_single_subscriber() {
+        check_admin_referer( 'culture_add_single_subscriber' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Permission denied.', 'culture-community' ) );
+        }
+
+        $email    = sanitize_email( wp_unslash( $_POST['single_email'] ?? '' ) );
+        $name     = sanitize_text_field( wp_unslash( $_POST['single_name'] ?? '' ) );
+        $location = sanitize_text_field( wp_unslash( $_POST['single_location'] ?? '' ) );
+        $list_id  = absint( $_POST['single_list_id'] ?? 0 );
+
+        if ( ! is_email( $email ) ) {
+            wp_safe_redirect( add_query_arg( array(
+                'page'  => 'culture-subscribers-import',
+                'error' => 'invalid_email',
+            ), admin_url( 'admin.php' ) ) );
+            exit;
+        }
+
+        // get_or_create ensures an existing subscriber is returned rather than duplicated.
+        $sub_id = Culture_Subscribers_DB::get_or_create( $email, $name, $location );
+
+        if ( $list_id && $sub_id ) {
+            Culture_Subscribers_DB::add_subscriber_to_list_id( $sub_id, $list_id );
+        }
+
+        wp_safe_redirect( add_query_arg( array(
+            'page'  => 'culture-subscribers-import',
+            'added' => '1',
         ), admin_url( 'admin.php' ) ) );
         exit;
     }
