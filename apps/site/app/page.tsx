@@ -93,11 +93,11 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       getNewslettersWithFallback(10).catch(() => []),
     ]);
 
-    const { coverStory, stories, products } = homepageData;
+    const { coverStory, featuredPool: heroPlusFeatured, stories, products } = homepageData;
     const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
 
     const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
-    const carouselPool = (topPool || []).filter((s: any) => !usedSlugs.has(s.slug)).slice(0, 7);
+    const carouselPool = (heroPlusFeatured || []).filter((s: any) => !usedSlugs.has(s.slug)).slice(0, 7);
     carouselPool.forEach((s: any) => usedSlugs.add(s.slug));
     const featuredPool = (topPool || []).filter((s: any) => !usedSlugs.has(s.slug));
 

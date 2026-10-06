@@ -38,7 +38,7 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   // the `stories` row).
   let featuredPool: any[] = [];
   try {
-    const featuredData = await getWPData(GET_STORIES, { first: 8, tag: "featured" }, OPT);
+    const featuredData = await getWPData(GET_STORIES, { first: 9, tag: "featured" }, OPT);
     // Commons-qualifying posts (category "commons" or a Basit Jamiu byline)
     // never surface anywhere under /magazine or the homepage — same
     // isCommonsPost exclusion applied in getMagazineSections() and
@@ -170,7 +170,7 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   seriesThinkCreative = filterSeries(seriesThinkCreative);
 
   return {
-    coverStory, stories, products,
+    coverStory, featuredPool, stories, products,
     latestIssue, latestIssueStories, interviewStories,
     seriesTheRadar, seriesPortraits, seriesTheLane, seriesThinkCreative,
   };
