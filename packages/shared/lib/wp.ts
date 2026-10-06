@@ -1684,7 +1684,7 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
   try {
     const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
       getMagazineMainPool(edition),
-      getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
+      getWPData(GET_STORIES, { first: 8, categoryName: "news" }),
       getWPData(GET_STORIES, { first: 12, categoryName: "viewpoints" }),
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
@@ -1707,13 +1707,13 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
 
     const opinionStories = (opinionData?.posts?.nodes || [])
       .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
-      .slice(0, 4);
+      .slice(0, 8);
     const portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
       .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
-      .slice(0, 5);
+      .slice(0, 8);
     const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
       .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
-      .slice(0, 4);
+      .slice(0, 8);
 
     return { topPool, editorialStories, opinionStories, portraitStories, digestStories };
   } catch (err: any) {
