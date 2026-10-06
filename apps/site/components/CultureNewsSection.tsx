@@ -44,8 +44,9 @@ export default function CultureNewsSection({
   if (safeStories.length === 0) return null;
 
   const items = safeStories.slice(0, 12);
-  const col1 = items.slice(0, Math.ceil(items.length / 2));
-  const col2 = items.slice(Math.ceil(items.length / 2));
+  const col1 = items.slice(0, 4);
+  const col2 = items.slice(4, 8);
+  const col3 = items.slice(8, 12);
 
   return (
     <section className="arc-section">
@@ -67,6 +68,13 @@ export default function CultureNewsSection({
           {col2.length > 0 && (
             <div className="cn-col">
               {col2.map((story) => (
+                <StoryRow key={story.slug || story.id} story={story} />
+              ))}
+            </div>
+          )}
+          {col3.length > 0 && (
+            <div className="cn-col">
+              {col3.map((story) => (
                 <StoryRow key={story.slug || story.id} story={story} />
               ))}
             </div>

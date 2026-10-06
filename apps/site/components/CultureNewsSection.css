@@ -1,9 +1,9 @@
-/* Culture News — dispatch layout (Option D: two-column list, thumbnail + headline + date) */
+/* Culture News — dispatch layout (Option D: three-column list, thumbnail + headline + date) */
 
 .cn-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 40px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 28px;
 }
 
 .cn-col {
@@ -67,9 +67,31 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 860px) {
+  .cn-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+  }
+  /* Third column stacks below the first two */
+  .cn-col:nth-child(3) {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+    border-top: 1px solid var(--rule);
+    padding-top: 2px;
+  }
+}
+
+@media (max-width: 560px) {
   .cn-grid {
     grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .cn-col:nth-child(3) {
+    grid-column: auto;
+    display: flex;
+    flex-direction: column;
     gap: 0;
   }
   .cn-col + .cn-col {
