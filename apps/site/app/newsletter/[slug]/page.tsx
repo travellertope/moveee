@@ -225,10 +225,25 @@ export default async function GmlIssuePage({
     ? sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, ""))
     : undefined;
 
+  // Map viewer segment → the correct appendix field fetched from WPGraphQL.
+  // us/ca share the US appendix; ng/gh share the Africa appendix.
+  const SEGMENT_TO_APPENDIX_FIELD: Record<string, string> = {
+    us: "editionAppendixUs",
+    ca: "editionAppendixUs",
+    uk: "editionAppendixUk",
+    au: "editionAppendixAu",
+    ng: "editionAppendixAfrica",
+    gh: "editionAppendixAfrica",
+  };
+  // Fall back to Africa appendix for any segment not in the map (e.g. unsegmented, ca).
+  const appendixField = SEGMENT_TO_APPENDIX_FIELD[viewerSegment] ?? "editionAppendixAfrica";
+  const appendixHtml = issue[appendixField] as string | undefined;
+  const sanitisedAppendix = appendixHtml ? sanitiseContent(appendixHtml) : "";
+
   const contentSlot = (
     <ArticleComments
       postId={parseInt(issue.databaseId)}
-      content={sanitiseContent(issue.content || "")}
+      content={sanitiseContent(issue.content || "") + (sanitisedAppendix ? `\n${sanitisedAppendix}` : "")}
     />
   );
 

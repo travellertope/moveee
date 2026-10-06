@@ -157,6 +157,18 @@ class Culture_Newsletter_Queue {
                 $recipients[]   = array( 'email' => $email, 'edition' => $edition );
             }
         }
+
+        // Fallback: any subscriber not matched by a regional segment filter
+        // (e.g. unsegmented, Canada, or any other region not in EDITIONS)
+        // receives the Africa edition — shared body + Africa appendix.
+        foreach ( Culture_Subscribers_DB::resolve_send_emails( $list_id, '' ) as $email ) {
+            if ( isset( $seen[ $email ] ) ) {
+                continue;
+            }
+            $seen[ $email ] = true;
+            $recipients[]   = array( 'email' => $email, 'edition' => 'africa' );
+        }
+
         return $recipients;
     }
 
