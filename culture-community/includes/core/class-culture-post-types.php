@@ -1072,6 +1072,29 @@ class Culture_Post_Types {
             ) );
         }
 
+        // Edition appendix fields — region-specific content appended to the
+        // main body on the frontend and in email sends. ACF stores these as
+        // postmeta with underscore-prefixed keys (hidden from standard meta UI),
+        // so they need explicit WPGraphQL exposure just like nlList above.
+        $appendix_fields = array(
+            'editionAppendixUs'     => 'edition_appendix_us',
+            'editionAppendixUk'     => 'edition_appendix_uk',
+            'editionAppendixAu'     => 'edition_appendix_au',
+            'editionAppendixAfrica' => 'edition_appendix_africa',
+        );
+        $appendix_types = array( 'CultureNewsletter', 'GetMeLitIssue', 'CultureDropIssue' );
+        foreach ( $appendix_types as $gql_type ) {
+            foreach ( $appendix_fields as $gql_field => $meta_key ) {
+                register_graphql_field( $gql_type, $gql_field, array(
+                    'type'        => 'String',
+                    'description' => "Region-specific appendix HTML for the {$meta_key} edition.",
+                    'resolve'     => function( $post ) use ( $meta_key ) {
+                        return (string) ( get_post_meta( $post->databaseId, $meta_key, true ) ?: '' );
+                    },
+                ) );
+            }
+        }
+
         error_log( 'Culture Community: GraphQL fields registration completed.' );
     }
 

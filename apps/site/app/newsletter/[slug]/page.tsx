@@ -225,10 +225,24 @@ export default async function GmlIssuePage({
     ? sanitizeHtml(issue.excerpt.replace(/<[^>]*>/g, ""))
     : undefined;
 
+  // Map viewer segment → the correct appendix field fetched from WPGraphQL.
+  // us/ca share the US appendix; ng/gh share the Africa appendix.
+  const SEGMENT_TO_APPENDIX_FIELD: Record<string, string> = {
+    us: "editionAppendixUs",
+    ca: "editionAppendixUs",
+    uk: "editionAppendixUk",
+    au: "editionAppendixAu",
+    ng: "editionAppendixAfrica",
+    gh: "editionAppendixAfrica",
+  };
+  const appendixField = viewerSegment ? SEGMENT_TO_APPENDIX_FIELD[viewerSegment] : undefined;
+  const appendixHtml = appendixField ? (issue[appendixField] as string | undefined) : undefined;
+  const sanitisedAppendix = appendixHtml ? sanitiseContent(appendixHtml) : "";
+
   const contentSlot = (
     <ArticleComments
       postId={parseInt(issue.databaseId)}
-      content={sanitiseContent(issue.content || "")}
+      content={sanitiseContent(issue.content || "") + (sanitisedAppendix ? `\n${sanitisedAppendix}` : "")}
     />
   );
 

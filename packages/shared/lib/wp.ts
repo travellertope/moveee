@@ -2084,6 +2084,10 @@ const NEWSLETTER_FIELDS_FRAGMENT = `
     nlList
     nlSegment
     nlIssueNum
+    editionAppendixUs
+    editionAppendixUk
+    editionAppendixAu
+    editionAppendixAfrica
     featuredImage {
       node {
         sourceUrl
@@ -2152,6 +2156,10 @@ const GETMELIT_FIELDS_FRAGMENT = `
     nlList
     nlSegment
     nlIssueNum
+    editionAppendixUs
+    editionAppendixUk
+    editionAppendixAu
+    editionAppendixAfrica
     featuredImage {
       node {
         sourceUrl
@@ -2184,6 +2192,10 @@ const CULTUREDROP_FIELDS_FRAGMENT = `
     nlList
     nlSegment
     nlIssueNum
+    editionAppendixUs
+    editionAppendixUk
+    editionAppendixAu
+    editionAppendixAfrica
     featuredImage {
       node {
         sourceUrl
