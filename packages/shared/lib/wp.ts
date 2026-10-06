@@ -1676,7 +1676,7 @@ export interface MagazineSections {
   opinionStories: any[];
   /** "the-lane" series — "The Lane". */
   portraitStories: any[];
-  /** "the-free-critics" series — "The Free Critics". */
+  /** "reviews" category — "Reviews". */
   digestStories: any[];
 }
 
@@ -1687,7 +1687,7 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
       getWPData(GET_STORIES, { first: 12, categoryName: "news" }),
       getWPData(GET_STORIES, { first: 12, categoryName: "cultural-viewpoints" }),
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
-      getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
+      getWPData(GET_STORIES, { first: 8, categoryName: "reviews" }),
     ]);
     // Commons-qualifying posts (category "commons" or a Basit Jamiu byline —
     // see isCommonsPost above) never surface anywhere under /magazine, per
@@ -1721,7 +1721,7 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
       .slice(0, 8);
     portraitStories.forEach((p: any) => usedIds.add(p.id));
 
-    const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
+    const digestStories = (digestData?.posts?.nodes || [])
       .filter((p: any) => !usedIds.has(p.id) && !isCommonsPost(p))
       .slice(0, 8);
 
