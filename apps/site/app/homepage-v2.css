@@ -94,12 +94,11 @@
    selector here bled its padding/typography onto that other page's masthead
    too. Every rule below must stay under .hpv2 — never drop back to a bare
    .masthead selector, even for a "quick" tweak. */
-/* Symmetric: the gap below the "Right Now" carousel matches the gap above the
-   headline. The section right after it (.arc-section — Culture News, or The
-   Front Page if Culture News is empty) drops its own top padding so the two
-   don't stack and the bottom gap reads exactly the same as the top one. */
+/* Symmetric: the tinted masthead band has the same padding below the "Right
+   Now" carousel as above the headline. The next .arc-section (Culture News)
+   keeps its own top padding — the masthead has its own background, so that
+   padding is the white gap between the two bands; don't zero it. */
 .hpv2 .masthead { padding: clamp(28px, 4vw, 56px) 0; text-align: center; }
-.hpv2 .masthead + .arc-section { padding-top: 0; }
 @media (max-width: 640px) {
   /* clamp()'s floor (28px) is the same fixed value at every mobile width
      since 4vw never exceeds it below ~700px — reads as too much gap on a
