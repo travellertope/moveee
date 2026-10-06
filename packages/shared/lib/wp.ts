@@ -1684,8 +1684,8 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
   try {
     const [mainPool, editData, opinionData, portraitData, digestData] = await Promise.all([
       getMagazineMainPool(edition),
-      getWPData(GET_STORIES, { first: 6, categoryName: "news" }),
-      getWPData(GET_STORIES, { first: 12, categoryName: "viewpoints" }),
+      getWPData(GET_STORIES, { first: 12, categoryName: "news" }),
+      getWPData(GET_STORIES, { first: 12, categoryName: "cultural-viewpoints" }),
       getWPData(GET_SERIES_STORIES, { series: "the-lane" }),
       getWPData(GET_SERIES_STORIES, { series: "the-free-critics" }),
     ]);
@@ -1703,17 +1703,27 @@ export async function getMagazineSections(edition?: EditionSlug): Promise<Magazi
       (p: any) => !p.categories?.nodes?.some((c: any) => c.slug === "news") && !isCommonsPost(p)
     );
 
-    const usedByTopIds = new Set(topPool.slice(0, 7).map((p: any) => p.id));
+    // Seed with every topPool id so no post that can appear in The Front
+    // Page / hero / carousel ever repeats in a named section below.
+    const usedIds = new Set(topPool.map((p: any) => p.id));
+    // editorialStories (news category) is naturally disjoint from topPool
+    // (topPool explicitly excludes news), but add them too so they can't
+    // repeat in the series sections.
+    editorialStories.forEach((p: any) => usedIds.add(p.id));
 
     const opinionStories = (opinionData?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
-      .slice(0, 4);
+      .filter((p: any) => !usedIds.has(p.id) && !isCommonsPost(p))
+      .slice(0, 8);
+    opinionStories.forEach((p: any) => usedIds.add(p.id));
+
     const portraitStories = (portraitData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
-      .slice(0, 5);
+      .filter((p: any) => !usedIds.has(p.id) && !isCommonsPost(p))
+      .slice(0, 8);
+    portraitStories.forEach((p: any) => usedIds.add(p.id));
+
     const digestStories = (digestData?.seriesItem?.posts?.nodes || [])
-      .filter((p: any) => !usedByTopIds.has(p.id) && !isCommonsPost(p))
-      .slice(0, 4);
+      .filter((p: any) => !usedIds.has(p.id) && !isCommonsPost(p))
+      .slice(0, 8);
 
     return { topPool, editorialStories, opinionStories, portraitStories, digestStories };
   } catch (err: any) {

@@ -40,10 +40,12 @@ const Footer = () => {
     window.location.href = EDITIONS[slug].path;
   }
 
+  const isHomepage = pathname === "/";
+
   return (
     <footer className="mfoot">
       <div className="mfoot-inner">
-        <div className="mfoot-top">
+        {!isHomepage && <div className="mfoot-top">
           <div className="mfoot-newsletter">
             <h2>Stay close to <em>culture</em>.<br />Get our weekly dispatch.</h2>
             <form className="mfoot-form" onSubmit={(e) => e.preventDefault()}>
@@ -74,7 +76,7 @@ const Footer = () => {
               </svg>
             </a>
           </div>
-        </div>
+        </div>}
 
         <div className="mfoot-columns">
           <div className="mfoot-column">
