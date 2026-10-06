@@ -212,7 +212,7 @@ export default async function Home() {
       <CultureNewsSection stories={editorialStories} />
 
       <MasonryRandomSection
-        eyebrowTitle={<>The Free <em>Critics</em></>}
+        eyebrowTitle={<><em>Reviews</em></>}
         stories={digestStories}
       />
 
