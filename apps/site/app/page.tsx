@@ -217,7 +217,7 @@ export default async function Home() {
       />
 
       <MasonryRandomSection
-        eyebrowTitle={<><em>Opinions</em> &amp; Essays</>}
+        eyebrowTitle={<><em>Viewpoints</em></>}
         stories={opinionStories}
       />
 
