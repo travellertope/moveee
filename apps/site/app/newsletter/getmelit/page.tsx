@@ -1,11 +1,8 @@
 import { getNewslettersWithFallback } from "@/lib/wp";
-import GetMeLitPage from "@/components/GetMeLitPage";
-import { NL_META } from "@/lib/newsletter-lists";
+import { redirect } from "next/navigation";
 import { geoSegment, deduplicateEditions } from "@/lib/newsletter-editions";
-import "../../getmelit.css";
+import { NL_META } from "@/lib/newsletter-lists";
 
-// dynamic = "force-dynamic" because we read geo headers to serve the
-// viewer's regional edition (same reasoning as /newsletter's own hub).
 export const dynamic = "force-dynamic";
 
 const meta = NL_META["getmelit"];
@@ -54,15 +51,19 @@ export default async function GetMeLitRoute() {
   try {
     newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
   } catch {
-    // CMS unreachable
+    // CMS unreachable — fall through to /newsletter hub
   }
 
   const segment = await geoSegment();
   const listIssues = newsletters.filter((n: any) => (n.nlList || "") === "getmelit");
-  // Each regional edition of the same issue is a separate WP post — dedupe
-  // by title+segment first (so only the viewer's own edition shows), then
-  // by issue number for any other kind of duplicate.
   const issues = deduplicateByIssueNum(deduplicateEditions(listIssues, segment));
 
-  return <GetMeLitPage issues={issues} />;
+  // The reader is the screen — redirect to the latest issue so the full
+  // vault-and-reader experience starts immediately. Fall back to /newsletter
+  // if the CMS is unreachable.
+  const latest = issues[0];
+  if (latest?.slug) {
+    redirect(`/newsletter/${latest.slug}`);
+  }
+  redirect("/newsletter");
 }

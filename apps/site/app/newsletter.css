@@ -3981,3 +3981,798 @@
   border-radius: var(--radius-md, 4px);
   white-space: nowrap;
 }
+
+
+/* ============================================================
+   IRC — Issue Reader Client (redesign, v5)
+   Applies to: apps/site/app/newsletter/[slug]/IssueReaderClient.tsx
+   These classes are ALL NEW — nothing below conflicts with the
+   existing rd-* or gml-* rules above.
+   ============================================================ */
+
+/* ── READING THEME TOKENS ── */
+.irc-reader {
+  --irc-bg:          #ffffff;
+  --irc-header-bg:   rgba(255,255,255,0.92);
+  --irc-header-border: rgba(20,17,13,0.08);
+  --irc-text:        var(--ink);
+  --irc-mute:        var(--mute);
+  --irc-rule:        var(--rule);
+  --irc-vault-bg:    #ffffff;
+  --irc-vault-overlay: rgba(20,17,13,0.55);
+  --irc-rail-bg:     transparent;
+  --irc-hero-bg:     var(--paper);
+  --irc-hero-glow:   rgba(122,36,28,0.06);
+  --irc-intro-bg:    var(--paper);
+}
+.irc-reader.irc-theme-sepia {
+  --irc-bg:          #f8f1e3;
+  --irc-header-bg:   rgba(248,241,227,0.93);
+  --irc-header-border: rgba(120,80,40,0.1);
+  --irc-vault-bg:    #f2e8d4;
+  --irc-hero-bg:     #f0e5d0;
+  --irc-intro-bg:    #f0e5d0;
+}
+.irc-reader.irc-theme-dark {
+  --irc-bg:          #0f0d0b;
+  --irc-header-bg:   rgba(15,13,11,0.94);
+  --irc-header-border: rgba(255,255,255,0.07);
+  --irc-text:        rgba(255,255,255,0.9);
+  --irc-mute:        rgba(255,255,255,0.45);
+  --irc-rule:        rgba(255,255,255,0.1);
+  --irc-vault-bg:    #161310;
+  --irc-vault-overlay: rgba(0,0,0,0.72);
+  --irc-hero-bg:     #141210;
+  --irc-hero-glow:   rgba(122,36,28,0.18);
+  --irc-intro-bg:    #141210;
+}
+.irc-reader {
+  background: var(--irc-bg);
+  color: var(--irc-text);
+  min-height: 100vh;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* ── PROGRESS RAIL ── */
+.irc-progress-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 300;
+  background: transparent;
+  pointer-events: none;
+}
+.irc-progress-bar {
+  height: 100%;
+  background: var(--ochre);
+  transition: width 0.1s linear;
+}
+.irc-progress-bar.irc--getmelit { background: var(--gold); }
+
+/* ── STICKY HEADER ── */
+.irc-header {
+  position: sticky;
+  top: var(--header-clear, 96px);
+  z-index: 200;
+  background: var(--irc-header-bg);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--irc-header-border);
+  transition: background 0.25s, border-color 0.25s;
+}
+.irc-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.irc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.irc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Wordmark */
+.irc-wordmark {
+  font-family: Fraunces, serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--irc-text);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.irc-wordmark:hover { color: var(--ochre); }
+.irc-wordmark.irc--getmelit:hover { color: var(--gold); }
+.irc-header-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--irc-mute);
+  background: var(--irc-header-border);
+  padding: 2px 7px;
+  border-radius: var(--radius-full, 9999px);
+  white-space: nowrap;
+}
+
+/* Issue Vault trigger — filled, brand accent */
+.irc-vault-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 32px;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.irc-vault-trigger:hover { background: var(--ochre-deep); transform: translateY(-1px); }
+.irc-vault-trigger:active { transform: translateY(0); }
+.irc-vault-trigger.irc--getmelit { background: var(--gold); }
+.irc-vault-trigger.irc--getmelit:hover { background: #8a6422; }
+.irc-vault-trigger-label { display: inline; }
+.irc-vault-trigger-count {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.22);
+  border-radius: var(--radius-full, 9999px);
+  padding: 1px 5px;
+  line-height: 16px;
+}
+@media (max-width: 480px) {
+  .irc-vault-trigger-label { display: none; }
+}
+
+/* Font controls */
+.irc-font-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.irc-font-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 4px);
+  color: var(--irc-mute);
+  font-family: Fraunces, serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.irc-font-btn:hover {
+  color: var(--irc-text);
+  background: var(--irc-header-border);
+}
+.irc-font-btn--active {
+  color: var(--ochre);
+  border-color: var(--ochre);
+}
+
+/* Theme switcher dots */
+.irc-theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  background: var(--irc-header-border);
+  border-radius: var(--radius-full, 9999px);
+}
+.irc-theme-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  padding: 0;
+}
+.irc-theme-dot:hover { transform: scale(1.15); }
+.irc-theme-dot--white { background: #ffffff; box-shadow: 0 0 0 1px rgba(0,0,0,0.12); }
+.irc-theme-dot--sepia { background: #f8f1e3; box-shadow: 0 0 0 1px rgba(120,80,40,0.2); }
+.irc-theme-dot--dark  { background: #1a1614; box-shadow: 0 0 0 1px rgba(255,255,255,0.1); }
+.irc-theme-dot--active { border-color: var(--ochre); transform: scale(1.15); }
+
+/* Icon buttons (bookmark, share) */
+.irc-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 4px);
+  color: var(--irc-mute);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.irc-icon-btn:hover {
+  color: var(--irc-text);
+  background: var(--irc-header-border);
+}
+.irc-icon-btn--active { color: var(--ochre); }
+@media (max-width: 600px) {
+  .irc-font-controls { display: none; }
+  .irc-theme-switcher { display: none; }
+}
+
+/* ── ISSUE VAULT DRAWER ── */
+.irc-vault-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--irc-vault-overlay);
+  z-index: 400;
+  display: flex;
+  justify-content: flex-end;
+  animation: irc-fade-in 0.2s ease;
+}
+.irc-vault-drawer {
+  width: min(420px, 96vw);
+  height: 100%;
+  background: var(--irc-vault-bg);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 32px rgba(0,0,0,0.18);
+  animation: irc-slide-in 0.25s cubic-bezier(0.32,0,0,1);
+  overflow: hidden;
+}
+@keyframes irc-fade-in  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes irc-slide-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
+
+.irc-vault-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--irc-rule);
+}
+.irc-vault-header-title {
+  font-family: Fraunces, serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--irc-text);
+}
+.irc-vault-header-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--irc-mute);
+  margin-top: 2px;
+}
+.irc-vault-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--irc-rule);
+  border-radius: var(--radius-md, 4px);
+  color: var(--irc-mute);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.irc-vault-close:hover { color: var(--irc-text); border-color: var(--irc-text); }
+
+/* Vault search + sort controls */
+.irc-vault-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--irc-rule);
+}
+.irc-vault-search-wrap {
+  position: relative;
+}
+.irc-vault-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--irc-mute);
+  pointer-events: none;
+}
+.irc-vault-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 30px;
+  background: var(--irc-header-border);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 4px);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--irc-text);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, background 0.15s;
+}
+.irc-vault-search::placeholder { color: var(--irc-mute); }
+.irc-vault-search:focus { background: transparent; border-color: var(--ochre); }
+.irc-vault-sort {
+  display: flex;
+  gap: 4px;
+}
+.irc-vault-sort-btn {
+  flex: 1;
+  height: 28px;
+  background: none;
+  border: 1px solid var(--irc-rule);
+  border-radius: var(--radius-md, 4px);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--irc-mute);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.irc-vault-sort-btn:hover { color: var(--irc-text); }
+.irc-vault-sort-btn--active {
+  color: var(--ochre);
+  border-color: var(--ochre);
+  background: rgba(122,36,28,0.05);
+}
+.irc-reader.irc-theme-dark .irc-vault-sort-btn--active {
+  background: rgba(122,36,28,0.15);
+}
+
+/* Vault issue list */
+.irc-vault-list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 0;
+}
+.irc-vault-empty {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--irc-mute);
+  text-align: center;
+  padding: 32px 20px;
+}
+.irc-vault-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--irc-rule);
+  transition: background 0.12s;
+}
+.irc-vault-row:last-child { border-bottom: none; }
+.irc-vault-row:hover { background: var(--irc-header-border); }
+.irc-vault-row--active { background: rgba(122,36,28,0.06); }
+.irc-vault-row--active-gml { background: rgba(179,130,56,0.07); }
+.irc-vault-row-inner {
+  flex: 1;
+  min-width: 0;
+}
+.irc-vault-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.irc-vault-row-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--irc-mute);
+}
+.irc-vault-row-current {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ochre);
+  background: rgba(122,36,28,0.1);
+  padding: 1px 5px;
+  border-radius: var(--radius-full, 9999px);
+}
+.irc-vault-row-title {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--irc-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.irc-vault-row--active .irc-vault-row-title,
+.irc-vault-row--active-gml .irc-vault-row-title { font-weight: 700; }
+.irc-vault-row-arrow { color: var(--irc-mute); flex-shrink: 0; }
+
+/* ── EDITORIAL INTRO BANNER ── */
+.irc-intro-banner {
+  background: var(--irc-intro-bg);
+  padding: 48px 24px 32px;
+  text-align: center;
+  transition: background 0.25s;
+}
+.irc-intro-eyebrow {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  margin-bottom: 20px;
+}
+.irc-intro-eyebrow.irc--getmelit { color: var(--gold); }
+.irc-intro-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.irc-intro-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--irc-rule);
+}
+.irc-intro-ornament {
+  font-size: 11px;
+  color: var(--irc-mute);
+  flex-shrink: 0;
+}
+
+/* ── EDITORIAL HERO ── */
+.irc-hero {
+  position: relative;
+  background: var(--irc-hero-bg);
+  overflow: hidden;
+  transition: background 0.25s;
+}
+.irc-hero-blur {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.5;
+}
+.irc-hero-blur--top {
+  width: 600px;
+  height: 600px;
+  background: var(--irc-hero-glow);
+  top: -200px;
+  right: -100px;
+}
+.irc-hero-blur--left {
+  width: 400px;
+  height: 400px;
+  background: var(--irc-hero-glow);
+  bottom: -100px;
+  left: -80px;
+  opacity: 0.35;
+}
+.irc-hero-inner {
+  position: relative;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 56px 40px 64px;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 56px;
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .irc-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 40px 24px 48px;
+  }
+}
+
+/* Hero text column */
+.irc-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.irc-hero-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.irc-hero-issue-pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ochre);
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+}
+.irc-hero-issue-pill.irc--getmelit { background: var(--gold); }
+.irc-hero-date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--irc-mute);
+}
+.irc-hero-title {
+  font-family: Fraunces, serif;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 900;
+  line-height: 1.07;
+  letter-spacing: -0.03em;
+  color: var(--irc-text);
+  text-wrap: balance;
+  margin: 0;
+}
+.irc-hero-excerpt {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--irc-mute);
+  max-width: 560px;
+  margin: 0;
+}
+.irc-hero-subscribe-cta {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+  text-decoration: none;
+  transition: gap 0.15s;
+  gap: 4px;
+}
+.irc-hero-subscribe-cta:hover { gap: 8px; }
+.irc-hero-subscribe-cta.irc--getmelit { color: var(--gold); }
+
+/* Hero image card */
+.irc-hero-img-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.irc-hero-img-glow {
+  position: absolute;
+  inset: -20px;
+  background: var(--irc-hero-glow);
+  border-radius: var(--radius-xl, 12px);
+  filter: blur(24px);
+  pointer-events: none;
+}
+.irc-hero-img-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  max-height: 480px;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+}
+.irc-hero-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+  z-index: 1;
+}
+.irc-hero-img-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 16px 14px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@media (max-width: 900px) {
+  .irc-hero-img-card {
+    aspect-ratio: 16/9;
+    max-height: 260px;
+  }
+}
+
+/* ── CONTENT GRID (article + left rail) ── */
+.irc-content-grid {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 0;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .irc-content-grid {
+    grid-template-columns: 1fr;
+    padding: 0 0;
+  }
+}
+
+/* ── LEFT RAIL ── */
+.irc-rail {
+  position: sticky;
+  top: calc(var(--header-clear, 96px) + 52px + 32px);
+  padding-top: 56px;
+}
+.irc-rail-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.irc-rail-bookmark,
+.irc-rail-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--irc-mute);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+  padding: 0;
+}
+.irc-rail-bookmark:hover,
+.irc-rail-top:hover { color: var(--irc-text); }
+.irc-rail-bookmark--active { color: var(--ochre); }
+@media (max-width: 760px) {
+  .irc-rail { display: none; }
+}
+
+/* ── ARTICLE BODY OVERRIDE ── */
+/* irc-article overrides the rd-body margins to work inside the grid */
+.irc-article {
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  border-left: 2px solid var(--irc-rule);
+  padding-left: 40px;
+}
+@media (max-width: 760px) {
+  .irc-article {
+    border-left: none;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* Dark-mode article typography overrides */
+.irc-theme-dark .rd-body p,
+.irc-theme-dark .rd-body ul li,
+.irc-theme-dark .rd-body ol li {
+  color: rgba(255,255,255,0.85);
+}
+.irc-theme-dark .rd-body h2,
+.irc-theme-dark .rd-body h3,
+.irc-theme-dark .rd-body h4 {
+  border-top-color: rgba(255,255,255,0.08);
+}
+.irc-theme-dark .rd-body strong { color: rgba(255,255,255,0.95); }
+.irc-theme-dark .rd-body figcaption { color: rgba(255,255,255,0.4); }
+.irc-theme-dark .rd-body hr { border-top-color: rgba(255,255,255,0.08); }
+.irc-theme-dark .rd-body img { opacity: 0.92; }
+
+/* Sepia article typography */
+.irc-theme-sepia .rd-body p,
+.irc-theme-sepia .rd-body ul li,
+.irc-theme-sepia .rd-body ol li { color: #3d2f1e; }
+.irc-theme-sepia .rd-body h2,
+.irc-theme-sepia .rd-body h3 { color: #8b4a20; }
+.irc-theme-sepia .rd-body h4 { color: #8b4a20; }
+.irc-theme-sepia .rd-body a { color: #8b4a20; }
+
+/* Drop cap on first paragraph of article body */
+.rd-body > p:first-of-type::first-letter,
+.irc-article > p:first-of-type::first-letter {
+  font-family: Fraunces, serif;
+  font-size: 4.4em;
+  font-weight: 900;
+  line-height: 0.82;
+  float: left;
+  margin-right: 6px;
+  margin-top: 6px;
+  color: var(--ochre);
+}
+.rd-body--getmelit > p:first-of-type::first-letter { color: var(--gold); }
+
+/* ── SUBSCRIBE FORM OVERRIDE for new irc-subscribe-form wrapper ── */
+/* mirrors the existing .rd-subscribe-form rules at line ~3940 */
+.irc-subscribe-form {
+  display: flex;
+  justify-content: center;
+  margin: 12px auto 0;
+  max-width: 500px;
+}
+.irc-subscribe-form .gml-cta-form { margin: 0; }
+.irc-subscribe-form .gml-cta-form form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.irc-subscribe-form .gml-cta-form input[type="email"] {
+  width: 260px;
+  height: 48px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+  padding: 0 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.irc-subscribe-form .gml-cta-form input[type="email"]:focus { border-color: var(--ochre); }
+.irc-subscribe-form .gml-cta-form .gml-signup-submit {
+  height: 48px;
+  padding: 0 20px;
+  width: auto;
+  margin-top: 0;
+  display: inline-block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  border-radius: var(--radius-md, 4px);
+  white-space: nowrap;
+}
+
+/* ── END IRC ── */
