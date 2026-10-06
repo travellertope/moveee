@@ -209,7 +209,7 @@ export default async function Home() {
       />
 
       <MasonryRandomSection
-        eyebrowTitle={<>The <em>Edit</em></>}
+        eyebrowTitle={<>Culture <em>News</em></>}
         viewAllHref="/magazine/category/news"
         stories={editorialStories}
       />
