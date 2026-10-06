@@ -66,20 +66,32 @@ class Culture_Subscribers {
             'culture-subscribers',
             array( __CLASS__, 'render_page' )
         );
+
+        add_submenu_page(
+            'culture-subscribers',
+            __( 'Import Subscribers', 'culture-community' ),
+            __( 'Import', 'culture-community' ),
+            'manage_options',
+            'culture-subscribers-import',
+            array( __CLASS__, 'render_import_page' )
+        );
+
+        add_submenu_page(
+            'culture-subscribers',
+            __( 'Subscriber Settings', 'culture-community' ),
+            __( 'Settings', 'culture-community' ),
+            'manage_options',
+            'culture-subscribers-settings',
+            array( __CLASS__, 'render_settings_page' )
+        );
     }
 
     /**
      * Render the subscribers admin page.
      */
     public static function render_page() {
-        $count           = Culture_Subscribers_DB::count();
-        $auto_subscribe  = get_option( 'culture_nl_auto_subscribe', '0' ) === '1';
-        $mailpoet_active = self::is_mailpoet_active();
-        $all_lists       = Culture_Newsletter_Lists::get_all();
-        $lists_by_id     = array();
-        foreach ( $all_lists as $l ) {
-            $lists_by_id[ $l['id'] ] = $l;
-        }
+        $count     = Culture_Subscribers_DB::count();
+        $all_lists = Culture_Newsletter_Lists::get_all();
 
         $page   = max( 1, absint( $_GET['paged'] ?? 1 ) );
         $search = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
@@ -197,11 +209,14 @@ class Culture_Subscribers {
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php esc_html_e( 'Newsletter Subscribers', 'culture-community' ); ?></h1>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-subscribers-import' ) ); ?>" class="page-title-action">
+                <?php esc_html_e( 'Import', 'culture-community' ); ?>
+            </a>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-newsletter-lists' ) ); ?>" class="page-title-action">
-                <?php esc_html_e( 'Manage Lists & Segments', 'culture-community' ); ?>
+                <?php esc_html_e( 'Lists & Segments', 'culture-community' ); ?>
             </a>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-campaigns' ) ); ?>" class="page-title-action">
-                <?php esc_html_e( 'One-Off Campaigns', 'culture-community' ); ?>
+                <?php esc_html_e( 'Campaigns', 'culture-community' ); ?>
             </a>
             <hr class="wp-header-end">
 
@@ -236,119 +251,6 @@ class Culture_Subscribers {
                 </div>
                 <?php endif; ?>
 
-            </div>
-
-            <?php /* ── IMPORT TOOLS ── */ ?>
-            <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;"><?php esc_html_e( 'Import Subscribers', 'culture-community' ); ?></h2>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px;">
-
-                <?php /* Bulk Import Card */ ?>
-                <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;min-width:340px;max-width:480px;flex:1;">
-                    <h3 style="margin:0 0 6px;font-size:13px;font-weight:600;">
-                        <?php esc_html_e( 'Bulk Import (CSV or Paste)', 'culture-community' ); ?>
-                    </h3>
-                    <p style="margin:0 0 12px;font-size:12px;color:#646970;">
-                        <?php esc_html_e( 'Upload a CSV or paste a list of subscribers. Format: email, name, location (comma separated, one per line).', 'culture-community' ); ?>
-                    </p>
-                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
-                        <input type="hidden" name="action" value="culture_bulk_import_emails">
-                        <?php wp_nonce_field( 'culture_bulk_import_emails' ); ?>
-
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Paste List</label>
-                            <textarea name="bulk_list" rows="3" style="width:100%;font-family:monospace;font-size:12px;" placeholder="tope@moveee.com, Tope, Lagos"></textarea>
-                        </div>
-
-                        <div style="margin-bottom:16px;">
-                            <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Or Upload CSV File</label>
-                            <input type="file" name="bulk_csv" accept=".csv" style="font-size:12px;">
-                        </div>
-
-                        <button type="submit" class="button button-primary">
-                            <?php esc_html_e( 'Import Selected', 'culture-community' ); ?>
-                        </button>
-                    </form>
-                </div>
-
-                <?php /* MailPoet Import */ ?>
-                <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;min-width:260px;max-width:300px;">
-                    <h3 style="margin:0 0 6px;font-size:13px;font-weight:600;">
-                        <?php esc_html_e( 'MailPoet Sync', 'culture-community' ); ?>
-                    </h3>
-                    <?php if ( $mailpoet_active ) : ?>
-                        <p style="margin:0 0 12px;font-size:12px;color:#646970;">
-                            <?php esc_html_e( 'Sync active subscribers from MailPoet table.', 'culture-community' ); ?>
-                        </p>
-                        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                            <input type="hidden" name="action" value="culture_import_mailpoet">
-                            <?php wp_nonce_field( 'culture_import_mailpoet' ); ?>
-                            <button type="submit" class="button button-secondary">
-                                <?php esc_html_e( 'Sync Now', 'culture-community' ); ?>
-                            </button>
-                        </form>
-                    <?php else : ?>
-                        <p style="margin:0;font-size:12px;color:#646970;">
-                            <?php esc_html_e( 'MailPoet is not active.', 'culture-community' ); ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-
-                <?php /* WordPress Users Import */ ?>
-                <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;min-width:260px;max-width:300px;">
-                    <h3 style="margin:0 0 6px;font-size:13px;font-weight:600;">
-                        <?php esc_html_e( 'WP User Import', 'culture-community' ); ?>
-                    </h3>
-                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                        <input type="hidden" name="action" value="culture_import_wp_users">
-                        <?php wp_nonce_field( 'culture_import_wp_users' ); ?>
-                        <div style="margin-bottom:10px;">
-                            <select name="role" style="width:100%;font-size:12px;">
-                                <option value=""><?php esc_html_e( 'All roles', 'culture-community' ); ?></option>
-                                <?php
-                                $roles = wp_roles()->get_names();
-                                foreach ( $roles as $role_key => $role_name ) {
-                                    echo '<option value="' . esc_attr( $role_key ) . '">' . esc_html( $role_name ) . '</option>';
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <button type="submit" class="button button-secondary">
-                            <?php esc_html_e( 'Import Role', 'culture-community' ); ?>
-                        </button>
-                    </form>
-                </div>
-
-            </div>
-
-            <?php /* ── AUTO-SUBSCRIBE TOGGLE ── */ ?>
-            <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;"><?php esc_html_e( 'Auto-Subscribe Settings', 'culture-community' ); ?></h2>
-            <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:20px 24px;max-width:560px;margin-bottom:32px;">
-                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-                    <input type="hidden" name="action" value="culture_nl_auto_subscribe">
-                    <?php wp_nonce_field( 'culture_nl_auto_subscribe' ); ?>
-                    <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;">
-                        <input
-                            type="checkbox"
-                            name="auto_subscribe"
-                            value="1"
-                            style="margin-top:2px;"
-                            <?php checked( $auto_subscribe ); ?>
-                        >
-                        <span>
-                            <strong style="display:block;font-size:13px;margin-bottom:2px;">
-                                <?php esc_html_e( 'Auto-subscribe new registrations', 'culture-community' ); ?>
-                            </strong>
-                            <span style="font-size:12px;color:#646970;">
-                                <?php esc_html_e( 'Add every new registered user to the list automatically.', 'culture-community' ); ?>
-                            </span>
-                        </span>
-                    </label>
-                    <div style="margin-top:14px;">
-                        <button type="submit" class="button button-secondary">
-                            <?php esc_html_e( 'Save Setting', 'culture-community' ); ?>
-                        </button>
-                    </div>
-                </form>
             </div>
 
             <?php /* ── SUBSCRIBER LIST ── */ ?>
@@ -529,6 +431,213 @@ class Culture_Subscribers {
                 </div>
                 <?php endif; ?>
             <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    // ── IMPORT PAGE ──────────────────────────────────────────────────────────
+
+    /**
+     * Dedicated Import Subscribers sub-page.
+     */
+    public static function render_import_page() {
+        $mailpoet_active = self::is_mailpoet_active();
+        $all_lists       = Culture_Newsletter_Lists::get_all();
+        $content_lists   = array_filter( $all_lists, function( $l ) {
+            return in_array( $l['type'], array( 'content', 'hub' ), true );
+        } );
+
+        $notice = '';
+        if ( isset( $_GET['imported'] ) ) {
+            $n      = absint( $_GET['imported'] );
+            $notice = sprintf(
+                _n( '%s new subscriber imported.', '%s new subscribers imported.', $n, 'culture-community' ),
+                number_format( $n )
+            );
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Import Subscribers', 'culture-community' ); ?></h1>
+            <hr class="wp-header-end">
+
+            <?php if ( $notice ) : ?>
+                <div class="notice notice-success is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
+            <?php endif; ?>
+
+            <?php /* ── BULK IMPORT ── */ ?>
+            <h2 style="font-size:15px;font-weight:600;margin:24px 0 8px;"><?php esc_html_e( 'Bulk Import — CSV or Paste', 'culture-community' ); ?></h2>
+            <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:32px;">
+                <p style="margin:0 0 16px;font-size:13px;color:#3c434a;">
+                    <?php esc_html_e( 'Paste a list of subscribers or upload a CSV file. Format: email, name, location (comma-separated, one per line). A header row is skipped automatically when uploading a file.', 'culture-community' ); ?>
+                </p>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="culture_bulk_import_emails">
+                    <input type="hidden" name="_wp_http_referer" value="<?php echo esc_attr( admin_url( 'admin.php?page=culture-subscribers-import' ) ); ?>">
+                    <?php wp_nonce_field( 'culture_bulk_import_emails' ); ?>
+
+                    <table class="form-table" style="margin:0 0 16px;">
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;width:140px;">
+                                <?php esc_html_e( 'Paste list', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <textarea name="bulk_list" rows="6" style="width:100%;max-width:420px;font-family:monospace;font-size:12px;" placeholder="tope@moveee.com, Tope, Lagos&#10;ade@moveee.com, Ade, Accra"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;">
+                                <?php esc_html_e( 'Or upload CSV', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <input type="file" name="bulk_csv" accept=".csv" style="font-size:13px;">
+                            </td>
+                        </tr>
+                        <?php if ( $content_lists ) : ?>
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;">
+                                <?php esc_html_e( 'Add to list', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <select name="import_list_id" style="font-size:13px;">
+                                    <option value="0"><?php esc_html_e( '— No list —', 'culture-community' ); ?></option>
+                                    <?php foreach ( $content_lists as $list ) : ?>
+                                        <option value="<?php echo esc_attr( $list['id'] ); ?>">
+                                            <?php echo esc_html( $list['name'] ); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="description" style="margin-top:4px;">
+                                    <?php esc_html_e( 'Optionally subscribe all imported emails to a specific list.', 'culture-community' ); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                    </table>
+
+                    <button type="submit" class="button button-primary">
+                        <?php esc_html_e( 'Import', 'culture-community' ); ?>
+                    </button>
+                </form>
+            </div>
+
+            <?php /* ── MAILPOET SYNC ── */ ?>
+            <h2 style="font-size:15px;font-weight:600;margin:0 0 8px;"><?php esc_html_e( 'MailPoet Sync', 'culture-community' ); ?></h2>
+            <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:32px;">
+                <?php if ( $mailpoet_active ) : ?>
+                    <p style="margin:0 0 16px;font-size:13px;color:#3c434a;">
+                        <?php esc_html_e( 'Sync all active MailPoet subscribers into Moveee Newsletters. Existing subscribers will not be duplicated.', 'culture-community' ); ?>
+                    </p>
+                    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                        <input type="hidden" name="action" value="culture_import_mailpoet">
+                        <?php wp_nonce_field( 'culture_import_mailpoet' ); ?>
+                        <button type="submit" class="button button-secondary">
+                            <?php esc_html_e( 'Sync Now', 'culture-community' ); ?>
+                        </button>
+                    </form>
+                <?php else : ?>
+                    <p style="margin:0;font-size:13px;color:#646970;">
+                        <?php esc_html_e( 'MailPoet is not installed or active on this site. Install MailPoet to use this sync.', 'culture-community' ); ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <?php /* ── WP USER IMPORT ── */ ?>
+            <h2 style="font-size:15px;font-weight:600;margin:0 0 8px;"><?php esc_html_e( 'Import WordPress Users', 'culture-community' ); ?></h2>
+            <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:32px;">
+                <p style="margin:0 0 16px;font-size:13px;color:#3c434a;">
+                    <?php esc_html_e( 'Add registered WordPress users to Moveee Newsletters. Filter by role, or leave "All roles" to import everyone.', 'culture-community' ); ?>
+                </p>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                    <input type="hidden" name="action" value="culture_import_wp_users">
+                    <?php wp_nonce_field( 'culture_import_wp_users' ); ?>
+                    <table class="form-table" style="margin:0 0 16px;">
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;width:140px;">
+                                <?php esc_html_e( 'Role', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <select name="role" style="font-size:13px;min-width:200px;">
+                                    <option value=""><?php esc_html_e( 'All roles', 'culture-community' ); ?></option>
+                                    <?php
+                                    foreach ( wp_roles()->get_names() as $role_key => $role_name ) {
+                                        echo '<option value="' . esc_attr( $role_key ) . '">' . esc_html( translate_user_role( $role_name ) ) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <?php if ( $content_lists ) : ?>
+                        <tr>
+                            <th scope="row" style="padding:8px 16px 8px 0;font-size:12px;font-weight:600;text-transform:uppercase;">
+                                <?php esc_html_e( 'Add to list', 'culture-community' ); ?>
+                            </th>
+                            <td>
+                                <select name="import_list_id" style="font-size:13px;">
+                                    <option value="0"><?php esc_html_e( '— No list —', 'culture-community' ); ?></option>
+                                    <?php foreach ( $content_lists as $list ) : ?>
+                                        <option value="<?php echo esc_attr( $list['id'] ); ?>">
+                                            <?php echo esc_html( $list['name'] ); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                    </table>
+                    <button type="submit" class="button button-secondary">
+                        <?php esc_html_e( 'Import Users', 'culture-community' ); ?>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <?php
+    }
+
+    // ── SETTINGS PAGE ─────────────────────────────────────────────────────────
+
+    /**
+     * Dedicated Subscriber Settings sub-page.
+     */
+    public static function render_settings_page() {
+        $auto_subscribe = get_option( 'culture_nl_auto_subscribe', '0' ) === '1';
+
+        $notice = '';
+        if ( isset( $_GET['saved'] ) && '1' === $_GET['saved'] ) {
+            $notice = __( 'Settings saved.', 'culture-community' );
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Subscriber Settings', 'culture-community' ); ?></h1>
+            <hr class="wp-header-end">
+
+            <?php if ( $notice ) : ?>
+                <div class="notice notice-success is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
+            <?php endif; ?>
+
+            <h2 style="font-size:15px;font-weight:600;margin:24px 0 8px;"><?php esc_html_e( 'Auto-Subscribe', 'culture-community' ); ?></h2>
+            <div style="background:#fff;border:1px solid #c3c4c7;border-radius:4px;padding:24px 28px;max-width:600px;margin-bottom:32px;">
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+                    <input type="hidden" name="action" value="culture_nl_auto_subscribe">
+                    <input type="hidden" name="redirect_page" value="culture-subscribers-settings">
+                    <?php wp_nonce_field( 'culture_nl_auto_subscribe' ); ?>
+                    <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;">
+                        <input type="checkbox" name="auto_subscribe" value="1" style="margin-top:3px;" <?php checked( $auto_subscribe ); ?>>
+                        <span>
+                            <strong style="display:block;font-size:13px;margin-bottom:4px;">
+                                <?php esc_html_e( 'Auto-subscribe new registrations', 'culture-community' ); ?>
+                            </strong>
+                            <span style="font-size:12px;color:#646970;">
+                                <?php esc_html_e( 'Automatically adds every new registered WordPress user to Moveee Newsletters when they create an account.', 'culture-community' ); ?>
+                            </span>
+                        </span>
+                    </label>
+                    <div style="margin-top:20px;">
+                        <button type="submit" class="button button-primary">
+                            <?php esc_html_e( 'Save Settings', 'culture-community' ); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
         <?php
     }
@@ -741,8 +850,19 @@ class Culture_Subscribers {
 
         $count = Culture_Subscribers_DB::subscribe_many( $items );
 
+        // If a target list was chosen, add every successfully imported subscriber to it.
+        $import_list_id = absint( $_POST['import_list_id'] ?? 0 );
+        if ( $import_list_id && $count > 0 ) {
+            foreach ( $items as $item ) {
+                $sub = Culture_Subscribers_DB::find_by_email( $item['email'] );
+                if ( $sub ) {
+                    Culture_Subscribers_DB::add_subscriber_to_list_id( $sub['id'], $import_list_id );
+                }
+            }
+        }
+
         wp_safe_redirect( add_query_arg( array(
-            'page'     => 'culture-subscribers',
+            'page'     => 'culture-subscribers-import',
             'imported' => $count,
         ), admin_url( 'admin.php' ) ) );
         exit;
@@ -783,7 +903,7 @@ class Culture_Subscribers {
         $imported = Culture_Subscribers_DB::subscribe_many( $items );
 
         wp_safe_redirect( add_query_arg( array(
-            'page'     => 'culture-subscribers',
+            'page'     => 'culture-subscribers-import',
             'imported' => $imported,
         ), admin_url( 'admin.php' ) ) );
         exit;
@@ -822,8 +942,19 @@ class Culture_Subscribers {
 
         $imported = Culture_Subscribers_DB::subscribe_many( $items );
 
+        // Optionally add all imported users to a chosen list.
+        $import_list_id = absint( $_POST['import_list_id'] ?? 0 );
+        if ( $import_list_id && $imported > 0 ) {
+            foreach ( $items as $item ) {
+                $sub = Culture_Subscribers_DB::find_by_email( $item['email'] );
+                if ( $sub ) {
+                    Culture_Subscribers_DB::add_subscriber_to_list_id( $sub['id'], $import_list_id );
+                }
+            }
+        }
+
         wp_safe_redirect( add_query_arg( array(
-            'page'     => 'culture-subscribers',
+            'page'     => 'culture-subscribers-import',
             'imported' => $imported,
         ), admin_url( 'admin.php' ) ) );
         exit;
@@ -842,8 +973,14 @@ class Culture_Subscribers {
         $enabled = isset( $_POST['auto_subscribe'] ) && '1' === $_POST['auto_subscribe'] ? '1' : '0';
         update_option( 'culture_nl_auto_subscribe', $enabled );
 
+        // Redirect back to whichever page submitted this (settings page or legacy subscribers page).
+        $redirect_page = sanitize_key( $_POST['redirect_page'] ?? 'culture-subscribers-settings' );
+        if ( ! in_array( $redirect_page, array( 'culture-subscribers', 'culture-subscribers-settings' ), true ) ) {
+            $redirect_page = 'culture-subscribers-settings';
+        }
+
         wp_safe_redirect( add_query_arg( array(
-            'page'  => 'culture-subscribers',
+            'page'  => $redirect_page,
             'saved' => '1',
         ), admin_url( 'admin.php' ) ) );
         exit;
