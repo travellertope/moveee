@@ -194,6 +194,8 @@ export default async function Home() {
         </div>
       </section>
 
+      <CultureNewsSection stories={editorialStories} />
+
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Front</em> Page</>}
         viewAllHref="/magazine"
@@ -214,8 +216,6 @@ export default async function Home() {
         eyebrowTitle={<>The <em>Lane</em></>}
         stories={portraitStories}
       />
-
-      <CultureNewsSection stories={editorialStories} />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Reviews</em></>}
