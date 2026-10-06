@@ -1328,6 +1328,21 @@ class Culture_Post_Types {
             ) );
         }
 
+        // Expose edition appendix fields to REST so the REST fallback path
+        // (used when GraphQL is unavailable or the schema cache is stale) also
+        // carries appendix content. These are ACF wysiwyg fields stored as plain
+        // (non-underscore-prefixed) meta, so no auth_callback is needed.
+        foreach ( array( 'culture_newsletter', 'getmelit', 'culture_drop' ) as $nl_cpt ) {
+            foreach ( array( 'edition_appendix_us', 'edition_appendix_uk', 'edition_appendix_au', 'edition_appendix_africa' ) as $meta_key ) {
+                register_post_meta( $nl_cpt, $meta_key, array(
+                    'type'         => 'string',
+                    'single'       => true,
+                    'default'      => '',
+                    'show_in_rest' => true,
+                ) );
+            }
+        }
+
         // Quote CPT – nested under the Moveee Content top-level menu
         // (September 2026; was Culture Community).
         register_post_type( 'culture_quote', array(

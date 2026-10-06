@@ -1,7 +1,9 @@
-import EditionNewsletterHub from "@/components/EditionNewsletterHub";
+import { getNewslettersWithFallback } from "@/lib/wp";
+import { redirect } from "next/navigation";
+import { deduplicateEditions, pickEditionIssue } from "@/lib/newsletter-editions";
 import type { Metadata } from "next";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { absolute: "US Edition | Moveee Magazine" },
@@ -19,6 +21,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function NewsletterUsPage() {
-  return <EditionNewsletterHub edition="us" />;
+export default async function NewsletterUsPage() {
+  let newsletters: any[] = [];
+  try {
+    newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
+  } catch {}
+
+  const issues = deduplicateEditions(
+    newsletters.filter((n: any) => (n.nlList || "") === "culture-drop"),
+    "us"
+  );
+  const latest = pickEditionIssue(issues, "us");
+  if (latest?.slug) redirect(`/newsletter/${latest.slug}`);
+  redirect("/newsletter");
 }

@@ -38,6 +38,11 @@ interface Props {
   contentSlot: React.ReactNode;
 }
 
+type ReadingTheme = "white" | "sepia" | "dark";
+type FontSize = "sm" | "md" | "lg";
+
+const FONT_SIZE_PX: Record<FontSize, string> = { sm: "15px", md: "17px", lg: "19px" };
+
 export default function IssueReaderClient({
   listId,
   issues,
@@ -54,30 +59,67 @@ export default function IssueReaderClient({
 }: Props) {
   const meta = NL_META[listId];
   const isGml = listId === "getmelit";
-  const paneRef = useRef<HTMLDivElement>(null);
+  const articleRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const [sortAsc, setSortAsc] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [vaultSearch, setVaultSearch] = useState("");
+  const [sortAsc, setSortAsc] = useState(false);
+  const [theme, setTheme] = useState<ReadingTheme>("white");
+  const [fontSize, setFontSize] = useState<FontSize>("md");
+  const [bookmarked, setBookmarked] = useState(false);
 
-  // Track right-pane element scroll for progress bar
   useEffect(() => {
-    const pane = paneRef.current;
-    if (!pane) return;
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = pane;
-      const pct = Math.min(100, (scrollTop / Math.max(1, scrollHeight - clientHeight)) * 100);
-      setProgress(pct);
-    };
-    pane.addEventListener("scroll", handleScroll, { passive: true });
-    return () => pane.removeEventListener("scroll", handleScroll);
+    try {
+      const t = localStorage.getItem("irc-theme") as ReadingTheme | null;
+      const f = localStorage.getItem("irc-fontsize") as FontSize | null;
+      const b = localStorage.getItem(`irc-bm-${currentSlug}`);
+      if (t && (t === "white" || t === "sepia" || t === "dark")) setTheme(t);
+      if (f && (f === "sm" || f === "md" || f === "lg")) setFontSize(f);
+      if (b === "1") setBookmarked(true);
+    } catch {}
+  }, [currentSlug]);
+
+  const applyTheme = useCallback((t: ReadingTheme) => {
+    setTheme(t);
+    try { localStorage.setItem("irc-theme", t); } catch {}
   }, []);
 
-  // Scroll active row into view when navigating between issues
+  const applyFontSize = useCallback((f: FontSize) => {
+    setFontSize(f);
+    try { localStorage.setItem("irc-fontsize", f); } catch {}
+  }, []);
+
+  const toggleBookmark = useCallback(() => {
+    const next = !bookmarked;
+    setBookmarked(next);
+    try { localStorage.setItem(`irc-bm-${currentSlug}`, next ? "1" : "0"); } catch {}
+  }, [bookmarked, currentSlug]);
+
   useEffect(() => {
-    const el = document.getElementById(`rd-row-${currentSlug}`);
-    el?.scrollIntoView({ block: "nearest" });
-  }, [currentSlug]);
+    const handleScroll = () => {
+      const art = articleRef.current;
+      if (!art) return;
+      const top = art.getBoundingClientRect().top + window.scrollY;
+      const h = art.offsetHeight;
+      const scrolled = window.scrollY - top;
+      setProgress(Math.min(100, Math.max(0, (scrolled / Math.max(1, h - window.innerHeight)) * 100)));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!vaultOpen) return;
+    const handle = (e: KeyboardEvent) => { if (e.key === "Escape") setVaultOpen(false); };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [vaultOpen]);
+
+  // Reset search when vault closes
+  useEffect(() => {
+    if (!vaultOpen) setVaultSearch("");
+  }, [vaultOpen]);
 
   const handleShare = useCallback(() => {
     const url = window.location.href;
@@ -87,253 +129,360 @@ export default function IssueReaderClient({
       navigator.clipboard.writeText(url).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      });
+      }).catch(() => {});
     }
   }, [issueTitle]);
 
   const sortedIssues = sortAsc ? [...issues].reverse() : issues;
+  const filteredIssues = vaultSearch.trim()
+    ? sortedIssues.filter(i =>
+        i.title.toLowerCase().includes(vaultSearch.toLowerCase()) ||
+        String(i.issueNum).includes(vaultSearch)
+      )
+    : sortedIssues;
   const issueNumStr = String(currentIssueNum).padStart(3, "0");
+  const accentMod = isGml ? " irc--getmelit" : "";
+  const rawTitle = issueTitle.replace(/<[^>]*>/g, "");
 
   return (
-    <div className="rd-layout">
+    <div className={`irc-reader irc-theme-${theme}`}>
 
-      {/* ── LEFT SIDEBAR (desktop only) ── */}
-      <div className={`rd-sidebar${collapsed ? " rd-sidebar--collapsed" : ""}`}>
-        {/* Everything that should slide out of view when collapsed lives in
-            this fixed-width inner wrapper, so it clips cleanly during the
-            width transition instead of reflowing/wrapping. */}
-        <div className="rd-sidebar-scroll" aria-hidden={collapsed}>
-          {/* Header */}
-          <div className="rd-sidebar-header">
-            <Link
-              href={`/newsletter/${listId}`}
-              className={`rd-sidebar-title${isGml ? " rd-sidebar-title--getmelit" : ""}`}
-              tabIndex={collapsed ? -1 : undefined}
-            >
+      {/* ── READING PROGRESS ── */}
+      <div className="irc-progress-rail" aria-hidden="true">
+        <div className={`irc-progress-bar${accentMod}`} style={{ width: `${progress}%` }} />
+      </div>
+
+      {/* ── STICKY READER HEADER ── */}
+      <header className={`irc-header${accentMod}`}>
+        <div className="irc-header-inner">
+
+          {/* Left: wordmark + issue badge */}
+          <div className="irc-header-left">
+            <Link href={`/newsletter/${listId}`} className={`irc-wordmark${accentMod}`}>
               {meta.label}
             </Link>
-            <p className="rd-sidebar-standfirst">
-              Browse all {issues.length} issues of {meta.label} — {meta.tagline.toLowerCase()}
-            </p>
+            <span className="irc-header-badge">N°{issueNumStr}</span>
+          </div>
+
+          {/* Center: Issue Vault */}
+          <button
+            className={`irc-vault-trigger${accentMod}`}
+            onClick={() => setVaultOpen(true)}
+            aria-label="Browse all issues"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+            </svg>
+            <span className="irc-vault-trigger-label">Issue Vault</span>
+            <span className="irc-vault-trigger-count">{issues.length}</span>
+          </button>
+
+          {/* Right: reading controls */}
+          <div className="irc-header-right">
+
+            {/* Font size */}
+            <div className="irc-font-controls" role="group" aria-label="Font size">
+              <button
+                className={`irc-font-btn${fontSize === "sm" ? " irc-font-btn--active" : ""}`}
+                onClick={() => applyFontSize("sm")}
+                title="Small"
+                style={{ fontSize: 12 }}
+              >A−</button>
+              <button
+                className={`irc-font-btn${fontSize === "lg" ? " irc-font-btn--active" : ""}`}
+                onClick={() => applyFontSize("lg")}
+                title="Large"
+                style={{ fontSize: 15 }}
+              >A+</button>
+            </div>
+
+            {/* Reading theme dots */}
+            <div className="irc-theme-switcher" role="group" aria-label="Reading theme">
+              <button
+                className={`irc-theme-dot irc-theme-dot--white${theme === "white" ? " irc-theme-dot--active" : ""}`}
+                onClick={() => applyTheme("white")}
+                title="White"
+                aria-pressed={theme === "white"}
+              />
+              <button
+                className={`irc-theme-dot irc-theme-dot--sepia${theme === "sepia" ? " irc-theme-dot--active" : ""}`}
+                onClick={() => applyTheme("sepia")}
+                title="Sepia"
+                aria-pressed={theme === "sepia"}
+              />
+              <button
+                className={`irc-theme-dot irc-theme-dot--dark${theme === "dark" ? " irc-theme-dot--active" : ""}`}
+                onClick={() => applyTheme("dark")}
+                title="Dark"
+                aria-pressed={theme === "dark"}
+              />
+            </div>
+
+            {/* Bookmark */}
+            <button
+              className={`irc-icon-btn${bookmarked ? " irc-icon-btn--active" : ""}`}
+              onClick={toggleBookmark}
+              title={bookmarked ? "Remove bookmark" : "Bookmark"}
+              aria-pressed={bookmarked}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+              </svg>
+            </button>
+
+            {/* Share */}
+            <button
+              className="irc-icon-btn"
+              onClick={handleShare}
+              title={copied ? "Copied!" : "Share"}
+            >
+              {copied ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+              )}
+            </button>
+
+          </div>
+        </div>
+      </header>
+
+      {/* ── ISSUE VAULT DRAWER ── */}
+      {vaultOpen && (
+        <div
+          className="irc-vault-overlay"
+          onClick={() => setVaultOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Issue Vault"
+        >
+          <div className="irc-vault-drawer" onClick={e => e.stopPropagation()}>
+
+            {/* Drawer header */}
+            <div className="irc-vault-header">
+              <div>
+                <div className="irc-vault-header-title">The Moveee Vault</div>
+                <div className="irc-vault-header-sub">Browse all {issues.length} issues of {meta.label}</div>
+              </div>
+              <button className="irc-vault-close" onClick={() => setVaultOpen(false)} aria-label="Close vault">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Search + sort */}
+            <div className="irc-vault-controls">
+              <div className="irc-vault-search-wrap">
+                <svg className="irc-vault-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  type="text"
+                  className="irc-vault-search"
+                  placeholder="Search issues…"
+                  value={vaultSearch}
+                  onChange={e => setVaultSearch(e.target.value)}
+                  aria-label="Search issues"
+                />
+              </div>
+              <div className="irc-vault-sort">
+                <button
+                  className={`irc-vault-sort-btn${!sortAsc ? " irc-vault-sort-btn--active" : ""}`}
+                  onClick={() => setSortAsc(false)}
+                >Newest</button>
+                <button
+                  className={`irc-vault-sort-btn${sortAsc ? " irc-vault-sort-btn--active" : ""}`}
+                  onClick={() => setSortAsc(true)}
+                >Oldest</button>
+              </div>
+            </div>
+
+            {/* Issue list */}
+            <div className="irc-vault-list">
+              {filteredIssues.length === 0 ? (
+                <p className="irc-vault-empty">No issues match "{vaultSearch}"</p>
+              ) : filteredIssues.map((issue) => {
+                const isActive = issue.slug === currentSlug;
+                const activeClass = isActive
+                  ? isGml ? " irc-vault-row--active-gml" : " irc-vault-row--active"
+                  : "";
+                return (
+                  <Link
+                    key={issue.slug}
+                    href={`/newsletter/${issue.slug}`}
+                    className={`irc-vault-row${activeClass}`}
+                    onClick={() => setVaultOpen(false)}
+                  >
+                    <div className="irc-vault-row-inner">
+                      <div className="irc-vault-row-meta">
+                        <span className="irc-vault-row-num">Issue {String(issue.issueNum).padStart(3, "0")}</span>
+                        {isActive && <span className="irc-vault-row-current">Current</span>}
+                      </div>
+                      <span className="irc-vault-row-title">{issue.title}</span>
+                    </div>
+                    <svg className="irc-vault-row-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </Link>
+                );
+              })}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── EDITORIAL INTRO BANNER ── */}
+      <div className="irc-intro-banner">
+        <span className={`irc-intro-eyebrow${accentMod}`}>{meta.tagline}</span>
+        <div className="irc-intro-divider" aria-hidden="true">
+          <div className="irc-intro-rule" />
+          <span className="irc-intro-ornament">✦</span>
+          <div className="irc-intro-rule" />
+        </div>
+      </div>
+
+      {/* ── EDITORIAL HERO ── */}
+      <section className={`irc-hero${accentMod}`}>
+        {/* Ambient blurs */}
+        <div className="irc-hero-blur irc-hero-blur--top" aria-hidden="true" />
+        <div className="irc-hero-blur irc-hero-blur--left" aria-hidden="true" />
+
+        <div className="irc-hero-inner">
+          {/* Left: text column */}
+          <div className="irc-hero-text">
+            <div className="irc-hero-meta-row">
+              <span className={`irc-hero-issue-pill${accentMod}`}>Issue N°{issueNumStr}</span>
+              <span className="irc-hero-date-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {publishedDate}
+              </span>
+              <span className="irc-hero-date-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {readingTime} min read
+              </span>
+            </div>
+
+            <h1 className="irc-hero-title" dangerouslySetInnerHTML={{ __html: issueTitle }} />
+
+            {previewHtml && (
+              <p className="irc-hero-excerpt">{previewHtml}</p>
+            )}
+
             <HideIfSubscribed>
-              <a
-                href="#rd-subscribe"
-                className="rd-sidebar-subscribe"
-                style={{ textAlign: "center", textDecoration: "none", display: "block" }}
-                tabIndex={collapsed ? -1 : undefined}
-              >
+              <a href="#irc-subscribe" className={`irc-hero-subscribe-cta${accentMod}`}>
                 Subscribe free →
               </a>
             </HideIfSubscribed>
           </div>
 
-          {/* Archive panel */}
-          <div className="rd-archive-panel">
-            {/* Sticky panel header */}
-            <div className="rd-archive-panel-header">
-              <span className="rd-archive-panel-label">Browse Archive</span>
-              <div className="rd-sort-toggle">
-                <button
-                  className={`rd-sort-btn${!sortAsc ? " rd-sort-btn--active" : ""}`}
-                  onClick={() => setSortAsc(false)}
-                  title="Newest first"
-                  tabIndex={collapsed ? -1 : undefined}
-                >↓</button>
-                <button
-                  className={`rd-sort-btn${sortAsc ? " rd-sort-btn--active" : ""}`}
-                  onClick={() => setSortAsc(true)}
-                  title="Oldest first"
-                  tabIndex={collapsed ? -1 : undefined}
-                >↑</button>
+          {/* Right: featured image card */}
+          {imageUrl && (
+            <div className="irc-hero-img-wrap">
+              <div className="irc-hero-img-glow" aria-hidden="true" />
+              <div className="irc-hero-img-card">
+                <Image
+                  src={imageUrl}
+                  alt={rawTitle}
+                  fill
+                  style={{ objectFit: "cover" }}
+                  priority
+                />
+                <div className="irc-hero-img-overlay" aria-hidden="true" />
+                <div className="irc-hero-img-caption">
+                  <span>{meta.label}</span>
+                  <span>Issue N°{issueNumStr}</span>
+                </div>
               </div>
             </div>
-
-            {/* Scrollable issue list */}
-            <div className="rd-archive-list">
-              {sortedIssues.map((issue) => {
-                const isActive = issue.slug === currentSlug;
-                const activeClass = isGml
-                  ? " rd-archive-row--active--getmelit"
-                  : " rd-archive-row--active";
-                return (
-                  <Link
-                    key={issue.slug}
-                    id={`rd-row-${issue.slug}`}
-                    href={`/newsletter/${issue.slug}`}
-                    className={`rd-archive-row${isActive ? activeClass : ""}`}
-                    tabIndex={collapsed ? -1 : undefined}
-                  >
-                    <span className="rd-archive-num">
-                      Issue {String(issue.issueNum).padStart(3, "0")}
-                    </span>
-                    <span className="rd-archive-title">
-                      {issue.title}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          )}
         </div>
+      </section>
 
-        {/* Footer — stays visible at any width so the sidebar can always be
-            brought back once collapsed. */}
-        <div className="rd-sidebar-footer">
-          <button
-            className="rd-sidebar-collapse"
-            title={collapsed ? "Expand archive sidebar" : "Collapse archive sidebar"}
-            aria-expanded={!collapsed}
-            onClick={() => setCollapsed((c) => !c)}
-          >
-            <span className="rd-sidebar-collapse-arrow">{collapsed ? "»" : "«"}</span>
-            {!collapsed && <span className="rd-sidebar-collapse-label">Collapse</span>}
-          </button>
-        </div>
-      </div>
+      {/* ── ARTICLE + SIDEBAR RAIL ── */}
+      <div className="irc-content-grid">
 
-      {/* ── MOBILE HEADER + ARCHIVE STRIP (≤1024px only) ── */}
-      <div className="rd-mobile-strip" style={{ flexDirection: "column", padding: 0, gap: 0 }}>
-        {/* Mobile header row */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 16px",
-          height: 60,
-          background: "#fff",
-          borderBottom: "1px solid var(--rule)",
-          flexShrink: 0,
-        }}>
-          <Link
-            href={`/newsletter/${listId}`}
-            style={{ fontFamily: "Fraunces, serif", fontSize: 20, fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}
-          >
-            {meta.label}
-          </Link>
-          <span style={{
-            border: "1px solid var(--rule)",
-            borderRadius: 999,
-            padding: "4px 12px",
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 11,
-            fontWeight: 700,
-            color: "var(--ink)",
-          }}>
-            Issue N°{issueNumStr}
-          </span>
-        </div>
-        {/* Horizontal pill strip */}
-        <div style={{ display: "flex", gap: 8, padding: 12, overflowX: "auto", scrollbarWidth: "none", background: "var(--paper-warm)", borderBottom: "1px solid var(--rule)" }}>
-          {issues.slice(0, 10).map((issue) => {
-            const isActive = issue.slug === currentSlug;
-            const activeClass = isGml
-              ? " rd-strip-pill--active--getmelit"
-              : " rd-strip-pill--active";
-            return (
-              <Link
-                key={issue.slug}
-                href={`/newsletter/${issue.slug}`}
-                className={`rd-strip-pill${isActive ? activeClass : ""}`}
-              >
-                Issue {issue.issueNum}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── RIGHT CONTENT PANE ── */}
-      <div className="rd-pane" ref={paneRef}>
-
-        {/* Progress bar — tracks this pane's scroll, not window */}
-        <div className="rd-progress">
-          <div
-            className={`rd-progress-bar${isGml ? " rd-progress-bar--getmelit" : ""}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-
-        {/* Floating issue badge */}
-        <div className="rd-issue-badge">
-          <div className="rd-issue-badge-inner">
-            <span className="rd-badge-label">Issue N°{issueNumStr}</span>
-            <div className="rd-badge-sep" />
+        {/* Left sticky rail (desktop only) */}
+        <aside className="irc-rail">
+          <div className="irc-rail-inner">
             <button
-              className={`rd-badge-share${isGml ? " rd-badge-share--getmelit" : ""}`}
-              onClick={handleShare}
-              title={copied ? "Copied!" : "Share issue"}
+              className={`irc-rail-bookmark${bookmarked ? " irc-rail-bookmark--active" : ""}`}
+              onClick={toggleBookmark}
+              title={bookmarked ? "Saved" : "Save story"}
             >
-              {copied ? (
-                <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'DM Sans', sans-serif" }}>Copied!</span>
-              ) : (
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              )}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+              </svg>
+              <span>{bookmarked ? "Saved" : "Save story"}</span>
+            </button>
+            <button
+              className="irc-rail-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              title="Back to top"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+              </svg>
+              <span>Top</span>
             </button>
           </div>
-        </div>
+        </aside>
 
-
-        {/* Hero */}
-        <div className={`rd-hero${isGml ? " rd-hero--getmelit" : ""}`}>
-          <div className="rd-hero-inner">
-            {/* Left: issue title + date */}
-            <div className="rd-hero-text-col">
-              <h1 className="rd-hero-title">{issueTitle}</h1>
-              <span className="rd-hero-date">{publishedDate}</span>
-            </div>
-            {/* Right: featured image */}
-            <div className="rd-hero-image-col">
-              {imageUrl ? (
-                <div style={{ width: "100%", maxWidth: 420, aspectRatio: "4/3", position: "relative", borderRadius: "var(--radius-lg, 6px)", overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,.15)", marginLeft: "auto" }}>
-                  <Image src={imageUrl} alt={issueTitle} fill style={{ objectFit: "cover" }} />
-                </div>
-              ) : (
-                <div className="rd-hero-image" style={{ background: `linear-gradient(135deg, rgba(${isGml ? "179,130,56" : "197,73,31"},.3), rgba(${isGml ? "179,130,56" : "197,73,31"},.8))` }} />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Article body */}
-        <article className={`rd-body${isGml ? " rd-body--getmelit" : ""}`}>
+        {/* Main article body */}
+        <div
+          ref={articleRef}
+          className={`rd-body${isGml ? " rd-body--getmelit" : ""} irc-article`}
+          style={{ fontSize: FONT_SIZE_PX[fontSize] }}
+        >
           <ArticleContentGate
             accessLevel={accessLevel}
             callbackUrl={callbackUrl}
             previewHtml={previewHtml}
             fullContent={contentSlot}
           />
-        </article>
-
-        {/* Subscribe band */}
-        <HideIfSubscribed>
-          <div className="rd-subscribe-band" id="rd-subscribe">
-            <h2 className="rd-subscribe-title">Never miss an issue.</h2>
-            <div className="rd-subscribe-form">
-              {isGml ? (
-                <NewsletterSubscribeWidget
-                  placeholder="your@email.com"
-                  buttonLabel="Get it in my inbox →"
-                  list="getmelit"
-                  inputClassName="rd-subscribe-input rd-subscribe-input--getmelit"
-                  buttonClassName="rd-subscribe-btn rd-subscribe-btn--getmelit"
-                />
-              ) : (
-                <GmlCTAForm
-                  list="culture-drop"
-                  buttonLabel="Drop it in my inbox →"
-                  successLabel="✓ You're in"
-                />
-              )}
-            </div>
-            <span className="rd-subscribe-note">
-              Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time
-            </span>
-          </div>
-        </HideIfSubscribed>
+        </div>
 
       </div>
+
+      {/* ── SUBSCRIBE BAND ── */}
+      <HideIfSubscribed>
+        <div className="rd-subscribe-band" id="irc-subscribe">
+          <h2 className="rd-subscribe-title">Never miss an issue.</h2>
+          <div className="irc-subscribe-form">
+            {isGml ? (
+              <NewsletterSubscribeWidget
+                placeholder="your@email.com"
+                buttonLabel="Get it in my inbox →"
+                list="getmelit"
+                inputClassName="rd-subscribe-input rd-subscribe-input--getmelit"
+                buttonClassName="rd-subscribe-btn rd-subscribe-btn--getmelit"
+              />
+            ) : (
+              <GmlCTAForm
+                list="culture-drop"
+                buttonLabel="Drop it in my inbox →"
+                successLabel="✓ You're in"
+              />
+            )}
+          </div>
+          <span className="rd-subscribe-note">
+            Free · {isGml ? "Daily" : "Weekly"} · Unsubscribe any time
+          </span>
+        </div>
+      </HideIfSubscribed>
+
     </div>
   );
 }
