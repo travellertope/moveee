@@ -102,6 +102,12 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
     carouselPool.forEach((s: any) => usedSlugs.add(s.slug));
     const featuredPool = (topPool || []).filter((s: any) => !usedSlugs.has(s.slug));
 
+    // usedSlugs now contains cover + carousel slugs.
+    // getMagazineSections() runs in parallel and never sees these, so a post
+    // tagged "featured" AND in a category section could appear twice.
+    // Re-filter every named section against usedSlugs to close that gap.
+    const dedup = (arr: any[]) => (arr || []).filter((s: any) => s?.slug && !usedSlugs.has(s.slug));
+
     const carouselStories = carouselPool.map((s: any) => ({
       slug: s.slug,
       title: s.title || "",
@@ -139,10 +145,10 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       carouselStories,
       featuredPool,
       shopProducts,
-      portraitStories: portraitStories || [],
-      editorialStories: editorialStories || [],
-      digestStories: digestStories || [],
-      opinionStories: opinionStories || [],
+      portraitStories: dedup(portraitStories),
+      editorialStories: dedup(editorialStories),
+      digestStories: dedup(digestStories),
+      opinionStories: dedup(opinionStories),
       featureStory,
     };
   } catch (err: any) {
