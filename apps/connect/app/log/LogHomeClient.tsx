@@ -94,7 +94,7 @@ export default function LogHomeClient({ displayName, initial, avatarUrl, feedPre
     return () => document.removeEventListener("keydown", onKey);
   }, [logModalType]);
 
-  async function finishFromProgress(entry: ShelfEntry, ev: MouseEvent) {
+  async function finishFromProgress(entry: ShelfEntry, ev: { preventDefault(): void; stopPropagation(): void }) {
     ev.preventDefault();
     ev.stopPropagation();
     setInProgress((prev) => prev.filter((e) => e.directoryId !== entry.directoryId));
