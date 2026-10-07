@@ -1,16 +1,16 @@
 import { getNewslettersWithFallback } from "@/lib/wp";
 import Link from "next/link";
-import NlhArchiveList from "@/components/NlhArchiveList";
-import type { NlArchiveRow } from "@/components/NlArchiveList";
+import Image from "next/image";
+import NlhCardGrid from "@/components/NlhCardGrid";
+import type { NlhCard } from "@/components/NlhCardGrid";
 import "../newsletter.css";
 import "../newsletter-hub.css";
-import { sanitizeHtml } from "@/lib/sanitize";
 import { geoSegment, deduplicateEditions, issueNumbersByList } from "@/lib/newsletter-editions";
+import type { Metadata } from "next";
 
-// dynamic = "force-dynamic" because we read geo headers to serve the viewer's regional edition.
 export const dynamic = "force-dynamic";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: { absolute: "Newsletters — Moveee Magazine" },
   description:
     "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
@@ -18,130 +18,143 @@ export const metadata = {
   openGraph: {
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture. GetMeLit — a new story or poem every day.",
     url: "https://themoveee.com/newsletter",
     siteName: "Moveee Magazine",
     type: "website",
     images: [{ url: "/og-fallback.png", width: 1200, height: 630, alt: "Moveee Magazine Newsletters" }],
   },
   twitter: {
-    card: "summary_large_image" as const,
+    card: "summary_large_image",
     site: "@moveeemedia",
     creator: "@moveeemedia",
     title: "Newsletters — Moveee Magazine",
     description:
-      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture across Lagos, London, New York, Accra, and Paris. GetMeLit — a new story or poem every day, plus books and opportunities for writers.",
+      "Two newsletters from Moveee Magazine. Culture Drop — the weekly deep dive into culture. GetMeLit — a new story or poem every day.",
   },
 };
 
-const NL_LABELS: Record<string, string> = {
-  "culture-drop": "Culture Drop",
-  "getmelit": "GetMeLit",
-};
+function decodeEntities(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&hellip;/g, "…")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(Number(c)))
+    .trim();
+}
 
-export default async function NewsletterArchive({
-  searchParams,
-}: {
-  searchParams?: { list?: string };
-}) {
+function estimateReadingTime(excerpt: string, content?: string): number {
+  const text = content || excerpt;
+  const wordCount = text.replace(/<[^>]*>/g, "").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 200));
+}
+
+export default async function NewsletterHubPage() {
   let newsletters: any[] = [];
   try {
     newsletters = await getNewslettersWithFallback(50, { revalidate: 300 });
   } catch {
-    // CMS unreachable
+    // CMS unreachable — render empty state
   }
 
-  // "announcements" is an internal/operational list and must never appear on the archive.
+  // Internal/operational lists never appear on the public archive
   newsletters = newsletters.filter((n: any) => (n.nlList || "") !== "announcements");
 
-  // Deduplicate regional editions per-list before counting or displaying.
   const segment = await geoSegment();
   newsletters = deduplicateEditions(newsletters, segment);
 
-  const activeFilter = searchParams?.list ?? "all";
-  const allCount    = newsletters.length;
-  const cdCount     = newsletters.filter((n: any) => (n.nlList || "") === "culture-drop").length;
-  const gmlCount    = newsletters.filter((n: any) => (n.nlList || "") === "getmelit").length;
+  const cdCount  = newsletters.filter((n: any) => (n.nlList || "") === "culture-drop").length;
+  const gmlCount = newsletters.filter((n: any) => (n.nlList || "") === "getmelit").length;
 
-  const filtered = activeFilter === "all"
-    ? newsletters
-    : newsletters.filter((n: any) => (n.nlList || "") === activeFilter);
-
-  // Per-list issue numbers, not one shared counter across both newsletters
-  // — see issueNumbersByList's own comment for why.
   const issueNums = issueNumbersByList(newsletters);
+
+  const cards: NlhCard[] = newsletters.map((n: any): NlhCard => ({
+    id: n.id,
+    slug: n.slug,
+    title: n.title.replace(/<[^>]*>/g, ""),
+    list: n.nlList ?? null,
+    badgeLabel: n.nlList === "culture-drop" ? "Culture Drop" : n.nlList === "getmelit" ? "GetMeLit" : null,
+    date: n.date
+      ? new Date(n.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+      : "",
+    readingTime: estimateReadingTime(n.excerpt ?? "", n.content),
+    imageUrl: n.featuredImage?.node?.sourceUrl ?? undefined,
+    imageAlt: n.featuredImage?.node?.altText ?? undefined,
+    excerpt: decodeEntities(n.excerpt ?? "").slice(0, 140),
+  }));
 
   return (
     <>
-      {/* ══ HERO — mirrors GetMeLit/Culture Drop's own dark-hero style;
-          no subscribe forms here, the two buttons take you straight into
-          each newsletter's own page where subscribing happens. ══ */}
-      <section className="nlh-hero" data-header-zone="dark">
-        <div className="nlh-hero-inner">
-          <h1 className="nlh-hero-title">
+      {/* ── FULL-WIDTH SITE HEADER (pill hidden via Header.tsx) ── */}
+      <header className="nlh-header">
+        <div className="nlh-header-inner">
+          <Link href="/" className="irc-brand-logo" aria-label="Moveee Magazine">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-black.png" alt="Moveee" className="irc-brand-logo-img" />
+          </Link>
+          <span className="irc-header-divider" aria-hidden="true" />
+          <nav className="nlh-header-nav" aria-label="Site navigation">
+            <Link href="/">Magazine</Link>
+            <Link href="/newsletter" aria-current="page">Newsletters</Link>
+            <Link href="/happenings">Happenings</Link>
+          </nav>
+          <div className="nlh-header-right">
+            <Link href="/newsletter/culture-drop" className="nlh-header-pill nlh-header-pill--cd">
+              Culture Drop
+            </Link>
+            <Link href="/newsletter/getmelit" className="nlh-header-pill nlh-header-pill--gml">
+              GetMeLit
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* ── HERO ── */}
+      <section className="nlh2-hero" data-header-zone="dark">
+        <div className="nlh2-hero-inner">
+          <span className="nlh2-hero-eyebrow">Moveee Magazine</span>
+          <h1 className="nlh2-hero-title">
             The Moveee <em>Newsletters</em>
           </h1>
-          <p className="nlh-hero-sub">
-            Fiction Stories daily. Culture Dispatch weekly. There&rsquo;s something for everyone.
+          <p className="nlh2-hero-sub">
+            Fiction stories daily. Culture dispatch weekly.<br />
+            There&rsquo;s something for everyone.
           </p>
-          <div className="nlh-hero-pills">
-            <Link href="/newsletter/culture-drop" className="nlh-hero-pill nlh-hero-pill--cd">
-              Culture Drop · Every Tuesday<span className="arrow">→</span>
+          <div className="nlh2-hero-pills">
+            <Link href="/newsletter/culture-drop" className="nlh2-hero-pill nlh2-hero-pill--cd">
+              Culture Drop · Every Tuesday <span aria-hidden="true">→</span>
             </Link>
-            <Link href="/newsletter/getmelit" className="nlh-hero-pill nlh-hero-pill--gml">
-              GetMeLit · Mon–Sat<span className="arrow">→</span>
+            <Link href="/newsletter/getmelit" className="nlh2-hero-pill nlh2-hero-pill--gml">
+              GetMeLit · Mon–Sat <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ══ ARCHIVE ══ */}
-      <section className="nlh-archive" id="archive">
-        <div className="nlh-wrap">
-          <div className="nlh-archive-head">
-            <h3>Archive</h3>
-            <nav className="nlh-archive-tabs">
-              <Link
-                href="/newsletter#archive"
-                className={`nlh-archive-tab${activeFilter === "all" ? " nlh-archive-tab--active" : ""}`}
-                scroll={false}
-              >
-                All <span className="n">{allCount}</span>
-              </Link>
-              <Link href="/newsletter/culture-drop" className="nlh-archive-tab">
-                Culture Drop <span className="n">{cdCount}</span>
-              </Link>
-              <Link href="/newsletter/getmelit" className="nlh-archive-tab">
-                GetMeLit <span className="n">{gmlCount}</span>
-              </Link>
-            </nav>
+      {/* ── ARCHIVE COLLECTION ── */}
+      <section className="nlh2-archive">
+        <div className="nlh2-wrap">
+          <div className="nlh2-archive-head">
+            <div>
+              <span className="nlh2-archive-eyebrow">Curated Library</span>
+              <h2 className="nlh2-archive-title">Archive Collection</h2>
+            </div>
           </div>
-          {allCount > 0 ? (
-            <NlhArchiveList
-              rows={filtered.map((issue: any): NlArchiveRow => {
-                const list = issue.nlList || null;
-                return {
-                  id: issue.id,
-                  slug: issue.slug,
-                  num: String(issueNums.get(issue.id) ?? 0).padStart(2, "0"),
-                  date: new Date(issue.date).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  }),
-                  titleHtml: sanitizeHtml(issue.title),
-                  list,
-                  badgeLabel: list ? (NL_LABELS[list] ?? list) : null,
-                  tagName: issue.cultureInterests?.nodes?.[0]?.name ?? null,
-                };
-              })}
-            />
+
+          {cards.length > 0 ? (
+            <NlhCardGrid cards={cards} cdCount={cdCount} gmlCount={gmlCount} />
           ) : (
-            <p className="nlh-empty">No issues published yet — check back soon.</p>
+            <p className="nlh-cg-empty">No issues published yet — check back soon.</p>
           )}
         </div>
       </section>
 
+      {/* ── CLOSEBAR ── */}
       <footer className="nlh-closebar">
         <span>Moveee Magazine — Two dispatches, one inbox.</span>
       </footer>
