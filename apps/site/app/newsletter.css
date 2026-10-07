@@ -4031,9 +4031,8 @@
   color: var(--irc-text);
   min-height: 100vh;
   /* The site's floating pill header is hidden on newsletter reader pages
-     (Header.tsx returns null for /newsletter/*). The irc-header takes the
-     top position (sticky top:0), so we only need to clear its 52px height. */
-  padding-top: 52px;
+     (Header.tsx returns null for /newsletter/*). The irc-header is the
+     first element and is sticky at top:0 — no padding needed here. */
   transition: background 0.25s, color 0.25s;
 }
 
@@ -4097,7 +4096,7 @@
   text-decoration: none;
 }
 .irc-brand-logo-img {
-  height: 22px;
+  height: 33px;
   width: auto;
   display: block;
 }
@@ -4510,11 +4509,11 @@
 }
 .irc-hero-inner {
   position: relative;
-  max-width: 1160px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 56px 40px 64px;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 2fr;
   gap: 56px;
   align-items: center;
 }
@@ -4608,8 +4607,7 @@
 .irc-hero-img-card {
   position: relative;
   width: 100%;
-  aspect-ratio: 3/4;
-  max-height: 480px;
+  aspect-ratio: 16/9;
   border-radius: var(--radius-xl, 12px);
   overflow: hidden;
   box-shadow: 0 24px 64px rgba(0,0,0,0.2);

@@ -162,8 +162,9 @@ export async function proxy(request: NextRequest) {
     return setCountryCookie(res)
   }
 
-  // Geo-redirect /newsletter and /magazine to edition-specific paths
-  if (pathname === '/newsletter' || pathname === '/magazine') {
+  // Geo-redirect /magazine to edition-specific paths
+  // /newsletter is a global archive listing page — do NOT redirect it
+  if (pathname === '/magazine') {
     const saved = request.cookies.get(EDITION_COOKIE)?.value
     if (saved && isValidRegionalSlug(saved)) {
       return NextResponse.redirect(new URL(`${pathname}/${saved}`, request.url))
