@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getUnifiedFeed } from "@/lib/unified-feed";
+import type { FeedItem } from "@/lib/unified-feed";
 import type { Metadata } from "next";
 import LogHomeClient from "./LogHomeClient";
 import "./reading-log.css";
@@ -22,7 +23,7 @@ export default async function LogPage() {
   const initial = displayName.charAt(0).toUpperCase();
 
   // Feed preview fetched server-side — no client API route needed
-  let feedPreview = [];
+  let feedPreview: FeedItem[] = [];
   try {
     const items = await getUnifiedFeed();
     feedPreview = items.slice(0, 3);
