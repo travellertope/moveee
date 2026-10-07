@@ -4089,6 +4089,26 @@
   flex-shrink: 0;
 }
 
+/* Brand logo (Moveee wordmark image → homepage) */
+.irc-brand-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.irc-brand-logo-img {
+  height: 22px;
+  width: auto;
+  display: block;
+}
+.irc-header-divider {
+  display: block;
+  width: 1px;
+  height: 18px;
+  background: var(--irc-header-border);
+  flex-shrink: 0;
+}
+
 /* Wordmark */
 .irc-wordmark {
   font-family: Fraunces, serif;
