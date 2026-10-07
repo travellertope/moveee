@@ -59,6 +59,9 @@ const Header = () => {
   // sitewide pill here too, same reasoning as Literary/Commons above, just
   // for one page rather than a whole vertical.
   const isStoopLandingPage = pathname === "/stoop" || pathname.startsWith("/stoop/");
+  // Newsletter issue reader pages get their own full-width sticky header
+  // (irc-header) — hide the floating pill so the reader header owns the top.
+  const isNewsletterReaderPage = pathname.startsWith("/newsletter/") && pathname !== "/newsletter";
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -255,7 +258,7 @@ const Header = () => {
   // own standalone masthead/nav/footer (see the comments above) — every
   // hook above still runs unconditionally (Rules of Hooks), only the
   // render is skipped.
-  if (isLiteraryPage || isLifestylePage || isMakersPage || isCommonsPage || isStoopLandingPage) return null;
+  if (isLiteraryPage || isLifestylePage || isMakersPage || isCommonsPage || isStoopLandingPage || isNewsletterReaderPage) return null;
 
   return (
     <>
