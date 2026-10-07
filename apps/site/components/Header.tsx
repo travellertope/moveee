@@ -59,9 +59,9 @@ const Header = () => {
   // sitewide pill here too, same reasoning as Literary/Commons above, just
   // for one page rather than a whole vertical.
   const isStoopLandingPage = pathname === "/stoop" || pathname.startsWith("/stoop/");
-  // Newsletter issue reader pages get their own full-width sticky header
-  // (irc-header) — hide the floating pill so the reader header owns the top.
-  const isNewsletterReaderPage = pathname.startsWith("/newsletter/") && pathname !== "/newsletter";
+  // All /newsletter pages (listing + reader) get their own full-width header;
+  // hide the floating pill so each newsletter page owns its top edge.
+  const isNewsletterReaderPage = pathname === "/newsletter" || pathname.startsWith("/newsletter/");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

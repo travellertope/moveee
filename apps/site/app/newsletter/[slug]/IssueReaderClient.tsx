@@ -170,8 +170,17 @@ export default function IssueReaderClient({
       <header className={`irc-header${accentMod}`}>
         <div className="irc-header-inner">
 
-          {/* Left: wordmark + issue badge */}
+          {/* Left: Moveee logo → home, then newsletter name + issue badge */}
           <div className="irc-header-left">
+            <Link href="/" className="irc-brand-logo" aria-label="Moveee Magazine">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={theme === "dark" ? "/logo-white.png" : "/logo-black.png"}
+                alt="Moveee"
+                className="irc-brand-logo-img"
+              />
+            </Link>
+            <span className="irc-header-divider" aria-hidden="true" />
             <Link href={`/newsletter/${listId}`} className={`irc-wordmark${accentMod}`}>
               {meta.label}
             </Link>
