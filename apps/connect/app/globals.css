@@ -25,7 +25,7 @@
 
   /* Fonts */
   --font-serif: "Fraunces", serif;
-  --font-sans: "DM Sans", sans-serif;
+  --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
   /* Animations */
@@ -46,6 +46,12 @@
 }
 
 :root {
+  /* Layout — updated by TopBar addition */
+  --topbar-height: 60px;
+
+  /* Font override — all var(--font-dm-sans) references auto-switch to Inter */
+  --font-dm-sans: var(--font-inter), "Inter", sans-serif;
+
   --paper: #ffffff;
   --paper-warm: #ffffff;
   --paper-deep: #f2f2f2;
