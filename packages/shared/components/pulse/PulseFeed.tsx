@@ -19,18 +19,12 @@ function draftKey(userId: string | number): string {
   return `moveee_post_draft_${userId}`;
 }
 
-// Mirrors Culture_Hubs::SECTION_HUB_SLUGS (docs/hubs-plan.md §10.2) — no
-// shared source of truth across the PHP/TS boundary here, same caveat as
-// every other duplicated map in this codebase (notification icons, etc.).
 const SECTION_HUB_SLUGS: Record<string, string> = {
   Music: "music", Fashion: "fashion", Art: "art", Film: "film", Food: "food",
   Sport: "sport", Travel: "travel", Ideas: "ideas", Literature: "literature",
   Design: "design", Tech: "tech",
 };
 
-// Mirrors apps/mobile/src/components/community/DiscoverCard.tsx's TYPE_BADGE —
-// kept as a small local map here since this is just a compact rail glyph,
-// not the full Discover card treatment.
 const DIR_TYPE_EMOJI: Record<string, string> = {
   person: "👤", place: "🏛", food: "🍽", book: "📚", film: "🎬",
   genre: "🎵", movement: "🌊", artwork: "🎨", concept: "💡",
@@ -54,24 +48,18 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
-  const [forYou, setForYou]         = useState(false);
+  const [forYou, setForYou]           = useState(false);
+  const [followingFilter, setFollowingFilter] = useState(false);
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Apply edition cookie → pre-select matching region
   useEffect(() => {
     const edition = document.cookie.split("; ").find(r => r.startsWith("moveee_edition="))?.split("=")[1];
-    const editionToRegion: Record<string, string> = {
-      uk:     "UK",
-      us:     "US",
-      africa: "Africa",
-    };
-    if (edition && editionToRegion[edition]) {
-      setActiveRegion(editionToRegion[edition]);
-    }
+    const editionToRegion: Record<string, string> = { uk: "UK", us: "US", africa: "Africa" };
+    if (edition && editionToRegion[edition]) setActiveRegion(editionToRegion[edition]);
   }, []);
 
   useEffect(() => {
@@ -116,8 +104,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       .catch(() => {});
   }, [session?.user]);
 
-  // For You Hub inclusion (docs/hubs-plan.md §4.5) — only fetched once For
-  // You is actually toggled on, since it's otherwise unused.
   const [followedOrJoinedHubIds, setFollowedOrJoinedHubIds] = useState<Set<number>>(new Set());
   const [hubCandidateItems, setHubCandidateItems] = useState<FeedItem[]>([]);
   useEffect(() => {
@@ -157,33 +143,28 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "editorial"  && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
-    // "For You": don't hard-filter — scoring in `sorted` reranks by relevance.
-    // But if user has interests, boost matching items by keeping all; hide nothing.
-    // Event-type items are surfaced exclusively through the Spotlight carousel below.
     return typeMatch && regionMatch && tagMatch && categoryMatch && !isEventItem(item);
-  }), [items, activeType, activeRegion, activeTag, activeCategory, forYou, interestTagSet]);
+  }), [items, activeType, activeRegion, activeTag, activeCategory, interestTagSet]);
 
-  // When "For You" is active, rank by relevance score; otherwise newest-first.
-  // Hub posts (docs/hubs-plan.md §4.5) only ever enter the ranking pool here,
-  // via hubCandidateItems — never through the default `items`/`filtered`
-  // fetch, which excludes them server-side.
-  const sorted = useMemo(() => (
-    forYou && hasInterests
-      ? rankFeed(
-          [...filtered, ...hubCandidateItems.filter(item => !isEventItem(item))],
-          interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds
-        )
-      : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ), [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds]);
+  // Posts from people you follow — community posts only
+  const followingItems = useMemo(() => (
+    filtered
+      .filter(item => item.communityAuthorUsername && followedUsernames.has(item.communityAuthorUsername.toLowerCase()))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  ), [filtered, followedUsernames]);
 
-  // Trending directory entries for the right rail — reuses the Discover
-  // feature's existing sort=trending (ranked by _community_review_count,
-  // i.e. how often community posts link to the entry), rather than a
-  // separate "trending posts" concept. Falls back to sort=recent when
-  // nothing has accumulated a review count yet (young directory), so the
-  // rail isn't permanently empty while that data builds up organically.
+  const sorted = useMemo(() => {
+    if (followingFilter) return followingItems;
+    if (forYou && hasInterests)
+      return rankFeed(
+        [...filtered, ...hubCandidateItems.filter(item => !isEventItem(item))],
+        interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds
+      );
+    return [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds, followingFilter, followingItems]);
+
   const [trendingDirectory, setTrendingDirectory] = useState<TrendingDirectoryEntry[]>([]);
-  const [trendingDirectoryLabel, setTrendingDirectoryLabel] = useState("Trending in the Directory");
+  const [trendingDirectoryLabel, setTrendingDirectoryLabel] = useState("Trending Now");
   useEffect(() => {
     fetch("/api/directory/browse?sort=trending&per_page=3")
       .then(res => res.ok ? res.json() : null)
@@ -203,9 +184,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       .catch(() => {});
   }, []);
 
-  // Composer pill opens a type-picker modal (composer redesign, July 2026);
-  // picking a type navigates to the dedicated /post/new page instead of
-  // expanding SubmitPost inline.
   const router = useRouter();
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
@@ -214,9 +192,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (!userId) return;
     setHasDraft(!!localStorage.getItem(draftKey(userId)));
   }, [userId]);
-  // Deliberately does NOT close the modal here — TypePickerModal shows a
-  // spinner on the picked tile and stays mounted until /post/new actually
-  // finishes navigating in, so a pick never looks like a dead click.
   const selectTemplate = useCallback((t: TemplateType) => {
     router.push(`/post/new?template=${t}`);
   }, [router]);
@@ -224,13 +199,41 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     router.push("/post/new?draft=1");
   }, [router]);
 
-  // Spotlight events carousel — inserted after the 5th feed item.
   const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
+
+  // Writers to follow — derive from feed items already in memory; no new API call needed.
+  const writersToFollow = useMemo(() => {
+    if (!session?.user) return [];
+    const seen = new Set<string>();
+    const writers: Array<{ username: string; displayName: string }> = [];
+    for (const item of items) {
+      if (!item.communityAuthorUsername) continue;
+      const uname = item.communityAuthorUsername.toLowerCase();
+      if (followedUsernames.has(uname) || seen.has(uname)) continue;
+      seen.add(uname);
+      writers.push({
+        username: item.communityAuthorUsername,
+        displayName: (item as any).communityAuthor ?? item.communityAuthorUsername,
+      });
+      if (writers.length >= 3) break;
+    }
+    return writers;
+  }, [items, followedUsernames, session?.user]);
+
+  const followUser = useCallback(async (username: string) => {
+    setFollowedUsernames(prev => new Set([...prev, username.toLowerCase()]));
+    try {
+      await fetch("/api/connect/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+    } catch {}
+  }, []);
 
   const visible = sorted.slice(0, visibleCount);
   const hasMore = visibleCount < sorted.length;
 
-  // Infinite scroll
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -247,17 +250,34 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setVisibleCount(20);
   }, []);
 
-const handleForYou = () => {
-    setForYou(prev => !prev);
+  // Tab handlers — each tab is exclusive; clicking the active one is a no-op
+  const handleAllPosts = () => {
+    if (!forYou && !followingFilter) return;
+    setForYou(false);
+    setFollowingFilter(false);
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
     setVisibleCount(20);
   };
-
-  const showRegions = activeType === "all" || activeType === "pulse";
-  const showTags = availableTags.length > 0 && (activeType === "all" || activeType === "community");
-
+  const handleFollowing = () => {
+    if (followingFilter) return;
+    setFollowingFilter(true);
+    setForYou(false);
+    setActiveType("all");
+    setActiveTag("");
+    setActiveCategory("");
+    setVisibleCount(20);
+  };
+  const handleForYou = () => {
+    if (forYou) return;
+    setForYou(true);
+    setFollowingFilter(false);
+    setActiveType("all");
+    setActiveTag("");
+    setActiveCategory("");
+    setVisibleCount(20);
+  };
 
   return (
     <div style={{ background: "var(--paper, #ffffff)" }}>
@@ -266,11 +286,11 @@ const handleForYou = () => {
         {/* ── Center Timeline ── */}
         <main className="pulse-timeline">
         <div className="pulse-timeline-inner">
-          {/* Interests nudge for logged-in users with no interests set */}
+          {/* Interests nudge */}
           {session && !hasInterests && (
-            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-deep, #f2f2f2)", border: "1px solid var(--rule-dark)", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ margin: "0.75rem 1.25rem", padding: "0.75rem 1rem", background: "var(--paper-deep, #f2f2f2)", border: "1px solid var(--rule-dark)", borderRadius: "var(--radius-lg)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
               <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--mute)", lineHeight: 1.5 }}>
-                <strong style={{ color: "var(--ink)" }}>Personalise your feed</strong> — pick your interests for a For You view.
+                <strong style={{ color: "var(--ink)" }}>Personalise your feed</strong> — pick your interests for a Trending view.
               </p>
               <Link href="/member/settings/interests" style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--ink)", whiteSpace: "nowrap", textDecoration: "none", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 Set interests →
@@ -278,19 +298,38 @@ const handleForYou = () => {
             </div>
           )}
 
+          {/* Composer box */}
           {session?.user && (
-            <button type="button" className="composer-pill" onClick={() => setTypeModalOpen(true)}>
-              <span className="composer-pill-avatar">
+            <div className="composer-box">
+              <div className="composer-box-avatar">
                 {(session.user as any)?.avatarUrl ? (
                   <img src={(session.user as any).avatarUrl} alt="" />
                 ) : (
                   (session.user?.name ?? (session.user as any)?.displayName ?? "?")
                     .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
                 )}
-              </span>
-              <span className="composer-pill-input">Share something with the community…</span>
-              <span className="composer-pill-post">Post</span>
-            </button>
+              </div>
+              <div className="composer-box-body">
+                <button type="button" className="composer-box-placeholder" onClick={() => setTypeModalOpen(true)}>
+                  Share something with the community…
+                </button>
+                <div className="composer-box-actions">
+                  <button type="button" className="composer-box-action-btn" onClick={() => setTypeModalOpen(true)}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+                    Media
+                  </button>
+                  <button type="button" className="composer-box-action-btn" onClick={() => router.push("/post/new?template=quote")}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                    Quote
+                  </button>
+                  <button type="button" className="composer-box-action-btn" onClick={() => router.push("/post/new?template=happening")}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+                    Event
+                  </button>
+                  <button type="button" className="composer-box-submit" onClick={() => setTypeModalOpen(true)}>Post</button>
+                </div>
+              </div>
+            </div>
           )}
           <TypePickerModal
             open={typeModalOpen}
@@ -300,31 +339,31 @@ const handleForYou = () => {
             onSelectDraft={selectDraftTile}
           />
 
-          {/* For You / Latest — content-type and category filtering moved into
-              the global search modal; this pair is the one remaining feed-level
-              control, mirroring the Twitter/Instagram "For You / Following"
-              pattern directly above the post list. */}
+          {/* Feed tabs — All Posts / Following / Trending */}
           <div className="feed-tabs">
             <button
               type="button"
-              className={`feed-tab${!forYou ? " feed-tab--active" : ""}`}
-              onClick={() => { if (forYou) handleForYou(); }}
+              className={`feed-tab${!forYou && !followingFilter ? " feed-tab--active" : ""}`}
+              onClick={handleAllPosts}
             >
-              Latest
+              All Posts
+            </button>
+            <button
+              type="button"
+              className={`feed-tab${followingFilter ? " feed-tab--active" : ""}`}
+              onClick={handleFollowing}
+            >
+              Following
             </button>
             <button
               type="button"
               className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
-              onClick={() => { if (!forYou) handleForYou(); }}
+              onClick={handleForYou}
             >
-              For You
+              Trending
             </button>
           </div>
 
-          {/* Section-filter → Hub prompt (docs/hubs-plan.md §10.4) — the
-              filter itself stays a lightweight, in-place list (no redirect);
-              this is just a one-click way to the fuller Hub page for anyone
-              who wants member count, Join, mod tools, etc. */}
           {activeTag && SECTION_HUB_SLUGS[activeTag] && (
             <Link
               href={`/hub/${SECTION_HUB_SLUGS[activeTag]}`}
@@ -334,7 +373,7 @@ const handleForYou = () => {
                 padding: "0.7rem 1rem",
                 background: "var(--paper-deep, #f2f2f2)",
                 border: "1px solid var(--rule-dark)",
-                borderRadius: 6,
+                borderRadius: "var(--radius-lg)",
                 textDecoration: "none",
               }}
             >
@@ -347,7 +386,23 @@ const handleForYou = () => {
             </Link>
           )}
 
-          {visible.length === 0 ? (
+          {/* Following tab empty state */}
+          {followingFilter && visible.length === 0 && (
+            <div style={{ textAlign: "center", padding: "3rem 1.5rem" }}>
+              <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink)", margin: "0 0 8px" }}>
+                Nobody to follow yet
+              </p>
+              <p style={{ fontSize: "0.8rem", color: "var(--mute)", margin: "0 0 16px" }}>
+                Follow people to see their posts here.
+              </p>
+              <Link href="/discover" style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--ochre)", textDecoration: "none" }}>
+                Find people to follow →
+              </Link>
+            </div>
+          )}
+
+          {/* Feed items */}
+          {(!followingFilter || visible.length > 0) && visible.length === 0 ? (
             <div style={{ color: "var(--mute, #aaa)", textAlign: "center", padding: "4rem 0", fontSize: "0.85rem" }}>
               Nothing here yet — check back soon.
             </div>
@@ -383,69 +438,72 @@ const handleForYou = () => {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
-          <div className="pulse-about-card" style={{ marginTop: 0 }}>
-            <p className="pulse-about-desc">
-              The community for creatives, entrepreneurs, and culture lovers. Post, share, and stay in important culture conversations.
-            </p>
-          </div>
-
-          {/* Trending directory entries — the ones community posts are
-              referencing/linking to most, via the Discover feature's
-              existing sort=trending (ranked by _community_review_count). */}
+          {/* Trending Now card */}
           {trendingDirectory.length > 0 && (
-            <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
+            <div className="pulse-sidebar-card">
               <p className="pulse-trending-heading">{trendingDirectoryLabel}</p>
-              <div>
-                {trendingDirectory.map(entry => (
-                  <Link key={entry.id} href={`/directory/${entry.slug}`} className="pulse-trending-item" style={{ display: "block", textDecoration: "none" }}>
-                    <p className="pulse-trending-title">
-                      {DIR_TYPE_EMOJI[entry.type] ?? "✦"} {entry.title}
+              {trendingDirectory.map(entry => (
+                <Link key={entry.id} href={`/directory/${entry.slug}`} className="pulse-trending-item" style={{ display: "block", textDecoration: "none" }}>
+                  <p className="pulse-trending-title">
+                    {DIR_TYPE_EMOJI[entry.type] ?? "✦"} {entry.title}
+                  </p>
+                  {entry.reviewCount > 0 && (
+                    <p className="pulse-trending-count">
+                      {entry.reviewCount} community post{entry.reviewCount !== 1 ? "s" : ""}
                     </p>
-                    {entry.reviewCount > 0 && (
-                      <p className="pulse-trending-count">
-                        {entry.reviewCount} community post{entry.reviewCount !== 1 ? "s" : ""}
-                      </p>
-                    )}
-                  </Link>
-                ))}
-              </div>
+                  )}
+                </Link>
+              ))}
             </div>
           )}
 
-          {/* For You hint */}
-          {hasInterests && !forYou && (
+          {/* Writers to follow — derived from feed items already loaded */}
+          {writersToFollow.length > 0 && (
+            <div className="pulse-sidebar-card">
+              <p className="pulse-trending-heading">Writers to Follow</p>
+              {writersToFollow.map(writer => (
+                <div key={writer.username} className="pulse-writer-row">
+                  <div className="pulse-writer-avatar">
+                    {writer.displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="pulse-writer-info">
+                    <p className="pulse-writer-name">{writer.displayName}</p>
+                    <p className="pulse-writer-handle">@{writer.username}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="pulse-writer-follow-btn"
+                    onClick={() => followUser(writer.username)}
+                  >
+                    Follow
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Trending hint for users with interests who are on All Posts */}
+          {hasInterests && !forYou && !followingFilter && (
             <div className="pulse-foryou-hint">
               <p style={{ fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
                 Personalised feed ready
               </p>
-              <p>Switch to For You to see content ranked by your interests.</p>
+              <p>Switch to Trending to see content ranked by your interests.</p>
               <button
                 type="button"
                 onClick={handleForYou}
                 style={{
-                  background: "var(--ochre)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 999,
-                  padding: "8px 10px",
-                  width: "100%",
-                  fontSize: "0.7rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  letterSpacing: ".06em",
-                  marginTop: 8,
+                  background: "var(--ochre)", color: "#fff", border: "none",
+                  borderRadius: 999, padding: "8px 10px", width: "100%",
+                  fontSize: "0.7rem", fontWeight: 600, cursor: "pointer",
+                  fontFamily: "inherit", letterSpacing: ".06em", marginTop: 8,
                 }}
               >
-                For You →
+                Trending →
               </button>
             </div>
           )}
 
-          {/* Minimal footer — apps/connect has no site-wide footer at all
-              (removed July 2026); every page with a right rail carries this
-              same copyright block instead. See "Footer removed sitewide"
-              in CLAUDE.md for the full list of pages. */}
           <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
             <p style={{ margin: 0, fontSize: "0.68rem", color: "var(--mute)", lineHeight: 1.7 }}>
               © {new Date().getFullYear()} The Moveee. All Rights Reserved.
@@ -459,7 +517,6 @@ const handleForYou = () => {
           </div>
         </aside>
       </div>
-
     </div>
   );
 }

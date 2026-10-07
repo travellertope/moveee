@@ -1,92 +1,11 @@
-/* .ch-header (top bar) is the <860px surface; .ch-rail (left sidebar) is
-   the >=860px surface — same cutover the 3-column feed uses. Both always
-   render; visibility is toggled by the media queries at the bottom of this
-   file rather than conditionally rendering in JS, so there's no hydration
-   flash either way. */
-.ch-header {
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  background: var(--paper);
-  border-bottom: 1px solid rgba(42, 36, 28, 0.15);
-}
+/* ConnectHeader — desktop left rail (≥860px) + mobile drawer (<860px).
+   The always-visible sticky top bar is handled by TopBar.tsx / top-bar.css.
+   ch = connect-header namespace */
 
-.ch-inner {
-  max-width: 1680px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-/* ── Logo ── */
-.ch-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-.ch-logo-img {
-  height: 28px;
-  width: auto;
-  display: block;
-}
-
-/* ── Desktop Nav ── */
-.ch-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  flex: 1;
-}
-
-.ch-nav-link {
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--ink-soft);
-  text-decoration: none;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-
-.ch-nav-link:hover,
-.ch-nav-link.active {
-  background: var(--paper-deep);
-  color: var(--ink);
-}
-
-.ch-nav-link--external {
-  color: var(--mute);
-  font-size: 0.8rem;
-}
-
-/* ── Right side (auth + hamburger) ── */
-.ch-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-.ch-icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  color: var(--ink);
-  line-height: 1;
-  text-decoration: none;
-}
+/* ══════════════════════════════════════════════════════
+   SHARED — buttons, avatar, dropdown used by both rail
+   and the mobile drawer
+   ══════════════════════════════════════════════════════ */
 
 .ch-btn-ghost {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
@@ -95,15 +14,12 @@
   color: var(--ink);
   text-decoration: none;
   padding: 0.4rem 0.9rem;
-  border-radius: 6px;
-  border: 1px solid rgba(42, 36, 28, 0.25);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--rule-dark);
   transition: background 0.15s;
   white-space: nowrap;
 }
-
-.ch-btn-ghost:hover {
-  background: var(--paper-deep);
-}
+.ch-btn-ghost:hover { background: var(--paper-deep); }
 
 .ch-btn-solid {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
@@ -113,40 +29,14 @@
   background: var(--ink);
   text-decoration: none;
   padding: 0.4rem 0.9rem;
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   transition: opacity 0.15s;
   white-space: nowrap;
 }
+.ch-btn-solid:hover { opacity: 0.82; }
 
-.ch-btn-solid:hover {
-  opacity: 0.82;
-}
-
-/* ── Avatar + dropdown ── */
-.ch-user-wrap {
-  position: relative;
-}
-
-.ch-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: none;
-  cursor: pointer;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.ch-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+/* Avatar (shared between rail user-card and mobile drawer) */
+.ch-avatar-img  { width: 100%; height: 100%; object-fit: cover; }
 .ch-avatar-initial {
   font-size: 0.8rem;
   font-weight: 700;
@@ -154,13 +44,14 @@
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
 }
 
+/* Dropdown menu shared between rail and mobile */
 .ch-user-menu {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
   background: var(--paper);
-  border: 1px solid rgba(42, 36, 28, 0.15);
-  border-radius: 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   min-width: 210px;
   padding: 0.5rem;
@@ -168,7 +59,6 @@
   flex-direction: column;
   z-index: 300;
 }
-
 .ch-user-name {
   font-size: 0.875rem;
   font-weight: 600;
@@ -176,27 +66,20 @@
   padding: 0.4rem 0.75rem 0.1rem;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
 }
-
 .ch-user-tier {
   font-size: 0.72rem;
   color: var(--mute);
   padding: 0 0.75rem 0.5rem;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
 }
-
-.ch-user-divider {
-  height: 1px;
-  background: rgba(42, 36, 28, 0.1);
-  margin: 0.25rem 0;
-}
-
+.ch-user-divider { height: 1px; background: var(--rule); margin: 0.25rem 0; }
 .ch-user-item {
   display: block;
   font-size: 0.875rem;
   color: var(--ink-soft);
   text-decoration: none;
   padding: 0.45rem 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--radius-lg);
   background: none;
   border: none;
   cursor: pointer;
@@ -205,86 +88,170 @@
   transition: background 0.12s;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
 }
+.ch-user-item:hover { background: var(--paper-deep); color: var(--ink); }
+.ch-user-item--danger { color: #c0392b; }
+.ch-user-item--danger:hover { background: color-mix(in srgb, #c0392b 8%, transparent); }
 
-.ch-user-item:hover {
-  background: var(--paper-deep);
-  color: var(--ink);
-}
+/* ══════════════════════════════════════════════════════
+   DESKTOP LEFT RAIL (≥860px)
+   ══════════════════════════════════════════════════════ */
 
-.ch-user-item--danger {
-  color: #e65100;
-}
-
-.ch-user-item--danger:hover {
-  background: #fef2f2;
-  color: #e65100;
-}
-
-/* ── Hamburger button ── */
-.ch-hamburger {
-  display: none;
+.ch-rail {
+  display: none; /* shown at ≥860px in responsive section below */
+  width: 232px;
+  flex-shrink: 0;
   flex-direction: column;
-  justify-content: center;
+  position: sticky;
+  top: var(--topbar-height, 60px);             /* sit flush below the global TopBar */
+  height: calc(100dvh - var(--topbar-height, 60px));
+  background: var(--paper);
+  border-right: 1px solid rgba(42, 36, 28, 0.12);
+  overflow-y: auto;
+  z-index: 100;
+}
+
+/* Section headings ("Main" / "Explore") */
+.ch-rail-section-label {
+  padding: 12px 18px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+}
+.ch-rail-section-label--spaced { padding-top: 18px; }
+
+/* Nav list */
+.ch-rail-nav { padding: 2px 10px; display: flex; flex-direction: column; gap: 1px; }
+
+.ch-rail-link {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  width: 36px;
-  height: 36px;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-xl);           /* was 4px — rounded per mockup */
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  transition: background 0.12s, color 0.12s;
+}
+.ch-rail-link svg { flex-shrink: 0; }
+.ch-rail-link:hover { background: var(--paper-deep); color: var(--ink); }
+.ch-rail-link.active { background: var(--ink); color: var(--paper); font-weight: 600; }
+.ch-rail-link--ext { color: var(--mute); font-size: 13px; }
+
+.ch-rail-spacer { flex: 1; }
+
+/* Bottom strip — notifications + user card */
+.ch-rail-bottom {
+  border-top: 1px solid rgba(42, 36, 28, 0.09);
+  padding: 8px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Notification bell row */
+.ch-rail-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: var(--radius-xl);
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: background 0.15s;
+  text-decoration: none;
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  transition: background 0.12s, color 0.12s;
 }
+.ch-rail-icon-btn:hover { background: var(--paper-deep); color: var(--ink); }
+/* NotificationBell renders its own badge+dropdown — fill to the full row width */
+.ch-rail-icon-btn--bell { padding: 0; }
+.ch-rail-icon-btn--bell > * { width: 100%; }
 
-.ch-hamburger:hover {
-  background: var(--paper-deep);
+/* User card */
+.ch-rail-user-wrap { position: relative; }
+.ch-rail-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-xl);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
 }
-
-.ch-hamburger-line {
-  display: block;
-  width: 20px;
-  height: 1.5px;
+.ch-rail-user:hover { background: var(--paper-deep); }
+.ch-rail-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  overflow: hidden;
   background: var(--ink);
-  border-radius: 2px;
-  transition: transform 0.2s, opacity 0.2s;
-  transform-origin: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ch-rail-user-info { display: flex; flex-direction: column; min-width: 0; }
+.ch-rail-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+}
+.ch-rail-user-tier {
+  font-size: 11px;
+  color: var(--mute);
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
 }
 
-.ch-hamburger[aria-expanded="true"] .ch-hamburger-line:nth-child(1) {
-  transform: translateY(6.5px) rotate(45deg);
+.ch-rail-auth { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
+.ch-rail-auth .ch-btn-ghost,
+.ch-rail-auth .ch-btn-solid { text-align: center; }
+
+/* Dropdown opens upward — anchored at the bottom of a tall sidebar */
+.ch-user-menu--rail {
+  right: auto;
+  left: 0;
+  top: auto;
+  bottom: calc(100% + 8px);
 }
 
-.ch-hamburger[aria-expanded="true"] .ch-hamburger-line:nth-child(2) {
-  opacity: 0;
-}
+/* ══════════════════════════════════════════════════════
+   MOBILE OVERLAY + DRAWER (<860px)
+   The TopBar hamburger dispatches "moveee:open-mobile-nav"
+   which ConnectHeader listens for to set mobileOpen=true.
+   ══════════════════════════════════════════════════════ */
 
-.ch-hamburger[aria-expanded="true"] .ch-hamburger-line:nth-child(3) {
-  transform: translateY(-6.5px) rotate(-45deg);
-}
-
-/* ── Mobile drawer overlay ── */
 .ch-mobile-overlay {
   display: none;
   position: fixed;
   inset: 0;
   background: rgba(20, 17, 13, 0.5);
-  z-index: 205; /* above .ch-header (200), below .ch-mobile-nav (210) */
+  z-index: 205; /* above TopBar (200), below drawer (210) */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s;
 }
+.ch-mobile-overlay.open { opacity: 1; pointer-events: auto; }
 
-.ch-mobile-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* ── Mobile nav drawer — a left-sliding full-height panel over the dimmed
-   backdrop above (matches the approved mockup's Frame 4), not a slide-down
-   panel below the header. It shares content/classes with the desktop rail
-   (logo, search, main nav, spacer, bottom icon rows, account row) and
-   overlays the header entirely while open, same as the mockup. ── */
 .ch-mobile-nav {
   display: none;
   position: fixed;
@@ -301,37 +268,19 @@
   transition: transform 0.2s ease;
   overflow-y: auto;
 }
+.ch-mobile-nav.open { transform: translateX(0); pointer-events: auto; }
 
-.ch-mobile-nav.open {
-  transform: translateX(0);
-  pointer-events: auto;
-}
-
-.ch-mobile-nav-logo { padding: 22px 22px 16px; display: block; }
-.ch-mobile-nav-logo img { height: 24px; width: auto; display: block; }
-
-.ch-mobile-search-wrap { padding: 0 14px 14px; }
-/* Search entry point at the top of the mobile drawer — mirrors
-   .ch-rail-search-btn's rounded pill treatment, since the top bar itself
-   only has room for bell/avatar/hamburger (no search icon there). */
-.ch-mobile-search-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(42, 36, 28, 0.15);
-  background: var(--paper-deep);
+/* Section groupings inside the drawer */
+.ch-mobile-nav-section { padding: 4px 14px; }
+.ch-mobile-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--mute);
-  font-size: 13px;
+  padding: 12px 10px 4px;
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  text-align: left;
-  cursor: pointer;
 }
-.ch-mobile-search-btn svg { flex-shrink: 0; }
-
-.ch-mobile-nav-main { padding: 4px 14px; display: flex; flex-direction: column; }
 
 .ch-mobile-nav-link {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
@@ -340,223 +289,50 @@
   color: var(--ink-soft);
   text-decoration: none;
   padding: 9px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-xl);
   display: block;
   transition: background 0.12s, color 0.12s;
 }
-
-/* Icon+label rows (main nav + Discover Culture, People Near Me, Stoop IRL,
-   Interest Hubs, theme toggle, Notifications) — mirrors .ch-rail-link/
-   .ch-rail-icon-btn's treatment so the mobile drawer visually matches the
-   desktop rail instead of falling back to a plain text list. */
-.ch-mobile-nav-link--icon {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.ch-mobile-nav-link--icon { display: flex; align-items: center; gap: 12px; }
 .ch-mobile-nav-link--icon svg { flex-shrink: 0; }
-
 .ch-mobile-nav-link:hover,
-.ch-mobile-nav-link.active {
-  background: var(--paper-deep);
-  color: var(--ink);
-}
+.ch-mobile-nav-link.active { background: var(--paper-deep); color: var(--ink); }
+.ch-mobile-nav-link.active { font-weight: 600; }
+.ch-mobile-nav-link--external { color: var(--mute); }
 
-.ch-mobile-nav-link--external {
-  color: var(--mute);
-}
-
-.ch-mobile-nav-spacer { flex: 1; }
-
+.ch-mobile-nav-spacer { flex: 1; min-height: 16px; }
 .ch-mobile-nav-bottom {
   border-top: 1px solid rgba(42, 36, 28, 0.1);
-  padding: 10px 4px 14px;
+  padding: 6px 14px 14px;
   display: flex;
   flex-direction: column;
 }
-
 .ch-mobile-user {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px;
-  margin-top: 6px;
-  border-radius: 6px;
+  margin-top: 4px;
+  border-radius: var(--radius-xl);
   text-decoration: none;
+  transition: background 0.12s;
 }
 .ch-mobile-user:hover { background: var(--paper-deep); }
-
-.ch-mobile-auth {
-  display: flex;
-  gap: 0.5rem;
-  padding: 10px;
-  margin-top: 6px;
-}
-
+.ch-mobile-auth { display: flex; gap: 0.5rem; padding: 10px; margin-top: 6px; }
 .ch-mobile-auth .ch-btn-ghost,
-.ch-mobile-auth .ch-btn-solid {
-  flex: 1;
-  text-align: center;
-}
+.ch-mobile-auth .ch-btn-solid { flex: 1; text-align: center; }
 
-/* ══════════════ Desktop left rail (>=860px) ══════════════ */
-.ch-rail {
-  display: none; /* shown at >=860px, see responsive section below */
-  width: 232px;
-  flex-shrink: 0;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  background: var(--paper);
-  border-right: 1px solid rgba(42, 36, 28, 0.15);
-  overflow-y: auto;
-  z-index: 100;
-}
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ══════════════════════════════════════════════════════ */
 
-.ch-rail-logo { padding: 22px 22px 16px; display: block; }
-.ch-rail-logo img { height: 24px; width: auto; display: block; }
-
-.ch-rail-search-wrap { padding: 0 14px 14px; }
-.ch-rail-search-btn {
-  width: 100%; display: flex; align-items: center; gap: 8px;
-  padding: 8px 10px; border-radius: 999px;
-  border: 1px solid rgba(42, 36, 28, 0.15); background: var(--paper-deep);
-  color: var(--mute); font-size: 13px; text-align: left; cursor: pointer;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-}
-.ch-rail-search-btn:hover { border-color: var(--ochre, #7a241c); color: var(--ink-soft); }
-.ch-rail-search-btn svg { flex-shrink: 0; }
-.ch-rail-search-kbd {
-  margin-left: auto; font-family: var(--font-jetbrains-mono), monospace; font-size: 10px;
-  color: var(--mute); border: 1px solid rgba(42, 36, 28, 0.15); border-radius: 3px;
-  padding: 1px 5px; flex-shrink: 0;
-}
-
-.ch-rail-nav { padding: 4px 14px; display: flex; flex-direction: column; gap: 1px; }
-.ch-rail-link {
-  display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 4px;
-  font-size: 14px; font-weight: 500; color: var(--ink-soft); text-decoration: none;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-}
-.ch-rail-link svg { flex-shrink: 0; }
-.ch-rail-link:hover { background: var(--paper-deep); color: var(--ink); }
-.ch-rail-link.active { background: var(--ink); color: var(--paper); font-weight: 600; }
-.ch-rail-link--ext { color: var(--mute); }
-
-.ch-rail-spacer { flex: 1; }
-
-.ch-rail-bottom { border-top: 1px solid rgba(42, 36, 28, 0.1); padding: 10px 10px 14px; }
-.ch-rail-icon-row { display: flex; flex-direction: column; gap: 1px; padding: 0 4px 10px; }
-.ch-rail-icon-btn {
-  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-  padding: 9px 10px; border-radius: 4px; color: var(--ink-soft); font-size: 14px;
-  font-weight: 500; background: none; border: none; cursor: pointer; position: relative;
-  text-decoration: none; font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-}
-.ch-rail-icon-btn:hover { background: var(--paper-deep); color: var(--ink); }
-/* NotificationBell renders its own badge/dropdown — let it fill this row
-   like the other icon+label buttons instead of the default inline sizing */
-.ch-rail-icon-btn--bell { padding: 0; }
-.ch-rail-icon-btn--bell > * { width: 100%; }
-
-.ch-rail-user-wrap { position: relative; }
-.ch-rail-user {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 8px 10px; border-radius: 6px; background: none; border: none; cursor: pointer; text-align: left;
-}
-.ch-rail-user:hover { background: var(--paper-deep); }
-.ch-rail-user-avatar {
-  width: 32px; height: 32px; border-radius: 999px; flex-shrink: 0; overflow: hidden;
-  background: var(--ink); display: flex; align-items: center; justify-content: center;
-}
-.ch-rail-user-info { display: flex; flex-direction: column; min-width: 0; }
-.ch-rail-user-name {
-  font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.3;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-}
-.ch-rail-user-tier { font-size: 11px; color: var(--mute); font-family: var(--font-dm-sans), "DM Sans", sans-serif; }
-
-.ch-rail-auth { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
-.ch-rail-auth .ch-btn-ghost,
-.ch-rail-auth .ch-btn-solid { text-align: center; }
-
-/* User dropdown opens upward from the rail (it's anchored near the bottom
-   of a tall sidebar, so opening downward like the mobile version would run
-   off-screen) — same inner classes/content as .ch-user-menu, just repositioned */
-.ch-user-menu--rail {
-  right: auto; left: 0;
-  top: auto; bottom: calc(100% + 8px);
-}
-
-/* ── Responsive breakpoints ── */
 @media (min-width: 860px) {
-  .ch-header,
-  .ch-hamburger,
   .ch-mobile-nav,
-  .ch-mobile-overlay {
-    display: none !important;
-  }
-  .ch-rail {
-    display: flex;
-  }
+  .ch-mobile-overlay { display: none !important; }
+  .ch-rail { display: flex; }
 }
 
 @media (max-width: 859px) {
-  .ch-nav {
-    display: none;
-  }
-
-  .ch-hamburger {
-    display: flex;
-  }
-
-  .ch-mobile-nav {
-    display: flex;
-  }
-
-  .ch-mobile-overlay {
-    display: block;
-  }
-
-  /* Hide desktop sign-in/join buttons; show them in mobile drawer instead */
-  .ch-right .ch-btn-ghost,
-  .ch-right .ch-btn-solid {
-    display: none;
-  }
-
-  /* Tighten the right-side icon cluster so it never forces the header to
-     overflow horizontally on narrow phones (logo + search + bell + avatar
-     + hamburger all compete for ~360-428px of width). */
-  .ch-right {
-    gap: 0.25rem;
-  }
-
-  .ch-icon-btn,
-  .ch-right > div > button[aria-label="Notifications"] {
-    padding: 4px !important;
-  }
-
-  .ch-avatar {
-    width: 30px;
-    height: 30px;
-  }
-
-  .ch-hamburger {
-    width: 32px;
-    height: 32px;
-    padding: 4px;
-  }
-}
-
-@media (max-width: 480px) {
-  .ch-inner {
-    padding: 0 1rem;
-    gap: 0.75rem;
-  }
-
-  .ch-logo-img {
-    height: 22px;
-  }
+  .ch-mobile-nav    { display: flex; }
+  .ch-mobile-overlay { display: block; }
 }
