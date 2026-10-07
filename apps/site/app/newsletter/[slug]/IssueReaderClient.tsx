@@ -363,16 +363,6 @@ export default function IssueReaderClient({
         </div>
       )}
 
-      {/* ── EDITORIAL INTRO BANNER ── */}
-      <div className="irc-intro-banner">
-        <span className={`irc-intro-eyebrow${accentMod}`}>{meta.tagline}</span>
-        <div className="irc-intro-divider" aria-hidden="true">
-          <div className="irc-intro-rule" />
-          <span className="irc-intro-ornament">✦</span>
-          <div className="irc-intro-rule" />
-        </div>
-      </div>
-
       {/* ── EDITORIAL HERO ── */}
       <section className={`irc-hero${accentMod}`}>
         {/* Ambient blurs */}
