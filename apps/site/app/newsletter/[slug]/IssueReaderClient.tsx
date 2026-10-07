@@ -143,6 +143,20 @@ export default function IssueReaderClient({
   const issueNumStr = String(currentIssueNum).padStart(3, "0");
   const accentMod = isGml ? " irc--getmelit" : "";
   const rawTitle = issueTitle.replace(/<[^>]*>/g, "");
+  // WP excerpts arrive with HTML entities (&hellip; etc) — decode for plain-text rendering
+  const cleanExcerpt = previewHtml
+    ? previewHtml
+        .replace(/<[^>]*>/g, "")
+        .replace(/&hellip;/g, "…")
+        .replace(/&mdash;/g, "—")
+        .replace(/&ndash;/g, "–")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(Number(c)))
+        .trim()
+    : undefined;
 
   return (
     <div className={`irc-reader irc-theme-${theme}`}>
@@ -377,8 +391,8 @@ export default function IssueReaderClient({
 
             <h1 className="irc-hero-title" dangerouslySetInnerHTML={{ __html: issueTitle }} />
 
-            {previewHtml && (
-              <p className="irc-hero-excerpt">{previewHtml}</p>
+            {cleanExcerpt && (
+              <p className="irc-hero-excerpt">{cleanExcerpt}</p>
             )}
 
             <HideIfSubscribed>

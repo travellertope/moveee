@@ -4030,6 +4030,11 @@
   background: var(--irc-bg);
   color: var(--irc-text);
   min-height: 100vh;
+  /* Clear the floating pill header — same treatment every other page's
+     first section uses. Without this the reader header and intro eyebrow
+     both start at y=0, behind the pill, causing them to overlap or
+     appear above the sticky bar. */
+  padding-top: var(--header-clear, 96px);
   transition: background 0.25s, color 0.25s;
 }
 
