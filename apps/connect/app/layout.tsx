@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Inter, DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "./member.css";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -7,10 +7,17 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import SessionProvider from "@/components/SessionProvider";
 import ConnectHeader from "@/components/Header";
+import TopBar from "@/components/TopBar";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
 import AppDownloadModal from "@/components/AppDownloadModal";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
 import "@/components/app-download-nudge.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -79,12 +86,13 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}>
+      <body className={`${inter.variable} ${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}>
         <SessionProvider>
           <CurrencyProvider initialPricing={null}>
             <LanguageProvider>
               <ThemeProvider>
                 <AppDownloadBanner />
+                <TopBar />
                 <div className="cw-shell">
                   <ConnectHeader />
                   <div className="cw-shell-content">

@@ -94,13 +94,17 @@
    selector here bled its padding/typography onto that other page's masthead
    too. Every rule below must stay under .hpv2 — never drop back to a bare
    .masthead selector, even for a "quick" tweak. */
-.hpv2 .masthead { padding: clamp(28px, 4vw, 56px) 0 0; text-align: center; }
+/* Symmetric: the tinted masthead band has the same padding below the "Right
+   Now" carousel as above the headline. The next .arc-section (Culture News)
+   keeps its own top padding — the masthead has its own background, so that
+   padding is the white gap between the two bands; don't zero it. */
+.hpv2 .masthead { padding: clamp(28px, 4vw, 56px) 0; text-align: center; }
 @media (max-width: 640px) {
   /* clamp()'s floor (28px) is the same fixed value at every mobile width
      since 4vw never exceeds it below ~700px — reads as too much gap on a
      short mobile viewport right under the hero. Give mobile its own,
      smaller flat value instead of inheriting the desktop clamp's floor. */
-  .hpv2 .masthead { padding-top: 14px; }
+  .hpv2 .masthead { padding-top: 14px; padding-bottom: 14px; }
 }
 .hpv2 .masthead h1 { font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.025em; line-height: 1.05; text-wrap: balance; }
 .hpv2 .masthead h1 em { font-style: italic; font-weight: 400; color: var(--ochre); }
