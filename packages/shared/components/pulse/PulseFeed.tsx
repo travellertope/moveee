@@ -11,13 +11,9 @@ import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
 import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import StoopReminderCard from "./StoopReminderCard";
-import TypePickerModal from "./TypePickerModal";
-import type { TemplateType } from "./SubmitPost";
+import ComposerModal, { type ComposerTab } from "./ComposerModal";
 import "@/app/pulse-layout.css";
 
-function draftKey(userId: string | number): string {
-  return `moveee_post_draft_${userId}`;
-}
 
 const SECTION_HUB_SLUGS: Record<string, string> = {
   Music: "music", Fashion: "fashion", Art: "art", Film: "film", Food: "food",
@@ -212,19 +208,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, []);
 
   const router = useRouter();
-  const [typeModalOpen, setTypeModalOpen] = useState(false);
-  const [hasDraft, setHasDraft] = useState(false);
-  const userId = (session?.user as any)?.id as string | number | undefined;
-  useEffect(() => {
-    if (!userId) return;
-    setHasDraft(!!localStorage.getItem(draftKey(userId)));
-  }, [userId]);
-  const selectTemplate = useCallback((t: TemplateType) => {
-    router.push(`/post/new?template=${t}`);
-  }, [router]);
-  const selectDraftTile = useCallback(() => {
-    router.push("/post/new?draft=1");
-  }, [router]);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerTab, setComposerTab] = useState<ComposerTab>("update");
 
   const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
 
@@ -362,20 +347,18 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
                 )}
               </div>
-              <button type="button" className="composer-box-placeholder" onClick={() => setTypeModalOpen(true)}>
+              <button type="button" className="composer-box-placeholder" onClick={() => { setComposerTab("update"); setComposerOpen(true); }}>
                 Share a place review, music recommendation, film take, or itinerary…
               </button>
-              <button type="button" className="composer-box-review-btn" onClick={() => router.push("/post/new?template=hidden-gem")} aria-label="Write a review">
+              <button type="button" className="composer-box-review-btn" onClick={() => { setComposerTab("review"); setComposerOpen(true); }} aria-label="Write a review">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               </button>
             </div>
           )}
-          <TypePickerModal
-            open={typeModalOpen}
-            onClose={() => setTypeModalOpen(false)}
-            onSelect={selectTemplate}
-            hasDraft={hasDraft}
-            onSelectDraft={selectDraftTile}
+          <ComposerModal
+            open={composerOpen}
+            onClose={() => setComposerOpen(false)}
+            initialTab={composerTab}
           />
 
           {/* Feed tabs — All / content-type categories + Sort by */}
