@@ -2,8 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import NotificationsClient from "./NotificationsClient";
-import AccountNav from "@/components/AccountNav";
-import "../../member.css";
+import FeedRightSidebar from "@/components/pulse/FeedRightSidebar";
+import "@/app/pulse-layout.css";
+import "@/app/member.css";
 
 export const dynamic = "force-dynamic";
 
@@ -32,14 +33,19 @@ export default async function NotificationsPage() {
   if (!session?.user) redirect("/login?callbackUrl=/member/notifications");
 
   const user = session.user;
-  const isPatron = user.tier === "patron";
   const notifications = await fetchNotifications(Number(user.id));
 
   return (
-    <div className="acct-page">
-      <div className="acct-wrap">
-        <AccountNav isPatron={isPatron} />
-        <NotificationsClient initialItems={notifications} />
+    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+      <div className="pulse-layout pulse-layout--feed">
+        <main className="pulse-timeline">
+          <div className="pulse-timeline-inner" style={{ padding: "20px 20px 40px" }}>
+            <NotificationsClient initialItems={notifications} />
+          </div>
+        </main>
+        <aside className="pulse-sidebar-right">
+          <FeedRightSidebar />
+        </aside>
       </div>
     </div>
   );
