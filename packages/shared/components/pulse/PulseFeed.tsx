@@ -362,26 +362,12 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
                 )}
               </div>
-              <div className="composer-box-body">
-                <button type="button" className="composer-box-placeholder" onClick={() => setTypeModalOpen(true)}>
-                  Share something with the community…
-                </button>
-                <div className="composer-box-actions">
-                  <button type="button" className="composer-box-action-btn" onClick={() => setTypeModalOpen(true)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-                    Media
-                  </button>
-                  <button type="button" className="composer-box-action-btn" onClick={() => router.push("/post/new?template=quote")}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                    Quote
-                  </button>
-                  <button type="button" className="composer-box-action-btn" onClick={() => router.push("/post/new?template=happening")}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
-                    Event
-                  </button>
-                  <button type="button" className="composer-box-submit" onClick={() => setTypeModalOpen(true)}>Post</button>
-                </div>
-              </div>
+              <button type="button" className="composer-box-placeholder" onClick={() => setTypeModalOpen(true)}>
+                Share a place review, music recommendation, film take, or itinerary…
+              </button>
+              <button type="button" className="composer-box-review-btn" onClick={() => router.push("/post/new?template=hidden-gem")} aria-label="Write a review">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </button>
             </div>
           )}
           <TypePickerModal

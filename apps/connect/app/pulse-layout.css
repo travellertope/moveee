@@ -416,11 +416,12 @@
   margin: 0;
 }
 
-/* ── Composer box — pill card matching mockup ───────────────────── */
+/* ── Composer box — single-row: avatar · pill input · star review btn ── */
 .composer-box {
   display: flex;
-  gap: 12px;
-  padding: 14px 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
   background: var(--paper);
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl, 20px);
@@ -447,18 +448,12 @@
   height: 100%;
   object-fit: cover;
 }
-.composer-box-body {
+.composer-box-placeholder {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.composer-box-placeholder {
-  width: 100%;
   text-align: left;
   background: var(--paper-deep, #f5f0e8);
-  border: 1px solid var(--rule, #e8e2d8);
+  border: 1px solid transparent;
   border-radius: var(--radius-2xl);
   padding: 9px 16px;
   font-family: var(--font-sans, 'Inter', sans-serif);
@@ -466,46 +461,33 @@
   color: var(--mute);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .composer-box-placeholder:hover {
-  border-color: var(--ochre);
+  border-color: var(--rule, #e8e2d8);
   background: var(--paper);
 }
-.composer-box-actions {
+.composer-box-review-btn {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-.composer-box-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   background: none;
   border: none;
-  cursor: pointer;
-  font-family: var(--font-sans, 'Inter', sans-serif);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--mute);
-  padding: 5px 8px;
-  border-radius: var(--radius-lg);
-  transition: background 0.12s, color 0.12s;
-}
-.composer-box-action-btn:hover { background: var(--paper-deep); color: var(--ink); }
-.composer-box-submit {
-  margin-left: auto;
-  background: var(--ochre);
-  color: #fff;
-  border: none;
   border-radius: var(--radius-full);
-  padding: 6px 16px;
-  font-family: var(--font-sans, 'Inter', sans-serif);
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--ochre, #7a241c);
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.12s, transform 0.12s;
+  padding: 0;
 }
-.composer-box-submit:hover { opacity: 0.85; }
+.composer-box-review-btn:hover {
+  background: rgba(122,36,28,0.08);
+  transform: scale(1.1);
+}
 
 /* ── Writers to Follow card ─────────────────────────────────────── */
 .pulse-writer-row {
