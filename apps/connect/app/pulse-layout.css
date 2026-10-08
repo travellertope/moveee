@@ -260,12 +260,12 @@
 .pf-follow-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 12px;
+  padding: 7px 0;
 }
 .pf-follow-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   background: var(--ink, #14110d);
   color: var(--paper, #fff);
@@ -282,7 +282,7 @@
 .pf-follow-info { flex: 1; min-width: 0; }
 .pf-follow-name {
   font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   margin: 0;
@@ -301,21 +301,22 @@
 }
 .pf-follow-btn {
   flex-shrink: 0;
-  padding: 5px 12px;
+  padding: 5px 14px;
   border-radius: 999px;
-  border: 1.5px solid var(--ink, #14110d);
-  background: transparent;
-  color: var(--ink);
+  border: none;
+  background: rgba(122, 36, 28, 0.08);
+  color: var(--ochre, #7a241c);
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   font-size: 11px;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 .pf-follow-btn:hover {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--ochre, #7a241c);
+  color: #fff;
 }
 
 /* ── Legacy right rail styles (kept for non-feed pulse pages) ────── */

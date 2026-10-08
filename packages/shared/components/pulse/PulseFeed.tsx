@@ -519,7 +519,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             <div className="pf-sidebar-section">
               <div className="pf-section-header">
                 <div className="pf-section-title-row">
-                  <h3 className="pf-section-title">Users to Follow</h3>
+                  <h3 className="pf-section-title">Writers to Follow</h3>
                 </div>
                 <Link href="/discover" className="pf-section-see-all">See all</Link>
               </div>
