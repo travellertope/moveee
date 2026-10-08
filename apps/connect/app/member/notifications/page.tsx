@@ -33,31 +33,12 @@ export default async function NotificationsPage() {
 
   const user = session.user;
   const isPatron = user.tier === "patron";
-  const displayName = user.displayName || user.name || user.username || "Member";
-  const initial = displayName.charAt(0).toUpperCase();
   const notifications = await fetchNotifications(Number(user.id));
 
   return (
     <div className="acct-page">
       <div className="acct-wrap">
-        <div className="acct-profile">
-          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-            ) : initial}
-          </div>
-          <div className="acct-profile-body">
-            <h1 className="acct-name">Notifications</h1>
-            <div className="acct-meta">
-              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
-                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
-              </span>
-            </div>
-          </div>
-        </div>
-
         <AccountNav isPatron={isPatron} />
-
         <NotificationsClient initialItems={notifications} />
       </div>
     </div>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart, Bookmark, ExternalLink } from "lucide-react";
 
 interface SavedPost {
   id: number;
@@ -28,8 +27,25 @@ interface SavedData {
 
 type Tab = "liked" | "bookmarked";
 
+const TYPE_LABEL: Record<string, string> = {
+  quote: "Quote",
+  article: "Article",
+  community: "Post",
+};
+
+const TYPE_ICON: Record<string, string> = {
+  quote: "💬",
+  article: "📖",
+  community: "📝",
+};
+
+function relativeDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function CollectionTabs() {
-  const [tab, setTab] = useState<Tab>("liked");
+  const [tab, setTab] = useState<Tab>("bookmarked");
   const [data, setData] = useState<SavedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -37,14 +53,8 @@ export default function CollectionTabs() {
   useEffect(() => {
     fetch("/api/user/saved", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => {
-        setData(d);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError(true);
-        setLoading(false);
-      });
+      .then((d) => { setData(d); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
   }, []);
 
   const items = data?.[tab] ?? [];
@@ -52,68 +62,77 @@ export default function CollectionTabs() {
   const bookmarkedCount = data?.bookmarked?.length ?? 0;
 
   return (
-    <div>
-      {/* Tab bar */}
-      <div className="collection-tab-bar">
-        <button
-          className={`collection-tab ${tab === "liked" ? "active" : ""}`}
-          onClick={() => setTab("liked")}
-        >
-          <Heart size={14} strokeWidth={1.5} />
-          Liked
-          {!loading && <span className="collection-tab-count">{likedCount}</span>}
-        </button>
-        <button
-          className={`collection-tab ${tab === "bookmarked" ? "active" : ""}`}
-          onClick={() => setTab("bookmarked")}
-        >
-          <Bookmark size={14} strokeWidth={1.5} />
-          Saved
-          {!loading && <span className="collection-tab-count">{bookmarkedCount}</span>}
-        </button>
+    <div className="coll-panel">
+      {/* Heading */}
+      <div className="coll-panel-header">
+        <div>
+          <h1 className="coll-panel-heading">
+            {tab === "bookmarked" ? "Your Saved Cultural Gems" : "Posts You've Liked"}
+          </h1>
+          {!loading && (
+            <p className="coll-panel-count">
+              {tab === "bookmarked"
+                ? `${bookmarkedCount} saved item${bookmarkedCount !== 1 ? "s" : ""}`
+                : `${likedCount} liked item${likedCount !== 1 ? "s" : ""}`}
+            </p>
+          )}
+        </div>
+
+        {/* Tab switcher */}
+        <div className="coll-tab-bar">
+          <button
+            className={`coll-tab${tab === "bookmarked" ? " coll-tab--active" : ""}`}
+            onClick={() => setTab("bookmarked")}
+          >
+            <span>🔖</span> Saved
+            {!loading && <span className="coll-tab-count">{bookmarkedCount}</span>}
+          </button>
+          <button
+            className={`coll-tab${tab === "liked" ? " coll-tab--active" : ""}`}
+            onClick={() => setTab("liked")}
+          >
+            <span>♥</span> Liked
+            {!loading && <span className="coll-tab-count">{likedCount}</span>}
+          </button>
+        </div>
       </div>
 
-      {/* Content */}
+      {/* States */}
       {loading && (
-        <div className="collection-empty">Loading your collection…</div>
+        <div className="coll-loading">
+          <div className="coll-loading-spinner" />
+          Loading your collection…
+        </div>
       )}
 
       {error && (
-        <div className="collection-empty">
-          Could not load your collection. Please try again.
+        <div className="coll-empty-state">
+          <div className="coll-empty-icon">⚠️</div>
+          <p className="coll-empty-label">Couldn't load your collection</p>
+          <p className="coll-empty-sub">Please refresh the page to try again.</p>
         </div>
       )}
 
       {!loading && !error && items.length === 0 && (
-        <div className="collection-empty">
-          {tab === "liked" ? (
-            <>
-              <p>You haven&apos;t liked anything yet.</p>
-              <p style={{ marginTop: 8 }}>
-                Hit the ♥ on quotes or magazine articles to save them here.
-              </p>
-              <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
-                <Link href="/feed" className="mem-upgrade-btn" style={{ display: "inline-block" }}>Browse Feed</Link>
-                <Link href="/magazine" className="mem-field-btn" style={{ display: "inline-block" }}>Browse Magazine</Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <p>Nothing saved yet.</p>
-              <p style={{ marginTop: 8 }}>
-                Tap the 🔖 on any quote or article to add it to your reading list.
-              </p>
-              <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
-                <Link href="/feed" className="mem-upgrade-btn" style={{ display: "inline-block" }}>Browse Feed</Link>
-                <Link href="/magazine" className="mem-field-btn" style={{ display: "inline-block" }}>Browse Magazine</Link>
-              </div>
-            </>
-          )}
+        <div className="coll-empty-state">
+          <div className="coll-empty-icon">{tab === "bookmarked" ? "🔖" : "♥"}</div>
+          <p className="coll-empty-label">
+            {tab === "bookmarked" ? "No saved bookmarks yet" : "Nothing liked yet"}
+          </p>
+          <p className="coll-empty-sub">
+            {tab === "bookmarked"
+              ? "Bookmark posts in the feed to read or revisit later."
+              : "Hit the ♥ on quotes or articles to save them here."}
+          </p>
+          <div className="coll-empty-actions">
+            <Link href="/feed" className="coll-empty-btn coll-empty-btn--primary">Browse Feed</Link>
+            <Link href="/magazine" className="coll-empty-btn">Browse Magazine</Link>
+          </div>
         </div>
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="collection-grid">
+        <div className="coll-grid">
           {items.map((item) => (
             <CollectionCard key={`${item.type}-${item.id}`} item={item} />
           ))}
@@ -124,29 +143,36 @@ export default function CollectionTabs() {
 }
 
 function CollectionCard({ item }: { item: SavedPost }) {
-  const typeLabel = item.type === "quote" ? "Quote" : item.type === "community" ? "Post" : "Article";
-  const dateStr = new Date(item.date).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const label = TYPE_LABEL[item.type] ?? "Post";
+  const icon = TYPE_ICON[item.type] ?? "📄";
 
   return (
-    <Link href={item.url || "/"} className="collection-card">
-      <div className="collection-card-type">{typeLabel}</div>
-      <div className="collection-card-title">{item.title}</div>
-      {item.excerpt && (
-        <div className="collection-card-excerpt">{item.excerpt}</div>
+    <Link href={item.url || "/"} className="coll-card">
+      {item.featuredImage && (
+        <div className="coll-card-cover">
+          <img src={item.featuredImage} alt="" loading="lazy" />
+        </div>
       )}
-      <div className="collection-card-meta">
-        <span>{dateStr}</span>
-        {item.likes > 0 && (
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Heart size={11} strokeWidth={1.5} />
-            {item.likes}
-          </span>
+      {!item.featuredImage && (
+        <div className="coll-card-cover coll-card-cover--placeholder">
+          <span className="coll-card-cover-icon">{icon}</span>
+        </div>
+      )}
+      <div className="coll-card-body">
+        <div className="coll-card-meta-row">
+          <span className="coll-card-type">{label}</span>
+          {item.category && <span className="coll-card-cat">{item.category}</span>}
+        </div>
+        <h3 className="coll-card-title">{item.title}</h3>
+        {item.excerpt && <p className="coll-card-excerpt">{item.excerpt}</p>}
+        {item.quoteAuthor && (
+          <p className="coll-card-author">— {item.quoteAuthor}{item.quoteSource ? `, ${item.quoteSource}` : ""}</p>
         )}
-        <ExternalLink size={11} strokeWidth={1.5} style={{ marginLeft: "auto" }} />
+        <div className="coll-card-footer">
+          <span className="coll-card-date">{relativeDate(item.date)}</span>
+          {item.likes > 0 && <span className="coll-card-likes">♥ {item.likes}</span>}
+          <span className="coll-card-arrow" aria-hidden="true">→</span>
+        </div>
       </div>
     </Link>
   );
