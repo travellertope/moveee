@@ -11,15 +11,17 @@ import "./header.css";
 const SITE_URL = "https://themoveee.com";
 
 const NAV = [
-  { href: "/feed",   label: "Feed",   icon: "feed"   },
-  { href: "/events", label: "Events", icon: "events" },
-  { href: "/games",  label: "Games",  icon: "games"  },
+  { href: "/feed",                 label: "Home Feed",       icon: "feed"      },
+  { href: "/discover",             label: "Explore Topics",  icon: "discover"  },
+  { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
+  { href: "/member/notifications", label: "Notifications",   icon: "bell"      },
 ] as const;
 
-const RAIL_LINKS = [
-  { href: "/discover",      label: "Discover Culture", icon: "discover" },
-  { href: "/connect/stoop", label: "Stoop IRL",        icon: "stoop"    },
-  { href: "/hub",           label: "Interest Hubs",    icon: "hub"      },
+const HUB_SPACES = [
+  { slug: "music",      label: "Music",      color: "#10b981" },
+  { slug: "fashion",    label: "Fashion",    color: "#3b82f6" },
+  { slug: "art",        label: "Art",        color: "#a855f7" },
+  { slug: "literature", label: "Literature", color: "#f59e0b" },
 ] as const;
 
 function RailIcon({ name }: { name: string }) {
@@ -41,6 +43,8 @@ function RailIcon({ name }: { name: string }) {
       return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
     case "bell":
       return <svg {...common} viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
+    case "bookmark":
+      return <svg {...common} viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>;
     default:
       return null;
   }
@@ -123,28 +127,21 @@ export default function ConnectHeader() {
     <>
       {/* ══════════════ Desktop left rail (≥860px) ══════════════ */}
       <aside className="ch-rail" aria-label="Main navigation">
-        <div className="ch-rail-section-label">Main</div>
+        <div className="ch-rail-section-label">Menu</div>
         <nav className="ch-rail-nav">
           {NAV.map((item) => (
             <Link key={item.href} href={item.href} className={`ch-rail-link${isActive(item.href) ? " active" : ""}`}>
               <RailIcon name={item.icon} /> {item.label}
             </Link>
           ))}
-          <Link href={`${SITE_URL}/magazine`} className="ch-rail-link ch-rail-link--ext">
-            <RailIcon name="magazine" /> Magazine <ExternalArrow />
-          </Link>
         </nav>
 
-        <Link href="/post/new" className="ch-rail-post-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          New Post
-        </Link>
-
-        <div className="ch-rail-section-label ch-rail-section-label--spaced">Explore</div>
+        <div className="ch-rail-section-label ch-rail-section-label--spaced">Spaces</div>
         <div className="ch-rail-nav">
-          {RAIL_LINKS.map((item) => (
-            <Link key={item.href} href={item.href} className={`ch-rail-link${isActive(item.href) ? " active" : ""}`}>
-              <RailIcon name={item.icon} /> {item.label}
+          {HUB_SPACES.map((hub) => (
+            <Link key={hub.slug} href={`/hub/${hub.slug}`} className={`ch-rail-link ch-rail-hub-link${pathname.startsWith(`/hub/${hub.slug}`) ? " active" : ""}`}>
+              <span className="ch-rail-hub-dot" style={{ background: hub.color }} />
+              # {hub.label}
             </Link>
           ))}
         </div>
@@ -152,11 +149,6 @@ export default function ConnectHeader() {
         <div className="ch-rail-spacer" />
 
         <div className="ch-rail-bottom">
-          {status === "authenticated" && user && (
-            <div className="ch-rail-icon-btn ch-rail-icon-btn--bell">
-              <NotificationBell showLabel />
-            </div>
-          )}
 
           {status === "authenticated" && user ? (
             <div className="ch-rail-user-wrap" ref={railUserMenuRef}>
@@ -194,7 +186,7 @@ export default function ConnectHeader() {
       {/* Mobile nav drawer — slides in from the left when TopBar's hamburger fires the event */}
       <nav id="ch-mobile-nav" className={`ch-mobile-nav${mobileOpen ? " open" : ""}`} aria-label="Mobile navigation">
         <div className="ch-mobile-nav-section">
-          <div className="ch-mobile-section-label">Main</div>
+          <div className="ch-mobile-section-label">Menu</div>
           {NAV.map((item) => (
             <Link key={item.href} href={item.href} className={`ch-mobile-nav-link ch-mobile-nav-link--icon${isActive(item.href) ? " active" : ""}`} onClick={() => setMobileOpen(false)}>
               <RailIcon name={item.icon} /> {item.label}
@@ -203,13 +195,20 @@ export default function ConnectHeader() {
           <Link href={`${SITE_URL}/magazine`} className="ch-mobile-nav-link ch-mobile-nav-link--icon ch-mobile-nav-link--external" onClick={() => setMobileOpen(false)}>
             <RailIcon name="magazine" /> Magazine <ExternalArrow />
           </Link>
+          <Link href="/events" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
+            <RailIcon name="events" /> Events
+          </Link>
+          <Link href="/games" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
+            <RailIcon name="games" /> Games
+          </Link>
         </div>
 
         <div className="ch-mobile-nav-section">
-          <div className="ch-mobile-section-label">Explore</div>
-          {RAIL_LINKS.map((item) => (
-            <Link key={item.href} href={item.href} className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
-              <RailIcon name={item.icon} /> {item.label}
+          <div className="ch-mobile-section-label">Spaces</div>
+          {HUB_SPACES.map((hub) => (
+            <Link key={hub.slug} href={`/hub/${hub.slug}`} className="ch-mobile-nav-link" onClick={() => setMobileOpen(false)}>
+              <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: hub.color, marginRight: 10, flexShrink: 0 }} />
+              # {hub.label}
             </Link>
           ))}
         </div>

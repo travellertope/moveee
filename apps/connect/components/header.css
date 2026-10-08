@@ -129,8 +129,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 9px 12px;
-  border-radius: var(--radius-xl);           /* was 4px — rounded per mockup */
+  padding: 10px 14px;
+  border-radius: var(--radius-2xl, 20px);
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-soft);
@@ -140,29 +140,23 @@
 }
 .ch-rail-link svg { flex-shrink: 0; }
 .ch-rail-link:hover { background: var(--paper-deep); color: var(--ink); }
-.ch-rail-link.active { background: rgba(122, 36, 28, 0.1); color: var(--ochre, #7a241c); font-weight: 700; }
+.ch-rail-link.active {
+  background: rgba(122, 36, 28, 0.08);
+  color: var(--ochre, #7a241c);
+  font-weight: 600;
+}
 .ch-rail-link--ext { color: var(--mute); font-size: 13px; }
 
-.ch-rail-spacer { flex: 1; }
-
-/* New Post CTA button in the desktop rail */
-.ch-rail-post-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 10px 14px 0;
-  padding: 10px 16px;
-  background: var(--ochre, #7a241c);
-  color: #fff;
+/* Hub spaces (Spaces section — colored dot + # label) */
+.ch-rail-hub-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 999px;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: background 0.15s;
+  flex-shrink: 0;
 }
-.ch-rail-post-btn:hover { background: var(--ochre-deep, #5c1b15); }
+.ch-rail-hub-link { font-size: 13px; gap: 10px; }
+
+.ch-rail-spacer { flex: 1; }
 
 /* Bottom strip — notifications + user card */
 .ch-rail-bottom {
