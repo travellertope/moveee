@@ -305,19 +305,22 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
       onClick={close}
       style={{
         position: "fixed", inset: 0, zIndex: 8000,
-        background: "rgba(20,17,13,0.55)",
-        display: "flex", justifyContent: "flex-end", alignItems: "stretch",
+        background: "rgba(20,17,13,0.60)",
+        display: "flex", justifyContent: "center", alignItems: "center",
+        padding: "16px",
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "min(520px, 100vw)",
+          width: "min(720px, 100%)",
+          maxHeight: "90vh",
           background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
           overflowY: "auto",
-          boxShadow: "-4px 0 24px rgba(0,0,0,0.15)",
+          borderRadius: "20px",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.35), 0 4px 20px rgba(0,0,0,0.12)",
         }}
       >
         {/* Header */}

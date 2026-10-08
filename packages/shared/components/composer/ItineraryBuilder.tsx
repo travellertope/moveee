@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef, useState } from "react";
+
 export interface ItineraryStop {
   name: string;
   lat: number;
@@ -16,6 +18,9 @@ interface Props {
 const EMPTY_STOP: ItineraryStop = { name: "", lat: 0, lng: 0, note: "", image_url: "" };
 
 export default function ItineraryBuilder({ stops, onChange }: Props) {
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   function update(i: number, field: keyof ItineraryStop, value: string | number) {
     const next = [...stops];
     next[i] = { ...next[i], [field]: value };
@@ -28,6 +33,18 @@ export default function ItineraryBuilder({ stops, onChange }: Props) {
 
   function removeStop(i: number) {
     if (stops.length > 2) onChange(stops.filter((_, j) => j !== i));
+  }
+
+  async function handleStopImage(i: number, file: File) {
+    setUploadingIdx(i);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/community/upload-image", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok && data.url) update(i, "image_url", data.url);
+    } catch {}
+    setUploadingIdx(null);
   }
 
   return (
@@ -51,6 +68,29 @@ export default function ItineraryBuilder({ stops, onChange }: Props) {
               maxLength={300}
               rows={2}
             />
+            {/* Per-stop photo */}
+            <input
+              ref={el => { fileInputRefs.current[i] = el; }}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={e => { if (e.target.files?.[0]) handleStopImage(i, e.target.files[0]); e.target.value = ""; }}
+            />
+            {stop.image_url ? (
+              <div className="composer-stop-photo-preview">
+                <img src={stop.image_url} alt="Stop photo" />
+                <button type="button" className="composer-stop-photo-remove" onClick={() => update(i, "image_url", "")} aria-label="Remove photo">✕</button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={`composer-stop-photo-add${uploadingIdx === i ? " composer-stop-photo-add--uploading" : ""}`}
+                onClick={() => fileInputRefs.current[i]?.click()}
+                disabled={uploadingIdx === i}
+              >
+                📷 {uploadingIdx === i ? "Uploading…" : "Add photo (optional)"}
+              </button>
+            )}
           </div>
           {stops.length > 2 && (
             <button type="button" className="composer-itinerary-remove" onClick={() => removeStop(i)}>×</button>

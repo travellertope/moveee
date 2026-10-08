@@ -31,6 +31,8 @@ interface Stop {
   name: string;
   location: string;
   note: string;
+  image_url: string;
+  image_uploading?: boolean;
 }
 
 interface Props {
@@ -139,8 +141,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [iTitle, setITitle]         = useState("");
   const [iOverview, setIOverview]   = useState("");
   const [stops, setStops]           = useState<Stop[]>([
-    { id: "a", name: "", location: "", note: "" },
-    { id: "b", name: "", location: "", note: "" },
+    { id: "a", name: "", location: "", note: "", image_url: "" },
+    { id: "b", name: "", location: "", note: "", image_url: "" },
   ]);
 
   // Event
@@ -172,7 +174,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setPollQ(""); setPollOpts(["", ""]);
     setQText(""); setQAuthor(""); setQSource(""); setQReflection("");
     setITitle(""); setIOverview("");
-    setStops([{ id: "a", name: "", location: "", note: "" }, { id: "b", name: "", location: "", note: "" }]);
+    setStops([{ id: "a", name: "", location: "", note: "", image_url: "" }, { id: "b", name: "", location: "", note: "", image_url: "" }]);
     setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
     setEvDesc(""); setEvAdmission(""); setEvTicketUrl("");
     setImageUrl(""); setError("");
@@ -192,6 +194,21 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
       setError(e.message || "Image upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleStopImageUpload(stopId: string, file: File) {
+    setStops(prev => prev.map(s => s.id === stopId ? { ...s, image_uploading: true } : s));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/community/upload-image", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setStops(prev => prev.map(s => s.id === stopId ? { ...s, image_url: data.url, image_uploading: false } : s));
+    } catch (e: any) {
+      setError(e.message || "Stop image upload failed");
+      setStops(prev => prev.map(s => s.id === stopId ? { ...s, image_uploading: false } : s));
     }
   }
 
@@ -256,7 +273,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             lat: 0,
             lng: 0,
             note: [s.location.trim(), s.note.trim()].filter(Boolean).join(" — "),
-            image_url: "",
+            image_url: s.image_url || "",
           }));
         } else if (activeTab === "event") {
           template_type = "happening";
@@ -606,13 +623,34 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                         onChange={e => setStops(stops.map(s => s.id === stop.id ? { ...s, note: e.target.value } : s))}
                         rows={2}
                       />
+                      {/* Per-stop photo */}
+                      <div className="cm-stop-photo">
+                        <input
+                          id={`stop-img-${stop.id}`}
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={e => { if (e.target.files?.[0]) handleStopImageUpload(stop.id, e.target.files[0]); e.target.value = ""; }}
+                        />
+                        {stop.image_url ? (
+                          <div className="cm-stop-photo-preview">
+                            <img src={stop.image_url} alt="Stop photo" />
+                            <button type="button" className="cm-stop-photo-remove" onClick={() => setStops(stops.map(s => s.id === stop.id ? { ...s, image_url: "" } : s))} aria-label="Remove photo">✕</button>
+                          </div>
+                        ) : (
+                          <label htmlFor={`stop-img-${stop.id}`} className={`cm-stop-photo-add${stop.image_uploading ? " cm-stop-photo-add--uploading" : ""}`}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                            {stop.image_uploading ? "Uploading…" : "Add photo"}
+                          </label>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {stops.length < 8 && (
                     <button
                       type="button"
                       className="cm-add-btn"
-                      onClick={() => setStops([...stops, { id: Math.random().toString(36).slice(2), name: "", location: "", note: "" }])}
+                      onClick={() => setStops([...stops, { id: Math.random().toString(36).slice(2), name: "", location: "", note: "", image_url: "" }])}
                     >
                       <span aria-hidden="true">＋</span> Add a stop
                     </button>
