@@ -201,7 +201,7 @@
 }
 
 .game-card__name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 700;
   line-height: 1.15;
@@ -226,7 +226,7 @@
 }
 
 .game-card__result-score {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 700;
   color: var(--ink);
@@ -393,7 +393,7 @@
 
 .wsi-quote-card::before {
   content: '\201C';
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 120px;
   color: rgba(197,73,31,.12);
   position: absolute;
@@ -404,7 +404,7 @@
 }
 
 .wsi-quote-text {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(19px, 2.5vw, 24px);
   font-weight: 400;
   font-style: italic;
@@ -565,7 +565,7 @@
 }
 
 .trivia-header__title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 13px;
   color: var(--mute);
   font-weight: 400;
@@ -607,7 +607,7 @@
 }
 
 .trivia-question-text {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(20px, 3vw, 26px);
   font-weight: 600;
   line-height: 1.4;
@@ -751,7 +751,7 @@
 }
 
 .game-result__title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 700;
   color: var(--ink);
@@ -775,7 +775,7 @@
 }
 
 .game-result__score-num {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 96px;
   font-weight: 700;
   line-height: 1;
@@ -804,7 +804,7 @@
 }
 
 .game-result__stat-num {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 700;
   color: var(--ink);
@@ -893,7 +893,7 @@
 }
 
 .gds-logo {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -968,7 +968,7 @@
 }
 
 .gds-score-num {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 48px;
   font-weight: 700;
   line-height: .9;
@@ -1000,7 +1000,7 @@
 }
 
 .gds-tagline {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-style: italic;
   font-size: 18px;
   color: var(--ink-soft);
@@ -1470,7 +1470,7 @@
 }
 
 .crossword-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 400;
   color: var(--ink);

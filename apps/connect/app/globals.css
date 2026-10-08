@@ -24,7 +24,7 @@
   --radius-full: 9999px;
 
   /* Fonts */
-  --font-serif: "Fraunces", serif;
+  --font-serif: "Inter", sans-serif;
   --font-sans: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
@@ -49,9 +49,12 @@
   /* Layout — updated by TopBar addition */
   --topbar-height: 60px;
 
-  /* Font override — all var(--font-dm-sans) references auto-switch to Inter */
+  /* Font overrides — all var(--font-dm-sans) / var(--font-fraunces) references use Inter */
   --font-dm-sans: var(--font-inter), "Inter", sans-serif;
+  --font-fraunces: var(--font-inter), "Inter", sans-serif;
+  --font-serif: var(--font-inter), "Inter", sans-serif;
 
+  --bg-page: #f8fafc;
   --paper: #ffffff;
   --paper-warm: #ffffff;
   --paper-deep: #f2f2f2;
@@ -109,6 +112,7 @@
 
 /* ── Dark mode — mirrors apps/mobile/src/theme.ts darkColors ── */
 [data-theme="dark"] {
+  --bg-page: #1a1714;
   --paper: #242018;
   --paper-warm: #1a1612;
   --paper-deep: #2d2820;
@@ -208,9 +212,9 @@
 }
 
 body {
-  background: var(--paper);
+  background: var(--bg-page, #f8fafc);
   color: var(--ink);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-weight: 400;
   font-size: 15px;
   line-height: 1.55;
@@ -259,7 +263,7 @@ body::before {
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-weight: 500;
   line-height: 0.95;
   letter-spacing: -0.02em;
@@ -835,7 +839,7 @@ h1, h2, h3, h4 {
   max-width: 680px;
 }
 .collated-comments-heading {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 400;
   color: var(--ink);
@@ -875,7 +879,7 @@ h1, h2, h3, h4 {
   border: none;
   padding: 0;
   cursor: pointer;
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 12px;
   font-style: italic;
   color: var(--mute);
@@ -885,14 +889,14 @@ h1, h2, h3, h4 {
 }
 .collated-comment-ref:hover { color: var(--ochre); }
 .collated-comment-body {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   line-height: 1.6;
   color: var(--ink-soft);
 }
 .collated-comment-body p { margin: 0; }
 .collated-comments-empty {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-style: italic;
   color: var(--mute);

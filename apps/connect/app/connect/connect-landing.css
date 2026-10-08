@@ -30,7 +30,7 @@
 }
 .lc-offer-card--fellowship .lc-offer-eyebrow { color: var(--gold); }
 .lc-offer-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(24px, 2.6vw, 32px);
   font-weight: 300;
   letter-spacing: -.02em;
@@ -81,7 +81,7 @@
   margin-bottom: 10px;
 }
 .lc-step-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 17px;
   font-weight: 600;
   color: var(--ink);
@@ -125,7 +125,7 @@
 }
 .lc-badge-emoji { font-size: 22px; margin-bottom: 8px; display: block; }
 .lc-badge-name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
@@ -147,7 +147,7 @@
   text-align: center;
 }
 .lc-trust-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(20px, 2.2vw, 26px);
   font-weight: 300;
   color: var(--ink);
@@ -169,7 +169,7 @@
   text-align: center;
 }
 .lc-cta-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(26px, 3vw, 38px);
   font-weight: 300;
   color: var(--paper);

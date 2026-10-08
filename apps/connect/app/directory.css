@@ -76,7 +76,7 @@
 }
 
 .dir-heading {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(36px, 6vw, 64px);
   font-weight: 300;
   color: var(--dir-dark-ink);
@@ -228,7 +228,7 @@
 }
 
 .dir-card-title {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 1.25;
@@ -439,7 +439,7 @@
 }
 
 .dir-wiki-title {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(28px, 4vw, 46px);
   font-weight: 300;
   color: var(--dir-ink);
@@ -476,7 +476,7 @@
 }
 
 .dir-wiki-section-heading {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 400;
   color: var(--dir-ink);
@@ -537,7 +537,7 @@
 }
 
 .dir-wiki-infobox-name {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 500;
   color: var(--dir-ink);
@@ -956,7 +956,7 @@
 }
 
 .dir-single-title {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(28px, 5vw, 48px);
   font-weight: 300;
   color: var(--dir-ink);
@@ -988,7 +988,7 @@
 }
 
 .dir-single-body h2 {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 400;
   margin: 36px 0 14px;
@@ -1087,7 +1087,7 @@
 }
 
 .dir-submit-heading {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(26px, 4vw, 38px);
   font-weight: 300;
   color: var(--dir-ink);
@@ -1108,7 +1108,7 @@
   padding: 48px 0;
 }
 .dir-submit-auth-gate h2 {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 300;
   margin: 0 0 12px;
@@ -1333,7 +1333,7 @@
 }
 
 .dir-success h2 {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 300;
   color: var(--dir-ink);
