@@ -27,14 +27,12 @@
 
 /* ── Brand ── */
 .tb-brand {
-  font-size: 1.375rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  color: var(--ochre);
   text-decoration: none;
   flex-shrink: 0;
   line-height: 1;
   transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
 }
 .tb-brand:hover { opacity: 0.78; }
 

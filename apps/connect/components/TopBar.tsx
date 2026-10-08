@@ -64,7 +64,15 @@ export default function TopBar() {
           </button>
 
           {/* Brand */}
-          <Link href="/feed" className="tb-brand">moveee.</Link>
+          <Link href="/feed" className="tb-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={theme === "dark" ? "/logo-white.png" : "/logo-black.png"}
+              alt="Moveee"
+              height={28}
+              style={{ width: "auto", display: "block" }}
+            />
+          </Link>
 
           {/* Search pill — desktop only */}
           <button type="button" className="tb-search" onClick={() => setSearchOpen(true)}>
