@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { openSearchModal } from "@/lib/searchModalBus";
 import { onStoopFilters } from "@/lib/stoopFiltersBus";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
+import StoopDetailPanel from "@/components/connect/StoopDetailPanel";
 
 /* ─── Data types ─────────────────────────────────────────────── */
 interface Cluster {
@@ -127,6 +128,9 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
   const [hostVibe, setHostVibe] = useState("");
   const [hostSubmitting, setHostSubmitting] = useState(false);
   const [hostError, setHostError] = useState("");
+
+  /* Inline detail panel */
+  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
 
   /* Data */
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -548,43 +552,54 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
         </>
       )}
 
-      {/* ── Main stoop grid ──────────────────────────────────── */}
-      {filteredEntries.length === 0 && !myCluster ? (
-        <div className="stoop-empty">
-          <span className="stoop-empty-icon" aria-hidden="true">🚪</span>
-          <h4>No Stoop near you yet.</h4>
-          <p>Be the first to start one in your area — it takes about 5 minutes and Moveee handles the rest.</p>
-          <button
-            type="button"
-            className="stoop-hero-btn stoop-hero-btn--primary"
-            style={{ margin: "0 auto" }}
-            onClick={() => setShowHostModal(true)}
-          >
-            Start a Stoop →
-          </button>
-        </div>
-      ) : filteredEntries.length > 0 ? (
+      {/* ── Inline detail panel ──────────────────────────────── */}
+      {selectedClusterId !== null ? (
+        <StoopDetailPanel
+          clusterId={selectedClusterId}
+          onBack={() => setSelectedClusterId(null)}
+        />
+      ) : (
         <>
-          <div className="stoop-grid">
-            {filteredEntries.map((c) => (
-              <StoopCard
-                key={c.id}
-                cluster={c}
-                joining={joiningId === c.id}
-                error={joinError?.id === c.id ? joinError.message : ""}
-                onJoin={() => join(c.id)}
-              />
-            ))}
-          </div>
-          {category === "all" && (hasMore ? (
-            <button type="button" className="stoop-load-more" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "Loading…" : "Load more"}
-            </button>
-          ) : (
-            <div className="stoop-count">Showing all {entries.length} Stoop{entries.length !== 1 ? "s" : ""}</div>
-          ))}
+          {/* ── Main stoop grid ──────────────────────────────────── */}
+          {filteredEntries.length === 0 && !myCluster ? (
+            <div className="stoop-empty">
+              <span className="stoop-empty-icon" aria-hidden="true">🚪</span>
+              <h4>No Stoop near you yet.</h4>
+              <p>Be the first to start one in your area — it takes about 5 minutes and Moveee handles the rest.</p>
+              <button
+                type="button"
+                className="stoop-hero-btn stoop-hero-btn--primary"
+                style={{ margin: "0 auto" }}
+                onClick={() => setShowHostModal(true)}
+              >
+                Start a Stoop →
+              </button>
+            </div>
+          ) : filteredEntries.length > 0 ? (
+            <>
+              <div className="stoop-grid">
+                {filteredEntries.map((c) => (
+                  <StoopCard
+                    key={c.id}
+                    cluster={c}
+                    joining={joiningId === c.id}
+                    error={joinError?.id === c.id ? joinError.message : ""}
+                    onJoin={() => join(c.id)}
+                    onSelect={() => setSelectedClusterId(c.id)}
+                  />
+                ))}
+              </div>
+              {category === "all" && (hasMore ? (
+                <button type="button" className="stoop-load-more" onClick={loadMore} disabled={loadingMore}>
+                  {loadingMore ? "Loading…" : "Load more"}
+                </button>
+              ) : (
+                <div className="stoop-count">Showing all {entries.length} Stoop{entries.length !== 1 ? "s" : ""}</div>
+              ))}
+            </>
+          ) : null}
         </>
-      ) : null}
+      )}
 
       {/* ── "Start a Stoop" quick modal ──────────────────────── */}
       {showHostModal && (
@@ -731,9 +746,9 @@ function RailCard({
 
 /* ─── StoopCard — cover-photo card (replaces GridCard) ─────────── */
 function StoopCard({
-  cluster, joining, error, onJoin,
+  cluster, joining, error, onJoin, onSelect,
 }: {
-  cluster: Cluster; joining: boolean; error?: string; onJoin: () => void;
+  cluster: Cluster; joining: boolean; error?: string; onJoin: () => void; onSelect: () => void;
 }) {
   const badge = capacityBadge(cluster.memberCount, cluster.capacity);
   const dateBadge = cluster.meetingDay
@@ -741,7 +756,7 @@ function StoopCard({
     : "";
 
   return (
-    <div className="stoop-card">
+    <div className="stoop-card" onClick={onSelect} style={{ cursor: "pointer" }}>
       {/* Cover photo — gradient until clusters have imageUrl */}
       <div className="stoop-card-cover" style={{ background: coverGrad(cluster.id) }}>
         {dateBadge && <span className="stoop-card-date-badge">{dateBadge}</span>}
@@ -780,7 +795,7 @@ function StoopCard({
             <button
               type="button"
               className={`stoop-card-rsvp${badge.tone === "full" ? " stoop-card-rsvp--full" : ""}`}
-              onClick={onJoin}
+              onClick={(e) => { e.stopPropagation(); onJoin(); }}
               disabled={joining || badge.tone === "full"}
             >
               {joining

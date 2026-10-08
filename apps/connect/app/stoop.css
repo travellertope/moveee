@@ -1249,3 +1249,370 @@
 @media (max-width: 480px) {
   .stoop-my-body { flex-direction: column; align-items: flex-start; }
 }
+
+/* ═══════════════════════════════════════════════════
+   STOOP DETAIL PANEL — .stoop-dp-* namespace
+   Renders inline as the centre column between sidebars
+   ═══════════════════════════════════════════════════ */
+
+.stoop-dp-root {
+  padding-bottom: 40px;
+}
+
+/* Back button */
+.stoop-dp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--ochre, #7a241c);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 12px 0 16px;
+  letter-spacing: 0.02em;
+  transition: opacity 0.12s;
+}
+.stoop-dp-back:hover { opacity: 0.7; }
+
+/* Loading / error states */
+.stoop-dp-loading {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--mute, #888);
+  font-size: 14px;
+}
+.stoop-dp-error {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--mute, #888);
+  font-size: 14px;
+}
+.stoop-dp-retry {
+  margin-top: 12px;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Cover header */
+.stoop-dp-cover {
+  position: relative;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 0;
+}
+.stoop-dp-cover-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 18px 18px;
+  pointer-events: none;
+}
+.stoop-dp-cover-content {
+  position: relative;
+  padding: 24px 24px 22px;
+  width: 100%;
+}
+.stoop-dp-neighborhood {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 8px;
+}
+.stoop-dp-title {
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.stoop-dp-schedule {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}
+
+/* Action bar */
+.stoop-dp-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0 14px;
+  border-bottom: 1px solid var(--rule, rgba(0,0,0,0.1));
+  flex-wrap: wrap;
+}
+.stoop-dp-host-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stoop-dp-host-av {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full, 999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stoop-dp-host-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stoop-dp-host-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+}
+.stoop-dp-member-count {
+  font-size: 12px;
+  color: var(--mute, #888);
+}
+.stoop-dp-join-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.stoop-dp-action-error {
+  font-size: 11px;
+  color: var(--ochre, #7a241c);
+  text-align: right;
+}
+
+/* Buttons */
+.stoop-dp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.13s, opacity 0.13s;
+  white-space: nowrap;
+}
+.stoop-dp-btn--primary {
+  background: var(--ochre, #7a241c);
+  color: #fff;
+}
+.stoop-dp-btn--primary:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-dp-btn--leave {
+  background: transparent;
+  color: var(--mute, #888);
+  border: 1px solid var(--rule, rgba(0,0,0,0.15));
+}
+.stoop-dp-btn--leave:hover:not(:disabled) { color: var(--ochre); border-color: var(--ochre); }
+.stoop-dp-btn--disabled {
+  background: var(--rule, rgba(0,0,0,0.1));
+  color: var(--mute, #888);
+  cursor: not-allowed;
+}
+.stoop-dp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Capacity bar */
+.stoop-dp-cap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+.stoop-dp-cap-track {
+  flex: 1;
+  height: 4px;
+  background: var(--rule, rgba(0,0,0,0.1));
+  border-radius: var(--radius-full, 999px);
+  overflow: hidden;
+}
+.stoop-dp-cap-fill {
+  height: 100%;
+  background: var(--ochre, #7a241c);
+  border-radius: inherit;
+  transition: width 0.3s;
+}
+.stoop-dp-cap-label {
+  font-size: 11px;
+  color: var(--mute, #888);
+  white-space: nowrap;
+}
+
+/* Section blocks */
+.stoop-dp-section {
+  padding: 20px 0 4px;
+  border-top: 1px solid var(--rule, rgba(0,0,0,0.07));
+  margin-top: 8px;
+}
+.stoop-dp-section-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute, #888);
+  margin: 0 0 10px;
+}
+.stoop-dp-about {
+  font-size: 14px;
+  color: var(--ink-soft, #444);
+  line-height: 1.65;
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Address — locked */
+.stoop-dp-address-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--paper-deep, #ede6d9);
+  border-radius: var(--radius-lg, 6px);
+  padding: 16px;
+}
+.stoop-dp-lock-icon {
+  flex-shrink: 0;
+  color: var(--mute, #888);
+  margin-top: 2px;
+}
+.stoop-dp-locked-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+  margin: 0 0 4px;
+}
+.stoop-dp-locked-sub {
+  font-size: 12px;
+  color: var(--mute, #888);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Address — unlocked */
+.stoop-dp-address-unlocked {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: color-mix(in srgb, var(--ochre, #7a241c) 6%, transparent);
+  border-radius: var(--radius-lg, 6px);
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--ochre, #7a241c) 18%, transparent);
+}
+.stoop-dp-unlock-icon {
+  flex-shrink: 0;
+  color: var(--ochre, #7a241c);
+  margin-top: 2px;
+}
+.stoop-dp-address-line {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+  margin: 0 0 4px;
+}
+.stoop-dp-location-note {
+  font-size: 12px;
+  color: var(--ink-soft, #444);
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.stoop-dp-accessible-badge {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  background: color-mix(in srgb, var(--ochre, #7a241c) 10%, transparent);
+  padding: 3px 8px;
+  border-radius: var(--radius-full, 999px);
+}
+
+/* Members roster */
+.stoop-dp-members-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.stoop-dp-member-chip {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full, 999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.stoop-dp-member-extra {
+  font-size: 12px;
+  color: var(--mute, #888);
+  font-weight: 600;
+  padding-left: 4px;
+}
+
+/* Hub link */
+.stoop-dp-hub-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.12s;
+}
+.stoop-dp-hub-link:hover { opacity: 0.75; }
+
+/* Footer */
+.stoop-dp-footer {
+  padding: 20px 0 8px;
+  border-top: 1px solid var(--rule, rgba(0,0,0,0.07));
+  margin-top: 8px;
+}
+.stoop-dp-full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft, #444);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.stoop-dp-full-link:hover { color: var(--ochre, #7a241c); }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .stoop-dp-action-bar { gap: 12px; }
+  .stoop-dp-join-col { align-items: flex-start; }
+  .stoop-dp-cover { min-height: 150px; }
+  .stoop-dp-title { font-size: 20px; }
+}
