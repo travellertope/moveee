@@ -19,16 +19,6 @@ export default async function StoopPage() {
   return (
     <div className="stoop-page-bg">
       <div className="stoop-wrap">
-        <div className="stoop-header">
-          <div className="stoop-header-text">
-            <h1 className="stoop-title">Culture, <em>close to home.</em></h1>
-            <p className="stoop-lede">
-              Small, weekly gatherings of Moveee members in your own area — no ticket, no big crowd,
-              just your neighbours in culture.
-            </p>
-          </div>
-        </div>
-
         {loggedIn ? (
           <StoopBrowser viewerCity={viewerCity} viewerCountry={viewerCountry} />
         ) : (

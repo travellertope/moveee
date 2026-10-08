@@ -736,3 +736,516 @@
   .stoop-loc-fields > *,
   .stoop-loc-save { flex: 1 1 100%; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   STOOP IRL HUB — redesigned browse view (October 2026)
+   Hero banner → category chips → 2-col cover-photo card grid
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Hero banner ─────────────────────────────────────────────── */
+.stoop-hero {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  margin: 16px 0 28px;
+  min-height: 200px;
+  background: linear-gradient(
+    120deg,
+    var(--ink) 0%,
+    color-mix(in srgb, var(--ink) 65%, var(--ochre)) 60%,
+    color-mix(in srgb, var(--ochre) 55%, #6b1510) 100%
+  );
+}
+
+.stoop-hero-content {
+  flex: 1;
+  padding: 32px 36px;
+  position: relative;
+  z-index: 2;
+  max-width: 68%;
+}
+
+.stoop-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  color: var(--gold);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.stoop-hero-heading {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--paper);
+  margin: 0 0 10px;
+}
+
+.stoop-hero-sub {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
+  line-height: 1.55;
+  margin: 0 0 22px;
+  max-width: 46ch;
+}
+
+.stoop-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stoop-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: opacity 0.15s, background 0.15s;
+}
+.stoop-hero-btn--primary {
+  background: var(--ochre);
+  color: #fff;
+}
+.stoop-hero-btn--primary:hover { background: var(--ochre-deep, #5c1b15); }
+.stoop-hero-btn--ghost {
+  background: color-mix(in srgb, var(--paper) 10%, transparent);
+  color: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent);
+}
+.stoop-hero-btn--ghost:hover { background: color-mix(in srgb, var(--paper) 18%, transparent); }
+.stoop-hero-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Decorative right-side panel */
+.stoop-hero-art {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 38%;
+  background:
+    radial-gradient(circle at 70% 40%, color-mix(in srgb, var(--gold) 18%, transparent) 0%, transparent 55%),
+    radial-gradient(circle at 90% 80%, color-mix(in srgb, var(--ochre) 22%, transparent) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+/* Subtle dot-grid overlay on the art panel */
+.stoop-hero-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--paper) 12%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ── Category filter chips ──────────────────────────────────── */
+.stoop-cats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stoop-cats-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  flex-shrink: 0;
+}
+.stoop-cats-chips::-webkit-scrollbar { display: none; }
+
+.stoop-cat-chip {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink-soft);
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.stoop-cat-chip:hover { border-color: var(--ochre); color: var(--ink); }
+.stoop-cat-chip--active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.stoop-cats-count {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  color: var(--mute);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── "Your Stoop" member card (new dark-gradient design) ────── */
+.stoop-my-card {
+  background: linear-gradient(135deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 78%, var(--ochre)) 100%);
+  border-radius: var(--radius-xl, 12px);
+  padding: 28px 30px;
+  color: var(--paper);
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.stoop-my-card::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ochre) 30%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.stoop-my-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ochre) 60%, var(--paper) 40%);
+  margin: 0 0 12px;
+}
+.stoop-my-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success, #2e7d32);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success, #2e7d32) 25%, transparent);
+  flex-shrink: 0;
+}
+
+.stoop-my-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.stoop-my-name {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  color: var(--paper);
+}
+
+.stoop-my-meta {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
+  margin: 0 0 4px;
+}
+.stoop-my-meta b { color: var(--paper); font-weight: 600; }
+
+/* ── Cover-photo Stoop cards (new grid design) ─────────────── */
+.stoop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.stoop-card {
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(20,17,13,0.07));
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.stoop-card:hover {
+  box-shadow: 0 4px 18px rgba(20,17,13,0.12);
+  transform: translateY(-1px);
+}
+
+.stoop-card-cover {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+.stoop-card-cover-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.stoop-card-date-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--gold) 85%, #000);
+  color: #fff;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stoop-card-body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.stoop-card-host {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stoop-card-host-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stoop-card-host-label {
+  font-size: 11.5px;
+  color: var(--mute);
+  font-weight: 500;
+}
+
+.stoop-card-name {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.stoop-card-venue {
+  font-size: 12px;
+  color: var(--mute);
+  margin: 0;
+}
+
+.stoop-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.stoop-card-loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stoop-card-loc svg { flex-shrink: 0; }
+
+.stoop-card-rsvp {
+  flex-shrink: 0;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s;
+}
+.stoop-card-rsvp:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-card-rsvp--full { background: var(--rule); color: var(--mute); cursor: not-allowed; }
+.stoop-card-rsvp:disabled:not(.stoop-card-rsvp--full) { opacity: 0.6; cursor: default; }
+
+/* ── "Start a Stoop" quick modal ────────────────────────────── */
+.stoop-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+}
+@media (min-width: 560px) {
+  .stoop-modal-backdrop { align-items: center; padding: 24px; }
+}
+
+.stoop-modal-card {
+  background: var(--paper);
+  border-radius: var(--radius-2xl, 20px) var(--radius-2xl, 20px) 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  box-shadow: 0 -4px 40px rgba(20, 17, 13, 0.2);
+}
+@media (min-width: 560px) {
+  .stoop-modal-card { border-radius: var(--radius-2xl, 20px); }
+}
+
+.stoop-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 1;
+}
+.stoop-modal-title {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+.stoop-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.stoop-modal-close:hover { background: var(--rule); }
+
+.stoop-modal-body {
+  padding: 20px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stoop-modal-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+
+.stoop-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 13px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+}
+.stoop-modal-input:focus { outline: none; border-color: var(--ochre); }
+
+.stoop-modal-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stoop-modal-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.stoop-modal-note {
+  font-size: 12px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.stoop-modal-submit {
+  width: 100%;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 13px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.stoop-modal-submit:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-modal-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Responsive adjustments for new elements ─────────────────── */
+@media (max-width: 640px) {
+  .stoop-hero { margin: 12px 0 20px; }
+  .stoop-hero-content { max-width: 100%; padding: 24px 20px; }
+  .stoop-hero-art { display: none; }
+  .stoop-hero-heading { font-size: 19px; }
+  .stoop-grid { grid-template-columns: 1fr; }
+  .stoop-cats-row { flex-direction: column; align-items: flex-start; }
+  .stoop-modal-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .stoop-my-body { flex-direction: column; align-items: flex-start; }
+}
