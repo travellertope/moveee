@@ -72,9 +72,15 @@
 /* ── Feed tabs — pill style ─────────────────────────────────────────── */
 .feed-tabs {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 14px 16px 16px;
   background: transparent;
+}
+.feed-tabs-pills {
+  display: flex;
+  gap: 6px;
 }
 .feed-tab {
   position: relative;
@@ -101,6 +107,41 @@
 }
 /* Remove old underline indicator */
 .feed-tab--active::after { display: none; }
+
+/* ── Feed sort control ──────────────────────────────────────────── */
+.feed-sort {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.feed-sort-label {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  color: var(--mute);
+  white-space: nowrap;
+  user-select: none;
+}
+.feed-sort-select {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+  background-size: 10px 6px;
+  outline: none;
+  transition: color 0.12s;
+}
+.feed-sort-select:hover { color: var(--ink); }
+.feed-sort-select:focus { color: var(--ink); }
 
 /* ── Right sidebar sections ──────────────────────────────────────── */
 .pf-sidebar-section {

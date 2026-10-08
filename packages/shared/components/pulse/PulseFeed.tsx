@@ -59,6 +59,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
+  const [sortBy, setSortBy] = useState<"recent" | "top">("recent");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Apply edition cookie → pre-select matching region
@@ -163,18 +164,28 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     return typeMatch && regionMatch && tagMatch && categoryMatch && !isEventItem(item);
   }), [items, activeType, activeRegion, activeTag, activeCategory, forYou, interestTagSet]);
 
-  // When "For You" is active, rank by relevance score; otherwise newest-first.
+  // When "For You" is active, rank by relevance score; otherwise sort by
+  // the user's chosen sort order (newest-first or top-by-engagement).
   // Hub posts (docs/hubs-plan.md §4.5) only ever enter the ranking pool here,
   // via hubCandidateItems — never through the default `items`/`filtered`
   // fetch, which excludes them server-side.
-  const sorted = useMemo(() => (
-    forYou && hasInterests
-      ? rankFeed(
-          [...filtered, ...hubCandidateItems.filter(item => !isEventItem(item))],
-          interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds
-        )
-      : [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ), [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds]);
+  const sorted = useMemo(() => {
+    if (forYou && hasInterests) {
+      return rankFeed(
+        [...filtered, ...hubCandidateItems.filter(item => !isEventItem(item))],
+        interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds
+      );
+    }
+    const pool = [...filtered];
+    if (sortBy === "top") {
+      return pool.sort((a, b) => {
+        const engA = (a.reactions ? a.reactions.love + a.reactions.fire + a.reactions.clap : 0) + (a.commentCount ?? 0);
+        const engB = (b.reactions ? b.reactions.love + b.reactions.fire + b.reactions.clap : 0) + (b.commentCount ?? 0);
+        return engB - engA || new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+    }
+    return pool.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds, sortBy]);
 
   // Trending directory entries for the right rail — reuses the Discover
   // feature's existing sort=trending (ranked by _community_review_count,
@@ -314,20 +325,34 @@ const handleForYou = () => {
               control, mirroring the Twitter/Instagram "For You / Following"
               pattern directly above the post list. */}
           <div className="feed-tabs">
-            <button
-              type="button"
-              className={`feed-tab${!forYou ? " feed-tab--active" : ""}`}
-              onClick={() => { if (forYou) handleForYou(); }}
-            >
-              Latest
-            </button>
-            <button
-              type="button"
-              className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
-              onClick={() => { if (!forYou) handleForYou(); }}
-            >
-              For You
-            </button>
+            <div className="feed-tabs-pills">
+              <button
+                type="button"
+                className={`feed-tab${!forYou ? " feed-tab--active" : ""}`}
+                onClick={() => { if (forYou) handleForYou(); }}
+              >
+                Latest
+              </button>
+              <button
+                type="button"
+                className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
+                onClick={() => { if (!forYou) handleForYou(); }}
+              >
+                For You
+              </button>
+            </div>
+            <div className="feed-sort">
+              <label htmlFor="feed-sort-select" className="feed-sort-label">Sort by:</label>
+              <select
+                id="feed-sort-select"
+                className="feed-sort-select"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as "recent" | "top")}
+              >
+                <option value="recent">Most Recent</option>
+                <option value="top">Top Discussions</option>
+              </select>
+            </div>
           </div>
 
           {/* Section-filter → Hub prompt (docs/hubs-plan.md §10.4) — the
