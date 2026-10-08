@@ -64,7 +64,16 @@ export default function TopBar() {
           </button>
 
           {/* Brand */}
-          <Link href="/feed" className="tb-brand">moveee.</Link>
+          <Link href="/feed" className="tb-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
+              alt="Moveee"
+              height={28}
+              width={178}
+              className="tb-brand-img"
+            />
+          </Link>
 
           {/* Search pill — desktop only */}
           <button type="button" className="tb-search" onClick={() => setSearchOpen(true)}>
