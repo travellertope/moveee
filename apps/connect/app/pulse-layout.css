@@ -1,9 +1,14 @@
 /* ── Shared Pulse/Connect feed layout ─────────────────────────────── */
+
+/* Feed background token — slate-50 in light mode */
+:root { --feed-bg: #f8fafc; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --feed-bg: var(--paper, #1a1714); }
+}
+:root[data-theme="dark"] { --feed-bg: var(--paper, #1a1714); }
+
 .pulse-layout {
   display: grid;
-  /* center column capped for readability, not left to grow edge-to-edge —
-     widened again (was 200/640/300 @ 1400px cap) since that still left
-     large dead margins at common desktop widths */
   grid-template-columns: 240px minmax(0, 760px) 340px;
   justify-content: center;
   max-width: 1680px;
@@ -12,21 +17,6 @@
   align-items: start;
   overflow-x: clip;
 }
-/* The main /feed page has no left sidebar of its own anymore — its
-   Content Type / Sections controls moved into the global left-nav rail
-   and the search modal (see Header.tsx/SearchModal.tsx). This modifier
-   drops the left 240px track for that page only; the single-story pages
-   below (pulse/[slug], community/[slug]) still use the base 3-column
-   .pulse-layout with a real .pulse-sidebar-left.
-   The timeline track is 1fr (fills all remaining space) rather than a
-   fixed max-width, so the two tracks always sum to exactly the container
-   width — the base .pulse-layout's justify-content:center has nothing
-   left to redistribute, which previously showed up as an asymmetric
-   leading gap glued to the timeline's left edge only (its right edge,
-   against the right-rail column, got none of that extra space, so the
-   column read as unevenly padded). The 760px reading-width cap moves
-   onto .pulse-timeline-inner below, which centers via margin:auto within
-   the now-full-width track, splitting any leftover space evenly. */
 .pulse-layout--feed {
   grid-template-columns: minmax(0, 1fr) 340px;
 }
@@ -41,28 +31,37 @@
 }
 .pulse-sidebar-left::-webkit-scrollbar { width: 3px; }
 .pulse-sidebar-left::-webkit-scrollbar-thumb { background: var(--rule-dark, #e0d8ce); }
+
+/* Timeline: transparent so the feed-bg shows through; cards provide their own white bg */
 .pulse-timeline {
-  border-right: 1px solid var(--rule, #e8e2d8);
-  background: var(--paper, #ffffff);
+  background: transparent;
   min-height: 80vh;
   min-width: 0;
 }
-/* Caps + centers the feed's actual content within the now-full-width
-   .pulse-timeline track (see .pulse-layout--feed comment above) — kept
-   separate from .pulse-timeline itself so its border-right/background
-   still span the full track width. */
+
+/* Caps + centers the feed's content within the full-width track */
 .pulse-timeline-inner {
   max-width: 760px;
   margin: 0 auto;
 }
+
+/* Cards sit on slate-50 bg — give them a slightly bigger radius and airy spacing */
+.pulse-timeline article {
+  border-radius: 16px !important;
+  margin-bottom: 4px !important;
+}
+
 .pulse-sidebar-right {
   position: sticky;
   top: var(--topbar-height, 60px);
   max-height: calc(100dvh - var(--topbar-height, 60px));
   overflow-y: auto;
-  background: var(--paper, #ffffff);
-  padding: 24px 16px;
+  padding: 16px 14px;
+  background: transparent;
 }
+.pulse-sidebar-right::-webkit-scrollbar { width: 3px; }
+.pulse-sidebar-right::-webkit-scrollbar-thumb { background: var(--rule-dark, #e0d8ce); }
+
 @media (max-width: 860px) {
   .pulse-layout              { grid-template-columns: 1fr; }
   .pulse-sidebar-left        { display: none; }
@@ -70,41 +69,252 @@
   .pulse-timeline            { border-right: none; }
 }
 
-/* ── For You / Latest tabs (replaces the old in-feed Content Type sidebar +
-   category pill strip — content-type/category filtering now lives in the
-   global search modal; this is the one remaining feed-level control) ── */
+/* ── Feed tabs — pill style ─────────────────────────────────────────── */
 .feed-tabs {
   display: flex;
-  gap: 4px;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--rule, #e8e2d8);
-  background: var(--paper);
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 16px;
+  background: transparent;
+}
+.feed-tabs-pills {
+  display: flex;
+  gap: 6px;
 }
 .feed-tab {
   position: relative;
-  background: none;
-  border: none;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e8e2d8);
   cursor: pointer;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--mute);
-  padding: 14px 12px;
+  color: var(--ink-soft);
+  padding: 8px 18px;
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.feed-tab:hover { color: var(--ink); }
-.feed-tab--active { color: var(--ink); }
-.feed-tab--active::after {
-  content: "";
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: -1px;
-  height: 2px;
-  background: var(--ochre);
-  border-radius: 2px 2px 0 0;
+.feed-tab:hover {
+  background: var(--paper-deep, #f2ede3);
+  border-color: var(--rule-dark, #d5cdc2);
+  color: var(--ink);
+}
+.feed-tab--active {
+  background: var(--ochre, #7a241c);
+  border-color: var(--ochre, #7a241c);
+  color: #fff;
+}
+/* Remove old underline indicator */
+.feed-tab--active::after { display: none; }
+
+/* ── Feed sort control ──────────────────────────────────────────── */
+.feed-sort {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.feed-sort-label {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  color: var(--mute);
+  white-space: nowrap;
+  user-select: none;
+}
+.feed-sort-select {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0 center;
+  background-size: 10px 6px;
+  outline: none;
+  transition: color 0.12s;
+}
+.feed-sort-select:hover { color: var(--ink); }
+.feed-sort-select:focus { color: var(--ink); }
+
+/* ── Right sidebar sections ──────────────────────────────────────── */
+.pf-sidebar-section {
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-xl, 12px);
+  padding: 16px;
+  margin-bottom: 12px;
 }
 
-/* ── Right rail: trending + about ───────────────────────────────── */
+.pf-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.pf-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pf-section-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+.pf-section-title {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+.pf-section-see-all {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.pf-section-see-all:hover { text-decoration: underline; }
+
+/* Trending Now */
+.pf-trending-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-lg, 6px);
+  text-decoration: none;
+  transition: background 0.12s;
+}
+.pf-trending-card:hover { background: var(--paper-deep, #f5f0e8); }
+.pf-trending-emoji {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md, 4px);
+  background: var(--paper-deep, #f5f0e8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.pf-trending-name {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pf-trending-meta {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 11px;
+  color: var(--mute);
+  margin: 2px 0 0;
+}
+
+/* Hubs */
+.pf-hub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pf-hub-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--paper-deep, #f5f0e8);
+  border: 1px solid var(--rule, #e8e2d8);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.pf-hub-chip:hover {
+  background: var(--ochre, #7a241c);
+  border-color: var(--ochre, #7a241c);
+  color: #fff;
+}
+
+/* Users to Follow */
+.pf-follow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.pf-follow-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--ink, #14110d);
+  color: var(--paper, #fff);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.pf-follow-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.pf-follow-info { flex: 1; min-width: 0; }
+.pf-follow-name {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-follow-sub {
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 11px;
+  color: var(--mute);
+  margin: 1px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-follow-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink, #14110d);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.pf-follow-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ── Legacy right rail styles (kept for non-feed pulse pages) ────── */
 .pulse-trending-heading {
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   font-size: 9px;
@@ -179,7 +389,7 @@
   border: 1px solid rgba(179,130,56,.2);
   border-radius: 12px;
   padding: 12px;
-  margin-top: 16px;
+  margin-bottom: 12px;
 }
 .pulse-foryou-hint p {
   font-family: var(--font-sans, 'DM Sans', sans-serif);

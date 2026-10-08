@@ -54,6 +54,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
+  const [sortBy, setSortBy] = useState<"recent" | "top">("recent");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -153,15 +154,26 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   ), [filtered, followedUsernames]);
 
+  // Sort order: Following tab → followingItems; For You → ranked by interests;
+  // otherwise → newest-first or top-by-engagement based on sortBy control.
   const sorted = useMemo(() => {
     if (followingFilter) return followingItems;
-    if (forYou && hasInterests)
+    if (forYou && hasInterests) {
       return rankFeed(
         [...filtered, ...hubCandidateItems.filter(item => !isEventItem(item))],
         interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds
       );
-    return [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds, followingFilter, followingItems]);
+    }
+    const pool = [...filtered];
+    if (sortBy === "top") {
+      return pool.sort((a, b) => {
+        const engA = (a.reactions ? a.reactions.love + a.reactions.fire + a.reactions.clap : 0) + (a.commentCount ?? 0);
+        const engB = (b.reactions ? b.reactions.love + b.reactions.fire + b.reactions.clap : 0) + (b.commentCount ?? 0);
+        return engB - engA || new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+    }
+    return pool.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [filtered, hubCandidateItems, forYou, hasInterests, interestTagSet, userCity, userRegion, followedUsernames, followedOrJoinedHubIds, followingFilter, followingItems, sortBy]);
 
   const [trendingDirectory, setTrendingDirectory] = useState<TrendingDirectoryEntry[]>([]);
   const [trendingDirectoryLabel, setTrendingDirectoryLabel] = useState("Trending Now");
@@ -279,8 +291,17 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setVisibleCount(20);
   };
 
+  // Suggested users for "Users to Follow" sidebar section
+  const [suggestedUsers, setSuggestedUsers] = useState<{ id: string; displayName: string; username: string; occupation?: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/connect/members?per_page=4&sort=recent")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.members) setSuggestedUsers(data.members.slice(0, 4)); })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div style={{ background: "var(--paper, #ffffff)" }}>
+    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
       <div className="pulse-layout pulse-layout--feed">
 
         {/* ── Center Timeline ── */}
@@ -339,29 +360,43 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             onSelectDraft={selectDraftTile}
           />
 
-          {/* Feed tabs — All Posts / Following / Trending */}
+          {/* Feed tabs — All Posts / Following / Trending + Sort by */}
           <div className="feed-tabs">
-            <button
-              type="button"
-              className={`feed-tab${!forYou && !followingFilter ? " feed-tab--active" : ""}`}
-              onClick={handleAllPosts}
-            >
-              All Posts
-            </button>
-            <button
-              type="button"
-              className={`feed-tab${followingFilter ? " feed-tab--active" : ""}`}
-              onClick={handleFollowing}
-            >
-              Following
-            </button>
-            <button
-              type="button"
-              className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
-              onClick={handleForYou}
-            >
-              Trending
-            </button>
+            <div className="feed-tabs-pills">
+              <button
+                type="button"
+                className={`feed-tab${!forYou && !followingFilter ? " feed-tab--active" : ""}`}
+                onClick={handleAllPosts}
+              >
+                All Posts
+              </button>
+              <button
+                type="button"
+                className={`feed-tab${followingFilter ? " feed-tab--active" : ""}`}
+                onClick={handleFollowing}
+              >
+                Following
+              </button>
+              <button
+                type="button"
+                className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
+                onClick={handleForYou}
+              >
+                Trending
+              </button>
+            </div>
+            <div className="feed-sort">
+              <label htmlFor="feed-sort-select" className="feed-sort-label">Sort by:</label>
+              <select
+                id="feed-sort-select"
+                className="feed-sort-select"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as "recent" | "top")}
+              >
+                <option value="recent">Most Recent</option>
+                <option value="top">Top Discussions</option>
+              </select>
+            </div>
           </div>
 
           {activeTag && SECTION_HUB_SLUGS[activeTag] && (
@@ -438,45 +473,66 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
-          {/* Trending Now card */}
+
+          {/* Trending Now */}
           {trendingDirectory.length > 0 && (
-            <div className="pulse-sidebar-card">
-              <p className="pulse-trending-heading">{trendingDirectoryLabel}</p>
+            <div className="pf-sidebar-section">
+              <div className="pf-section-header">
+                <div className="pf-section-title-row">
+                  <span className="pf-section-icon">🔥</span>
+                  <h3 className="pf-section-title">Trending Now</h3>
+                </div>
+              </div>
               {trendingDirectory.map(entry => (
-                <Link key={entry.id} href={`/directory/${entry.slug}`} className="pulse-trending-item" style={{ display: "block", textDecoration: "none" }}>
-                  <p className="pulse-trending-title">
-                    {DIR_TYPE_EMOJI[entry.type] ?? "✦"} {entry.title}
-                  </p>
-                  {entry.reviewCount > 0 && (
-                    <p className="pulse-trending-count">
-                      {entry.reviewCount} community post{entry.reviewCount !== 1 ? "s" : ""}
-                    </p>
-                  )}
+                <Link key={entry.id} href={`/directory/${entry.slug}`} className="pf-trending-card">
+                  <div className="pf-trending-emoji">{DIR_TYPE_EMOJI[entry.type] ?? "✦"}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <p className="pf-trending-name">{entry.title}</p>
+                    {entry.reviewCount > 0 && (
+                      <p className="pf-trending-meta">{entry.reviewCount} post{entry.reviewCount !== 1 ? "s" : ""}</p>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
           )}
 
-          {/* Writers to follow — derived from feed items already loaded */}
-          {writersToFollow.length > 0 && (
-            <div className="pulse-sidebar-card">
-              <p className="pulse-trending-heading">Writers to Follow</p>
-              {writersToFollow.map(writer => (
-                <div key={writer.username} className="pulse-writer-row">
-                  <div className="pulse-writer-avatar">
-                    {writer.displayName.charAt(0).toUpperCase()}
+          {/* Hubs — # hashtag-style navigation to topic communities */}
+          <div className="pf-sidebar-section">
+            <div className="pf-section-header">
+              <div className="pf-section-title-row">
+                <h3 className="pf-section-title">Explore Hubs</h3>
+              </div>
+              <Link href="/hub" className="pf-section-see-all">See all</Link>
+            </div>
+            <div className="pf-hub-chips">
+              {Object.entries(SECTION_HUB_SLUGS).map(([name, slug]) => (
+                <Link key={slug} href={`/hub/${slug}`} className="pf-hub-chip">
+                  #{name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Users to Follow */}
+          {suggestedUsers.length > 0 && (
+            <div className="pf-sidebar-section">
+              <div className="pf-section-header">
+                <div className="pf-section-title-row">
+                  <h3 className="pf-section-title">Users to Follow</h3>
+                </div>
+                <Link href="/discover" className="pf-section-see-all">See all</Link>
+              </div>
+              {suggestedUsers.map(user => (
+                <div key={user.id} className="pf-follow-row">
+                  <div className="pf-follow-avatar">
+                    {(user.displayName || user.username || "?").charAt(0).toUpperCase()}
                   </div>
-                  <div className="pulse-writer-info">
-                    <p className="pulse-writer-name">{writer.displayName}</p>
-                    <p className="pulse-writer-handle">@{writer.username}</p>
+                  <div className="pf-follow-info">
+                    <p className="pf-follow-name">{user.displayName || user.username}</p>
+                    {user.occupation && <p className="pf-follow-sub">{user.occupation}</p>}
                   </div>
-                  <button
-                    type="button"
-                    className="pulse-writer-follow-btn"
-                    onClick={() => followUser(writer.username)}
-                  >
-                    Follow
-                  </button>
+                  <Link href={`/connect/${user.username}`} className="pf-follow-btn">Follow</Link>
                 </div>
               ))}
             </div>
