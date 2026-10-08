@@ -104,8 +104,8 @@
   position: sticky;
   top: var(--topbar-height, 60px);             /* sit flush below the global TopBar */
   height: calc(100dvh - var(--topbar-height, 60px));
-  background: var(--paper);
-  border-right: 1px solid rgba(42, 36, 28, 0.12);
+  background: transparent;
+  border-right: none;
   overflow-y: auto;
   z-index: 100;
 }

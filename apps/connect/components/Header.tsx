@@ -171,11 +171,6 @@ export default function ConnectHeader() {
                 </div>
               )}
             </div>
-          ) : status === "unauthenticated" ? (
-            <div className="ch-rail-auth">
-              <Link href="/login" className="ch-btn-ghost">Sign in</Link>
-              <Link href="/register" className="ch-btn-solid">Join</Link>
-            </div>
           ) : null}
         </div>
       </aside>

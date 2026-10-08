@@ -18,8 +18,8 @@
   overflow-x: clip;
 }
 .pulse-layout--feed {
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 0 24px;
+  grid-template-columns: minmax(0, 1fr) 296px;
+  gap: 0 28px;
 }
 .pulse-sidebar-left {
   border-right: 1px solid var(--rule, #e8e2d8);
