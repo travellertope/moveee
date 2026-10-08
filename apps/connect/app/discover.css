@@ -43,7 +43,7 @@
   margin: 0 0 10px;
 }
 .disc-hero-title {
-  font-family: var(--font-fraunces, Georgia, serif);
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-weight: 700;
   font-size: clamp(32px, 5vw, 56px);
   line-height: .98;
@@ -160,7 +160,7 @@
 
 .disc-rail-heading,
 .disc-grid-heading {
-  font-family: var(--font-fraunces, Georgia, serif);
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 700;
   color: var(--ink);
@@ -271,7 +271,7 @@
 }
 
 .disc-card-title {
-  font-family: var(--font-fraunces, Georgia, serif);
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-weight: 700;
   font-size: 19px;
   line-height: 1.2;

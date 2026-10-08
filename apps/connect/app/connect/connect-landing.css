@@ -21,7 +21,7 @@
 }
 .lc-offer-emoji { font-size: 28px; margin-bottom: 16px; }
 .lc-offer-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .2em;
   text-transform: uppercase;
@@ -38,7 +38,7 @@
   margin: 0 0 16px;
 }
 .lc-offer-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: var(--mute);
   line-height: 1.6;
@@ -49,7 +49,7 @@
   margin-top: 28px;
   padding: 12px 22px;
   border-radius: var(--radius-full);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -75,7 +75,7 @@
   gap: 24px;
 }
 .lc-step-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--ochre);
   margin-bottom: 10px;
@@ -88,7 +88,7 @@
   margin: 0 0 6px;
 }
 .lc-step-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--mute);
   line-height: 1.55;
@@ -132,7 +132,7 @@
   margin: 0 0 4px;
 }
 .lc-badge-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--mute);
   line-height: 1.5;
@@ -154,7 +154,7 @@
   margin: 0 0 12px;
 }
 .lc-trust-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: var(--mute);
   line-height: 1.6;
@@ -186,7 +186,7 @@
   display: inline-block;
   padding: 14px 28px;
   border-radius: var(--radius-full);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;

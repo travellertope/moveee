@@ -93,7 +93,7 @@
 }
 
 .rl-section-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -114,7 +114,7 @@
 }
 
 .rl-section-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
 }
@@ -135,7 +135,7 @@
   background: var(--paper-deep);
   border: none;
   cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
@@ -187,7 +187,7 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: var(--radius-full);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -208,7 +208,7 @@
 }
 
 .rl-progress-author {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   margin: 0 0 8px;
@@ -221,7 +221,7 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: var(--ochre);
@@ -248,7 +248,7 @@
 }
 
 .rl-goal-year {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -273,7 +273,7 @@
 }
 
 .rl-goal-meta {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--ink-soft);
   margin: 0;
@@ -311,7 +311,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 700;
   color: var(--paper);
@@ -326,7 +326,7 @@
 }
 
 .rl-activity-meta {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--ink-soft);
   margin: 0;
@@ -349,7 +349,7 @@
 }
 
 .rl-activity-author {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--mute);
   margin: 0 0 6px;
@@ -359,14 +359,14 @@
 }
 
 .rl-activity-rating {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 12px;
   color: var(--ochre);
   margin: 0 0 4px;
 }
 
 .rl-activity-excerpt {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--ink-soft);
   line-height: 1.5;
@@ -395,7 +395,7 @@
 }
 
 .rl-feed-kicker {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -418,7 +418,7 @@
 }
 
 .rl-feed-excerpt {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--ink-soft);
   line-height: 1.5;
@@ -436,7 +436,7 @@
   border-radius: var(--radius-full);
   border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
   background: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
@@ -450,7 +450,7 @@
 }
 
 .rl-see-all-link {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--ochre);
@@ -475,7 +475,7 @@
 }
 
 .rl-empty {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--mute);
   margin: 0;
@@ -517,7 +517,7 @@
   padding: 11px 0;
   background: none;
   border: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: var(--mute);

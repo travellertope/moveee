@@ -392,7 +392,7 @@
    check off rather than a word — the one input on these pages people
    transcribe by eye from another screen. */
 .auth-input--code {
-  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 22px;
   letter-spacing: 0.32em;
   text-align: center;

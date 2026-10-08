@@ -25,7 +25,7 @@
   margin-top: 32px;
 }
 .mco-eyebrow {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .15em;
@@ -43,7 +43,7 @@
 }
 .mco-headline em { font-style: italic; color: var(--ink); }
 .mco-lede {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 16px;
   color: var(--ink-soft);
   line-height: 1.6;
@@ -63,7 +63,7 @@
   gap: 24px;
 }
 .mco-nav-link {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
@@ -86,7 +86,7 @@
   padding: 80px;
   color: var(--mute, #7a6f5c);
   font-size: 14px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 
 /* ── Directory section ── */
@@ -104,7 +104,7 @@
   gap: 40px;
 }
 .mco-section-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .2em;
   text-transform: uppercase;
@@ -131,7 +131,7 @@
   max-width: 500px;
 }
 .mco-directory-cta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -165,7 +165,7 @@
   padding: 12px 16px;
   border: 1px solid rgba(42,36,28,.15);
   background: var(--paper);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 12px;
   color: var(--ink);
   outline: none;
@@ -179,7 +179,7 @@
   padding: 12px 16px;
   border: 1px solid rgba(42,36,28,.15);
   background: var(--paper);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--ink);
   outline: none;
@@ -269,7 +269,7 @@
   line-height: 1.35;
 }
 .mco-member-location {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -284,7 +284,7 @@
   margin: 6px 0 0;
 }
 .mco-member-discipline {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -329,7 +329,7 @@
   color: var(--ochre);
 }
 .mco-dir-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   white-space: nowrap;
@@ -339,7 +339,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -386,7 +386,7 @@
   color: var(--paper);
   padding: 14px 28px;
   border-radius: var(--radius-full);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -420,7 +420,7 @@
   background: var(--ink);
 }
 .mco-tier-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .2em;
   text-transform: uppercase;
@@ -440,7 +440,7 @@
 .mco-tier-card--pro .mco-tier-name { color: var(--paper); }
 .mco-tier-card--pro .mco-tier-name em { color: var(--ochre); font-style: italic; }
 .mco-tier-price {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   margin: 0 0 28px;
@@ -479,7 +479,7 @@
   background: var(--ink);
   color: var(--paper);
   border-radius: var(--radius-full);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -496,7 +496,7 @@
 .mco-tier-status {
   display: inline-block;
   margin-top: 32px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -520,7 +520,7 @@
   font-size: 13px;
 }
 .mco-compare-table thead th {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -622,7 +622,7 @@
 }
 a.mco-fellowship-card:hover { border-color: rgba(179,130,56,.4); }
 .mco-fellowship-card-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -637,13 +637,13 @@ a.mco-fellowship-card:hover { border-color: rgba(179,130,56,.4); }
   margin: 0 0 6px;
 }
 .mco-fellowship-card-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   margin: 0;
 }
 .mco-fellowship-card-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--ochre);
   margin: 6px 0 0;
@@ -662,13 +662,13 @@ a.mco-fellowship-card:hover { border-color: rgba(179,130,56,.4); }
   flex-shrink: 0;
   border: none;
   cursor: pointer;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .mco-fellowship-start-btn {
   border: none;
   background: none;
   cursor: pointer;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .mco-fellowship-empty {
   border: 1px dashed rgba(42,36,28,.15);

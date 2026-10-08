@@ -88,7 +88,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
@@ -115,14 +115,14 @@
   flex-shrink: 0;
 }
 .feed-sort-label {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   color: var(--mute);
   white-space: nowrap;
   user-select: none;
 }
 .feed-sort-select {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-soft);
@@ -168,14 +168,14 @@
   line-height: 1;
 }
 .pf-section-title {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   margin: 0;
 }
 .pf-section-see-all {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   font-weight: 600;
   color: var(--ochre, #7a241c);
@@ -207,7 +207,7 @@
   flex-shrink: 0;
 }
 .pf-trending-name {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: var(--ink);
@@ -219,7 +219,7 @@
   overflow: hidden;
 }
 .pf-trending-meta {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   color: var(--mute);
   margin: 2px 0 0;
@@ -238,7 +238,7 @@
   border-radius: 999px;
   background: var(--paper-deep, #f5f0e8);
   border: 1px solid var(--rule, #e8e2d8);
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-soft);
@@ -265,7 +265,7 @@
   border-radius: 999px;
   background: var(--ink, #14110d);
   color: var(--paper, #fff);
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   display: flex;
@@ -277,7 +277,7 @@
 .pf-follow-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .pf-follow-info { flex: 1; min-width: 0; }
 .pf-follow-name {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
@@ -287,7 +287,7 @@
   text-overflow: ellipsis;
 }
 .pf-follow-sub {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   color: var(--mute);
   margin: 1px 0 0;
@@ -302,7 +302,7 @@
   border: none;
   background: rgba(122, 36, 28, 0.08);
   color: var(--ochre, #7a241c);
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   font-weight: 700;
   text-decoration: none;
@@ -317,7 +317,7 @@
 
 /* ── Legacy right rail styles (kept for non-feed pulse pages) ────── */
 .pulse-trending-heading {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -339,7 +339,7 @@
   width: 100%;
 }
 .pulse-trending-title {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: var(--ink);
@@ -350,7 +350,7 @@
   overflow: hidden;
 }
 .pulse-trending-count {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-mono, var(--font-inter), 'Inter', sans-serif);
   font-size: 10px;
   color: var(--mute);
   margin-top: 4px;
@@ -372,14 +372,14 @@
   margin-bottom: 16px;
 }
 .pulse-about-title {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 8px;
 }
 .pulse-about-desc {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   color: var(--ink-soft);
   line-height: 1.5;
@@ -393,7 +393,7 @@
   margin-bottom: 12px;
 }
 .pulse-foryou-hint p {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   color: var(--ink-soft);
   line-height: 1.5;
@@ -423,7 +423,7 @@
   justify-content: center;
   font-size: 13px;
   font-weight: 700;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   overflow: hidden;
 }
 .composer-box-avatar img {
@@ -445,7 +445,7 @@
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl);
   padding: 9px 16px;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 14px;
   color: var(--mute);
   cursor: pointer;
@@ -467,7 +467,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 600;
   color: var(--mute);
@@ -483,7 +483,7 @@
   border: none;
   border-radius: var(--radius-full);
   padding: 6px 16px;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -513,11 +513,11 @@
   justify-content: center;
   font-size: 13px;
   font-weight: 700;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
 }
 .pulse-writer-info { flex: 1; min-width: 0; }
 .pulse-writer-name {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: var(--ink);
@@ -527,7 +527,7 @@
   text-overflow: ellipsis;
 }
 .pulse-writer-handle {
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   color: var(--mute);
   margin: 0;
@@ -538,7 +538,7 @@
   color: var(--ochre);
   border-radius: var(--radius-full);
   padding: 4px 12px;
-  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
