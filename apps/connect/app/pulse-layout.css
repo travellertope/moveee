@@ -55,13 +55,9 @@
 .pulse-sidebar-right {
   position: sticky;
   top: var(--topbar-height, 60px);
-  max-height: calc(100dvh - var(--topbar-height, 60px));
-  overflow-y: auto;
   padding: 16px 0;
   background: transparent;
 }
-.pulse-sidebar-right::-webkit-scrollbar { width: 3px; }
-.pulse-sidebar-right::-webkit-scrollbar-thumb { background: var(--rule-dark, #e0d8ce); }
 
 @media (max-width: 860px) {
   .pulse-layout              { grid-template-columns: 1fr; }
@@ -404,13 +400,16 @@
   margin: 0;
 }
 
-/* ── Composer box (replaces the old pill) ───────────────────────── */
+/* ── Composer box — pill card matching mockup ───────────────────── */
 .composer-box {
   display: flex;
   gap: 12px;
   padding: 14px 20px;
-  border-bottom: 1px solid var(--rule, #e8e2d8);
   background: var(--paper);
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-2xl, 20px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin: 12px 0 8px;
 }
 .composer-box-avatar {
   width: 36px;
