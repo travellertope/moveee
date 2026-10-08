@@ -143,30 +143,31 @@ export default async function CommunityPostPage({
           <main className="pulse-timeline">
           <div className="pulse-timeline-inner">
             {/* Back link */}
-            <div style={{ padding: "0.85rem 1.25rem 0", display: "flex", alignItems: "center" }}>
+            <div style={{ padding: "1rem 1rem 0", display: "flex", alignItems: "center" }}>
               <Link href="/feed" style={{
-                color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
-                letterSpacing: "0.06em", textTransform: "uppercase",
-                display: "inline-flex", alignItems: "center", gap: "0.3rem",
+                color: "#7a6f5c", fontSize: "0.82rem", textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: "0.35rem",
+                fontWeight: 500,
               }}>
-                ← Feed
+                ← Back to Feed
               </Link>
             </div>
 
-            {/* Post card — matches community card style from the feed */}
+            {/* Post card */}
             <article style={{
               background: "#fff",
-              borderBottom: "1px solid #e8e2d8",
-              borderLeft: "3px solid #81c784",
-              padding: "1rem 1.25rem",
-              display: "flex",
-              gap: "0.75rem",
+              border: "1px solid rgba(20,17,13,0.09)",
+              borderRadius: "12px",
+              boxShadow: "0 1px 4px rgba(20,17,13,0.06)",
+              padding: "1.25rem 1.5rem",
+              margin: "0.85rem 1rem 1rem",
             }}>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
               {/* Avatar */}
               <div style={{
-                width: "34px", height: "34px", borderRadius: "50%",
+                width: "40px", height: "40px", borderRadius: "50%",
                 background: "#edf7ed", border: "1px solid #c8e6c9",
-                color: "#2e7d32", fontSize: "0.62rem", fontWeight: 700,
+                color: "#2e7d32", fontSize: "0.68rem", fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
               }}>
                 {initials}
@@ -174,19 +175,21 @@ export default async function CommunityPostPage({
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-                  <span style={{ color: "#14110d", fontSize: "0.82rem", fontWeight: 600 }}>{author}</span>
-                  <span style={{ color: "#c8bfb0", fontSize: "0.7rem" }}>·</span>
-                  <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>{formatDate(post.date)}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.65rem", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                    <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 700 }}>{author}</span>
+                    <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>{formatDate(post.date)}</span>
+                  </div>
                   {tag && (
                     <Link
                       href={`/feed?tag=${encodeURIComponent(tag)}`}
                       style={{
                         marginLeft: "auto",
-                        background: "#edf7ed", color: "#2e7d32",
-                        fontSize: "0.58rem", fontWeight: 700,
-                        letterSpacing: "0.1em", textTransform: "uppercase",
-                        padding: "0.15rem 0.4rem", border: "none",
+                        background: "rgba(46,125,50,0.08)", color: "#2e7d32",
+                        fontSize: "0.68rem", fontWeight: 600,
+                        padding: "0.2rem 0.6rem",
+                        borderRadius: "9999px",
+                        border: "1px solid rgba(46,125,50,0.18)",
                         textDecoration: "none",
                       }}
                     >
@@ -247,6 +250,7 @@ export default async function CommunityPostPage({
                 />
 
               </div>
+              </div>
             </article>
           </div>
           </main>
@@ -254,7 +258,7 @@ export default async function CommunityPostPage({
           {/* ── Right sidebar ── */}
           <aside className="pulse-sidebar-right">
             <div style={{ padding: "1.25rem 1rem" }}>
-              <div style={{ background: "#fff", border: "1px solid #e8e2d8", padding: "0.85rem" }}>
+              <div style={{ background: "#fff", border: "1px solid rgba(20,17,13,0.09)", borderRadius: "12px", padding: "0.85rem", boxShadow: "0 1px 3px rgba(20,17,13,0.05)" }}>
                 <p style={{
                   color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
                   letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.45rem",
@@ -266,19 +270,19 @@ export default async function CommunityPostPage({
                 </p>
                 {loggedIn ? (
                   <Link href="/member" style={{
-                    display: "block", background: "#c93c2a", color: "#fff",
-                    textAlign: "center", padding: "0.45rem 0.75rem",
-                    fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-                    textTransform: "uppercase", textDecoration: "none",
+                    display: "block", background: "var(--ochre, #7a241c)", color: "#fff",
+                    textAlign: "center", padding: "0.5rem 0.75rem",
+                    fontSize: "0.78rem", fontWeight: 600,
+                    borderRadius: "8px", textDecoration: "none",
                   }}>
                     Member Dashboard →
                   </Link>
                 ) : (
                   <Link href="/register" style={{
-                    display: "block", background: "#c93c2a", color: "#fff",
-                    textAlign: "center", padding: "0.45rem 0.75rem",
-                    fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-                    textTransform: "uppercase", textDecoration: "none",
+                    display: "block", background: "var(--ochre, #7a241c)", color: "#fff",
+                    textAlign: "center", padding: "0.5rem 0.75rem",
+                    fontSize: "0.78rem", fontWeight: 600,
+                    borderRadius: "8px", textDecoration: "none",
                   }}>
                     Join Moveee →
                   </Link>

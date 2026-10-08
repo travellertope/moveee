@@ -11,13 +11,9 @@ import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
 import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import StoopReminderCard from "./StoopReminderCard";
-import TypePickerModal from "./TypePickerModal";
-import type { TemplateType } from "./SubmitPost";
+import ComposerModal, { type ComposerTab } from "./ComposerModal";
 import "@/app/pulse-layout.css";
 
-function draftKey(userId: string | number): string {
-  return `moveee_post_draft_${userId}`;
-}
 
 const SECTION_HUB_SLUGS: Record<string, string> = {
   Music: "music", Fashion: "fashion", Art: "art", Film: "film", Food: "food",
@@ -30,6 +26,13 @@ const DIR_TYPE_EMOJI: Record<string, string> = {
   genre: "🎵", movement: "🌊", artwork: "🎨", concept: "💡",
   fashion: "👗", "tv-series": "📺",
 };
+
+const TEMPLATE_TABS = [
+  { key: "reviews",  label: "Reviews & Gems",  emoji: "⭐", templates: ["hidden-gem", "food-review"] },
+  { key: "travel",   label: "Travel Routes",    emoji: "🗺️",  templates: ["itinerary"] },
+  { key: "showcase", label: "Art & Showcase",   emoji: "🎨", templates: ["creative-showcase"] },
+  { key: "polls",    label: "Polls",            emoji: "📊", templates: ["poll"] },
+] as const;
 
 interface TrendingDirectoryEntry {
   id: number;
@@ -53,6 +56,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
+  const [activeTemplate, setActiveTemplate] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [sortBy, setSortBy] = useState<"recent" | "top">("recent");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -130,6 +134,10 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     })();
   }, [session?.user, forYou]);
 
+  const activeTemplateTemplates = useMemo(() => (
+    activeTemplate ? TEMPLATE_TABS.find(t => t.key === activeTemplate)?.templates ?? [] : []
+  ), [activeTemplate]);
+
   const filtered = useMemo(() => items.filter(item => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch = activeRegion === "All" || !item.region || item.region.toLowerCase() === activeRegion.toLowerCase();
@@ -144,8 +152,11 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "editorial"  && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
-    return typeMatch && regionMatch && tagMatch && categoryMatch && !isEventItem(item);
-  }), [items, activeType, activeRegion, activeTag, activeCategory, interestTagSet]);
+    const templateMatch = !activeTemplate || (
+      item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never)
+    );
+    return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && !isEventItem(item);
+  }), [items, activeType, activeRegion, activeTag, activeCategory, activeTemplate, activeTemplateTemplates, interestTagSet]);
 
   // Posts from people you follow — community posts only
   const followingItems = useMemo(() => (
@@ -197,19 +208,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, []);
 
   const router = useRouter();
-  const [typeModalOpen, setTypeModalOpen] = useState(false);
-  const [hasDraft, setHasDraft] = useState(false);
-  const userId = (session?.user as any)?.id as string | number | undefined;
-  useEffect(() => {
-    if (!userId) return;
-    setHasDraft(!!localStorage.getItem(draftKey(userId)));
-  }, [userId]);
-  const selectTemplate = useCallback((t: TemplateType) => {
-    router.push(`/post/new?template=${t}`);
-  }, [router]);
-  const selectDraftTile = useCallback(() => {
-    router.push("/post/new?draft=1");
-  }, [router]);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerTab, setComposerTab] = useState<ComposerTab>("update");
 
   const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
 
@@ -264,9 +264,10 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   // Tab handlers — each tab is exclusive; clicking the active one is a no-op
   const handleAllPosts = () => {
-    if (!forYou && !followingFilter) return;
+    if (!forYou && !followingFilter && !activeTemplate) return;
     setForYou(false);
     setFollowingFilter(false);
+    setActiveTemplate("");
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
@@ -276,6 +277,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (followingFilter) return;
     setFollowingFilter(true);
     setForYou(false);
+    setActiveTemplate("");
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
@@ -285,9 +287,24 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (forYou) return;
     setForYou(true);
     setFollowingFilter(false);
+    setActiveTemplate("");
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
+    setVisibleCount(20);
+  };
+  const handleTemplate = (key: string) => {
+    if (activeTemplate === key) {
+      setActiveTemplate("");
+      setActiveType("all");
+    } else {
+      setActiveTemplate(key);
+      setActiveType("community");
+      setForYou(false);
+      setFollowingFilter(false);
+      setActiveTag("");
+      setActiveCategory("");
+    }
     setVisibleCount(20);
   };
 
@@ -330,68 +347,54 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                     .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
                 )}
               </div>
-              <div className="composer-box-body">
-                <button type="button" className="composer-box-placeholder" onClick={() => setTypeModalOpen(true)}>
-                  Share something with the community…
-                </button>
-                <div className="composer-box-actions">
-                  <button type="button" className="composer-box-action-btn" onClick={() => setTypeModalOpen(true)}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
-                    Media
-                  </button>
-                  <button type="button" className="composer-box-action-btn" onClick={() => router.push("/post/new?template=quote")}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                    Quote
-                  </button>
-                  <button type="button" className="composer-box-action-btn" onClick={() => router.push("/post/new?template=happening")}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
-                    Event
-                  </button>
-                  <button type="button" className="composer-box-submit" onClick={() => setTypeModalOpen(true)}>Post</button>
-                </div>
-              </div>
+              <button type="button" className="composer-box-placeholder" onClick={() => { setComposerTab("update"); setComposerOpen(true); }}>
+                Share a place review, music recommendation, film take, or itinerary…
+              </button>
+              <button type="button" className="composer-box-review-btn" onClick={() => { setComposerTab("review"); setComposerOpen(true); }} aria-label="Write a review">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </button>
             </div>
           )}
-          <TypePickerModal
-            open={typeModalOpen}
-            onClose={() => setTypeModalOpen(false)}
-            onSelect={selectTemplate}
-            hasDraft={hasDraft}
-            onSelectDraft={selectDraftTile}
+          <ComposerModal
+            open={composerOpen}
+            onClose={() => setComposerOpen(false)}
+            initialTab={composerTab}
           />
 
-          {/* Feed tabs — All Posts / Following / Trending + Sort by */}
+          {/* Feed tabs — All / content-type categories + Sort by */}
           <div className="feed-tabs">
             <div className="feed-tabs-pills">
               <button
                 type="button"
-                className={`feed-tab${!forYou && !followingFilter ? " feed-tab--active" : ""}`}
+                className={`feed-tab${!forYou && !followingFilter && !activeTemplate ? " feed-tab--active" : ""}`}
                 onClick={handleAllPosts}
               >
-                All Posts
+                All
               </button>
-              <button
-                type="button"
-                className={`feed-tab${followingFilter ? " feed-tab--active" : ""}`}
-                onClick={handleFollowing}
-              >
-                Following
-              </button>
-              <button
-                type="button"
-                className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
-                onClick={handleForYou}
-              >
-                Trending
-              </button>
+              {TEMPLATE_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={`feed-tab feed-tab--category${activeTemplate === tab.key ? " feed-tab--active" : ""}`}
+                  onClick={() => handleTemplate(tab.key)}
+                >
+                  <span className="feed-tab-emoji" aria-hidden="true">{tab.emoji}</span>
+                  {tab.label}
+                </button>
+              ))}
             </div>
             <div className="feed-sort">
-              <label htmlFor="feed-sort-select" className="feed-sort-label">Sort by:</label>
+              <label htmlFor="feed-sort-select" className="feed-sort-label" aria-label="Sort by">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </label>
               <select
                 id="feed-sort-select"
                 className="feed-sort-select"
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as "recent" | "top")}
+                aria-label="Sort by"
               >
                 <option value="recent">Most Recent</option>
                 <option value="top">Top Discussions</option>
