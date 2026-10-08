@@ -103,10 +103,8 @@
   flex-direction: column;
   position: sticky;
   top: var(--topbar-height, 60px);             /* sit flush below the global TopBar */
-  height: calc(100dvh - var(--topbar-height, 60px));
   background: transparent;
   border-right: none;
-  overflow-y: auto;
   z-index: 100;
 }
 
