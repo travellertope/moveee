@@ -224,8 +224,17 @@ body {
 .cw-shell { display: block; }
 .cw-shell-content { min-width: 0; }
 @media (min-width: 860px) {
-  .cw-shell { display: flex; align-items: flex-start; }
-  .cw-shell-content { flex: 1; }
+  .cw-shell {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .cw-shell-content { flex: 1; min-width: 0; }
 }
 
 /* Utility: hide native scrollbar on horizontal carousels/rails while keeping them scrollable */

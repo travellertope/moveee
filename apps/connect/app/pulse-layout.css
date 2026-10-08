@@ -18,7 +18,8 @@
   overflow-x: clip;
 }
 .pulse-layout--feed {
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 296px;
+  gap: 0 28px;
 }
 .pulse-sidebar-left {
   border-right: 1px solid var(--rule, #e8e2d8);
@@ -69,43 +70,45 @@
   .pulse-timeline            { border-right: none; }
 }
 
-/* ── Feed tabs — pill style ─────────────────────────────────────────── */
+/* ── Feed tabs — white card container matching mockup ───────────────── */
 .feed-tabs {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 14px 16px 16px;
-  background: transparent;
+  padding: 6px;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-2xl, 20px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin: 12px 16px 8px;
 }
 .feed-tabs-pills {
   display: flex;
-  gap: 6px;
+  gap: 2px;
 }
 .feed-tab {
   position: relative;
-  background: var(--paper, #fff);
-  border: 1px solid var(--rule, #e8e2d8);
+  background: none;
+  border: none;
   cursor: pointer;
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
-  padding: 8px 18px;
-  border-radius: 999px;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  padding: 7px 18px;
+  border-radius: var(--radius-xl, 12px);
+  transition: background 0.15s, color 0.15s;
 }
 .feed-tab:hover {
   background: var(--paper-deep, #f2ede3);
-  border-color: var(--rule-dark, #d5cdc2);
   color: var(--ink);
 }
 .feed-tab--active {
   background: var(--ochre, #7a241c);
-  border-color: var(--ochre, #7a241c);
   color: #fff;
+  box-shadow: 0 1px 3px rgba(122,36,28,0.2);
 }
-/* Remove old underline indicator */
 .feed-tab--active::after { display: none; }
 
 /* ── Feed sort control ──────────────────────────────────────────── */
@@ -147,9 +150,10 @@
 .pf-sidebar-section {
   background: var(--paper, #fff);
   border: 1px solid var(--rule, #e8e2d8);
-  border-radius: var(--radius-xl, 12px);
-  padding: 16px;
+  border-radius: var(--radius-2xl, 20px);
+  padding: 20px;
   margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
 .pf-section-header {
@@ -256,12 +260,12 @@
 .pf-follow-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 0;
+  gap: 12px;
+  padding: 7px 0;
 }
 .pf-follow-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   background: var(--ink, #14110d);
   color: var(--paper, #fff);
@@ -278,7 +282,7 @@
 .pf-follow-info { flex: 1; min-width: 0; }
 .pf-follow-name {
   font-family: var(--font-sans, 'DM Sans', sans-serif);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   margin: 0;
@@ -297,21 +301,22 @@
 }
 .pf-follow-btn {
   flex-shrink: 0;
-  padding: 5px 12px;
+  padding: 5px 14px;
   border-radius: 999px;
-  border: 1.5px solid var(--ink, #14110d);
-  background: transparent;
-  color: var(--ink);
+  border: none;
+  background: rgba(122, 36, 28, 0.08);
+  color: var(--ochre, #7a241c);
   font-family: var(--font-sans, 'DM Sans', sans-serif);
   font-size: 11px;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 .pf-follow-btn:hover {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--ochre, #7a241c);
+  color: #fff;
 }
 
 /* ── Legacy right rail styles (kept for non-feed pulse pages) ────── */
