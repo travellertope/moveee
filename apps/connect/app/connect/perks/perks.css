@@ -16,7 +16,7 @@
   margin: 0 auto;
 }
 .perks-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -57,7 +57,7 @@
   border-radius: var(--radius-full);
 }
 .perks-balance-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -71,14 +71,14 @@
   letter-spacing: -.01em;
 }
 .perks-balance-unit {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--ochre);
 }
 .perks-balance-link {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -120,7 +120,7 @@
 }
 .perks-filter-bar::-webkit-scrollbar { display: none; }
 .perks-filter-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -175,7 +175,7 @@
   gap: 8px;
 }
 .perk-card-partner {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -205,7 +205,7 @@
   margin-top: 4px;
 }
 .perk-card-tag {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -216,7 +216,7 @@
   border-radius: var(--radius-full);
 }
 .perk-card-expiry {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .1em;
   color: var(--mute);
@@ -230,7 +230,7 @@
   gap: 12px;
 }
 .perk-cost-badge {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -240,7 +240,7 @@
   color: var(--ochre);
 }
 .perk-min-spend {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -258,7 +258,7 @@
 
 /* ── Redeem button ── */
 .perk-redeem-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -283,7 +283,7 @@
   border: 1px solid rgba(42,36,28,.15);
   text-decoration: none;
   display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -327,7 +327,7 @@
 }
 .perk-modal-close:hover { color: var(--ink); }
 .perk-modal-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -360,14 +360,14 @@
   border-bottom: 1px solid rgba(42,36,28,.08);
 }
 .perk-modal-detail-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .14em;
   text-transform: uppercase;
   color: var(--mute);
 }
 .perk-modal-detail-value {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: var(--ink);
@@ -380,7 +380,7 @@
   flex-wrap: wrap;
 }
 .perk-modal-confirm-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -396,7 +396,7 @@
 .perk-modal-confirm-btn:hover:not(:disabled) { background: var(--ochre); }
 .perk-modal-confirm-btn:disabled { opacity: .55; cursor: not-allowed; }
 .perk-modal-cancel-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -426,7 +426,7 @@
   padding: 8px 0 4px;
 }
 .perk-qr-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -442,7 +442,7 @@
   border-radius: var(--radius-xl);
 }
 .perk-qr-token {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   color: var(--mute);
@@ -450,7 +450,7 @@
   margin: 0 0 10px;
 }
 .perk-qr-expiry {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -466,7 +466,7 @@
 /* ── Perk card button ── */
 .perk-card-btn {
   display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -523,7 +523,7 @@
   border-radius: var(--radius-xl);
 }
 .perk-success-expiry {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .1em;
   text-transform: uppercase;

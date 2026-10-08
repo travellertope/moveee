@@ -18,7 +18,7 @@
 }
 .sec-head-left { display: flex; flex-direction: column; gap: 10px; }
 .sec-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .2em;
   text-transform: uppercase;
@@ -84,7 +84,7 @@
 .sec-card:hover .sec-card-img img { transform: scale(1.03); }
 .sec-card-img--portrait { aspect-ratio: 16/9; }
 .sec-card-kicker {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -102,7 +102,7 @@
 }
 .sec-card:hover .sec-card-title { color: var(--ochre); }
 .sec-card-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -152,7 +152,7 @@
   margin: 0 0 20px;
 }
 .sec-single-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -175,7 +175,7 @@
 }
 .sec-back {
   display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -188,7 +188,7 @@
 
 /* ── Shop: price tag ── */
 .sec-card-price {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: .08em;
   color: var(--ink);
@@ -238,7 +238,7 @@
   align-items: center;
 }
 .con-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .22em;
   text-transform: uppercase;
@@ -267,7 +267,7 @@
   background: var(--ochre);
   color: var(--paper);
   padding: 14px 28px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -277,7 +277,7 @@
 }
 .con-btn-primary:hover { background: var(--ochre-deep, #a83d1a); }
 .con-btn-ghost {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -289,7 +289,7 @@
 }
 .con-btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
 .con-price {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   color: var(--mute);
@@ -319,7 +319,7 @@
   border-color: var(--ink);
 }
 .con-tier-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -336,7 +336,7 @@
 }
 .con-tier-card--patron .con-tier-name { color: var(--paper); }
 .con-tier-price {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 13px;
   letter-spacing: .06em;
   color: var(--mute);
@@ -363,7 +363,7 @@
   content: '✓';
   position: absolute;
   left: 0;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   color: var(--ochre);
   top: 2px;
@@ -372,7 +372,7 @@
 .con-tier-btn {
   display: inline-block;
   padding: 12px 20px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -395,7 +395,7 @@
 .con-tier-status {
   display: inline-block;
   padding: 12px 20px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;

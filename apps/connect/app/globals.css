@@ -26,7 +26,7 @@
   /* Fonts */
   --font-serif: "Inter", sans-serif;
   --font-sans: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Animations */
   --animate-marquee: marquee 25s linear infinite;
@@ -49,7 +49,6 @@
   /* Layout — updated by TopBar addition */
   --topbar-height: 60px;
 
-  /* Font overrides — all var(--font-dm-sans) / var(--font-fraunces) references use Inter */
   --font-dm-sans: var(--font-inter), "Inter", sans-serif;
   --font-fraunces: var(--font-inter), "Inter", sans-serif;
   --font-serif: var(--font-inter), "Inter", sans-serif;
@@ -198,7 +197,7 @@
   width: max-content;
 }
 .ticker-track span {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -271,7 +270,7 @@ h1, h2, h3, h4 {
 }
 
 .mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -285,7 +284,7 @@ h1, h2, h3, h4 {
   padding: 16px 28px;
   border-radius: var(--radius-full);
   text-decoration: none;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -302,7 +301,7 @@ h1, h2, h3, h4 {
   color: var(--ink);
   padding: 16px 0;
   text-decoration: none;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -316,7 +315,7 @@ h1, h2, h3, h4 {
   padding: 18px 32px;
   border-radius: var(--radius-full);
   text-decoration: none;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -338,7 +337,7 @@ h1, h2, h3, h4 {
 /* ── Newsletter manage CTA (authenticated members) ── */
 .nl-manage { display: flex; flex-direction: column; gap: 10px; }
 .nl-manage-note {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -347,7 +346,7 @@ h1, h2, h3, h4 {
 }
 .nl-manage-btn {
   display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -393,7 +392,7 @@ h1, h2, h3, h4 {
   gap: 32px;
 }
 .cookie-bar-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -430,7 +429,7 @@ h1, h2, h3, h4 {
 .cookie-bar-manage {
   background: none;
   border: none;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -442,7 +441,7 @@ h1, h2, h3, h4 {
 .cookie-bar-manage:hover { color: rgba(243, 236, 224, 0.8); }
 
 .cookie-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -479,7 +478,7 @@ h1, h2, h3, h4 {
 .cookie-bar-back {
   background: none;
   border: none;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -504,7 +503,7 @@ h1, h2, h3, h4 {
 }
 .cookie-detail-info { flex: 1; min-width: 0; }
 .cookie-detail-name {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -517,7 +516,7 @@ h1, h2, h3, h4 {
   line-height: 1.45;
 }
 .cookie-toggle--on {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -673,7 +672,7 @@ h1, h2, h3, h4 {
 }
 
 .comment-sidebar-header h3 {
-  font-family: var(--font-newsreader), serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-style: italic;
   margin: 0;
   font-size: 24px;
@@ -727,7 +726,7 @@ h1, h2, h3, h4 {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -787,7 +786,7 @@ h1, h2, h3, h4 {
   color: var(--paper);
   border: none;
   padding: 12px 24px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -861,7 +860,7 @@ h1, h2, h3, h4 {
   align-items: baseline;
 }
 .collated-comment-author {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -869,7 +868,7 @@ h1, h2, h3, h4 {
   font-weight: 600;
 }
 .collated-comment-date {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .08em;
   color: var(--mute);
@@ -911,7 +910,7 @@ h1, h2, h3, h4 {
   right: -6px;
   background: var(--ochre);
   color: #fff;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 9px;
   font-weight: 600;
   line-height: 1;
@@ -970,7 +969,7 @@ h1, h2, h3, h4 {
   background: var(--paper, #fff);
   cursor: pointer;
   white-space: nowrap;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: var(--ink-soft, #3a342b);
@@ -1012,7 +1011,7 @@ h1, h2, h3, h4 {
   margin-top: 6px;
   background: var(--ink, #14110d);
   color: var(--paper, #fff);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 11px;
   padding: 6px 10px;
   border-radius: 4px;
@@ -1046,7 +1045,7 @@ h1, h2, h3, h4 {
   border-left: 3px solid var(--ochre, #7a241c);
   border-radius: 0 4px 4px 0;
   color: var(--ink-soft, #3a342b);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 12px;
 }
 
@@ -1059,7 +1058,7 @@ h1, h2, h3, h4 {
   border-left: 3px solid var(--ochre, #7a241c);
   border-radius: 0 6px 6px 0;
   padding: 8px 12px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 13px;
   color: var(--ink-soft, #3a342b);
 }
@@ -1115,7 +1114,7 @@ h1, h2, h3, h4 {
 /* Field label for date inputs etc. */
 .composer-field-label {
   display: block;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 11px;
   font-weight: 700;
   color: var(--mute, #7a6f5c);
@@ -1136,7 +1135,7 @@ h1, h2, h3, h4 {
   border-radius: 4px;
   color: var(--ink, #14110d);
   font-size: 14px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   padding: 8px 10px;
   outline: none;
   width: 100%;
@@ -1162,7 +1161,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--rule, #e0d8ce);
   border-radius: 6px;
   color: var(--ink, #14110d);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 15px;
   line-height: 1.5;
   padding: 10px 12px;
@@ -1185,7 +1184,7 @@ h1, h2, h3, h4 {
   position: absolute;
   bottom: 4px;
   right: 4px;
-  font-family: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-jetbrains-mono, var(--font-inter), 'Inter', sans-serif);
   font-size: 11px;
   color: var(--mute, #7a6f5c);
   font-variant-numeric: tabular-nums;
@@ -1249,10 +1248,10 @@ h1, h2, h3, h4 {
 }
 .composer-slim-bar-left { display: flex; align-items: center; gap: 7px; }
 .composer-slim-bar-emoji { font-size: 15px; }
-.composer-slim-bar-label { font-weight: 700; font-size: 13.5px; color: var(--ink, #14110d); font-family: var(--font-dm-sans, "DM Sans", sans-serif); }
+.composer-slim-bar-label { font-weight: 700; font-size: 13.5px; color: var(--ink, #14110d); font-family: var(--font-dm-sans, 'Inter', sans-serif); }
 .composer-slim-bar-change {
   background: none; border: none; padding: 0; cursor: pointer;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 13px; font-weight: 700; color: var(--ochre, #7a241c);
 }
 
@@ -1267,7 +1266,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--rule, #e0d8ce);
   border-radius: 9999px;
   padding: 6px 12px 6px 10px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ink, #14110d);
@@ -1307,7 +1306,7 @@ h1, h2, h3, h4 {
   border: none;
   background: none;
   border-radius: 6px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ink, #14110d);
@@ -1366,12 +1365,12 @@ h1, h2, h3, h4 {
 }
 .type-picker-tile-em { font-size: 1.3rem; display: block; margin-bottom: 4px; }
 .type-picker-tile b {
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.8rem; display: block; font-weight: 700; color: var(--ink, #14110d);
 }
 .type-picker-tile-desc {
   display: block;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.66rem; font-weight: 500; color: var(--mute, #7a6f5c); margin-top: 3px; line-height: 1.3;
 }
 .type-picker-tile--locked { opacity: 0.55; cursor: not-allowed; }
@@ -1406,7 +1405,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--rule, #e0d8ce);
   border-radius: 4px;
   color: var(--mute, #7a6f5c);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 12px;
   padding: 5px 10px;
   cursor: pointer;
@@ -1426,7 +1425,7 @@ h1, h2, h3, h4 {
   border: none;
   border-radius: 4px;
   padding: 0 20px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -1443,7 +1442,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--rule, #e0d8ce);
   border-radius: 4px;
   padding: 0 16px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -1458,7 +1457,7 @@ h1, h2, h3, h4 {
   color: var(--mute, #7a6f5c);
   border: none;
   padding: 0 10px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -1483,7 +1482,7 @@ h1, h2, h3, h4 {
 .composer-wizard-dot--active { background: var(--ochre, #7a241c); transform: scale(1.3); }
 .composer-wizard-dot--done { background: var(--gold, #b38238); }
 .composer-wizard-label {
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 11px;
   font-weight: 600;
   color: var(--mute, #7a6f5c);
@@ -1500,7 +1499,7 @@ h1, h2, h3, h4 {
   border-radius: 9999px;
   padding: 0 20px;
   color: var(--mute, #7a6f5c);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 14px;
   text-align: left;
   cursor: pointer;
@@ -1573,12 +1572,12 @@ h1, h2, h3, h4 {
 }
 
 /* Error */
-.composer-error { color: var(--error); font-weight: 700; font-family: var(--font-dm-sans, "DM Sans", sans-serif); font-size: 0.78rem; margin: 0; }
+.composer-error { color: var(--error); font-weight: 700; font-family: var(--font-dm-sans, 'Inter', sans-serif); font-size: 0.78rem; margin: 0; }
 
 /* Star rating */
 .composer-star-rating { display: flex; align-items: center; gap: 8px; }
 .composer-star-label {
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 12px;
   color: var(--mute, #7a6f5c);
   font-weight: 700;
@@ -1641,7 +1640,7 @@ h1, h2, h3, h4 {
 .composer-dir-loading,
 .composer-dir-empty {
   padding: 12px 14px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.75rem;
   color: var(--mute, #7a6f5c);
 }
@@ -1652,7 +1651,7 @@ h1, h2, h3, h4 {
   border: none;
   border-radius: 4px;
   padding: 7px 14px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
@@ -1669,7 +1668,7 @@ h1, h2, h3, h4 {
   background: transparent;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.78rem;
   transition: background 0.1s;
 }
@@ -1776,7 +1775,7 @@ h1, h2, h3, h4 {
 }
 .composer-dir-selected-name {
   flex: 1;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--ink, #14110d);
@@ -1812,7 +1811,7 @@ h1, h2, h3, h4 {
   background: transparent;
   border: none;
   color: var(--ochre, #7a241c);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
@@ -1822,7 +1821,7 @@ h1, h2, h3, h4 {
 .composer-poll-add:hover { text-decoration: underline; }
 .composer-poll-duration { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .composer-poll-duration-label {
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.72rem;
   color: var(--mute, #7a6f5c);
   font-weight: 700;
@@ -1838,7 +1837,7 @@ h1, h2, h3, h4 {
   border-radius: 50%;
   background: var(--paper-deep, #f2f2f2);
   color: var(--ink, #14110d);
-  font-family: var(--font-jetbrains-mono, "JetBrains Mono", monospace);
+  font-family: var(--font-jetbrains-mono, var(--font-inter), 'Inter', sans-serif);
   font-size: 0.7rem;
   font-weight: 700;
   display: flex;
@@ -1865,7 +1864,7 @@ h1, h2, h3, h4 {
   background: transparent;
   border: none;
   color: var(--ochre, #7a241c);
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
@@ -1887,7 +1886,7 @@ h1, h2, h3, h4 {
   pointer-events: none;
 }
 .composer-guide-desc {
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.95rem;
   color: var(--mute, #7a6f5c);
   font-style: italic;
@@ -1914,7 +1913,7 @@ h1, h2, h3, h4 {
   border: none;
   border-bottom: 2px solid transparent;
   padding: 8px 10px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--mute, #7a6f5c);
@@ -1937,7 +1936,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--rule, #e0d8ce);
   border-radius: 9999px;
   padding: 3px 11px;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 0.68rem;
   color: var(--ink-soft, #3a342b);
   cursor: pointer;
@@ -2000,7 +1999,7 @@ h1, h2, h3, h4 {
 }
 .composer-photo-hint {
   width: 100%;
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   font-size: 11px;
   color: var(--mute, #7a6f5c);
   margin: 0;
@@ -2008,7 +2007,7 @@ h1, h2, h3, h4 {
 
 /* Link preview loading */
 .composer-link-loading {
-  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  font-family: var(--font-dm-sans, 'Inter', sans-serif);
   color: var(--mute, #7a6f5c);
   font-size: 0.72rem;
   margin: 0;

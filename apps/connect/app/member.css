@@ -42,7 +42,7 @@
   gap: 6px;
 }
 .mem-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .2em;
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   letter-spacing: 0;
   text-transform: none;
@@ -72,7 +72,7 @@
 .mem-sep { opacity: .5; }
 .mem-tier-badge {
   padding: 3px 10px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .1em;
@@ -116,12 +116,12 @@
   gap: 2px;
 }
 .mem-passkey-banner-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 700;
 }
 .mem-passkey-banner-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: rgba(243,236,224,.7);
 }
@@ -135,7 +135,7 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: rgba(243,236,224,.5);
   cursor: pointer;
@@ -150,7 +150,7 @@
   background: var(--paper);
   color: var(--ink);
   border-radius: 999px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -193,7 +193,7 @@
   color: var(--ink);
 }
 .mem-stat-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -222,7 +222,7 @@
   transform: translateX(-50%);
   background: var(--ink);
   color: var(--paper);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   letter-spacing: 0;
@@ -285,14 +285,14 @@
   align-items: baseline;
 }
 .mem-card-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .18em;
   text-transform: uppercase;
   color: var(--ochre);
 }
 .mem-card-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .1em;
   color: var(--mute);
@@ -356,7 +356,7 @@
   min-width: 0;
 }
 .mem-badge-name {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: var(--ink);
@@ -366,7 +366,7 @@
 }
 .mem-badge.locked .mem-badge-name { color: var(--ink); }
 .mem-badge-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   letter-spacing: 0;
   color: var(--ink-soft);
@@ -388,7 +388,7 @@
 }
 .mem-points-row:last-child { border-bottom: none; }
 .mem-points-val {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .1em;
   color: var(--ochre);
@@ -406,7 +406,7 @@
   border-right: none;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   padding: 10px 12px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .04em;
   color: var(--ink);
@@ -419,7 +419,7 @@
   border: none;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   padding: 10px 16px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -431,7 +431,7 @@
 .mem-referral-copy:hover { background: var(--ochre); }
 .mem-referral-copy.copied { background: var(--moss); }
 .mem-referral-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -466,7 +466,7 @@
   position: absolute;
   left: 0;
   color: var(--ochre);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
 }
 .mem-upgrade-btn {
@@ -474,7 +474,7 @@
   background: var(--ochre);
   color: var(--paper);
   padding: 12px 20px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -494,7 +494,7 @@
 .mem-nav-select {
   width: 100%;
   padding: 13px 40px 13px 16px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -524,7 +524,7 @@
 .mem-link {
   display: block;
   padding: 14px 20px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -554,7 +554,7 @@
   gap: 16px;
 }
 .mem-field-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -570,7 +570,7 @@
   color: var(--mute);
 }
 .mem-field-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -587,7 +587,7 @@
 .mem-field-btn--muted:hover { color: var(--ochre); border-color: var(--ochre); }
 
 .mem-settings-coming {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -641,7 +641,7 @@ select.mem-field-input { cursor: pointer; }
 
 /* Feedback badges */
 .mem-fb {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -654,7 +654,7 @@ select.mem-field-input { cursor: pointer; }
   padding: 24px 0 0;
 }
 .mem-settings-back-link {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -697,7 +697,7 @@ select.mem-field-input { cursor: pointer; }
   line-height: 1.5;
 }
 .mem-pref-freq {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -711,7 +711,7 @@ select.mem-field-input { cursor: pointer; }
   flex-shrink: 0;
 }
 .mem-pref-status {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 8px;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -720,7 +720,7 @@ select.mem-field-input { cursor: pointer; }
 .mem-pref-status--error { color: var(--ochre); }
 
 .mem-toggle {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -752,7 +752,7 @@ select.mem-field-input { cursor: pointer; }
 
 .mem-pref-email-row { display: flex; }
 .mem-pref-email {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 12px;
   letter-spacing: .04em;
   color: var(--ink);
@@ -804,7 +804,7 @@ select.mem-field-input { cursor: pointer; }
   align-items: center;
   gap: 8px;
   padding: 14px 28px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -868,7 +868,7 @@ select.mem-field-input { cursor: pointer; }
 .collection-card:hover { box-shadow: 0 4px 20px -2px rgba(20,17,13,.14); }
 
 .collection-card-type {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -902,7 +902,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 12px;
   font-size: 10.5px;
   color: var(--mute);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   letter-spacing: 0.04em;
 }
 
@@ -1060,7 +1060,7 @@ select.mem-field-input { cursor: pointer; }
 
 /* ── Shared tab bar (used by WalletClient and other member pages) ── */
 .prf-tab {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -1093,7 +1093,7 @@ select.mem-field-input { cursor: pointer; }
   border: none;
   border-radius: 3px;
   font-size: 0.82rem;
-  font-family: "'JetBrains Mono', monospace";
+  font-family: "var(--font-inter), 'Inter', sans-serif";
   letter-spacing: .08em;
   text-transform: uppercase;
   font-weight: 600;
@@ -1137,7 +1137,7 @@ select.mem-field-input { cursor: pointer; }
 }
 
 .hfc-step-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -1641,7 +1641,7 @@ select.mem-field-input { cursor: pointer; }
   overflow: hidden;
 }
 .clu-share-url-text {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.72rem;
   color: var(--mute);
   word-break: break-all;
@@ -1667,7 +1667,7 @@ select.mem-field-input { cursor: pointer; }
   border: 1px solid var(--rule);
   border-radius: var(--radius-full);
   padding: 6px 14px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.72rem;
   color: var(--ochre);
   cursor: pointer;
@@ -1740,7 +1740,7 @@ select.mem-field-input { cursor: pointer; }
 }
 
 .acct-tier-pill {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -1752,12 +1752,12 @@ select.mem-field-input { cursor: pointer; }
 .acct-tier-pill--citizen { background: var(--paper-deep); color: var(--mute); }
 
 .acct-meta-text {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--mute);
 }
 .acct-meta-link {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ochre);
@@ -1783,7 +1783,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 6px;
   flex: 0 0 auto;
   padding: 10px 14px 12px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: var(--mute);
@@ -1827,7 +1827,7 @@ select.mem-field-input { cursor: pointer; }
 .acct-stat-value--sm { font-size: 16px; }
 
 .acct-stat-label {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -1865,14 +1865,14 @@ select.mem-field-input { cursor: pointer; }
   color: var(--paper);
   border-radius: var(--radius-lg);
   padding: 12px 14px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   line-height: 1.5;
   box-shadow: var(--shadow-card);
 }
 
 .acct-stat-sub {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   margin-top: 6px;
@@ -1905,7 +1905,7 @@ select.mem-field-input { cursor: pointer; }
 }
 
 .acct-card-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -1914,13 +1914,13 @@ select.mem-field-input { cursor: pointer; }
 }
 
 .acct-card-count {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--mute);
 }
 
 .acct-card-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--mute);
   line-height: 1.55;
@@ -1930,7 +1930,7 @@ select.mem-field-input { cursor: pointer; }
 .acct-card-link {
   display: inline-block;
   margin-top: 12px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ochre);
@@ -1949,7 +1949,7 @@ select.mem-field-input { cursor: pointer; }
   border-left: none;
   border-right: none;
   border-bottom: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ochre);
@@ -1994,13 +1994,13 @@ select.mem-field-input { cursor: pointer; }
 .acct-badge--locked .acct-badge-icon { background: var(--paper-deep); color: var(--mute); }
 
 .acct-badge-name {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ink);
 }
 .acct-badge-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   margin-top: 1px;
@@ -2008,7 +2008,7 @@ select.mem-field-input { cursor: pointer; }
 
 /* ── How to earn ── */
 .acct-earn-intro {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--mute);
   line-height: 1.5;
@@ -2024,7 +2024,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 0 14px;
   padding: 9px 0;
   border-bottom: 1px solid var(--rule);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--ink-soft);
 }
@@ -2044,7 +2044,7 @@ select.mem-field-input { cursor: pointer; }
 .acct-upgrade-perks {
   margin: 0 0 16px;
   padding-left: 18px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   line-height: 1.9;
   opacity: .85;
@@ -2054,7 +2054,7 @@ select.mem-field-input { cursor: pointer; }
   text-align: center;
   background: var(--gold);
   color: var(--ink);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   padding: 11px;
@@ -2064,7 +2064,7 @@ select.mem-field-input { cursor: pointer; }
 .acct-upgrade-btn:hover { opacity: .9; }
 
 .acct-referral-count {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--mute);
   margin-top: 10px;
@@ -2083,7 +2083,7 @@ select.mem-field-input { cursor: pointer; }
   padding: 8px 6px;
   margin: 0 -6px;
   border-radius: var(--radius-md);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--ink-soft);
   text-decoration: none;
@@ -2180,7 +2180,7 @@ select.mem-field-input { cursor: pointer; }
 .wal-stat-card--balance .wal-stat-unit { color: var(--gold); }
 
 .wal-stat-label {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -2195,7 +2195,7 @@ select.mem-field-input { cursor: pointer; }
   color: var(--ink);
 }
 .wal-stat-unit {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10.5px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2203,7 +2203,7 @@ select.mem-field-input { cursor: pointer; }
   margin-left: 6px;
 }
 .wal-stat-sub {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11.5px;
   color: var(--mute);
   margin-top: 6px;
@@ -2223,19 +2223,19 @@ select.mem-field-input { cursor: pointer; }
 }
 .wal-txn:last-child { border-bottom: none; }
 .wal-txn-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--ink);
 }
 .wal-txn-date {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10.5px;
   color: var(--mute);
   margin-top: 2px;
 }
 .wal-txn-amt {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
@@ -2260,7 +2260,7 @@ select.mem-field-input { cursor: pointer; }
   border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
   border-radius: var(--radius-lg);
   padding: 12px 14px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--ink-soft);
   margin-bottom: 18px;
@@ -2268,7 +2268,7 @@ select.mem-field-input { cursor: pointer; }
 
 .wal-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
 .wal-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2280,7 +2280,7 @@ select.mem-field-input { cursor: pointer; }
   border: 1px solid var(--rule-dark);
   border-radius: var(--radius-md);
   padding: 11px 13px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   color: var(--ink);
   background: var(--paper);
@@ -2288,7 +2288,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .wal-input:focus { outline: none; border-color: var(--ochre); }
 .wal-hint {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.7rem;
   color: var(--mute);
   letter-spacing: .04em;
@@ -2303,7 +2303,7 @@ select.mem-field-input { cursor: pointer; }
 .wal-fee-row {
   display: flex;
   justify-content: space-between;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--mute);
   padding: 3px 0;
@@ -2321,7 +2321,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 6px;
   background: var(--gold);
   color: var(--ink);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2338,7 +2338,7 @@ select.mem-field-input { cursor: pointer; }
   margin: 0 0 8px;
 }
 .wal-upsell-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: color-mix(in srgb, var(--paper) 70%, transparent);
   line-height: 1.55;
@@ -2348,7 +2348,7 @@ select.mem-field-input { cursor: pointer; }
   display: inline-block;
   background: var(--gold);
   color: var(--ink);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   padding: 10px 20px;
@@ -2365,7 +2365,7 @@ select.mem-field-input { cursor: pointer; }
   color: var(--paper);
   border: none;
   border-radius: var(--radius-lg);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.8rem;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2377,7 +2377,7 @@ select.mem-field-input { cursor: pointer; }
 
 /* ── Coupons ── */
 .cpn-section-header {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2414,7 +2414,7 @@ select.mem-field-input { cursor: pointer; }
   color: var(--success);
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -2430,7 +2430,7 @@ select.mem-field-input { cursor: pointer; }
   line-height: 1.3;
 }
 .cpn-card-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10.5px;
   color: var(--mute);
   margin-top: 10px;
@@ -2441,7 +2441,7 @@ select.mem-field-input { cursor: pointer; }
   margin: 0 0 10px;
 }
 .cpn-card-expiry {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   margin-top: 8px;
@@ -2463,14 +2463,14 @@ select.mem-field-input { cursor: pointer; }
 .cpn-row--used { opacity: .6; }
 .cpn-row--expired { opacity: .4; }
 .cpn-row-title {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   font-weight: 700;
   color: var(--ink);
 }
 .cpn-row--expired .cpn-row-title { text-decoration: line-through; }
 .cpn-row-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10.5px;
   color: var(--mute);
   margin-top: 4px;
@@ -2479,7 +2479,7 @@ select.mem-field-input { cursor: pointer; }
   flex-shrink: 0;
   padding: 4px 10px;
   border-radius: var(--radius-full);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -2505,7 +2505,7 @@ select.mem-field-input { cursor: pointer; }
   border-bottom: 1px solid var(--rule);
 }
 .ntf-header-title {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2514,7 +2514,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .ntf-header-title span { color: var(--ochre); }
 .ntf-mark-all {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--ochre);
@@ -2549,18 +2549,18 @@ select.mem-field-input { cursor: pointer; }
   flex-shrink: 0;
 }
 .ntf-body { flex: 1; min-width: 0; }
-.ntf-title { font-family: 'DM Sans', sans-serif; font-size: 14.5px; color: var(--ink); font-weight: 500; }
+.ntf-title { font-family: 'Inter', sans-serif; font-size: 14.5px; color: var(--ink); font-weight: 500; }
 .ntf-title--unread { font-weight: 700; }
-.ntf-desc { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--mute); line-height: 1.5; margin-top: 2px; }
+.ntf-desc { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--mute); line-height: 1.5; margin-top: 2px; }
 .ntf-row--unread .ntf-desc { color: var(--ink-soft); }
-.ntf-date { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); margin-top: 6px; }
+.ntf-date { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 10.5px; color: var(--mute); margin-top: 6px; }
 .ntf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ochre); flex-shrink: 0; margin-top: 6px; }
 
 .ntf-loadmore { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--rule); }
 .ntf-loadmore-btn {
   background: none;
   border: none;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--mute);
   cursor: pointer;
@@ -2586,7 +2586,7 @@ select.mem-field-input { cursor: pointer; }
   padding: 16px;
 }
 .an-stat-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -2594,10 +2594,10 @@ select.mem-field-input { cursor: pointer; }
   margin-bottom: 8px;
 }
 .an-stat-value { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 24px; font-weight: 700; color: var(--ink); }
-.an-stat-sub { font-family: 'DM Sans', sans-serif; font-size: 10.5px; color: var(--mute); margin-top: 4px; }
+.an-stat-sub { font-family: 'Inter', sans-serif; font-size: 10.5px; color: var(--mute); margin-top: 4px; }
 
 .an-chart-title {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2622,10 +2622,10 @@ select.mem-field-input { cursor: pointer; }
   flex-shrink: 0;
 }
 .an-rank--1 { background: var(--ochre); color: #fff; }
-.an-post-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.an-post-date { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--mute); margin-top: 2px; }
-.an-post-eng { display: flex; gap: 10px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink-soft); }
-.an-post-total { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; color: var(--ink); text-align: right; margin-top: 2px; }
+.an-post-title { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.an-post-date { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--mute); margin-top: 2px; }
+.an-post-eng { display: flex; gap: 10px; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-soft); }
+.an-post-total { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: var(--ink); text-align: right; margin-top: 2px; }
 
 /* ═══════════════════════════════════════════════════
    ACCOUNT DASHBOARD — PHASE 5: MY EVENTS + REFERRALS
@@ -2649,14 +2649,14 @@ select.mem-field-input { cursor: pointer; }
   text-align: left;
 }
 .evt-row-head:disabled { cursor: default; }
-.evt-title { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
-.evt-meta { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); margin-top: 3px; }
-.evt-count { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--ochre); white-space: nowrap; flex-shrink: 0; }
+.evt-title { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+.evt-meta { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 10.5px; color: var(--mute); margin-top: 3px; }
+.evt-count { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: var(--ochre); white-space: nowrap; flex-shrink: 0; }
 
 .evt-attendees { padding: 0 0 16px; }
 .evt-export { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .evt-export-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2676,9 +2676,9 @@ select.mem-field-input { cursor: pointer; }
   border-radius: var(--radius-md);
   margin-bottom: 1px;
 }
-.evt-attendee-name { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--ink); }
-.evt-attendee-email { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--mute); }
-.evt-attendee-date { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mute); }
+.evt-attendee-name { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink); }
+.evt-attendee-email { font-family: 'Inter', sans-serif; font-size: 11px; color: var(--mute); }
+.evt-attendee-date { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 10.5px; color: var(--mute); }
 
 .evt-upsell {
   background: var(--ink);
@@ -2692,7 +2692,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 6px;
   background: var(--gold);
   color: var(--ink);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2703,7 +2703,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .evt-upsell-title { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 17px; font-weight: 700; color: var(--paper); margin: 0 0 8px; }
 .evt-upsell-desc {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   color: color-mix(in srgb, var(--paper) 70%, transparent);
   line-height: 1.55;
@@ -2713,7 +2713,7 @@ select.mem-field-input { cursor: pointer; }
   display: inline-block;
   background: var(--gold);
   color: var(--ink);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12.5px;
   font-weight: 700;
   padding: 10px 20px;
@@ -2723,7 +2723,7 @@ select.mem-field-input { cursor: pointer; }
 .evt-upsell-btn:hover { opacity: .9; }
 
 /* ── Referrals ── */
-.ref-desc { font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 16px; }
+.ref-desc { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 16px; }
 .ref-link-row { display: flex; gap: 8px; }
 .ref-link-input {
   flex: 1;
@@ -2731,7 +2731,7 @@ select.mem-field-input { cursor: pointer; }
   border-radius: var(--radius-lg);
   border: 1px solid var(--rule-dark);
   background: var(--paper-deep);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 12.5px;
   color: var(--ink);
 }
@@ -2741,7 +2741,7 @@ select.mem-field-input { cursor: pointer; }
   border: none;
   background: var(--ink);
   color: var(--paper);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
@@ -2749,7 +2749,7 @@ select.mem-field-input { cursor: pointer; }
   transition: background .2s;
 }
 .ref-copy-btn--copied { background: var(--success); }
-.ref-short { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); margin: 10px 0 0; }
+.ref-short { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--mute); margin: 10px 0 0; }
 .ref-short strong { color: var(--ink); }
 
 .ref-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 640px; margin-bottom: 20px; }
@@ -2764,7 +2764,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .ref-stat-value { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 26px; font-weight: 700; color: var(--ochre); }
 .ref-stat-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   color: var(--mute);
   text-transform: uppercase;
@@ -2775,18 +2775,18 @@ select.mem-field-input { cursor: pointer; }
 .ref-badge-row { margin-bottom: 20px; }
 .ref-badge-row:last-child { margin-bottom: 0; }
 .ref-badge-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.ref-badge-label { font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); }
-.ref-badge-count { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); }
+.ref-badge-label { font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.ref-badge-count { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--mute); }
 .ref-track { height: 6px; border-radius: var(--radius-full); background: var(--paper-deep); overflow: hidden; }
 .ref-fill { height: 100%; border-radius: var(--radius-full); background: var(--ochre); transition: width .4s ease; }
 .ref-fill--done { background: var(--success); }
-.ref-next-note { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--ink-soft); margin: 16px 0 0; }
+.ref-next-note { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--ink-soft); margin: 16px 0 0; }
 
 .ref-user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); }
 .ref-user-row:last-child { border-bottom: none; }
-.ref-user-name { font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); text-decoration: none; }
-.ref-user-handle { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); }
-.ref-user-time { font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--mute); }
+.ref-user-name { font-family: 'Inter', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.ref-user-handle { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--mute); }
+.ref-user-time { font-family: 'Inter', sans-serif; font-size: 11.5px; color: var(--mute); }
 
 .ref-step { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
 .ref-step:last-child { margin-bottom: 0; }
@@ -2799,12 +2799,12 @@ select.mem-field-input { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
 }
-.ref-step-text { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0; }
+.ref-step-text { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0; }
 
 /* ═══════════════════════════════════════════════════
    ACCOUNT DASHBOARD — PHASE 6: PORTFOLIO + COLLECTION
@@ -2815,10 +2815,10 @@ select.mem-field-input { cursor: pointer; }
    ═══════════════════════════════════════════════════ */
 
 /* ── Portfolio ── */
-.pf-locked-note { font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--mute); line-height: 1.6; margin: 0 0 10px; }
+.pf-locked-note { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--mute); line-height: 1.6; margin: 0 0 10px; }
 
 .pf-section-label {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11.5px;
   font-weight: 700;
   color: var(--ink);
@@ -2829,11 +2829,11 @@ select.mem-field-input { cursor: pointer; }
 
 .pf-pin-row { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule); }
 .pf-pin-row:last-child { border-bottom: none; }
-.pf-pin-tag { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
-.pf-pin-text { font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-pin-tag { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 9.5px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.pf-pin-text { font-family: 'Inter', sans-serif; font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .pf-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2854,19 +2854,19 @@ select.mem-field-input { cursor: pointer; }
 
 .pf-item-row { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule); }
 .pf-item-row:last-child { border-bottom: none; }
-.pf-item-title { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
-.pf-item-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+.pf-item-title { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink); }
+.pf-item-type { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 10px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
 .pf-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 .pf-form { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 14px; }
 .pf-field { display: flex; flex-direction: column; gap: 6px; }
-.pf-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
+.pf-label { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
 .pf-input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--rule-dark);
   border-radius: var(--radius-md);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   color: var(--ink);
   background: var(--paper);
@@ -2875,7 +2875,7 @@ select.mem-field-input { cursor: pointer; }
 .pf-input:focus { outline: none; border-color: var(--ochre); }
 .pf-form-actions { display: flex; gap: 10px; }
 .pf-submit-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2889,7 +2889,7 @@ select.mem-field-input { cursor: pointer; }
 .pf-submit-btn:hover:not(:disabled) { background: var(--ochre); }
 .pf-submit-btn:disabled { opacity: .5; cursor: not-allowed; }
 .pf-cancel-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2901,8 +2901,8 @@ select.mem-field-input { cursor: pointer; }
   cursor: pointer;
 }
 .pf-cancel-btn:hover { color: var(--ink); border-color: var(--ink); }
-.pf-status--success { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--success); margin-bottom: 12px; }
-.pf-status--error { font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: var(--error); margin-bottom: 12px; }
+.pf-status--success { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--success); margin-bottom: 12px; }
+.pf-status--error { font-family: 'Inter', sans-serif; font-size: 12.5px; color: var(--error); margin-bottom: 12px; }
 .acct-explore-arrow { color: var(--mute); font-size: 11px; }
 
 /* ── Reading Tracker (Phase 1 — docs/reading-tracker-plan.md) ── */
@@ -2923,7 +2923,7 @@ select.mem-field-input { cursor: pointer; }
   margin-bottom: 18px;
 }
 .rt-add-btn {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2937,7 +2937,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-add-btn:hover { background: var(--ochre); }
 .rt-stats-link {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: .04em;
   color: var(--ochre);
@@ -2956,7 +2956,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-media--modal { margin: 4px 0 14px; }
 .rt-media-chip {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .05em;
@@ -2976,7 +2976,7 @@ select.mem-field-input { cursor: pointer; }
   color: var(--paper);
 }
 .rt-stats-back {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--ochre);
   text-decoration: none;
@@ -3003,7 +3003,7 @@ select.mem-field-input { cursor: pointer; }
   text-align: left;
 }
 .rt-goal-text {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 12px;
   letter-spacing: .02em;
   color: var(--ink);
@@ -3025,7 +3025,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-goal-edit { display: flex; flex-direction: column; gap: 10px; }
 .rt-goal-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -3042,7 +3042,7 @@ select.mem-field-input { cursor: pointer; }
   color: var(--ink);
 }
 .rt-goal-save {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -3055,7 +3055,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-goal-save:hover { background: var(--ochre); }
 .rt-goal-cancel {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -3104,13 +3104,13 @@ select.mem-field-input { cursor: pointer; }
   margin: 0 0 2px;
 }
 .rt-card-author {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 11.5px;
   color: var(--mute);
   margin: 0 0 8px;
 }
 .rt-card-finished {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: .04em;
   color: var(--mute);
@@ -3124,7 +3124,7 @@ select.mem-field-input { cursor: pointer; }
    rather than competing with it. */
 .rts-avg {
   margin-left: 8px;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 400;
   text-transform: none;
@@ -3157,7 +3157,7 @@ select.mem-field-input { cursor: pointer; }
 
 .rt-card-select {
   width: 100%;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -3171,7 +3171,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .rt-card-remove {
   width: 100%;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -3184,7 +3184,7 @@ select.mem-field-input { cursor: pointer; }
 .rt-card-remove:hover { text-decoration: underline; }
 
 .rt-empty {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13.5px;
   color: var(--mute);
   padding: 40px 0;
@@ -3219,7 +3219,7 @@ select.mem-field-input { cursor: pointer; }
 .rt-modal-close {
   display: block;
   margin: 14px auto 0;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -3294,7 +3294,7 @@ select.mem-field-input { cursor: pointer; }
   line-height: 1.45;
 }
 .rt-activity-time {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -3334,13 +3334,13 @@ select.mem-field-input { cursor: pointer; }
   transition: height .3s ease;
 }
 .rts-month-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9.5px;
   color: var(--mute);
   margin-top: 4px;
 }
 .rts-month-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -3370,7 +3370,7 @@ select.mem-field-input { cursor: pointer; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10.5px;
   color: var(--mute);
 }
@@ -3387,7 +3387,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 10px;
 }
 .rts-bar-row-label {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--ink);
 }
@@ -3404,7 +3404,7 @@ select.mem-field-input { cursor: pointer; }
   transition: width .3s ease;
 }
 .rts-bar-row-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   text-align: right;
@@ -3420,14 +3420,14 @@ select.mem-field-input { cursor: pointer; }
 }
 .rts-genre-row:last-child { border-bottom: none; }
 .rts-genre-rank {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
   width: 18px;
   flex-shrink: 0;
 }
 .rts-genre-name {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--ink);
   flex: 1;
@@ -3437,7 +3437,7 @@ select.mem-field-input { cursor: pointer; }
    transfer to a restaurant), while every other figure on this page spans all
    five media. */
 .rts-scope-note {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -3451,7 +3451,7 @@ select.mem-field-input { cursor: pointer; }
 }
 .rts-genre-medium { opacity: .6; }
 .rts-genre-count {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   color: var(--mute);
 }

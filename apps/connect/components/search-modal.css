@@ -42,7 +42,7 @@
   background: none;
   font-size: 16px;
   color: var(--ink);
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 
 .sm-close {
@@ -105,7 +105,7 @@
   color: var(--mute);
   background: var(--paper);
   cursor: pointer;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 
 .sm-chip.active {

@@ -21,8 +21,8 @@
   --evt-shadow-card: 0px 1px 3px rgba(20, 17, 13, 0.08), 0px 1px 2px rgba(20, 17, 13, 0.04);
 
   --evt-font-serif: var(--font-inter), 'Inter', sans-serif;
-  --evt-font-sans: var(--font-sans, 'DM Sans', sans-serif);
-  --evt-font-mono: var(--font-mono, 'JetBrains Mono', monospace);
+  --evt-font-sans: var(--font-sans, 'Inter', sans-serif);
+  --evt-font-mono: var(--font-mono, var(--font-inter), 'Inter', sans-serif);
 }
 
 /* ── Dark mode — this page keeps its own --evt-* namespace (see above) but

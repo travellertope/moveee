@@ -8,7 +8,7 @@
    ══════════════════════════════════════════════════════ */
 
 .ch-btn-ghost {
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--ink);
@@ -22,7 +22,7 @@
 .ch-btn-ghost:hover { background: var(--paper-deep); }
 
 .ch-btn-solid {
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--paper);
@@ -41,7 +41,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--paper);
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 
 /* Dropdown menu shared between rail and mobile */
@@ -64,13 +64,13 @@
   font-weight: 600;
   color: var(--ink);
   padding: 0.4rem 0.75rem 0.1rem;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .ch-user-tier {
   font-size: 0.72rem;
   color: var(--mute);
   padding: 0 0.75rem 0.5rem;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .ch-user-divider { height: 1px; background: var(--rule); margin: 0.25rem 0; }
 .ch-user-item {
@@ -86,7 +86,7 @@
   text-align: left;
   width: 100%;
   transition: background 0.12s;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .ch-user-item:hover { background: var(--paper-deep); color: var(--ink); }
 .ch-user-item--danger { color: #c0392b; }
@@ -116,7 +116,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--mute);
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .ch-rail-section-label--spaced { padding-top: 18px; }
 
@@ -133,7 +133,7 @@
   font-weight: 500;
   color: var(--ink-soft);
   text-decoration: none;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   transition: background 0.12s, color 0.12s;
 }
 .ch-rail-link svg { flex-shrink: 0; }
@@ -181,7 +181,7 @@
   border: none;
   cursor: pointer;
   text-decoration: none;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   transition: background 0.12s, color 0.12s;
 }
 .ch-rail-icon-btn:hover { background: var(--paper-deep); color: var(--ink); }
@@ -225,12 +225,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 .ch-rail-user-tier {
   font-size: 11px;
   color: var(--mute);
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 
 .ch-rail-auth { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
@@ -290,11 +290,11 @@
   text-transform: uppercase;
   color: var(--mute);
   padding: 12px 10px 4px;
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
 }
 
 .ch-mobile-nav-link {
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-soft);
