@@ -259,8 +259,17 @@ const handleForYou = () => {
   const showTags = availableTags.length > 0 && (activeType === "all" || activeType === "community");
 
 
+  // Suggested users for "Users to Follow" sidebar section
+  const [suggestedUsers, setSuggestedUsers] = useState<{ id: string; displayName: string; username: string; occupation?: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/connect/members?per_page=4&sort=recent")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.members) setSuggestedUsers(data.members.slice(0, 4)); })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div style={{ background: "var(--paper, #ffffff)" }}>
+    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
       <div className="pulse-layout pulse-layout--feed">
 
         {/* ── Center Timeline ── */}
@@ -383,32 +392,68 @@ const handleForYou = () => {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
-          <div className="pulse-about-card" style={{ marginTop: 0 }}>
-            <p className="pulse-about-desc">
-              The community for creatives, entrepreneurs, and culture lovers. Post, share, and stay in important culture conversations.
-            </p>
+
+          {/* Trending Now */}
+          {trendingDirectory.length > 0 && (
+            <div className="pf-sidebar-section">
+              <div className="pf-section-header">
+                <div className="pf-section-title-row">
+                  <span className="pf-section-icon">🔥</span>
+                  <h3 className="pf-section-title">Trending Now</h3>
+                </div>
+              </div>
+              {trendingDirectory.map(entry => (
+                <Link key={entry.id} href={`/directory/${entry.slug}`} className="pf-trending-card">
+                  <div className="pf-trending-emoji">{DIR_TYPE_EMOJI[entry.type] ?? "✦"}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <p className="pf-trending-name">{entry.title}</p>
+                    {entry.reviewCount > 0 && (
+                      <p className="pf-trending-meta">{entry.reviewCount} post{entry.reviewCount !== 1 ? "s" : ""}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Hubs — # hashtag-style navigation to topic communities */}
+          <div className="pf-sidebar-section">
+            <div className="pf-section-header">
+              <div className="pf-section-title-row">
+                <h3 className="pf-section-title">Explore Hubs</h3>
+              </div>
+              <Link href="/hub" className="pf-section-see-all">See all</Link>
+            </div>
+            <div className="pf-hub-chips">
+              {Object.entries(SECTION_HUB_SLUGS).map(([name, slug]) => (
+                <Link key={slug} href={`/hub/${slug}`} className="pf-hub-chip">
+                  #{name}
+                </Link>
+              ))}
+            </div>
           </div>
 
-          {/* Trending directory entries — the ones community posts are
-              referencing/linking to most, via the Discover feature's
-              existing sort=trending (ranked by _community_review_count). */}
-          {trendingDirectory.length > 0 && (
-            <div style={{ marginTop: "1.5rem", marginBottom: "1.5rem" }}>
-              <p className="pulse-trending-heading">{trendingDirectoryLabel}</p>
-              <div>
-                {trendingDirectory.map(entry => (
-                  <Link key={entry.id} href={`/directory/${entry.slug}`} className="pulse-trending-item" style={{ display: "block", textDecoration: "none" }}>
-                    <p className="pulse-trending-title">
-                      {DIR_TYPE_EMOJI[entry.type] ?? "✦"} {entry.title}
-                    </p>
-                    {entry.reviewCount > 0 && (
-                      <p className="pulse-trending-count">
-                        {entry.reviewCount} community post{entry.reviewCount !== 1 ? "s" : ""}
-                      </p>
-                    )}
-                  </Link>
-                ))}
+          {/* Users to Follow */}
+          {suggestedUsers.length > 0 && (
+            <div className="pf-sidebar-section">
+              <div className="pf-section-header">
+                <div className="pf-section-title-row">
+                  <h3 className="pf-section-title">Users to Follow</h3>
+                </div>
+                <Link href="/discover" className="pf-section-see-all">See all</Link>
               </div>
+              {suggestedUsers.map(user => (
+                <div key={user.id} className="pf-follow-row">
+                  <div className="pf-follow-avatar">
+                    {(user.displayName || user.username || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="pf-follow-info">
+                    <p className="pf-follow-name">{user.displayName || user.username}</p>
+                    {user.occupation && <p className="pf-follow-sub">{user.occupation}</p>}
+                  </div>
+                  <Link href={`/connect/${user.username}`} className="pf-follow-btn">Follow</Link>
+                </div>
+              ))}
             </div>
           )}
 
@@ -442,11 +487,8 @@ const handleForYou = () => {
             </div>
           )}
 
-          {/* Minimal footer — apps/connect has no site-wide footer at all
-              (removed July 2026); every page with a right rail carries this
-              same copyright block instead. See "Footer removed sitewide"
-              in CLAUDE.md for the full list of pages. */}
-          <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
+          {/* Minimal footer */}
+          <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
             <p style={{ margin: 0, fontSize: "0.68rem", color: "var(--mute)", lineHeight: 1.7 }}>
               © {new Date().getFullYear()} The Moveee. All Rights Reserved.
               <br />
