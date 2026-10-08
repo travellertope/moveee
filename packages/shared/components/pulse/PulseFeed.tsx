@@ -31,6 +31,13 @@ const DIR_TYPE_EMOJI: Record<string, string> = {
   fashion: "👗", "tv-series": "📺",
 };
 
+const TEMPLATE_TABS = [
+  { key: "reviews",  label: "Reviews & Gems",  emoji: "⭐", templates: ["hidden-gem", "food-review"] },
+  { key: "travel",   label: "Travel Routes",    emoji: "🗺️",  templates: ["itinerary"] },
+  { key: "showcase", label: "Art & Showcase",   emoji: "🎨", templates: ["creative-showcase"] },
+  { key: "polls",    label: "Polls",            emoji: "📊", templates: ["poll"] },
+] as const;
+
 interface TrendingDirectoryEntry {
   id: number;
   title: string;
@@ -53,6 +60,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeRegion, setActiveRegion] = useState<string>("All");
   const [activeTag, setActiveTag] = useState<string>("");
   const [activeCategory, setActiveCategory] = useState<string>("");
+  const [activeTemplate, setActiveTemplate] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [sortBy, setSortBy] = useState<"recent" | "top">("recent");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -130,6 +138,10 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     })();
   }, [session?.user, forYou]);
 
+  const activeTemplateTemplates = useMemo(() => (
+    activeTemplate ? TEMPLATE_TABS.find(t => t.key === activeTemplate)?.templates ?? [] : []
+  ), [activeTemplate]);
+
   const filtered = useMemo(() => items.filter(item => {
     const typeMatch = activeType === "all" || item.type === activeType;
     const regionMatch = activeRegion === "All" || !item.region || item.region.toLowerCase() === activeRegion.toLowerCase();
@@ -144,8 +156,11 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "editorial"  && (item.category ?? "").toLowerCase()  === catLower) ||
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
-    return typeMatch && regionMatch && tagMatch && categoryMatch && !isEventItem(item);
-  }), [items, activeType, activeRegion, activeTag, activeCategory, interestTagSet]);
+    const templateMatch = !activeTemplate || (
+      item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never)
+    );
+    return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && !isEventItem(item);
+  }), [items, activeType, activeRegion, activeTag, activeCategory, activeTemplate, activeTemplateTemplates, interestTagSet]);
 
   // Posts from people you follow — community posts only
   const followingItems = useMemo(() => (
@@ -264,9 +279,10 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   // Tab handlers — each tab is exclusive; clicking the active one is a no-op
   const handleAllPosts = () => {
-    if (!forYou && !followingFilter) return;
+    if (!forYou && !followingFilter && !activeTemplate) return;
     setForYou(false);
     setFollowingFilter(false);
+    setActiveTemplate("");
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
@@ -276,6 +292,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (followingFilter) return;
     setFollowingFilter(true);
     setForYou(false);
+    setActiveTemplate("");
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
@@ -285,9 +302,24 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     if (forYou) return;
     setForYou(true);
     setFollowingFilter(false);
+    setActiveTemplate("");
     setActiveType("all");
     setActiveTag("");
     setActiveCategory("");
+    setVisibleCount(20);
+  };
+  const handleTemplate = (key: string) => {
+    if (activeTemplate === key) {
+      setActiveTemplate("");
+      setActiveType("all");
+    } else {
+      setActiveTemplate(key);
+      setActiveType("community");
+      setForYou(false);
+      setFollowingFilter(false);
+      setActiveTag("");
+      setActiveCategory("");
+    }
     setVisibleCount(20);
   };
 
@@ -360,30 +392,27 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             onSelectDraft={selectDraftTile}
           />
 
-          {/* Feed tabs — All Posts / Following / Trending + Sort by */}
+          {/* Feed tabs — All / content-type categories + Sort by */}
           <div className="feed-tabs">
             <div className="feed-tabs-pills">
               <button
                 type="button"
-                className={`feed-tab${!forYou && !followingFilter ? " feed-tab--active" : ""}`}
+                className={`feed-tab${!forYou && !followingFilter && !activeTemplate ? " feed-tab--active" : ""}`}
                 onClick={handleAllPosts}
               >
                 All
               </button>
-              <button
-                type="button"
-                className={`feed-tab${followingFilter ? " feed-tab--active" : ""}`}
-                onClick={handleFollowing}
-              >
-                Following
-              </button>
-              <button
-                type="button"
-                className={`feed-tab${forYou ? " feed-tab--active" : ""}`}
-                onClick={handleForYou}
-              >
-                Trending
-              </button>
+              {TEMPLATE_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={`feed-tab feed-tab--category${activeTemplate === tab.key ? " feed-tab--active" : ""}`}
+                  onClick={() => handleTemplate(tab.key)}
+                >
+                  <span className="feed-tab-emoji" aria-hidden="true">{tab.emoji}</span>
+                  {tab.label}
+                </button>
+              ))}
             </div>
             <div className="feed-sort">
               <label htmlFor="feed-sort-select" className="feed-sort-label" aria-label="Sort by">

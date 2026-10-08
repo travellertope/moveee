@@ -70,19 +70,25 @@
 .feed-tabs {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   padding: 6px;
   background: var(--paper, #fff);
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl, 20px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   margin: 12px 16px 8px;
+  min-width: 0;
 }
 .feed-tabs-pills {
   display: flex;
   gap: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex: 1;
+  min-width: 0;
 }
+.feed-tabs-pills::-webkit-scrollbar { display: none; }
 .feed-tab {
   position: relative;
   background: none;
@@ -92,9 +98,14 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
-  padding: 7px 18px;
+  padding: 7px 14px;
   border-radius: var(--radius-xl, 12px);
   transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .feed-tab:hover {
   background: var(--paper-deep, #f2ede3);
@@ -106,6 +117,10 @@
   box-shadow: 0 1px 3px rgba(122,36,28,0.2);
 }
 .feed-tab--active::after { display: none; }
+.feed-tab-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
 
 /* ── Feed sort control ──────────────────────────────────────────── */
 .feed-sort {
