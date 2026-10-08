@@ -40,7 +40,7 @@ function PollDisplay({ postId, options, expiresAt }: { postId: string; options: 
             background: showResults ? `linear-gradient(to right, rgba(46,125,50,0.1) ${pct}%, transparent ${pct}%)` : "#fff",
             border: `1px solid ${voted === i ? "#2e7d32" : "#e0d8ce"}`, borderRadius: "4px",
             padding: "10px 14px", textAlign: "left", cursor: showResults ? "default" : "pointer",
-            fontSize: "0.9rem", color: "#14110d", fontFamily: "var(--font-fraunces), serif",
+            fontSize: "0.9rem", color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif",
             display: "flex", justifyContent: "space-between",
           }}>
             <span>{opt.text}</span>
@@ -121,7 +121,7 @@ function CommentItem({
   return (
     <div>
       <div style={{
-        background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "0.85rem 1rem",
+        background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "12px", padding: "0.9rem 1rem",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.45rem" }}>
           <Avatar name={comment.author_name} size={28} />
@@ -150,7 +150,7 @@ function CommentItem({
         }}>
           {replies.map(reply => (
             <div key={reply.id} style={{
-              background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "0.75rem 1rem",
+              background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "12px", padding: "0.75rem 1rem",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
                 <Avatar name={reply.author_name} size={24} bg="#f0ece4" border="#e0d8ce" color="#7a6f5c" />
@@ -268,9 +268,9 @@ export default function CommunityPostClient({
       {/* Post text */}
       <p style={{
         color: "#14110d",
-        fontFamily: "var(--font-fraunces), serif",
-        fontSize: "1.1rem",
-        lineHeight: 1.7,
+        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+        fontSize: "1rem",
+        lineHeight: 1.75,
         margin: "0 0 1.25rem",
         whiteSpace: "pre-wrap",
       }}>
@@ -356,16 +356,21 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      <ReactionBar itemId={wpId} itemType="community" initialCounts={initialReactions} shareUrl={shareUrl} />
+      <div style={{ borderTop: "1px solid rgba(20,17,13,0.08)", paddingTop: "0.75rem", marginTop: "0.75rem" }}>
+        <ReactionBar itemId={wpId} itemType="community" initialCounts={initialReactions} shareUrl={shareUrl} />
+      </div>
 
       {/* Comments */}
       <div style={{ marginTop: "2rem" }}>
         <h2 style={{
-          fontFamily: "var(--font-fraunces), serif",
-          fontSize: "1rem", fontWeight: 700, color: "#14110d",
-          marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid #e8e2d8",
+          fontFamily: "var(--font-inter), 'Inter', sans-serif",
+          fontSize: "0.88rem", fontWeight: 700, color: "#14110d",
+          marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid rgba(20,17,13,0.08)",
+          display: "flex", alignItems: "center", gap: "0.4rem",
+          letterSpacing: "0.01em",
         }}>
-          {count === 0 ? "No comments yet" : `${count} comment${count === 1 ? "" : "s"}`}
+          <span style={{ fontSize: "1rem", lineHeight: 1 }}>💬</span>
+          {count === 0 ? "Discussion Replies" : `Discussion Replies (${count})`}
         </h2>
 
         {topLevel.length > 0 && (
@@ -383,7 +388,7 @@ export default function CommunityPostClient({
 
         {loggedIn ? (
           <form onSubmit={handleSubmit} style={{
-            background: "#fff", border: "1px solid #e8e2d8", borderRadius: "6px", padding: "1rem",
+            background: "#fff", border: "1px solid rgba(20,17,13,0.1)", borderRadius: "12px", padding: "1rem",
           }}>
             {replyTo && (
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.65rem" }}>
@@ -399,14 +404,14 @@ export default function CommunityPostClient({
             <textarea
               value={commentText}
               onChange={e => setCommentText(e.target.value.slice(0, 1000))}
-              placeholder={replyTo ? `Reply to ${replyTo.name}…` : "Add a comment…"}
+              placeholder={replyTo ? `Reply to ${replyTo.name}…` : "Share your thoughts…"}
               rows={3}
               style={{
-                width: "100%", background: "#ffffff", border: "1px solid #e0d8ce",
-                borderRadius: "4px", color: "#14110d",
-                fontFamily: "var(--font-fraunces), serif",
-                fontSize: "0.9rem", lineHeight: 1.55, resize: "vertical",
-                outline: "none", padding: "0.65rem 0.85rem", boxSizing: "border-box",
+                width: "100%", background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)",
+                borderRadius: "12px", color: "#14110d",
+                fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                fontSize: "0.9rem", lineHeight: 1.6, resize: "vertical",
+                outline: "none", padding: "0.75rem 1rem", boxSizing: "border-box",
               }}
             />
             {error && <p style={{ color: "#7a241c", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{error}</p>}
@@ -415,16 +420,15 @@ export default function CommunityPostClient({
                 type="submit"
                 disabled={!commentText.trim() || submitting}
                 style={{
-                  background: commentText.trim() && !submitting ? "#c93c2a" : "#e8e2d8",
+                  background: commentText.trim() && !submitting ? "var(--ochre, #7a241c)" : "#e8e2d8",
                   color: commentText.trim() && !submitting ? "#fff" : "#aaa",
-                  border: "none", borderRadius: "2px", padding: "0.38rem 1rem",
-                  fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
-                  textTransform: "uppercase",
+                  border: "none", borderRadius: "8px", padding: "0.5rem 1.1rem",
+                  fontSize: "0.85rem", fontWeight: 600,
                   cursor: commentText.trim() && !submitting ? "pointer" : "default",
                   transition: "all 0.15s",
                 }}
               >
-                {submitting ? "Posting…" : "Post"}
+                {submitting ? "Posting…" : "Post Reply"}
               </button>
             </div>
           </form>
@@ -432,10 +436,11 @@ export default function CommunityPostClient({
           <button
             onClick={() => window.dispatchEvent(new Event("open-auth-modal"))}
             style={{
-              width: "100%", background: "#fff", border: "1px solid #e8e2d8",
-              borderRadius: "6px", padding: "0.85rem 1rem", color: "#7a6f5c",
-              fontSize: "0.85rem", textAlign: "left", cursor: "pointer",
-              fontFamily: "var(--font-fraunces), serif",
+              width: "100%", background: "#f8f6f2",
+              border: "1px solid rgba(20,17,13,0.1)",
+              borderRadius: "12px", padding: "1rem", color: "#7a6f5c",
+              fontSize: "0.9rem", textAlign: "center", cursor: "pointer",
+              fontFamily: "var(--font-inter), 'Inter', sans-serif",
             }}
           >
             Sign in to join the conversation…
