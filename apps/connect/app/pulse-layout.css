@@ -115,11 +115,12 @@
   flex-shrink: 0;
 }
 .feed-sort-label {
-  font-family: var(--font-sans, 'Inter', sans-serif);
-  font-size: 12px;
+  display: flex;
+  align-items: center;
   color: var(--mute);
-  white-space: nowrap;
+  cursor: pointer;
   user-select: none;
+  line-height: 1;
 }
 .feed-sort-select {
   font-family: var(--font-sans, 'Inter', sans-serif);

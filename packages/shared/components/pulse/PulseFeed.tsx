@@ -368,7 +368,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                 className={`feed-tab${!forYou && !followingFilter ? " feed-tab--active" : ""}`}
                 onClick={handleAllPosts}
               >
-                All Posts
+                All
               </button>
               <button
                 type="button"
@@ -386,12 +386,17 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               </button>
             </div>
             <div className="feed-sort">
-              <label htmlFor="feed-sort-select" className="feed-sort-label">Sort by:</label>
+              <label htmlFor="feed-sort-select" className="feed-sort-label" aria-label="Sort by">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </label>
               <select
                 id="feed-sort-select"
                 className="feed-sort-select"
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as "recent" | "top")}
+                aria-label="Sort by"
               >
                 <option value="recent">Most Recent</option>
                 <option value="top">Top Discussions</option>
