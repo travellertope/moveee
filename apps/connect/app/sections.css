@@ -25,7 +25,7 @@
   color: var(--ochre);
 }
 .sec-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(14px, 1.6vw, 24px);
   font-weight: 300;
   line-height: 1;
@@ -35,7 +35,7 @@
 }
 .sec-title em { font-style: italic; color: var(--ochre); }
 .sec-desc {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 300;
   font-style: italic;
@@ -92,7 +92,7 @@
   margin-bottom: 8px;
 }
 .sec-card-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 300;
   line-height: 1.15;
@@ -119,7 +119,7 @@
 
 /* ── Empty state ── */
 .sec-empty {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 300;
   font-style: italic;
@@ -143,7 +143,7 @@
   border-radius: var(--radius-xl);
 }
 .sec-single-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(14px, 1.75vw, 24px);
   font-weight: 300;
   line-height: 1.05;
@@ -165,10 +165,10 @@
   flex-wrap: wrap;
 }
 .sec-single-meta span { color: var(--ochre); }
-.sec-single-body { font-size: 16px; line-height: 1.65; color: var(--ink-soft); font-family: 'Fraunces', serif; }
+.sec-single-body { font-size: 16px; line-height: 1.65; color: var(--ink-soft); font-family: var(--font-inter), 'Inter', sans-serif; }
 .sec-single-body p { margin: 0 0 1.4em; }
 .sec-single-body h2, .sec-single-body h3 {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-weight: 300;
   color: var(--ink);
   margin: 2em 0 .6em;
@@ -246,7 +246,7 @@
   margin-bottom: 24px;
 }
 .con-headline {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(18px, 2vw, 29px);
   font-weight: 300;
   line-height: 1.05;
@@ -327,7 +327,7 @@
 }
 .con-tier-card--patron .con-tier-label { color: var(--gold); }
 .con-tier-name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 300;
   line-height: 1;

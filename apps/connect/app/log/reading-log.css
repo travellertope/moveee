@@ -33,7 +33,7 @@
   border-radius: 50%;
   background: var(--ochre);
   color: var(--paper);
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   display: flex;
@@ -50,7 +50,7 @@
 }
 
 .rl-header-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: var(--ink);
@@ -195,7 +195,7 @@
 }
 
 .rl-progress-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--ink);
@@ -338,7 +338,7 @@
 }
 
 .rl-activity-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
@@ -405,7 +405,7 @@
 }
 
 .rl-feed-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
@@ -503,7 +503,7 @@
 }
 
 .rl-modal-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: var(--ink);

@@ -34,7 +34,7 @@
   margin: 0 0 12px;
 }
 .mco-headline {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 40px;
   font-weight: 600;
   line-height: 1.15;
@@ -112,7 +112,7 @@
   margin: 0 0 12px;
 }
 .mco-section-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(28px, 3vw, 44px);
   font-weight: 300;
   line-height: 1;
@@ -121,7 +121,7 @@
   margin: 0 0 16px;
 }
 .mco-section-desc {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 300;
   font-style: italic;
@@ -231,7 +231,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 300;
   flex-shrink: 0;
@@ -243,7 +243,7 @@
 }
 .mco-member-info { flex: 1; min-width: 0; }
 .mco-member-name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 300;
   color: var(--ink);
@@ -366,7 +366,7 @@
   margin-bottom: 16px;
 }
 .mco-dir-empty-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 300;
   font-style: italic;
@@ -429,7 +429,7 @@
 }
 .mco-tier-card--pro .mco-tier-eyebrow { color: var(--ochre); }
 .mco-tier-name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(28px, 3vw, 40px);
   font-weight: 300;
   line-height: 1;
@@ -584,7 +584,7 @@
 }
 .mco-fellowship-header { margin-bottom: 28px; }
 .mco-fellowship-title {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(22px, 2.4vw, 30px);
   font-weight: 300;
   letter-spacing: -.02em;
@@ -592,7 +592,7 @@
   margin: 0 0 8px;
 }
 .mco-fellowship-sub {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 14px;
   font-style: italic;
   color: var(--mute);
@@ -630,7 +630,7 @@ a.mco-fellowship-card:hover { border-color: rgba(179,130,56,.4); }
   margin: 0 0 6px;
 }
 .mco-fellowship-card-name {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 500;
   color: var(--ink);
@@ -677,7 +677,7 @@ a.mco-fellowship-card:hover { border-color: rgba(179,130,56,.4); }
   text-align: center;
 }
 .mco-fellowship-empty p {
-  font-family: 'Fraunces', serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-style: italic;
   color: var(--mute);
