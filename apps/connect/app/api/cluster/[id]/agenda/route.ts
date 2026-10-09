@@ -12,14 +12,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   const { id } = params;
+  const wpUserId = String(session.user.wpUserId ?? "0");
   const res = await fetch(
-    `${WP_URL}/wp-json/culture/v1/cluster/${id}/agenda`,
-    { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
+    `${WP_URL}/wp-json/culture/v1/cluster/${id}/agenda?user_id=${wpUserId}`,
+    {
+      headers: { Authorization: `Bearer ${API_SECRET}`, "X-WP-User-Id": wpUserId },
+      cache: "no-store",
+    }
   );
 
   if (!res.ok) {
-    // Backend may not have this endpoint yet — return empty so the client falls back
-    // to generating upcoming dates from meetingDay itself.
     return NextResponse.json({ gatherings: [] }, { status: 200 });
   }
 

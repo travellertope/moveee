@@ -2076,3 +2076,48 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ── Host Add Gathering Form ──────────────────────────── */
+.stoop-gather-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--paper-deep, #ede5d5);
+  border-radius: var(--radius-lg, 6px);
+  margin-bottom: 0.75rem;
+}
+.stoop-gather-add-input {
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+  background: var(--paper, #f3ece0);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.stoop-gather-add-input:focus {
+  border-color: var(--ochre, #7a241c);
+}
+.stoop-gather-add-error {
+  font-size: 11px;
+  color: var(--ochre, #7a241c);
+  margin: 0;
+}
+.stoop-gather-save-btn {
+  align-self: flex-end;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: var(--radius-full, 9999px);
+  border: none;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.stoop-gather-save-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -56,20 +56,26 @@ function StoopGatheringsSection({ clusterId, meetingDay, meetingTime, isMember, 
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
   const [rsvpState, setRsvpState] = useState<Record<string, "attending" | "declined">>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addDate, setAddDate] = useState("");
+  const [addTitle, setAddTitle] = useState("");
+  const [addDesc, setAddDesc] = useState("");
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState("");
 
-  useEffect(() => {
-    // Try backend first; fall back to generated dates
+  function loadAgenda() {
     fetch(`/api/cluster/${clusterId}/agenda`, { cache: "no-store" })
       .then(res => res.ok ? res.json() : { gatherings: [] })
       .then(data => {
         if (data.gatherings?.length > 0) {
-          setGatherings(data.gatherings.map((g: any) => ({
+          const mapped = data.gatherings.map((g: any) => ({
             id: g.id ?? g.isoDate ?? String(g.date),
             date: g.date_label ?? g.date,
             isoDate: g.iso_date ?? g.isoDate ?? "",
             title: g.title ?? "Weekly Gathering",
             rsvp: g.rsvp ?? null,
-          })));
+          }));
+          setGatherings(mapped);
           const init: Record<string, "attending" | "declined"> = {};
           data.gatherings.forEach((g: any) => {
             if (g.rsvp) init[g.id ?? g.isoDate] = g.rsvp;
@@ -82,7 +88,9 @@ function StoopGatheringsSection({ clusterId, meetingDay, meetingTime, isMember, 
       .catch(() => {
         if (meetingDay) setGatherings(nextOccurrences(meetingDay, meetingTime));
       });
-  }, [clusterId, meetingDay, meetingTime]);
+  }
+
+  useEffect(() => { loadAgenda(); }, [clusterId, meetingDay, meetingTime]);
 
   if (!meetingDay && gatherings.length === 0) return null;
 
@@ -106,16 +114,82 @@ function StoopGatheringsSection({ clusterId, meetingDay, meetingTime, isMember, 
     setLoading(prev => ({ ...prev, [gatheringId]: false }));
   }
 
+  async function handleAddGathering(e: React.FormEvent) {
+    e.preventDefault();
+    if (!addDate || !addTitle.trim()) return;
+    setAddSaving(true);
+    setAddError("");
+    try {
+      const res = await fetch(`/api/cluster/${clusterId}/agenda`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: addDate, title: addTitle.trim(), description: addDesc.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setAddError(err.message ?? "Could not save gathering.");
+      } else {
+        setShowAddForm(false);
+        setAddDate(""); setAddTitle(""); setAddDesc("");
+        loadAgenda();
+      }
+    } catch {
+      setAddError("Network error — please try again.");
+    }
+    setAddSaving(false);
+  }
+
+  const todayIso = new Date().toISOString().split("T")[0];
+
   return (
     <div className="stoop-dp-section">
       <div className="stoop-gather-heading-row">
         <h3 className="stoop-dp-section-heading">Upcoming Gatherings</h3>
         {isHost && (
-          <button type="button" className="stoop-gather-add-btn" title="Add a custom gathering (coming soon)" disabled>
-            + Add
+          <button
+            type="button"
+            className="stoop-gather-add-btn"
+            onClick={() => setShowAddForm(v => !v)}
+          >
+            {showAddForm ? "Cancel" : "+ Add"}
           </button>
         )}
       </div>
+
+      {showAddForm && (
+        <form className="stoop-gather-add-form" onSubmit={handleAddGathering}>
+          <input
+            type="date"
+            className="stoop-gather-add-input"
+            value={addDate}
+            min={todayIso}
+            onChange={e => setAddDate(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            className="stoop-gather-add-input"
+            placeholder="Gathering title"
+            value={addTitle}
+            onChange={e => setAddTitle(e.target.value)}
+            maxLength={120}
+            required
+          />
+          <input
+            type="text"
+            className="stoop-gather-add-input"
+            placeholder="Short description (optional)"
+            value={addDesc}
+            onChange={e => setAddDesc(e.target.value)}
+            maxLength={280}
+          />
+          {addError && <p className="stoop-gather-add-error">{addError}</p>}
+          <button type="submit" className="stoop-gather-save-btn" disabled={addSaving}>
+            {addSaving ? "Saving…" : "Save Gathering"}
+          </button>
+        </form>
+      )}
+
       <div className="stoop-gather-list">
         {gatherings.map(g => {
           const myRsvp = rsvpState[g.id] ?? null;
