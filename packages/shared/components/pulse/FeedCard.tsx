@@ -515,8 +515,6 @@ export default function FeedCard({
             boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
             margin: "12px 16px",
             padding: "1rem 1.25rem",
-            display: "flex",
-            gap: "0.75rem",
             overflow: "hidden",
             minWidth: 0,
           }}
@@ -539,6 +537,8 @@ export default function FeedCard({
               ✦ For You
             </span>
           )}
+          {/* Author row — flex row for avatar + header only; all post content is full-width below */}
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.5rem" }}>
           {/* Avatar */}
           {item.communityAuthorUsername ? (
             <Link href={`/connect/${item.communityAuthorUsername}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", flexShrink: 0 }}>
@@ -576,7 +576,7 @@ export default function FeedCard({
 
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Header: author info LEFT, type + hub badges RIGHT */}
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem" }}>
               {/* Left: name + pro + timestamp */}
               <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", minWidth: 0 }}>
                 {item.communityAuthorUsername ? (
@@ -632,6 +632,8 @@ export default function FeedCard({
                 )}
               </div>
             </div>
+          </div>
+          </div>
 
             {/* Text body — clicking opens the detail modal */}
             <div
@@ -909,7 +911,6 @@ export default function FeedCard({
                 <span style={{ fontSize: "0.68rem", color: "var(--error)", flexShrink: 0 }}>Couldn't send report.</span>
               )}
             </div>
-          </div>
         </article>
         {modalOpen && (
           <>

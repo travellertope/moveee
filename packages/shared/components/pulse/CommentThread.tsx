@@ -106,21 +106,42 @@ export default function CommentThread({ postId, initialComments }: CommentThread
       {/* Comment list */}
       {comments.length > 0 && (
         <div style={{ marginBottom: "1.75rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {comments.map((c) => (
-            <div key={c.id} style={{ borderLeft: "2px solid var(--rule, #e8e2d8)", paddingLeft: "0.85rem" }}>
-              <div style={{ display: "flex", gap: "0.6rem", alignItems: "baseline", marginBottom: "0.3rem" }}>
-                <span style={{ color: "var(--gold, #b38238)", fontSize: "0.8rem", fontWeight: 600 }}>
-                  {c.author_name}
-                </span>
-                <span style={{ color: "var(--mute, #bbb)", fontSize: "0.7rem" }}>
-                  {formatCommentDate(c.date)}
-                </span>
+          {comments.map((c) => {
+            const avatarUrl = c.author_avatar_urls?.["48"] ?? c.author_avatar_urls?.["24"] ?? null;
+            const initials = c.author_name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+            return (
+              <div key={c.id} style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
+                {/* Commenter avatar */}
+                <div style={{
+                  width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+                  background: "var(--cat-community-bg, #e8e2d8)",
+                  color: "var(--cat-community-fg, #5a4a3a)",
+                  fontSize: "0.58rem", fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden", marginTop: "2px",
+                }}>
+                  {avatarUrl && !avatarUrl.includes("gravatar.com/avatar/00000000") ? (
+                    <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    initials
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "baseline", marginBottom: "0.2rem" }}>
+                    <span style={{ color: "var(--gold, #b38238)", fontSize: "0.8rem", fontWeight: 600 }}>
+                      {c.author_name}
+                    </span>
+                    <span style={{ color: "var(--mute, #bbb)", fontSize: "0.68rem" }}>
+                      {formatCommentDate(c.date)}
+                    </span>
+                  </div>
+                  <p style={{ color: "var(--ink-soft, #3a342b)", fontSize: "0.84rem", lineHeight: 1.6, margin: 0 }}>
+                    {stripHtml(c.content?.rendered ?? "")}
+                  </p>
+                </div>
               </div>
-              <p style={{ color: "var(--ink-soft, #3a342b)", fontSize: "0.84rem", lineHeight: 1.6, margin: 0 }}>
-                {stripHtml(c.content?.rendered ?? "")}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -151,7 +172,25 @@ export default function CommentThread({ postId, initialComments }: CommentThread
 
       {/* Comment form */}
       {authStatus === "authenticated" && (
+        <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
+          {/* Current user avatar */}
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
+            background: "var(--cat-community-bg, #e8e2d8)",
+            color: "var(--cat-community-fg, #5a4a3a)",
+            fontSize: "0.58rem", fontWeight: 700,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden", marginTop: "2px",
+          }}>
+            {session?.user?.image ? (
+              <img src={session.user.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              (session?.user?.name ?? session?.user?.email ?? "?").split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "?"
+            )}
+          </div>
         <form onSubmit={handleSubmit} style={{
+          flex: 1,
+          minWidth: 0,
           background: "var(--paper, #fff)",
           border: "1px solid rgba(20,17,13,0.1)",
           borderRadius: "12px",
@@ -211,6 +250,7 @@ export default function CommentThread({ postId, initialComments }: CommentThread
             </button>
           </div>
         </form>
+        </div>
       )}
     </section>
   );
