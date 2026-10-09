@@ -1882,6 +1882,24 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Cluster agenda: upcoming gatherings + RSVPs (October 2026).
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/agenda', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_agenda_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/agenda', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_agenda_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Hubs (web — API key, explicit user_id param).
         // Mirrors /mobile/hub/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/hub/create', array(
@@ -2756,6 +2774,51 @@ class Culture_REST_API {
         $cluster_id = (int) $request->get_param( 'id' );
 
         return rest_ensure_response( Culture_Clusters::get_attendance_history( $cluster_id, $user_id ) );
+    }
+
+    public static function handle_cluster_agenda_get( $request ) {
+        $user_id    = (int) $request->get_param( 'user_id' );
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $items = Culture_Clusters::get_agenda( $cluster_id, $user_id );
+        return rest_ensure_response( array( 'gatherings' => $items ) );
+    }
+
+    public static function handle_cluster_agenda_post( $request ) {
+        $user_id    = (int) $request->get_param( 'user_id' );
+        $cluster_id = (int) $request->get_param( 'id' );
+
+        $body = $request->get_json_params();
+        if ( ! is_array( $body ) ) {
+            $body = array();
+        }
+
+        // Branch 1: RSVP toggle — body has "rsvp" key.
+        if ( isset( $body['rsvp'] ) || array_key_exists( 'rsvp', $body ) ) {
+            $gathering_id   = sanitize_text_field( $body['gathering_id'] ?? '' );
+            $rsvp           = isset( $body['rsvp'] ) && in_array( $body['rsvp'], array( 'attending', 'declined' ), true )
+                                ? $body['rsvp']
+                                : null;
+            // gathering_id is the ISO date string used as the RSVP key.
+            Culture_Clusters::set_rsvp( $cluster_id, $user_id, $gathering_id, $rsvp );
+            return rest_ensure_response( array( 'ok' => true ) );
+        }
+
+        // Branch 2: Create custom gathering — body has "date" + "title" keys.
+        // Only the cluster host may do this.
+        $status = Culture_Clusters::get_member_status( $cluster_id, $user_id );
+        if ( ( $status['role'] ?? '' ) !== 'host' ) {
+            return new WP_Error( 'forbidden', 'Only the stoop host can create gatherings.', array( 'status' => 403 ) );
+        }
+
+        $result = Culture_Clusters::create_gathering( $cluster_id, $user_id, $body );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        // Return the refreshed agenda so the client can re-render.
+        $items = Culture_Clusters::get_agenda( $cluster_id, $user_id );
+        return rest_ensure_response( array( 'ok' => true, 'gathering_id' => $result, 'gatherings' => $items ) );
     }
 
     /* ——————————————————————————————————————

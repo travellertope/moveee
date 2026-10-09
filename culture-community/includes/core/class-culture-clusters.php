@@ -1050,4 +1050,223 @@ class Culture_Clusters {
         }
         return $streak;
     }
+
+    /* ——————————————————————————————————————
+     *  Agenda — custom gatherings + RSVPs
+     * —————————————————————————————————————— */
+
+    public static function gatherings_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_cluster_gatherings';
+    }
+
+    public static function rsvps_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_cluster_rsvps';
+    }
+
+    public static function create_gatherings_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $t = self::gatherings_table();
+        dbDelta( "CREATE TABLE {$t} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            cluster_id bigint(20) NOT NULL,
+            gathering_date date NOT NULL,
+            title varchar(255) NOT NULL DEFAULT 'Special Gathering',
+            description text NOT NULL DEFAULT '',
+            created_by bigint(20) NOT NULL DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY cluster_date (cluster_id, gathering_date)
+        ) {$charset_collate};" );
+    }
+
+    public static function create_rsvps_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $t = self::rsvps_table();
+        dbDelta( "CREATE TABLE {$t} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            cluster_id bigint(20) NOT NULL,
+            user_id bigint(20) NOT NULL,
+            gathering_date date NOT NULL,
+            rsvp varchar(10) NOT NULL DEFAULT 'attending',
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY cluster_user_date (cluster_id, user_id, gathering_date),
+            KEY cluster_date (cluster_id, gathering_date)
+        ) {$charset_collate};" );
+    }
+
+    /**
+     * Generate the next $count occurrences of the cluster's weekly meeting day
+     * starting from tomorrow. Returns array of 'Y-m-d' strings.
+     */
+    private static function next_occurrences( string $meeting_day, int $count = 4 ) : array {
+        $day_map = array(
+            'sunday' => 0, 'monday' => 1, 'tuesday' => 2, 'wednesday' => 3,
+            'thursday' => 4, 'friday' => 5, 'saturday' => 6,
+        );
+        $target = $day_map[ strtolower( trim( $meeting_day ) ) ] ?? null;
+        if ( null === $target ) {
+            return array();
+        }
+        $dates = array();
+        $ts    = strtotime( 'tomorrow' );
+        for ( $tries = 0; $tries < 60 && count( $dates ) < $count; $tries++ ) {
+            if ( (int) gmdate( 'w', $ts ) === $target ) {
+                $dates[] = gmdate( 'Y-m-d', $ts );
+            }
+            $ts = strtotime( '+1 day', $ts );
+        }
+        return $dates;
+    }
+
+    /**
+     * Returns the merged agenda for a cluster: upcoming recurring meetings
+     * (generated) plus any custom gatherings from the DB, with each entry
+     * carrying the given user's RSVP status.
+     *
+     * Response shape per item:
+     *   id            string  — ISO date "Y-m-d" (used as RSVP key)
+     *   iso_date      string  — same
+     *   date_label    string  — e.g. "Sat 18 Jan · 10:30 AM"
+     *   title         string
+     *   description   string
+     *   is_custom     bool
+     *   custom_id     int|null — DB row id when is_custom=true
+     *   rsvp          string|null — "attending"|"declined"|null
+     */
+    public static function get_agenda( int $cluster_id, int $user_id, int $count = 4 ) : array {
+        global $wpdb;
+
+        $cluster = self::get_cluster( $cluster_id );
+        if ( ! $cluster ) {
+            return array();
+        }
+        $meeting_day  = (string) ( $cluster['meetingDay'] ?? '' );
+        $meeting_time = (string) ( $cluster['meetingTime'] ?? '' );
+
+        // Generate recurring dates.
+        $recurring_dates = self::next_occurrences( $meeting_day, $count );
+
+        // Fetch custom gatherings in the coming window.
+        $horizon  = gmdate( 'Y-m-d', strtotime( "+{$count} weeks" ) );
+        $tomorrow = gmdate( 'Y-m-d', strtotime( 'tomorrow' ) );
+        $custom   = $wpdb->get_results( $wpdb->prepare(
+            "SELECT id, gathering_date, title, description FROM {$wpdb->prefix}culture_cluster_gatherings
+             WHERE cluster_id = %d AND gathering_date BETWEEN %s AND %s
+             ORDER BY gathering_date ASC",
+            $cluster_id, $tomorrow, $horizon
+        ), ARRAY_A );
+
+        // Collect all distinct dates.
+        $custom_by_date = array();
+        foreach ( $custom as $row ) {
+            $custom_by_date[ $row['gathering_date'] ] = $row;
+        }
+        $all_dates = array_unique( array_merge( $recurring_dates, array_keys( $custom_by_date ) ) );
+        sort( $all_dates );
+        $all_dates = array_slice( $all_dates, 0, $count + 2 ); // allow a few extra from custom
+
+        // Fetch RSVPs for this user for all those dates.
+        if ( ! empty( $all_dates ) && $user_id > 0 ) {
+            $placeholders = implode( ',', array_fill( 0, count( $all_dates ), '%s' ) );
+            $rsvp_rows    = $wpdb->get_results( $wpdb->prepare(
+                "SELECT gathering_date, rsvp FROM {$wpdb->prefix}culture_cluster_rsvps
+                 WHERE cluster_id = %d AND user_id = %d AND gathering_date IN ({$placeholders})",
+                array_merge( array( $cluster_id, $user_id ), $all_dates )
+            ), ARRAY_A );
+            $rsvp_map = array_column( $rsvp_rows, 'rsvp', 'gathering_date' );
+        } else {
+            $rsvp_map = array();
+        }
+
+        // Build response.
+        $items = array();
+        foreach ( $all_dates as $iso ) {
+            $is_custom  = isset( $custom_by_date[ $iso ] );
+            $custom_row = $is_custom ? $custom_by_date[ $iso ] : null;
+            $ts         = strtotime( $iso );
+            $label      = gmdate( 'D j M', $ts ); // "Sat 18 Jan"
+            if ( $meeting_time && ! $is_custom ) {
+                $label .= ' · ' . $meeting_time;
+            }
+            $items[] = array(
+                'id'          => $iso,
+                'iso_date'    => $iso,
+                'date_label'  => strtoupper( $label ),
+                'title'       => $is_custom ? $custom_row['title'] : 'Weekly Gathering',
+                'description' => $is_custom ? $custom_row['description'] : '',
+                'is_custom'   => $is_custom,
+                'custom_id'   => $is_custom ? (int) $custom_row['id'] : null,
+                'rsvp'        => $rsvp_map[ $iso ] ?? null,
+            );
+        }
+        return $items;
+    }
+
+    /**
+     * Create a custom one-off gathering. Host-only — caller must verify role.
+     */
+    public static function create_gathering( int $cluster_id, int $user_id, array $data ) {
+        global $wpdb;
+
+        $date = sanitize_text_field( $data['date'] ?? '' );
+        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+            return new WP_Error( 'invalid_date', 'gathering_date must be YYYY-MM-DD.', array( 'status' => 400 ) );
+        }
+        if ( $date <= gmdate( 'Y-m-d' ) ) {
+            return new WP_Error( 'past_date', 'Gathering date must be in the future.', array( 'status' => 400 ) );
+        }
+
+        $title       = sanitize_text_field( $data['title'] ?? 'Special Gathering' );
+        $description = sanitize_textarea_field( $data['description'] ?? '' );
+
+        $result = $wpdb->insert(
+            self::gatherings_table(),
+            array(
+                'cluster_id'     => $cluster_id,
+                'gathering_date' => $date,
+                'title'          => $title ?: 'Special Gathering',
+                'description'    => $description,
+                'created_by'     => $user_id,
+            ),
+            array( '%d', '%s', '%s', '%s', '%d' )
+        );
+
+        if ( false === $result ) {
+            return new WP_Error( 'db_error', 'Could not save gathering.', array( 'status' => 500 ) );
+        }
+        return (int) $wpdb->insert_id;
+    }
+
+    /**
+     * Set or clear a user's RSVP for a gathering date. Passing null removes it.
+     */
+    public static function set_rsvp( int $cluster_id, int $user_id, string $gathering_date, ?string $rsvp ) : bool {
+        global $wpdb;
+
+        if ( null === $rsvp ) {
+            $wpdb->delete(
+                self::rsvps_table(),
+                array( 'cluster_id' => $cluster_id, 'user_id' => $user_id, 'gathering_date' => $gathering_date ),
+                array( '%d', '%d', '%s' )
+            );
+            return true;
+        }
+
+        $rsvp = in_array( $rsvp, array( 'attending', 'declined' ), true ) ? $rsvp : 'attending';
+        $wpdb->query( $wpdb->prepare(
+            "INSERT INTO {$wpdb->prefix}culture_cluster_rsvps
+                (cluster_id, user_id, gathering_date, rsvp)
+             VALUES (%d, %d, %s, %s)
+             ON DUPLICATE KEY UPDATE rsvp = VALUES(rsvp), updated_at = NOW()",
+            $cluster_id, $user_id, $gathering_date, $rsvp
+        ) );
+        return true;
+    }
 }

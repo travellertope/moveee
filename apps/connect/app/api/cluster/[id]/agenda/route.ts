@@ -12,13 +12,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+  const wpUserId = String(session.user.wpUserId ?? "0");
   const res = await fetch(
-    `${WP_URL}/wp-json/culture/v1/cluster/${id}/chatter`,
-    { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
+    `${WP_URL}/wp-json/culture/v1/cluster/${id}/agenda?user_id=${wpUserId}`,
+    {
+      headers: { Authorization: `Bearer ${API_SECRET}`, "X-WP-User-Id": wpUserId },
+      cache: "no-store",
+    }
   );
 
-  const data = await res.json().catch(() => ({}));
-  return NextResponse.json(data, { status: res.status });
+  if (!res.ok) {
+    return NextResponse.json({ gatherings: [] }, { status: 200 });
+  }
+
+  const data = await res.json().catch(() => ({ gatherings: [] }));
+  return NextResponse.json(data, { status: 200 });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const body = await req.json().catch(() => ({}));
 
   const res = await fetch(
-    `${WP_URL}/wp-json/culture/v1/cluster/${id}/chatter`,
+    `${WP_URL}/wp-json/culture/v1/cluster/${id}/agenda`,
     {
       method: "POST",
       headers: {
@@ -44,6 +52,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
   );
 
-  const data = await res.json().catch(() => ({}));
-  return NextResponse.json(data, { status: res.status });
+  if (!res.ok) {
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
+  const data = await res.json().catch(() => ({ ok: true }));
+  return NextResponse.json(data, { status: 200 });
 }

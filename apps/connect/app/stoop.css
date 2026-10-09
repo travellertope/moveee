@@ -1977,3 +1977,147 @@
   color: var(--mute);
   flex-shrink: 0;
 }
+
+/* ── Stoop Gatherings ─────────────────────────────────── */
+.stoop-gather-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.stoop-gather-add-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  border: 1px solid var(--ochre, #7a241c);
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  padding: 2px 10px;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+.stoop-gather-add-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.stoop-gather-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.stoop-gather-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.stoop-gather-row:last-child {
+  border-bottom: none;
+}
+.stoop-gather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.stoop-gather-date {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ochre, #7a241c);
+}
+.stoop-gather-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stoop-gather-rsvp-btns {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.stoop-gather-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.stoop-gather-btn:hover {
+  border-color: var(--ochre, #7a241c);
+  color: var(--ochre, #7a241c);
+}
+.stoop-gather-btn--yes {
+  background: var(--ochre, #7a241c);
+  border-color: var(--ochre, #7a241c);
+  color: #fff !important;
+}
+.stoop-gather-btn--no {
+  background: var(--ink, #14110d);
+  border-color: var(--ink, #14110d);
+  color: #fff !important;
+}
+.stoop-gather-locked {
+  font-size: 11px;
+  color: var(--mute);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Host Add Gathering Form ──────────────────────────── */
+.stoop-gather-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--paper-deep, #ede5d5);
+  border-radius: var(--radius-lg, 6px);
+  margin-bottom: 0.75rem;
+}
+.stoop-gather-add-input {
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+  background: var(--paper, #f3ece0);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.stoop-gather-add-input:focus {
+  border-color: var(--ochre, #7a241c);
+}
+.stoop-gather-add-error {
+  font-size: 11px;
+  color: var(--ochre, #7a241c);
+  margin: 0;
+}
+.stoop-gather-save-btn {
+  align-self: flex-end;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: var(--radius-full, 9999px);
+  border: none;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.stoop-gather-save-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

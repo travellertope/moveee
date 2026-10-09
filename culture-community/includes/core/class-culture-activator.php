@@ -230,6 +230,10 @@ class Culture_Activator {
         // Stoop check-in/attendance table (Literati Connect plan, Phase 3).
         Culture_Clusters::create_checkins_table();
 
+        // Stoop custom gatherings + per-gathering RSVPs (October 2026).
+        Culture_Clusters::create_gatherings_table();
+        Culture_Clusters::create_rsvps_table();
+
         // Hub membership + follow tables (docs/hubs-plan.md, Phase 1).
         Culture_Hubs::create_members_table();
         Culture_Hubs::create_follows_table();
