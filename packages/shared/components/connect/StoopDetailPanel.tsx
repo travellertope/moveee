@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const StoopChatterBox = dynamic(() => import("../pulse/StoopChatterBox"), { ssr: false });
 
 interface Cluster {
   id: number;
@@ -365,6 +368,11 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
         </div>
       )}
 
+      {/* Stoop Chatter */}
+      <div className="stoop-dp-section">
+        <StoopChatterBox clusterId={clusterId} isMember={isMember} />
+      </div>
+
       {/* Hub link */}
       {cluster.hubSlug && (
         <div className="stoop-dp-section">
@@ -376,7 +384,7 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
 
       {/* Full details link */}
       <div className="stoop-dp-footer">
-        <Link href={`/cluster/${clusterId}`} className="stoop-dp-full-link">
+        <Link href={`/stoop/${clusterId}`} className="stoop-dp-full-link">
           Open full Stoop page
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>

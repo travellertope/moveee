@@ -12,7 +12,9 @@ import FeedCard from "./FeedCard";
 import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import StoopReminderCard from "./StoopReminderCard";
 import ComposerModal, { type ComposerTab } from "./ComposerModal";
+import StoopsNearYouWidget from "./StoopsNearYouWidget";
 import "@/app/pulse-layout.css";
+import "@/app/stoop.css";
 
 
 const SECTION_HUB_SLUGS: Record<string, string> = {
@@ -476,6 +478,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
         {/* ── Right Sidebar ── */}
         <aside className="pulse-sidebar-right">
+
+          {/* Stoops Near You */}
+          <StoopsNearYouWidget />
 
           {/* Trending Now */}
           {trendingDirectory.length > 0 && (

@@ -273,6 +273,7 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
 
 import InternalLinkCard from "./InternalLinkCard";
 
+const StoopEmbedCard = dynamic(() => import("./StoopEmbedCard"), { ssr: false });
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { ssr: false });
 const DirectoryDetailModal = dynamic(() => import("./DirectoryDetailModal"), { ssr: false });
@@ -814,6 +815,13 @@ export default function FeedCard({
                 alt={item.title}
                 onClose={closeLightbox}
               />
+            )}
+
+            {/* Stoop embed card */}
+            {item.stoopClusterId && (
+              <div style={{ marginBottom: "0.5rem" }}>
+                <StoopEmbedCard clusterId={item.stoopClusterId} />
+              </div>
             )}
 
             {/* Link preview card (only if no image) */}
