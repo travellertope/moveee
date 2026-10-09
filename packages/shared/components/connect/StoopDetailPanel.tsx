@@ -7,6 +7,155 @@ import dynamic from "next/dynamic";
 
 const StoopChatterBox = dynamic(() => import("../pulse/StoopChatterBox"), { ssr: false });
 
+// ── Gatherings ────────────────────────────────────────────────────────────────
+
+const DAY_INDEX: Record<string, number> = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
+interface Gathering {
+  id: string;
+  date: string;        // display label e.g. "Sat 18 Jan"
+  isoDate: string;     // YYYY-MM-DD for API key
+  title: string;
+  rsvp: "attending" | "declined" | null;
+}
+
+function nextOccurrences(meetingDay: string, meetingTime: string, count = 3): Gathering[] {
+  const dayIdx = DAY_INDEX[meetingDay.toLowerCase()];
+  if (dayIdx === undefined) return [];
+  const now = new Date();
+  const out: Gathering[] = [];
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  for (let tries = 0; tries < 60 && out.length < count; tries++) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() === dayIdx) {
+      const label = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+      const iso = d.toISOString().split("T")[0];
+      out.push({
+        id: iso,
+        date: label + (meetingTime ? ` · ${meetingTime}` : ""),
+        isoDate: iso,
+        title: "Weekly Gathering",
+        rsvp: null,
+      });
+    }
+  }
+  return out;
+}
+
+function StoopGatheringsSection({ clusterId, meetingDay, meetingTime, isMember, isHost }: {
+  clusterId: number;
+  meetingDay: string;
+  meetingTime: string;
+  isMember: boolean;
+  isHost: boolean;
+}) {
+  const [gatherings, setGatherings] = useState<Gathering[]>([]);
+  const [rsvpState, setRsvpState] = useState<Record<string, "attending" | "declined">>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    // Try backend first; fall back to generated dates
+    fetch(`/api/cluster/${clusterId}/agenda`, { cache: "no-store" })
+      .then(res => res.ok ? res.json() : { gatherings: [] })
+      .then(data => {
+        if (data.gatherings?.length > 0) {
+          setGatherings(data.gatherings.map((g: any) => ({
+            id: g.id ?? g.isoDate ?? String(g.date),
+            date: g.date_label ?? g.date,
+            isoDate: g.iso_date ?? g.isoDate ?? "",
+            title: g.title ?? "Weekly Gathering",
+            rsvp: g.rsvp ?? null,
+          })));
+          const init: Record<string, "attending" | "declined"> = {};
+          data.gatherings.forEach((g: any) => {
+            if (g.rsvp) init[g.id ?? g.isoDate] = g.rsvp;
+          });
+          setRsvpState(init);
+        } else if (meetingDay) {
+          setGatherings(nextOccurrences(meetingDay, meetingTime));
+        }
+      })
+      .catch(() => {
+        if (meetingDay) setGatherings(nextOccurrences(meetingDay, meetingTime));
+      });
+  }, [clusterId, meetingDay, meetingTime]);
+
+  if (!meetingDay && gatherings.length === 0) return null;
+
+  async function handleRsvp(gatheringId: string, status: "attending" | "declined") {
+    const current = rsvpState[gatheringId];
+    const next = current === status ? null : status;
+    setRsvpState(prev => {
+      const updated = { ...prev };
+      if (next === null) delete updated[gatheringId];
+      else updated[gatheringId] = next;
+      return updated;
+    });
+    setLoading(prev => ({ ...prev, [gatheringId]: true }));
+    try {
+      await fetch(`/api/cluster/${clusterId}/agenda`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gathering_id: gatheringId, rsvp: next }),
+      });
+    } catch {}
+    setLoading(prev => ({ ...prev, [gatheringId]: false }));
+  }
+
+  return (
+    <div className="stoop-dp-section">
+      <div className="stoop-gather-heading-row">
+        <h3 className="stoop-dp-section-heading">Upcoming Gatherings</h3>
+        {isHost && (
+          <button type="button" className="stoop-gather-add-btn" title="Add a custom gathering (coming soon)" disabled>
+            + Add
+          </button>
+        )}
+      </div>
+      <div className="stoop-gather-list">
+        {gatherings.map(g => {
+          const myRsvp = rsvpState[g.id] ?? null;
+          const busy = loading[g.id];
+          return (
+            <div key={g.id} className="stoop-gather-row">
+              <div className="stoop-gather-info">
+                <span className="stoop-gather-date">{g.date}</span>
+                <span className="stoop-gather-title">{g.title}</span>
+              </div>
+              {isMember ? (
+                <div className="stoop-gather-rsvp-btns">
+                  <button
+                    type="button"
+                    className={`stoop-gather-btn${myRsvp === "attending" ? " stoop-gather-btn--yes" : ""}`}
+                    onClick={() => handleRsvp(g.id, "attending")}
+                    disabled={busy}
+                  >
+                    {myRsvp === "attending" ? "Attending ✓" : "Attend"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`stoop-gather-btn${myRsvp === "declined" ? " stoop-gather-btn--no" : ""}`}
+                    onClick={() => handleRsvp(g.id, "declined")}
+                    disabled={busy}
+                  >
+                    {myRsvp === "declined" ? "Can't Make It" : "Can't Go"}
+                  </button>
+                </div>
+              ) : (
+                <span className="stoop-gather-locked">Join to RSVP</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface Cluster {
   id: number;
   name: string;
@@ -345,6 +494,15 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
           </div>
         )}
       </div>
+
+      {/* Upcoming Weekly Gatherings */}
+      <StoopGatheringsSection
+        clusterId={clusterId}
+        meetingDay={cluster.meetingDay ?? ""}
+        meetingTime={cluster.meetingTime ?? ""}
+        isMember={isMember}
+        isHost={isHost}
+      />
 
       {/* Members roster */}
       {isMember && members.length > 0 && (
