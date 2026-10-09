@@ -809,6 +809,56 @@
   border-color: var(--rule, rgba(20,17,13,0.1));
 }
 
+/* Per-stop photo */
+.cm-stop-photo { margin-top: 2px; }
+.cm-stop-photo-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--mute);
+  background: var(--paper);
+  border: 1px dashed var(--rule, rgba(20,17,13,0.2));
+  border-radius: var(--radius-md);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.cm-stop-photo-add:hover { border-color: var(--ochre, #7a241c); color: var(--ochre, #7a241c); }
+.cm-stop-photo-add--uploading { opacity: 0.6; pointer-events: none; }
+.cm-stop-photo-preview {
+  position: relative;
+  display: inline-block;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+.cm-stop-photo-preview img {
+  display: block;
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+}
+.cm-stop-photo-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
 /* Image upload */
 .cm-upload-zone {
   border: 2px dashed var(--rule, rgba(20,17,13,0.15));

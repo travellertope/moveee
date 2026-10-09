@@ -2,8 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import NotificationsClient from "./NotificationsClient";
-import AccountNav from "@/components/AccountNav";
-import "../../member.css";
+import FeedRightSidebar from "@/components/pulse/FeedRightSidebar";
+import "@/app/pulse-layout.css";
+import "@/app/member.css";
 
 export const dynamic = "force-dynamic";
 
@@ -32,33 +33,19 @@ export default async function NotificationsPage() {
   if (!session?.user) redirect("/login?callbackUrl=/member/notifications");
 
   const user = session.user;
-  const isPatron = user.tier === "patron";
-  const displayName = user.displayName || user.name || user.username || "Member";
-  const initial = displayName.charAt(0).toUpperCase();
   const notifications = await fetchNotifications(Number(user.id));
 
   return (
-    <div className="acct-page">
-      <div className="acct-wrap">
-        <div className="acct-profile">
-          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-            ) : initial}
+    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+      <div className="pulse-layout pulse-layout--feed">
+        <main className="pulse-timeline">
+          <div className="pulse-timeline-inner" style={{ padding: "20px 20px 40px" }}>
+            <NotificationsClient initialItems={notifications} />
           </div>
-          <div className="acct-profile-body">
-            <h1 className="acct-name">Notifications</h1>
-            <div className="acct-meta">
-              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
-                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <AccountNav isPatron={isPatron} />
-
-        <NotificationsClient initialItems={notifications} />
+        </main>
+        <aside className="pulse-sidebar-right">
+          <FeedRightSidebar />
+        </aside>
       </div>
     </div>
   );

@@ -15,6 +15,8 @@ import ProBadge from "@/components/ProBadge";
 import ImageLightbox from "./ImageLightbox";
 import AudioPreviewButton from "./AudioPreviewButton";
 
+const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
+
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
   const [pollOpts, setPollOpts] = useState(options);
@@ -271,6 +273,7 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
 
 import InternalLinkCard from "./InternalLinkCard";
 
+const StoopEmbedCard = dynamic(() => import("./StoopEmbedCard"), { ssr: false });
 const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: false });
 const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { ssr: false });
 const DirectoryDetailModal = dynamic(() => import("./DirectoryDetailModal"), { ssr: false });
@@ -473,10 +476,12 @@ export default function FeedCard({
     const closeLightbox = useCallback(() => setLightbox(null), []);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
-    // Community posts open their own full page directly (no off-canvas
-    // drawer) — unlike Quote/Happening/Directory cards elsewhere in this
-    // file, which still use their detail modals.
-    const openPost = useCallback(() => router.push(`/community/${item.slug}`), [item.slug]);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [modalOpen, setModalOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const closeModal = useCallback(() => setModalOpen(false), []);
+    // Community posts open a centered modal overlay on click.
+    const openPost = useCallback(() => setModalOpen(true), []);
 
     const isPro = item.communityTier === "patron";
 
@@ -565,116 +570,69 @@ export default function FeedCard({
           )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
-              {item.communityAuthorUsername ? (
-                <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
-                  {item.communityAuthor || "Community Member"}
-                </Link>
-              ) : (
-                <span style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700 }}>
-                  {item.communityAuthor || "Community Member"}
-                </span>
-              )}
-              {isPro && <ProBadge size={13} />}
-              <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>·</span>
-              <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace", letterSpacing: "0.02em" }}>{formatDate(item.date)}</span>
-              {/* Hidden when a Hub badge will also render below (HubBadgeRow) —
-                  Hub Phase 6 auto-links every Section to an official Hub, so
-                  the two used to show the same label ("Literature") twice. */}
-              {item.communityTag && !item.hubId && (
-                <button
-                  onClick={() => onTagClick?.(item.communityTag!)}
-                  style={{
-                    marginLeft: "auto",
-                    background: "var(--cat-community-bg)",
-                    color: "var(--cat-community-fg)",
-                    fontSize: "0.58rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    padding: "0.15rem 0.4rem",
-                    borderRadius: "2px",
-                    border: "none",
-                    cursor: onTagClick ? "pointer" : "default",
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {item.communityTag}
-                </button>
-              )}
+            {/* Header: author info LEFT, type + hub badges RIGHT */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              {/* Left: name + pro + timestamp */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", minWidth: 0 }}>
+                {item.communityAuthorUsername ? (
+                  <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                    {item.communityAuthor || "Community Member"}
+                  </Link>
+                ) : (
+                  <span style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700 }}>
+                    {item.communityAuthor || "Community Member"}
+                  </span>
+                )}
+                {isPro && <ProBadge size={13} />}
+                <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace" }}>·</span>
+                <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace" }}>{formatDate(item.date)}</span>
+              </div>
+              {/* Right: type badge + hub/section badge */}
+              <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0 }}>
+                {item.templateType && item.templateType !== "post" && (() => {
+                  const typeMap: Record<string, { label: string; color: string; bg: string }> = {
+                    "itinerary":         { label: "🗺 Itinerary",    color: "#4f46e5", bg: "rgba(79,70,229,0.10)" },
+                    "hidden-gem":        { label: "💎 Place",        color: "#d97706", bg: "rgba(217,119,6,0.10)" },
+                    "food-review":       { label: "🍽 Food",         color: "#d97706", bg: "rgba(217,119,6,0.10)" },
+                    "book-review":       { label: "📚 Book",         color: "#7c3aed", bg: "rgba(124,58,237,0.10)" },
+                    "music-review":      { label: "🎵 Music",        color: "#059669", bg: "rgba(5,150,105,0.10)" },
+                    "film-review":       { label: "🎬 Film",         color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
+                    "poll":              { label: "📊 Poll",         color: "#059669", bg: "rgba(5,150,105,0.10)" },
+                    "creative-showcase": { label: "🎨 Showcase",     color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
+                    "cultural-take":     { label: "💭 Take",         color: "#7c3aed", bg: "rgba(124,58,237,0.10)" },
+                    "happening":         { label: "📅 Event",        color: "#e11d48", bg: "rgba(225,29,72,0.10)" },
+                    "event":             { label: "📅 Event",        color: "#e11d48", bg: "rgba(225,29,72,0.10)" },
+                  };
+                  const t = typeMap[item.templateType];
+                  if (!t) return null;
+                  return (
+                    <span style={{
+                      fontSize: "0.6rem", fontWeight: 600, padding: "2px 8px",
+                      borderRadius: "999px", color: t.color, background: t.bg,
+                      whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
+                    }}>
+                      {t.label}
+                    </span>
+                  );
+                })()}
+                {(item.hubName || item.hubSlug || (item.communityTag && !item.hubId)) && (
+                  <span style={{
+                    fontSize: "0.6rem", fontWeight: 500,
+                    padding: "2px 7px", borderRadius: "4px",
+                    background: "rgba(168,162,158,0.15)", color: "var(--mute)",
+                    whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
+                  }}>
+                    #{item.hubName || item.communityTag}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {item.hubId && (
-              <HubBadgeRow
-                hubId={item.hubId}
-                hubName={item.hubName}
-                hubSlug={item.hubSlug}
-                hubIsOfficial={item.hubIsOfficial}
-              />
-            )}
-
-            {/* Text — clicking opens the post's own page directly */}
+            {/* Text body — clicking opens the detail modal */}
             <div
               onClick={openPost}
               style={{ cursor: "pointer" }}
             >
-              {/* Template-specific header badges */}
-              {item.templateType && item.templateType !== "post" && (
-                <div style={{ marginBottom: "0.4rem" }}>
-                  {item.templateType === "hidden-gem" && (
-                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gold)", background: "var(--cat-pulse-bg)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
-                      💎 Place {item.starRating ? "★".repeat(item.starRating) : ""}
-                    </span>
-                  )}
-                  {item.templateType === "poll" && (
-                    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cat-purple-fg)", background: "var(--cat-purple-bg)", padding: "3px 10px", borderRadius: "9999px", fontFamily: "var(--font-sans), sans-serif" }}>
-                      📊 Poll
-                    </span>
-                  )}
-                  {item.templateType === "cultural-take" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-purple-fg)", background: "var(--cat-purple-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Take{item.locationName ? ` · ${item.locationName}` : ""}
-                    </span>
-                  )}
-                  {item.templateType === "food-review" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)", background: "var(--cat-editorial-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Food Review {item.foodDishName ? `· ${item.foodDishName}` : ""}
-                    </span>
-                  )}
-                  {item.templateType === "book-review" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6B48A8", background: "rgba(107,72,168,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
-                      📚 Book Review {item.bookTitle ? `· ${item.bookTitle}` : ""}
-                    </span>
-                  )}
-                  {item.templateType === "music-review" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0D7377", background: "rgba(13,115,119,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
-                      🎵 Music Review {item.musicTitle ? `· ${item.musicTitle}` : ""}
-                    </span>
-                  )}
-                  {item.templateType === "film-review" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2B4C7E", background: "rgba(43,76,126,0.12)", padding: "2px 6px", borderRadius: "2px" }}>
-                      🎬 Film Review {item.filmTitle ? `· ${item.filmTitle}` : ""}
-                    </span>
-                  )}
-                  {item.templateType === "creative-showcase" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Creative Showcase
-                    </span>
-                  )}
-                  {item.templateType === "itinerary" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-community-fg)", background: "var(--cat-community-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Itinerary
-                    </span>
-                  )}
-                  {item.templateType === "event" && (
-                    <span style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-rust-fg)", background: "var(--cat-rust-bg)", padding: "2px 6px", borderRadius: "2px" }}>
-                      Event{item.eventCategory ? ` · ${item.eventCategory}` : ""}
-                    </span>
-                  )}
-                </div>
-              )}
 
               {/* Location badge */}
               {item.locationName && (
@@ -788,28 +746,58 @@ export default function FeedCard({
               </div>
             )}
 
-            {/* Itinerary stops */}
-            {item.templateType === "itinerary" && item.itineraryStops && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0.6rem" }}>
-                {item.itineraryStops.map((stop: any, i: number) => (
-                  <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                    <div style={{
-                      width: "22px", height: "22px", borderRadius: "50%",
-                      background: "var(--gold)", color: "#fff",
-                      fontSize: "0.65rem", fontWeight: 700,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0, marginTop: "1px",
-                    }}>
-                      {i + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: "0.82rem", color: "var(--ink)" }}>{stop.name}</div>
-                      {stop.note && <div style={{ fontSize: "0.75rem", color: "var(--mute)", lineHeight: 1.4 }}>{stop.note}</div>}
-                    </div>
+            {/* Itinerary stops — grid with images when available */}
+            {item.templateType === "itinerary" && item.itineraryStops && item.itineraryStops.length > 0 && (() => {
+              const hasImages = item.itineraryStops.some((s: any) => s.image_url);
+              if (hasImages) {
+                return (
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                    gap: "8px",
+                    marginBottom: "0.6rem",
+                  }}>
+                    {item.itineraryStops.slice(0, 6).map((stop: any, i: number) => (
+                      <div key={i} style={{ position: "relative", borderRadius: "var(--radius-lg)", overflow: "hidden", background: "var(--paper-deep)", border: "1px solid var(--rule)" }}>
+                        {stop.image_url ? (
+                          <img src={stop.image_url} alt={stop.name} style={{ width: "100%", height: "96px", objectFit: "cover", display: "block" }} loading="lazy" />
+                        ) : (
+                          <div style={{ width: "100%", height: "96px", background: "var(--paper-deep)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span style={{ fontSize: "1.4rem" }}>📍</span>
+                          </div>
+                        )}
+                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(20,17,13,0.75) 0%, transparent 100%)", padding: "6px 6px 5px" }}>
+                          <span style={{ color: "#fff", fontSize: "0.6rem", fontWeight: 600, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {i + 1}. {stop.name}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "0.6rem" }}>
+                  {item.itineraryStops.map((stop: any, i: number) => (
+                    <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                      <div style={{
+                        width: "22px", height: "22px", borderRadius: "50%",
+                        background: "var(--gold)", color: "#fff",
+                        fontSize: "0.65rem", fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0, marginTop: "1px",
+                      }}>
+                        {i + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: "0.82rem", color: "var(--ink)" }}>{stop.name}</div>
+                        {stop.note && <div style={{ fontSize: "0.75rem", color: "var(--mute)", lineHeight: 1.4 }}>{stop.note}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* Single image — only when no gallery */}
             {item.image && !item.galleryImages?.length && (
@@ -827,6 +815,13 @@ export default function FeedCard({
                 alt={item.title}
                 onClose={closeLightbox}
               />
+            )}
+
+            {/* Stoop embed card */}
+            {item.stoopClusterId && (
+              <div style={{ marginBottom: "0.5rem" }}>
+                <StoopEmbedCard clusterId={item.stoopClusterId} />
+              </div>
             )}
 
             {/* Link preview card (only if no image) */}
@@ -911,6 +906,7 @@ export default function FeedCard({
             </div>
           </div>
         </article>
+        {modalOpen && <CommunityDetailModal item={item} onClose={closeModal} />}
       </>
     );
   }
