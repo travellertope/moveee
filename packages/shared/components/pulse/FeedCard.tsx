@@ -463,7 +463,12 @@ export default function FeedCard({
             </div>
           </div>
         </article>
-        {modalOpen && <QuoteDetailModal item={item} onClose={closeModal} />}
+        {modalOpen && (
+          <>
+            <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
+            <QuoteDetailModal item={item} onClose={closeModal} />
+          </>
+        )}
       </>
     );
   }
@@ -906,7 +911,12 @@ export default function FeedCard({
             </div>
           </div>
         </article>
-        {modalOpen && <CommunityDetailModal item={item} onClose={closeModal} />}
+        {modalOpen && (
+          <>
+            <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
+            <CommunityDetailModal item={item} onClose={closeModal} />
+          </>
+        )}
       </>
     );
   }
@@ -1064,7 +1074,12 @@ export default function FeedCard({
           )}
         </article>
 
-        {modalOpen && <PulseDetailModal item={item} onClose={closeModal} />}
+        {modalOpen && (
+          <>
+            <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
+            <PulseDetailModal item={item} onClose={closeModal} />
+          </>
+        )}
         <style>{`.pulse-body p { margin: 0 0 0.6em; } .pulse-body p:last-child { margin-bottom: 0; }`}</style>
       </>
     );
@@ -1227,7 +1242,12 @@ export default function FeedCard({
             image={item.image}
           />
         </article>
-        {modalOpen && <DirectoryDetailModal item={item} onClose={closeModal} />}
+        {modalOpen && (
+          <>
+            <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
+            <DirectoryDetailModal item={item} onClose={closeModal} />
+          </>
+        )}
       </>
     );
   }
@@ -1348,7 +1368,12 @@ export default function FeedCard({
             image={item.image}
           />
         </article>
-        {modalOpen && <HappeningDetailModal item={item} onClose={closeModal} />}
+        {modalOpen && (
+          <>
+            <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
+            <HappeningDetailModal item={item} onClose={closeModal} />
+          </>
+        )}
         <style>{`.happening-body p { margin: 0 0 0.6em; } .happening-body p:last-child { margin-bottom: 0; }`}</style>
       </>
     );
