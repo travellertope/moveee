@@ -183,7 +183,7 @@ export default function ReactionBar({
       <div style={{
         display: "inline-flex",
         alignItems: "center",
-        background: "var(--paper, #f3ece0)",
+        background: "#fff",
         border: "1.5px solid var(--rule, #e0d8ce)",
         borderRadius: "999px",
         boxShadow: "0 2px 14px rgba(20,17,13,0.10), 0 1px 4px rgba(20,17,13,0.06)",
