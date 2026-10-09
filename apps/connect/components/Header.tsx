@@ -15,6 +15,7 @@ const NAV = [
   { href: "/discover",             label: "Explore Topics",  icon: "discover"  },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
   { href: "/member/notifications", label: "Notifications",   icon: "bell"      },
+  { href: "/stoop",                label: "Stoop IRL",       icon: "stoop"     },
 ] as const;
 
 const HUB_SPACES = [
