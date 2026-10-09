@@ -8,17 +8,15 @@ import "../../pulse-layout.css";
 
 export const dynamic = "force-dynamic";
 
-interface Props {
-  params: { id: string };
-}
+export default async function StoopPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = (await getServerSession(authOptions as any)) as any;
+  const { id } = await params;
 
-export default async function StoopPage({ params }: Props) {
-  const session = await getServerSession(authOptions as any);
   if (!session?.user) {
-    redirect(`/auth/sign-in?next=/stoop/${params.id}`);
+    redirect(`/auth/sign-in?next=/stoop/${id}`);
   }
 
-  const clusterId = Number(params.id);
+  const clusterId = Number(id);
   if (!clusterId || isNaN(clusterId)) {
     redirect("/stoop");
   }
