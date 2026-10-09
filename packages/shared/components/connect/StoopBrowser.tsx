@@ -119,15 +119,51 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
   /* Category filter */
   const [category, setCategory] = useState<StCategory>("all");
 
-  /* "Start a Stoop" quick modal */
+  /* "Start a Stoop" wizard modal */
   const [showHostModal, setShowHostModal] = useState(false);
+  const [wizStep, setWizStep] = useState(1);
+  // Step 1 — country
+  const [hostCountry, setHostCountry] = useState(viewerCountry || "");
+  // Step 2 — venue
+  const [hostVenueType, setHostVenueType] = useState("");
+  const [hostNote, setHostNote] = useState("");
+  // Step 3 — capacity
+  const [hostCapacity, setHostCapacity] = useState(8);
+  const [hostAccessible, setHostAccessible] = useState(false);
+  // Step 4 — locality commitment
+  const [hostLocalityConfirmed, setHostLocalityConfirmed] = useState(false);
+  // Step 5 — address visibility
+  const [hostAddressVisible, setHostAddressVisible] = useState("members_only");
+  // Step 6 — details form
   const [hostStoopName, setHostStoopName] = useState("");
+  const [hostStreet, setHostStreet] = useState("");
   const [hostCity, setHostCity] = useState(viewerCity || "");
+  const [hostFormCountry, setHostFormCountry] = useState(viewerCountry || "");
   const [hostDay, setHostDay] = useState("saturday");
   const [hostTime, setHostTime] = useState("");
-  const [hostVibe, setHostVibe] = useState("");
+  const [hostLocationNote, setHostLocationNote] = useState("");
   const [hostSubmitting, setHostSubmitting] = useState(false);
   const [hostError, setHostError] = useState("");
+  const [hostCreatedId, setHostCreatedId] = useState<number | null>(null);
+  const [hostCreatedName, setHostCreatedName] = useState("");
+  const [hostLinkCopied, setHostLinkCopied] = useState(false);
+  const [hostLat, setHostLat] = useState<number | null>(null);
+  const [hostLng, setHostLng] = useState<number | null>(null);
+
+  function openWizard() {
+    setWizStep(1);
+    setHostCountry(viewerCountry || "");
+    setHostVenueType(""); setHostNote("");
+    setHostCapacity(8); setHostAccessible(false);
+    setHostLocalityConfirmed(false);
+    setHostAddressVisible("members_only");
+    setHostStoopName(""); setHostStreet("");
+    setHostCity(viewerCity || ""); setHostFormCountry(viewerCountry || "");
+    setHostDay("saturday"); setHostTime(""); setHostLocationNote("");
+    setHostError(""); setHostCreatedId(null); setHostCreatedName(""); setHostLinkCopied(false);
+    setHostLat(null); setHostLng(null);
+    setShowHostModal(true);
+  }
 
   /* Inline detail panel */
   const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
@@ -216,37 +252,63 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
     }
   }
 
-  /* ── Quick-create Stoop ──────────────────────────────────────*/
+  /* ── Geocode address via Nominatim ──────────────────────────*/
+  async function geocodeAddress() {
+    const q = [hostStreet.trim(), hostCity.trim(), hostFormCountry.trim()].filter(Boolean).join(", ");
+    if (!q) return;
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1`,
+        { headers: { Accept: "application/json" } }
+      );
+      const data = await res.json().catch(() => []);
+      if (Array.isArray(data) && data[0]) {
+        setHostLat(parseFloat(data[0].lat));
+        setHostLng(parseFloat(data[0].lon));
+      }
+    } catch {
+      /* non-fatal — stoop creates without coords */
+    }
+  }
+
+  /* ── Wizard Stoop create ─────────────────────────────────────*/
   async function submitHost() {
     if (hostSubmitting || !hostStoopName.trim() || !hostCity.trim()) return;
     setHostSubmitting(true);
     setHostError("");
+    /* Geocode before posting if we don't have coords yet */
+    if (hostLat === null) await geocodeAddress();
     try {
+      const payload: Record<string, unknown> = {
+        name: hostStoopName.trim(),
+        city: hostCity.trim(),
+        street: hostStreet.trim(),
+        country: hostFormCountry.trim() || hostCountry || viewerCountry || "",
+        meeting_day: hostDay,
+        meeting_time: hostTime.trim(),
+        location_note: hostLocationNote.trim(),
+        venue_type: hostVenueType || "other",
+        host_note: hostNote.trim(),
+        capacity: hostCapacity,
+        realistic_capacity: hostCapacity,
+        accessible: hostAccessible ? 1 : 0,
+        address_visible: hostAddressVisible,
+        locality_confirmed: hostLocalityConfirmed ? 1 : 0,
+      };
+      if (hostLat !== null) payload.lat = hostLat;
+      if (hostLng !== null) payload.lng = hostLng;
       const res = await fetch("/api/cluster/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: hostStoopName.trim(),
-          city: hostCity.trim(),
-          street: "",
-          country: viewerCountry || "",
-          meeting_day: hostDay,
-          meeting_time: hostTime.trim(),
-          host_note: hostVibe.trim(),
-          venue_type: "other",
-          realistic_capacity: 10,
-          accessible: 0,
-          address_visible: "members_only",
-          locality_confirmed: 1,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setHostError(data?.message || "Couldn't start that Stoop right now.");
         return;
       }
-      setShowHostModal(false);
-      if (data?.id) router.push(`/cluster/${data.id}`);
+      setHostCreatedId(data.id ?? null);
+      setHostCreatedName(hostStoopName.trim());
     } catch {
       setHostError("Couldn't start that Stoop right now.");
     } finally {
@@ -396,7 +458,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
             <button
               type="button"
               className="stoop-hero-btn stoop-hero-btn--primary"
-              onClick={() => setShowHostModal(true)}
+              onClick={openWizard}
             >
               + Start a Stoop
             </button>
@@ -570,7 +632,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
                 type="button"
                 className="stoop-hero-btn stoop-hero-btn--primary"
                 style={{ margin: "0 auto" }}
-                onClick={() => setShowHostModal(true)}
+                onClick={openWizard}
               >
                 Start a Stoop →
               </button>
@@ -601,99 +663,350 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
         </>
       )}
 
-      {/* ── "Start a Stoop" quick modal ──────────────────────── */}
-      {showHostModal && (
-        <div
-          className="stoop-modal-backdrop"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowHostModal(false); }}
-        >
-          <div className="stoop-modal-card" role="dialog" aria-modal="true" aria-label="Start a Stoop">
-            <div className="stoop-modal-header">
-              <h3 className="stoop-modal-title">Start a Stoop</h3>
-              <button
-                type="button"
-                className="stoop-modal-close"
-                onClick={() => setShowHostModal(false)}
-                aria-label="Close"
-              >✕</button>
-            </div>
-            <div className="stoop-modal-body">
-              <label className="stoop-modal-label" htmlFor="shost-name">Stoop name</label>
-              <input
-                id="shost-name"
-                type="text"
-                className="stoop-modal-input"
-                placeholder="e.g. Allen Avenue Stoop"
-                value={hostStoopName}
-                onChange={(e) => setHostStoopName(e.target.value)}
-              />
+      {/* ── "Start a Stoop" wizard modal ─────────────────────── */}
+      {showHostModal && (() => {
+        const TOTAL_STEPS = 6;
+        const progressPct = hostCreatedId ? 100 : ((wizStep - 1) / TOTAL_STEPS) * 100;
 
-              <div className="stoop-modal-row">
-                <div>
-                  <label className="stoop-modal-label" htmlFor="shost-city">City / Neighbourhood</label>
-                  <input
-                    id="shost-city"
-                    type="text"
-                    className="stoop-modal-input"
-                    placeholder="e.g. Peckham, London"
-                    value={hostCity}
-                    onChange={(e) => setHostCity(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="stoop-modal-label" htmlFor="shost-day">Meeting day</label>
-                  <select
-                    id="shost-day"
-                    className="stoop-modal-input"
-                    value={hostDay}
-                    onChange={(e) => setHostDay(e.target.value)}
-                  >
-                    {["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map((d) => (
-                      <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="stoop-modal-label" htmlFor="shost-time">Meeting time</label>
-                  <input
-                    id="shost-time"
-                    type="text"
-                    className="stoop-modal-input"
-                    placeholder="e.g. 6:30pm"
-                    value={hostTime}
-                    onChange={(e) => setHostTime(e.target.value)}
-                  />
-                </div>
+        const COUNTRY_OPTIONS = [
+          { value: "United Kingdom", label: "🇬🇧 United Kingdom" },
+          { value: "Nigeria", label: "🇳🇬 Nigeria" },
+          { value: "United States", label: "🇺🇸 United States" },
+          { value: "Canada", label: "🇨🇦 Canada" },
+          { value: "Australia", label: "🇦🇺 Australia" },
+          { value: "Ghana", label: "🇬🇭 Ghana" },
+          { value: "South Africa", label: "🇿🇦 South Africa" },
+        ];
+
+        const VENUE_OPTIONS = [
+          { value: "home", label: "Home", icon: "🏠", sub: "Living room, kitchen, yard" },
+          { value: "cafe", label: "Café / Bar", icon: "☕", sub: "Booked or regular spot" },
+          { value: "coworking", label: "Studio / Library", icon: "📚", sub: "Coworking, community space" },
+          { value: "outdoor", label: "Outdoor", icon: "🌳", sub: "Park, roof, courtyard" },
+        ];
+
+        const ADDR_OPTIONS = [
+          { value: "members_only", label: "Members only", sub: "Only people in your Stoop see it" },
+          { value: "on_request", label: "On request", sub: "Members request it; you share privately" },
+          { value: "area_only", label: "Area only", sub: "Show the neighbourhood, never the address" },
+        ];
+
+        const canAdvance = (() => {
+          if (wizStep === 1) return hostCountry !== "";
+          if (wizStep === 2) return hostVenueType !== "";
+          if (wizStep === 4) return hostLocalityConfirmed;
+          return true;
+        })();
+
+        const stepTitle = [
+          "Where will you host?",
+          "What kind of space?",
+          "How many people?",
+          "Committing to your area",
+          "Address privacy",
+          "Stoop details",
+        ][wizStep - 1] ?? "Start a Stoop";
+
+        return (
+          <div
+            className="stoop-modal-backdrop"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowHostModal(false); } }}
+          >
+            <div className="stoop-modal-card" role="dialog" aria-modal="true" aria-label="Start a Stoop">
+              {/* Header */}
+              <div className="stoop-modal-header">
+                {wizStep > 1 && !hostCreatedId ? (
+                  <button type="button" className="stoop-wiz-back" onClick={() => setWizStep((s) => s - 1)} aria-label="Back">
+                    ← Back
+                  </button>
+                ) : <span />}
+                <h3 className="stoop-modal-title">{hostCreatedId ? "Stoop is live! 🎉" : stepTitle}</h3>
+                <button type="button" className="stoop-modal-close" onClick={() => setShowHostModal(false)} aria-label="Close">✕</button>
               </div>
 
-              <label className="stoop-modal-label" htmlFor="shost-vibe">Vibe &amp; details (optional)</label>
-              <textarea
-                id="shost-vibe"
-                className="stoop-modal-input stoop-modal-textarea"
-                rows={3}
-                placeholder="What's the vibe? Vinyl sessions, book circle, cooking together…"
-                value={hostVibe}
-                onChange={(e) => setHostVibe(e.target.value)}
-              />
+              {/* Progress bar */}
+              <div className="stoop-wiz-progress">
+                <div className="stoop-wiz-progress-fill" style={{ width: `${progressPct}%` }} />
+              </div>
 
-              {hostError && <p className="stoop-detail-error">{hostError}</p>}
+              <div className="stoop-modal-body">
+                {/* ── Success screen ── */}
+                {hostCreatedId ? (
+                  <div className="stoop-wiz-success">
+                    <p className="stoop-wiz-success-name">{hostCreatedName}</p>
+                    <p className="stoop-wiz-success-sub">
+                      Your Stoop is live. Share the invite link with people nearby and they can request to join.
+                    </p>
+                    <button
+                      type="button"
+                      className="stoop-wiz-copy-btn"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/cluster/${hostCreatedId}`).catch(() => {});
+                        setHostLinkCopied(true);
+                        setTimeout(() => setHostLinkCopied(false), 2500);
+                      }}
+                    >
+                      {hostLinkCopied ? "✓ Copied!" : "Copy invite link"}
+                    </button>
+                    <button
+                      type="button"
+                      className="stoop-modal-submit"
+                      onClick={() => { setShowHostModal(false); router.push(`/cluster/${hostCreatedId}`); }}
+                    >
+                      Go to my Stoop →
+                    </button>
+                  </div>
+                ) : wizStep === 1 ? (
+                  /* Step 1 — Country */
+                  <>
+                    <p className="stoop-wiz-sub">We&apos;ll show your Stoop to people in the right area.</p>
+                    <div className="stoop-wiz-country-list">
+                      {COUNTRY_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`stoop-wiz-country-chip${hostCountry === opt.value ? " stoop-wiz-country-chip--active" : ""}`}
+                          onClick={() => setHostCountry(opt.value)}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        className={`stoop-wiz-country-chip${!COUNTRY_OPTIONS.find((o) => o.value === hostCountry) && hostCountry !== "" ? " stoop-wiz-country-chip--active" : ""}`}
+                        onClick={() => setHostCountry("Other")}
+                      >
+                        🌍 Somewhere else
+                      </button>
+                    </div>
+                  </>
+                ) : wizStep === 2 ? (
+                  /* Step 2 — Venue type */
+                  <>
+                    <p className="stoop-wiz-sub">Stoops can happen anywhere — what fits your space?</p>
+                    <div className="stoop-wiz-venue-grid">
+                      {VENUE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`stoop-wiz-venue-chip${hostVenueType === opt.value ? " stoop-wiz-venue-chip--active" : ""}`}
+                          onClick={() => setHostVenueType(opt.value)}
+                        >
+                          <span className="stoop-wiz-venue-icon">{opt.icon}</span>
+                          <span className="stoop-wiz-venue-name">{opt.label}</span>
+                          <span className="stoop-wiz-venue-sub">{opt.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <label className="stoop-modal-label" htmlFor="wiz-host-note" style={{ marginTop: "1.2rem" }}>
+                      Host note <span style={{ color: "var(--mute)", fontWeight: 400 }}>(optional)</span>
+                    </label>
+                    <textarea
+                      id="wiz-host-note"
+                      className="stoop-modal-input stoop-modal-textarea"
+                      rows={2}
+                      placeholder="e.g. We rotate between homes. Vinyl sessions, bring a record."
+                      value={hostNote}
+                      onChange={(e) => setHostNote(e.target.value)}
+                    />
+                  </>
+                ) : wizStep === 3 ? (
+                  /* Step 3 — Capacity & accessibility */
+                  <>
+                    <p className="stoop-wiz-sub">Set a comfortable size. You can change this anytime.</p>
+                    <div className="stoop-wiz-cap-row">
+                      <button
+                        type="button"
+                        className="stoop-wiz-cap-btn"
+                        onClick={() => setHostCapacity((n) => Math.max(2, n - 1))}
+                        disabled={hostCapacity <= 2}
+                      >−</button>
+                      <span className="stoop-wiz-cap-value">{hostCapacity}</span>
+                      <button
+                        type="button"
+                        className="stoop-wiz-cap-btn"
+                        onClick={() => setHostCapacity((n) => Math.min(30, n + 1))}
+                        disabled={hostCapacity >= 30}
+                      >+</button>
+                    </div>
+                    <p className="stoop-wiz-cap-hint">members · max 30</p>
+                    <label className="stoop-wiz-accessible-row">
+                      <input
+                        type="checkbox"
+                        checked={hostAccessible}
+                        onChange={(e) => setHostAccessible(e.target.checked)}
+                      />
+                      <span>
+                        <strong>Accessible venue</strong>
+                        <span style={{ display: "block", color: "var(--mute)", fontSize: "0.78rem" }}>
+                          Step-free access, lift, or ground level
+                        </span>
+                      </span>
+                    </label>
+                  </>
+                ) : wizStep === 4 ? (
+                  /* Step 4 — Locality commitment */
+                  <>
+                    <p className="stoop-wiz-sub">
+                      Stoops are neighbourhood gatherings — the same crew, same area, same rhythm.
+                      We ask hosts to commit to showing up for at least a month.
+                    </p>
+                    <div className="stoop-wiz-context-note">
+                      <strong>Why this matters:</strong> When people join a Stoop they're signing up to a recurring local thing, not a one-off event.
+                      Hosts who move or go quiet disrupt the whole group.
+                    </div>
+                    <button
+                      type="button"
+                      className={`stoop-wiz-commit${hostLocalityConfirmed ? " stoop-wiz-commit--active" : ""}`}
+                      onClick={() => setHostLocalityConfirmed((v) => !v)}
+                    >
+                      {hostLocalityConfirmed ? "✓ " : ""}
+                      I&apos;m local to this area and I commit to hosting at least monthly
+                    </button>
+                  </>
+                ) : wizStep === 5 ? (
+                  /* Step 5 — Address visibility */
+                  <>
+                    <p className="stoop-wiz-sub">Who can see your exact address? You can change this later.</p>
+                    <div className="stoop-wiz-addr-options">
+                      {ADDR_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`stoop-wiz-addr-option${hostAddressVisible === opt.value ? " stoop-wiz-addr-option--active" : ""}`}
+                          onClick={() => setHostAddressVisible(opt.value)}
+                        >
+                          <span className="stoop-wiz-addr-label">{opt.label}</span>
+                          <span className="stoop-wiz-addr-sub">{opt.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Recap */}
+                    <div className="stoop-wiz-summary">
+                      <p><strong>Location:</strong> {hostCountry}</p>
+                      <p><strong>Venue:</strong> {VENUE_OPTIONS.find((v) => v.value === hostVenueType)?.label ?? hostVenueType}</p>
+                      <p><strong>Size:</strong> up to {hostCapacity} members{hostAccessible ? " · accessible" : ""}</p>
+                    </div>
+                  </>
+                ) : wizStep === 6 ? (
+                  /* Step 6 — Full details */
+                  <>
+                    <p className="stoop-wiz-sub">Last step — give your Stoop a name and a meeting time.</p>
+                    <label className="stoop-modal-label" htmlFor="wiz-name">Stoop name <span className="stoop-wiz-required">*</span></label>
+                    <input
+                      id="wiz-name"
+                      type="text"
+                      className="stoop-modal-input"
+                      placeholder="e.g. Allen Avenue Stoop"
+                      value={hostStoopName}
+                      onChange={(e) => setHostStoopName(e.target.value)}
+                    />
 
-              <p className="stoop-modal-note">
-                You can add address, capacity, and privacy settings after creation. Needs at least 4 members to activate.
-              </p>
+                    <label className="stoop-modal-label" htmlFor="wiz-street">Street address <span className="stoop-wiz-required">*</span></label>
+                    <input
+                      id="wiz-street"
+                      type="text"
+                      className="stoop-modal-input"
+                      placeholder="e.g. 14 Rye Lane — used for proximity matching"
+                      value={hostStreet}
+                      onChange={(e) => { setHostStreet(e.target.value); setHostLat(null); setHostLng(null); }}
+                      onBlur={geocodeAddress}
+                    />
+                    <p className="stoop-wiz-geo-note">Exact address is only shown to members per your privacy setting.</p>
 
-              <button
-                type="button"
-                className="stoop-modal-submit"
-                disabled={hostSubmitting || !hostStoopName.trim() || !hostCity.trim()}
-                onClick={submitHost}
-              >
-                {hostSubmitting ? "Starting…" : "Publish Stoop →"}
-              </button>
+                    <div className="stoop-modal-row">
+                      <div>
+                        <label className="stoop-modal-label" htmlFor="wiz-city">City <span className="stoop-wiz-required">*</span></label>
+                        <input
+                          id="wiz-city"
+                          type="text"
+                          className="stoop-modal-input"
+                          placeholder="e.g. London"
+                          value={hostCity}
+                          onChange={(e) => { setHostCity(e.target.value); setHostLat(null); setHostLng(null); }}
+                        />
+                      </div>
+                      <div>
+                        <label className="stoop-modal-label" htmlFor="wiz-country">Country <span className="stoop-wiz-required">*</span></label>
+                        <input
+                          id="wiz-country"
+                          type="text"
+                          className="stoop-modal-input"
+                          placeholder="Country"
+                          value={hostFormCountry}
+                          onChange={(e) => { setHostFormCountry(e.target.value); setHostLat(null); setHostLng(null); }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="stoop-modal-row">
+                      <div>
+                        <label className="stoop-modal-label" htmlFor="wiz-day">Meeting day <span className="stoop-wiz-required">*</span></label>
+                        <select id="wiz-day" className="stoop-modal-input" value={hostDay} onChange={(e) => setHostDay(e.target.value)}>
+                          {["monday","tuesday","wednesday","thursday","friday","saturday","sunday"].map((d) => (
+                            <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="stoop-modal-label" htmlFor="wiz-time">Time <span className="stoop-wiz-required">*</span></label>
+                        <input
+                          id="wiz-time"
+                          type="text"
+                          className="stoop-modal-input"
+                          placeholder="e.g. 6:30pm"
+                          value={hostTime}
+                          onChange={(e) => setHostTime(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <label className="stoop-modal-label" htmlFor="wiz-arrival">Arrival note <span style={{ color: "var(--mute)", fontWeight: 400 }}>(optional)</span></label>
+                    <textarea
+                      id="wiz-arrival"
+                      className="stoop-modal-input stoop-modal-textarea"
+                      rows={2}
+                      placeholder="e.g. Ring the bell on the left. Park on the side street."
+                      value={hostLocationNote}
+                      onChange={(e) => setHostLocationNote(e.target.value)}
+                    />
+
+                    {hostLat !== null && (
+                      <p className="stoop-wiz-geo-confirmed">✓ Address verified — proximity matching enabled</p>
+                    )}
+                    {hostError && <p className="stoop-detail-error">{hostError}</p>}
+                  </>
+                ) : null}
+
+                {/* Navigation row */}
+                {!hostCreatedId && (
+                  <div className="stoop-wiz-nav">
+                    {wizStep < 6 ? (
+                      <button
+                        type="button"
+                        className="stoop-wiz-nav-next"
+                        disabled={!canAdvance}
+                        onClick={() => setWizStep((s) => s + 1)}
+                      >
+                        {wizStep === 5 ? "Add details →" : "Continue →"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="stoop-modal-submit"
+                        disabled={hostSubmitting || !hostStoopName.trim() || !hostStreet.trim() || !hostCity.trim() || !hostFormCountry.trim() || !hostTime.trim()}
+                        onClick={submitHost}
+                      >
+                        {hostSubmitting ? "Starting…" : "Publish Stoop →"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }

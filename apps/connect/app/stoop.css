@@ -1235,6 +1235,300 @@
 .stoop-modal-submit:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
 .stoop-modal-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* ── Wizard progress bar ─────────────────────────────────────── */
+.stoop-wiz-progress {
+  height: 3px;
+  background: var(--rule);
+  position: sticky;
+  top: 61px;
+  z-index: 1;
+}
+.stoop-wiz-progress-fill {
+  height: 100%;
+  background: var(--ochre);
+  transition: width 0.3s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Back button in header */
+.stoop-wiz-back {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+  cursor: pointer;
+  padding: 0;
+}
+.stoop-wiz-back:hover { opacity: 0.75; }
+
+/* Shared step sub-heading */
+.stoop-wiz-sub {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
+  line-height: 1.55;
+}
+
+/* ── Step 1: country chips ───────────────────────────────────── */
+.stoop-wiz-country-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stoop-wiz-country-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.stoop-wiz-country-chip:hover { border-color: var(--ochre); }
+.stoop-wiz-country-chip--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+  color: var(--ochre);
+  font-weight: 700;
+}
+
+/* ── Step 2: venue grid ──────────────────────────────────────── */
+.stoop-wiz-venue-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stoop-wiz-venue-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  transition: border-color 0.12s, background 0.12s;
+  text-align: left;
+}
+.stoop-wiz-venue-chip:hover { border-color: var(--ochre); }
+.stoop-wiz-venue-chip--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+}
+.stoop-wiz-venue-icon { font-size: 22px; }
+.stoop-wiz-venue-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.stoop-wiz-venue-sub { font-size: 11px; color: var(--mute); line-height: 1.4; }
+.stoop-wiz-venue-chip--active .stoop-wiz-venue-name { color: var(--ochre); }
+
+/* ── Step 3: capacity stepper ────────────────────────────────── */
+.stoop-wiz-cap-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 8px 0;
+}
+.stoop-wiz-cap-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ochre);
+  background: #fff;
+  color: var(--ochre);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.stoop-wiz-cap-btn:hover:not(:disabled) { background: #fdf5f4; }
+.stoop-wiz-cap-btn:disabled { border-color: var(--rule); color: var(--mute); cursor: default; }
+.stoop-wiz-cap-value {
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 56px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.stoop-wiz-cap-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--mute);
+  margin: -4px 0 4px;
+}
+.stoop-wiz-accessible-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+}
+.stoop-wiz-accessible-row input { margin-top: 2px; accent-color: var(--ochre); }
+
+/* ── Step 4: locality commitment ─────────────────────────────── */
+.stoop-wiz-context-note {
+  padding: 12px 16px;
+  background: #fdf5f4;
+  border-left: 3px solid var(--ochre);
+  border-radius: 0 var(--radius-md, 4px) var(--radius-md, 4px) 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.stoop-wiz-commit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  line-height: 1.5;
+  transition: border-color 0.14s, background 0.14s, color 0.14s;
+}
+.stoop-wiz-commit:hover { border-color: var(--ochre); }
+.stoop-wiz-commit--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+  color: var(--ochre);
+}
+
+/* ── Step 5: address options + summary ───────────────────────── */
+.stoop-wiz-addr-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stoop-wiz-addr-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 12px 16px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  transition: border-color 0.12s, background 0.12s;
+}
+.stoop-wiz-addr-option:hover { border-color: var(--ochre); }
+.stoop-wiz-addr-option--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+}
+.stoop-wiz-addr-label { font-size: 14px; font-weight: 700; color: var(--ink); }
+.stoop-wiz-addr-sub { font-size: 12px; color: var(--mute); }
+.stoop-wiz-addr-option--active .stoop-wiz-addr-label { color: var(--ochre); }
+
+.stoop-wiz-summary {
+  padding: 12px 16px;
+  background: var(--paper-deep, #f0e9da);
+  border-radius: var(--radius-lg, 6px);
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stoop-wiz-summary p { margin: 0; }
+
+/* ── Step 6: detail form extras ──────────────────────────────── */
+.stoop-wiz-required { color: var(--ochre); }
+.stoop-wiz-geo-note {
+  font-size: 11px;
+  color: var(--mute);
+  margin: -6px 0 0;
+  line-height: 1.4;
+}
+.stoop-wiz-geo-confirmed {
+  font-size: 12px;
+  color: #2e7d32;
+  margin: -4px 0 0;
+  font-weight: 600;
+}
+
+/* ── Nav row ─────────────────────────────────────────────────── */
+.stoop-wiz-nav {
+  padding-top: 4px;
+}
+.stoop-wiz-nav-next {
+  width: 100%;
+  padding: 13px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--ochre);
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.stoop-wiz-nav-next:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-wiz-nav-next:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Success screen ──────────────────────────────────────────── */
+.stoop-wiz-success {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  text-align: center;
+  padding: 8px 0;
+}
+.stoop-wiz-success-name {
+  font-family: var(--font-fraunces, serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+.stoop-wiz-success-sub {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.55;
+  max-width: 380px;
+}
+.stoop-wiz-copy-btn {
+  padding: 10px 22px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+  background: #fff;
+  border: 1.5px solid var(--ochre);
+  border-radius: var(--radius-full, 999px);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.stoop-wiz-copy-btn:hover { background: #fdf5f4; }
+
 /* ── Responsive adjustments for new elements ─────────────────── */
 @media (max-width: 640px) {
   .stoop-hero { margin: 12px 0 20px; }

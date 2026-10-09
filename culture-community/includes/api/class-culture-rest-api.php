@@ -2614,6 +2614,10 @@ class Culture_REST_API {
             'addressVisible'    => (string) ( $request->get_param( 'address_visible' ) ?: 'members_only' ),
             'localityConfirmed' => (bool) $request->get_param( 'locality_confirmed' ),
         );
+        $raw_lat = $request->get_param( 'lat' );
+        $raw_lng = $request->get_param( 'lng' );
+        if ( is_numeric( $raw_lat ) ) $data['lat'] = (float) $raw_lat;
+        if ( is_numeric( $raw_lng ) ) $data['lng'] = (float) $raw_lng;
 
         $result = Culture_Clusters::create_cluster( $user_id, $data );
         if ( is_wp_error( $result ) ) {
