@@ -318,14 +318,14 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
               <button
                 type="button"
                 className="hfc-capacity-btn"
-                onClick={() => setCapacity((n) => Math.min(20, n + 1))}
+                onClick={() => setCapacity((n) => Math.min(30, n + 1))}
                 aria-label="Increase"
               >+</button>
             </div>
             <p className="hfc-capacity-hint">
               Cooking sessions work best at 6–8. Film screenings and music listening
               sessions can comfortably go to 10–12.
-              {isNG ? " For an open compound or outdoor setup, 12–16 is fine." : ""}
+              {isNG ? " For an open compound or outdoor setup, up to 20 is fine." : ""}
             </p>
 
             <label className="hfc-accessible-row">

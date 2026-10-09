@@ -2,35 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Heart, Flame, Hand, Share2 } from "lucide-react";
+import { Heart, Bookmark, Share2 } from "lucide-react";
 
-const REACTIONS = [
-  { key: "love", icon: Heart, label: "Love",    activeColor: "#E53E3E" },
-  { key: "fire", icon: Flame, label: "Fire",    activeColor: "#F97316" },
-  { key: "clap", icon: Hand,  label: "Respect", activeColor: "#B38238" },
-] as const;
-type ReactionKey = (typeof REACTIONS)[number]["key"];
+const BOOKMARK_STORAGE = "moveee_bookmarks";
+const REACTION_STORAGE = "moveee_reactions";
+type ReactionKey = "love";
 
-const STORAGE_KEY = "moveee_reactions";
-
-function getStored(): Record<string, ReactionKey | null> {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
+function getStoredReactions(): Record<string, ReactionKey | null> {
+  try { return JSON.parse(localStorage.getItem(REACTION_STORAGE) ?? "{}"); } catch { return {}; }
 }
-
-function setStored(data: Record<string, ReactionKey | null>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function setStoredReactions(data: Record<string, ReactionKey | null>) {
+  localStorage.setItem(REACTION_STORAGE, JSON.stringify(data));
+}
+function getStoredBookmarks(): Record<string, boolean> {
+  try { return JSON.parse(localStorage.getItem(BOOKMARK_STORAGE) ?? "{}"); } catch { return {}; }
+}
+function setStoredBookmarks(data: Record<string, boolean>) {
+  localStorage.setItem(BOOKMARK_STORAGE, JSON.stringify(data));
 }
 
 interface ReactionBarProps {
-  itemId:       string;
-  itemType:     "community" | "pulse" | "quote";
-  initialCounts: { love: number; fire: number; clap: number };
-  shareUrl?:    string;
-  noBorder?:    boolean;
+  itemId:        string;
+  itemType:      "community" | "pulse" | "quote";
+  initialCounts: { love: number; fire?: number; clap?: number };
+  shareUrl?:     string;
+  noBorder?:     boolean;
 }
 
 export default function ReactionBar({
@@ -43,196 +39,249 @@ export default function ReactionBar({
   const { status } = useSession();
   const loggedIn = status === "authenticated";
 
-  const [counts, setCounts]   = useState(initialCounts);
+  const [loveCount, setLoveCount] = useState(initialCounts.love);
   const [myReaction, setMyReaction] = useState<ReactionKey | null>(null);
-  const [copied, setCopied]   = useState(false);
-  const [pending, setPending] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [reactPending, setReactPending] = useState(false);
+  const [bookmarkPending, setBookmarkPending] = useState(false);
 
-  // Hydrate from the server record on mount — this is the real per-user
-  // source of truth (shared with mobile via `_culture_post_reactions`
-  // usermeta). Fall back to the localStorage cache immediately so there's
-  // no flash of "unreacted" while the request is in flight, then reconcile
-  // once the server responds.
+  const storageKey = `${itemType}-${itemId}`;
+
+  // Hydrate reaction from localStorage, then reconcile with server.
   useEffect(() => {
-    const stored = getStored();
-    setMyReaction(stored[`${itemType}-${itemId}`] ?? null);
+    const stored = getStoredReactions();
+    setMyReaction(stored[storageKey] ?? null);
+
+    const bk = getStoredBookmarks();
+    setBookmarked(!!bk[storageKey]);
 
     if (!loggedIn) return;
     let cancelled = false;
     fetch(`/api/community/react?postId=${encodeURIComponent(itemId)}`)
-      .then((res) => (res.ok ? res.json() : null))
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
         const serverReaction = (data.userReaction ?? null) as ReactionKey | null;
         setMyReaction(serverReaction);
-        const next = getStored();
-        next[`${itemType}-${itemId}`] = serverReaction;
-        setStored(next);
+        const next = getStoredReactions();
+        next[storageKey] = serverReaction;
+        setStoredReactions(next);
       })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId, itemType, loggedIn]);
 
-  async function handleReact(emoji: ReactionKey) {
-    if (!loggedIn) {
-      window.dispatchEvent(new Event("open-auth-modal"));
-      return;
-    }
-    if (pending) return;
+  async function handleLove() {
+    if (!loggedIn) { window.dispatchEvent(new Event("open-auth-modal")); return; }
+    if (reactPending) return;
 
-    const isRemoving = myReaction === emoji;
-    const prevCounts = counts;
+    const isRemoving = myReaction === "love";
+    const prevCount = loveCount;
     const prevReaction = myReaction;
 
-    // Optimistic update.
-    const next = { ...counts };
-    if (myReaction && myReaction !== emoji) {
-      next[myReaction] = Math.max(0, next[myReaction] - 1);
-    }
-    if (isRemoving) {
-      next[emoji] = Math.max(0, next[emoji] - 1);
-    } else {
-      next[emoji] = next[emoji] + 1;
-    }
-    setCounts(next);
-    setMyReaction(isRemoving ? null : emoji);
+    setLoveCount(isRemoving ? Math.max(0, loveCount - 1) : loveCount + 1);
+    setMyReaction(isRemoving ? null : "love");
+    const stored = getStoredReactions();
+    stored[storageKey] = isRemoving ? null : "love";
+    setStoredReactions(stored);
 
-    const stored = getStored();
-    stored[`${itemType}-${itemId}`] = isRemoving ? null : emoji;
-    setStored(stored);
-
-    setPending(true);
+    setReactPending(true);
     try {
-      // Server toggles/switches atomically — tapping the same emoji again
-      // un-reacts, tapping a different one switches in one call.
       const res = await fetch("/api/community/react", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: itemId, type: emoji }),
+        body: JSON.stringify({ postId: itemId, type: "love" }),
       });
       if (res.ok) {
         const fresh = await res.json();
-        setCounts(fresh.reactions ?? next);
+        setLoveCount(fresh.reactions?.love ?? loveCount);
         const serverReaction = (fresh.reactionType ?? null) as ReactionKey | null;
         setMyReaction(serverReaction);
-        const updated = getStored();
-        updated[`${itemType}-${itemId}`] = serverReaction;
-        setStored(updated);
+        const updated = getStoredReactions();
+        updated[storageKey] = serverReaction;
+        setStoredReactions(updated);
       } else {
-        // Rollback on failure.
-        setCounts(prevCounts);
+        setLoveCount(prevCount);
         setMyReaction(prevReaction);
-        const reverted = getStored();
-        reverted[`${itemType}-${itemId}`] = prevReaction;
-        setStored(reverted);
       }
     } catch {
-      setCounts(prevCounts);
+      setLoveCount(prevCount);
       setMyReaction(prevReaction);
     } finally {
-      setPending(false);
+      setReactPending(false);
+    }
+  }
+
+  async function handleBookmark() {
+    if (!loggedIn) { window.dispatchEvent(new Event("open-auth-modal")); return; }
+    if (bookmarkPending) return;
+
+    const prevBookmarked = bookmarked;
+    const next = !bookmarked;
+    setBookmarked(next);
+    const bk = getStoredBookmarks();
+    bk[storageKey] = next;
+    setStoredBookmarks(bk);
+
+    const contentTypeMap: Record<string, string> = {
+      quote: "quote",
+      pulse: "article",
+      community: "community",
+    };
+
+    setBookmarkPending(true);
+    try {
+      const res = await fetch("/api/community/bookmark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: itemId, contentType: contentTypeMap[itemType] }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const confirmed = !!data.bookmarked;
+        setBookmarked(confirmed);
+        const bkUpdated = getStoredBookmarks();
+        bkUpdated[storageKey] = confirmed;
+        setStoredBookmarks(bkUpdated);
+      } else {
+        setBookmarked(prevBookmarked);
+        const bkReverted = getStoredBookmarks();
+        bkReverted[storageKey] = prevBookmarked;
+        setStoredBookmarks(bkReverted);
+      }
+    } catch {
+      setBookmarked(prevBookmarked);
+    } finally {
+      setBookmarkPending(false);
     }
   }
 
   async function handleShare() {
     const url = shareUrl ?? window.location.href;
     if (navigator.share) {
-      try {
-        await navigator.share({ url });
-      } catch {
-        // User cancelled or share failed — silently ignore.
-      }
+      try { await navigator.share({ url }); } catch {}
       return;
     }
-    // Fallback: copy to clipboard.
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Nothing we can do.
-    }
+    } catch {}
   }
 
+  const loveActive = myReaction === "love";
+
   return (
-    <div
-      style={{
-        display: "flex",
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      ...(noBorder ? {} : { paddingTop: "0.75rem", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: "0.25rem" }),
+    }}>
+      {/* Floating pill */}
+      <div style={{
+        display: "inline-flex",
         alignItems: "center",
-        gap: "0.25rem",
-        ...(noBorder ? {} : { paddingTop: "0.5rem", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: "0.25rem" }),
-        minWidth: 0,
+        background: "#fff",
+        border: "1.5px solid var(--rule, #e0d8ce)",
+        borderRadius: "999px",
+        boxShadow: "0 2px 14px rgba(20,17,13,0.10), 0 1px 4px rgba(20,17,13,0.06)",
         overflow: "hidden",
-      }}
-    >
-      {REACTIONS.map(({ key, icon: Icon, label, activeColor }) => {
-        const active = myReaction === key;
-        const count  = counts[key];
-        return (
-          <button
-            key={key}
-            onClick={() => handleReact(key)}
-            title={label}
-            aria-label={`${label}: ${count}`}
-            style={{
-              background: "transparent",
-              border: "none",
-              borderRadius: "20px",
-              padding: "0.2rem 0.4rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.3rem",
-              fontSize: "0.8rem",
-              color: active ? activeColor : "var(--mute, #7a6f5c)",
-              transition: "all 0.15s",
-              lineHeight: 1,
-            }}
-          >
-            <Icon
-              size={16}
-              strokeWidth={1.8}
-              fill={active ? activeColor : "none"}
-              color={active ? activeColor : "var(--mute, #7a6f5c)"}
-            />
-            {count > 0 && (
-              <span style={{ fontSize: "0.7rem", fontVariantNumeric: "tabular-nums" }}>
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
+      }}>
 
-      {/* Spacer */}
-      <div style={{ flex: 1 }} />
+        {/* Love / Heart */}
+        <button
+          onClick={handleLove}
+          title={loveActive ? "Unlike" : "Love this"}
+          aria-label={`Love: ${loveCount}`}
+          style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            padding: "8px 16px",
+            background: "transparent", border: "none", cursor: "pointer",
+            color: loveActive ? "#E53E3E" : "var(--ink-soft, #5a5248)",
+            transition: "all 0.15s",
+            lineHeight: 1,
+          }}
+          onMouseEnter={e => { if (!loveActive) (e.currentTarget as HTMLElement).style.color = "#E53E3E"; }}
+          onMouseLeave={e => { if (!loveActive) (e.currentTarget as HTMLElement).style.color = "var(--ink-soft, #5a5248)"; }}
+        >
+          <Heart
+            size={18}
+            strokeWidth={2.5}
+            fill={loveActive ? "#E53E3E" : "none"}
+            color={loveActive ? "#E53E3E" : "currentColor"}
+            style={{ transition: "all 0.15s", transform: loveActive ? "scale(1.15)" : "scale(1)" }}
+          />
+          {loveCount > 0 && (
+            <span style={{
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              fontVariantNumeric: "tabular-nums",
+              color: loveActive ? "#E53E3E" : "var(--ink-soft, #5a5248)",
+            }}>
+              {loveCount}
+            </span>
+          )}
+        </button>
 
-      {/* Share button */}
-      <button
-        onClick={handleShare}
-        title={copied ? "Copied!" : "Copy link"}
-        style={{
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          color: copied ? "var(--success, #2e7d32)" : "var(--mute, #7a6f5c)",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.3rem",
-          fontSize: "0.7rem",
-          padding: "0.2rem 0.4rem",
-          transition: "color 0.15s",
-        }}
-      >
-        {copied ? (
-          <span>Copied ✓</span>
-        ) : (
-          <Share2 size={14} strokeWidth={1.8} aria-hidden />
-        )}
-      </button>
+        {/* Divider */}
+        <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+
+        {/* Bookmark */}
+        <button
+          onClick={handleBookmark}
+          title={bookmarked ? "Remove bookmark" : "Save for later"}
+          aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "8px 14px",
+            background: "transparent", border: "none", cursor: "pointer",
+            color: bookmarked ? "var(--gold, #b38238)" : "var(--ink-soft, #5a5248)",
+            transition: "all 0.15s",
+            lineHeight: 1,
+          }}
+          onMouseEnter={e => { if (!bookmarked) (e.currentTarget as HTMLElement).style.color = "var(--gold, #b38238)"; }}
+          onMouseLeave={e => { if (!bookmarked) (e.currentTarget as HTMLElement).style.color = "var(--ink-soft, #5a5248)"; }}
+        >
+          <Bookmark
+            size={18}
+            strokeWidth={2.5}
+            fill={bookmarked ? "var(--gold, #b38238)" : "none"}
+            color={bookmarked ? "var(--gold, #b38238)" : "currentColor"}
+            style={{ transition: "all 0.15s" }}
+          />
+        </button>
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+
+        {/* Share */}
+        <button
+          onClick={handleShare}
+          title={copied ? "Copied!" : "Share"}
+          aria-label="Share"
+          style={{
+            display: "flex", alignItems: "center", gap: "5px",
+            padding: "8px 14px",
+            background: "transparent", border: "none", cursor: "pointer",
+            color: copied ? "#2e7d32" : "var(--ink-soft, #5a5248)",
+            transition: "all 0.15s",
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            lineHeight: 1,
+          }}
+          onMouseEnter={e => { if (!copied) (e.currentTarget as HTMLElement).style.color = "var(--ochre, #7a241c)"; }}
+          onMouseLeave={e => { if (!copied) (e.currentTarget as HTMLElement).style.color = "var(--ink-soft, #5a5248)"; }}
+        >
+          {copied ? (
+            <span style={{ fontSize: "0.72rem" }}>Copied ✓</span>
+          ) : (
+            <Share2 size={16} strokeWidth={2.5} color="currentColor" />
+          )}
+        </button>
+
+      </div>
     </div>
   );
 }

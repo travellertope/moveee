@@ -89,7 +89,7 @@ class Culture_Clusters {
     public static function default_capacity() : int {
         return defined( 'CULTURE_CLUSTER_DEFAULT_CAPACITY' )
             ? (int) CULTURE_CLUSTER_DEFAULT_CAPACITY
-            : (int) get_option( 'culture_cluster_default_capacity', 12 );
+            : (int) get_option( 'culture_cluster_default_capacity', 30 );
     }
 
     public static function election_window_days() : int {
@@ -364,6 +364,12 @@ class Culture_Clusters {
         update_post_meta( $post_id, '_cluster_accessible', (int) ( $data['accessible'] ?? 0 ) );
         update_post_meta( $post_id, '_cluster_address_visible', sanitize_text_field( $data['addressVisible'] ?? 'members_only' ) );
         update_post_meta( $post_id, '_cluster_host_locality_confirmed', (int) ( $data['localityConfirmed'] ?? 0 ) );
+        if ( isset( $data['lat'] ) && is_numeric( $data['lat'] ) ) {
+            update_post_meta( $post_id, '_cluster_lat', (float) $data['lat'] );
+        }
+        if ( isset( $data['lng'] ) && is_numeric( $data['lng'] ) ) {
+            update_post_meta( $post_id, '_cluster_lng', (float) $data['lng'] );
+        }
         update_post_meta( $post_id, '_cluster_created_at', $now );
 
         global $wpdb;

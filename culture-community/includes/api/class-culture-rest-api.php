@@ -2116,6 +2116,35 @@ class Culture_REST_API {
             'callback'            => array( __CLASS__, 'handle_self_checkin' ),
             'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
+
+        // Reloadly — instant rewards (airtime + gift cards).
+        register_rest_route( 'culture/v1', '/reloadly/operators', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reloadly_operators' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'country_iso' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'phone'       => array( 'required' => false, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reloadly/products', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_reloadly_products' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'country_iso' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/reloadly/topup', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reloadly_topup' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+        register_rest_route( 'culture/v1', '/reloadly/giftcard', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_reloadly_giftcard' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
     }
 
     /* ——————————————————————————————————————
@@ -2614,6 +2643,10 @@ class Culture_REST_API {
             'addressVisible'    => (string) ( $request->get_param( 'address_visible' ) ?: 'members_only' ),
             'localityConfirmed' => (bool) $request->get_param( 'locality_confirmed' ),
         );
+        $raw_lat = $request->get_param( 'lat' );
+        $raw_lng = $request->get_param( 'lng' );
+        if ( is_numeric( $raw_lat ) ) $data['lat'] = (float) $raw_lat;
+        if ( is_numeric( $raw_lng ) ) $data['lng'] = (float) $raw_lng;
 
         $result = Culture_Clusters::create_cluster( $user_id, $data );
         if ( is_wp_error( $result ) ) {
@@ -6570,6 +6603,129 @@ class Culture_REST_API {
             'message'        => "Check-in successful! You earned {$rep_earned} points and {$credits_earned} credits.",
             'rep_earned'     => $rep_earned,
             'credits_earned' => $credits_earned,
+        ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Reloadly — instant rewards
+     * —————————————————————————————————————— */
+
+    public static function handle_reloadly_operators( $request ) {
+        if ( ! Culture_Reloadly::is_configured() ) {
+            return new WP_Error( 'reloadly_disabled', 'Instant rewards are not available right now.', array( 'status' => 503 ) );
+        }
+
+        $country_iso = strtoupper( sanitize_text_field( $request->get_param( 'country_iso' ) ) );
+        $phone       = sanitize_text_field( $request->get_param( 'phone' ) ?? '' );
+
+        if ( $phone ) {
+            $result = Culture_Reloadly::detect_operator( $phone, $country_iso );
+        } else {
+            $result = Culture_Reloadly::get_operators( $country_iso );
+        }
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reloadly_products( $request ) {
+        if ( ! Culture_Reloadly::is_configured() ) {
+            return new WP_Error( 'reloadly_disabled', 'Instant rewards are not available right now.', array( 'status' => 503 ) );
+        }
+
+        $country_iso = strtoupper( sanitize_text_field( $request->get_param( 'country_iso' ) ) );
+        $result      = Culture_Reloadly::get_gift_card_products( $country_iso );
+
+        if ( is_wp_error( $result ) ) return $result;
+        return rest_ensure_response( $result );
+    }
+
+    public static function handle_reloadly_topup( $request ) {
+        if ( ! Culture_Reloadly::is_configured() ) {
+            return new WP_Error( 'reloadly_disabled', 'Instant rewards are not available right now.', array( 'status' => 503 ) );
+        }
+
+        $user_id     = absint( $request->get_param( 'user_id' ) );
+        $operator_id = absint( $request->get_param( 'operator_id' ) );
+        $amount      = (float) $request->get_param( 'amount' );
+        $currency    = strtoupper( sanitize_text_field( $request->get_param( 'currency' ) ?? 'NGN' ) );
+        $phone       = sanitize_text_field( $request->get_param( 'phone' ) ?? '' );
+        $country_iso = strtoupper( sanitize_text_field( $request->get_param( 'country_iso' ) ?? '' ) );
+
+        if ( ! $user_id || ! $operator_id || $amount <= 0 || ! $phone || ! $country_iso ) {
+            return new WP_Error( 'bad_request', 'Missing required fields.', array( 'status' => 400 ) );
+        }
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $credits_required = Culture_Reloadly::credits_for_amount( $amount, $currency );
+        $balance          = Culture_Gamification::get_credit_balance( $user_id );
+
+        if ( $balance < $credits_required ) {
+            return new WP_Error( 'insufficient_credits',
+                "You need {$credits_required} credits but only have {$balance}.",
+                array( 'status' => 400 )
+            );
+        }
+
+        $result = Culture_Reloadly::send_topup( $operator_id, $amount, $phone, $country_iso );
+        if ( is_wp_error( $result ) ) return $result;
+
+        Culture_Gamification::deduct_credits( $user_id, $credits_required, 'reloadly_topup', $result['transactionId'] ?? 0 );
+
+        return rest_ensure_response( array(
+            'success'          => true,
+            'transaction_id'   => $result['transactionId'] ?? null,
+            'credits_deducted' => $credits_required,
+            'new_balance'      => Culture_Gamification::get_credit_balance( $user_id ),
+        ) );
+    }
+
+    public static function handle_reloadly_giftcard( $request ) {
+        if ( ! Culture_Reloadly::is_configured() ) {
+            return new WP_Error( 'reloadly_disabled', 'Instant rewards are not available right now.', array( 'status' => 503 ) );
+        }
+
+        $user_id    = absint( $request->get_param( 'user_id' ) );
+        $product_id = absint( $request->get_param( 'product_id' ) );
+        $amount     = (float) $request->get_param( 'amount' );
+        $currency   = strtoupper( sanitize_text_field( $request->get_param( 'currency' ) ?? 'USD' ) );
+        $email      = sanitize_email( $request->get_param( 'email' ) ?? '' );
+
+        if ( ! $user_id || ! $product_id || $amount <= 0 || ! $email ) {
+            return new WP_Error( 'bad_request', 'Missing required fields.', array( 'status' => 400 ) );
+        }
+        if ( ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'invalid_user', 'User not found.', array( 'status' => 404 ) );
+        }
+
+        $credits_required = Culture_Reloadly::credits_for_amount( $amount, $currency );
+        $balance          = Culture_Gamification::get_credit_balance( $user_id );
+
+        if ( $balance < $credits_required ) {
+            return new WP_Error( 'insufficient_credits',
+                "You need {$credits_required} credits but only have {$balance}.",
+                array( 'status' => 400 )
+            );
+        }
+
+        $result = Culture_Reloadly::order_gift_card( $product_id, $amount, $email );
+        if ( is_wp_error( $result ) ) return $result;
+
+        Culture_Gamification::deduct_credits( $user_id, $credits_required, 'reloadly_giftcard', $result['transactionId'] ?? 0 );
+
+        return rest_ensure_response( array(
+            'success'          => true,
+            'transaction_id'   => $result['transactionId'] ?? null,
+            'credits_deducted' => $credits_required,
+            'new_balance'      => Culture_Gamification::get_credit_balance( $user_id ),
+            'redeemCode'       => $result['redeemCode'] ?? null,
+            'pinCode'          => $result['pinCode'] ?? null,
+            'cardNumber'       => $result['cardNumber'] ?? null,
         ) );
     }
 }

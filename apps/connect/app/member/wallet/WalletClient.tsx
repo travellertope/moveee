@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
+import ReloadlyTab from "./ReloadlyTab";
 
 interface LedgerEntry {
   id: number;
@@ -45,13 +46,15 @@ export default function WalletClient({
   creditsPerGbp,
   entries,
   isPro,
+  userEmail,
 }: {
   credits: number;
   creditsPerGbp: number;
   entries: LedgerEntry[];
   isPro: boolean;
+  userEmail: string;
 }) {
-  const [tab, setTab]               = useState<"history" | "cashout">("history");
+  const [tab, setTab]               = useState<"history" | "cashout" | "rewards">("history");
   const [cashCredits, setCashCredits] = useState("");
   const [currency, setCurrency]     = useState("GBP");
   const [accountName, setAccountName] = useState("");
@@ -165,6 +168,9 @@ export default function WalletClient({
         <button type="button" onClick={() => setTab("history")} className={`wal-tab${tab === "history" ? " wal-tab--active" : ""}`}>
           Transaction History
         </button>
+        <button type="button" onClick={() => setTab("rewards")} className={`wal-tab${tab === "rewards" ? " wal-tab--active" : ""}`}>
+          Instant Rewards
+        </button>
         <button type="button" onClick={() => setTab("cashout")} className={`wal-tab${tab === "cashout" ? " wal-tab--active" : ""}`}>
           Cash Out
         </button>
@@ -192,6 +198,15 @@ export default function WalletClient({
             </div>
           )}
         </section>
+      )}
+
+      {/* Instant Rewards */}
+      {tab === "rewards" && (
+        <ReloadlyTab
+          userCredits={credits}
+          userEmail={userEmail}
+          creditsPerGbp={creditsPerGbp}
+        />
       )}
 
       {/* Cashout */}
