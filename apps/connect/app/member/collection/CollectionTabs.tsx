@@ -27,21 +27,9 @@ interface SavedData {
 
 type Tab = "liked" | "bookmarked";
 
-const TYPE_LABEL: Record<string, string> = {
-  quote: "Quote",
-  article: "Article",
-  community: "Post",
-};
-
-const TYPE_ICON: Record<string, string> = {
-  quote: "💬",
-  article: "📖",
-  community: "📝",
-};
-
-function relativeDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+function formatDate(iso: string): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function CollectionTabs() {
@@ -132,9 +120,9 @@ export default function CollectionTabs() {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="coll-grid">
+        <div>
           {items.map((item) => (
-            <CollectionCard key={`${item.type}-${item.id}`} item={item} />
+            <CollectionFeedCard key={`${item.type}-${item.id}`} item={item} />
           ))}
         </div>
       )}
@@ -142,38 +130,210 @@ export default function CollectionTabs() {
   );
 }
 
-function CollectionCard({ item }: { item: SavedPost }) {
-  const label = TYPE_LABEL[item.type] ?? "Post";
-  const icon = TYPE_ICON[item.type] ?? "📄";
+function CollectionFeedCard({ item }: { item: SavedPost }) {
+  const href = item.url || "/";
+
+  // Quote card — mirrors FeedCard quote style
+  if (item.type === "quote") {
+    return (
+      <Link href={href} style={{ textDecoration: "none" }}>
+        <article
+          style={{
+            position: "relative",
+            background: "var(--paper-deep, #f2f2f2)",
+            border: "1px solid var(--rule)",
+            borderRadius: "12px",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            margin: "12px 16px",
+            overflow: "hidden",
+            minWidth: 0,
+            padding: "20px 24px 20px 24px",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              top: "16px",
+              left: "16px",
+              color: "var(--mute)",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "34px",
+              lineHeight: 1,
+              userSelect: "none",
+            }}
+          >
+            "
+          </span>
+          <div style={{ paddingLeft: "32px" }}>
+            <p style={{
+              color: "var(--ink)",
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "18px",
+              fontStyle: "italic",
+              lineHeight: 1.4,
+              margin: "0 0 12px",
+            }}>
+              {item.title}
+            </p>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", flexWrap: "wrap" }}>
+              {item.quoteAuthor && (
+                <span style={{ color: "var(--ink)", fontSize: "0.83rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
+                  — {item.quoteAuthor}
+                </span>
+              )}
+              {item.quoteSource && (
+                <span style={{ color: "var(--mute)", fontSize: "0.83rem", fontFamily: "var(--font-sans), sans-serif" }}>
+                  {item.quoteSource}
+                </span>
+              )}
+              <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>
+                {formatDate(item.date)}
+              </span>
+            </div>
+          </div>
+        </article>
+      </Link>
+    );
+  }
+
+  // Article card — mirrors FeedCard editorial style
+  if (item.type === "article") {
+    const CLAMP_CHARS = 320;
+    const text = item.excerpt ?? "";
+    const isLong = text.length > CLAMP_CHARS;
+    const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
+
+    return (
+      <article style={{
+        position: "relative",
+        background: "var(--paper)",
+        border: "1px solid var(--rule)",
+        borderRadius: "12px",
+        boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+        margin: "12px 16px",
+        padding: "1rem 1.25rem 1.5rem",
+        overflow: "hidden",
+        minWidth: 0,
+      }}>
+        {/* Eyebrow row */}
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem", alignItems: "center" }}>
+          <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)" }}>
+            The Culture Brief
+          </span>
+          {item.category && (
+            <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              · {item.category}
+            </span>
+          )}
+          <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>
+            {formatDate(item.date)}
+          </span>
+        </div>
+
+        {/* Body */}
+        <Link href={href} style={{ textDecoration: "none", display: "block" }}>
+          {item.featuredImage && (
+            <div style={{ width: "100%", maxHeight: "220px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid var(--rule)" }}>
+              <img src={item.featuredImage} alt={item.title} style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }} loading="lazy" />
+            </div>
+          )}
+          <h3 style={{
+            color: "var(--ink)",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "17px",
+            fontWeight: 600,
+            lineHeight: 1.2,
+            marginBottom: "0.5rem",
+          }}>
+            {item.title}
+          </h3>
+          {displayText && (
+            <p style={{ color: "var(--ink-soft)", fontSize: "14px", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
+              {displayText}
+            </p>
+          )}
+          {isLong && (
+            <span style={{ color: "var(--ochre)", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+              Read more →
+            </span>
+          )}
+        </Link>
+      </article>
+    );
+  }
+
+  // Community post card — mirrors FeedCard community style
+  const CLAMP_CHARS = 280;
+  const text = item.excerpt ?? "";
+  const isLong = text.length > CLAMP_CHARS;
+  const displayText = isLong ? text.slice(0, CLAMP_CHARS) + "…" : text;
 
   return (
-    <Link href={item.url || "/"} className="coll-card">
-      {item.featuredImage && (
-        <div className="coll-card-cover">
-          <img src={item.featuredImage} alt="" loading="lazy" />
-        </div>
-      )}
-      {!item.featuredImage && (
-        <div className="coll-card-cover coll-card-cover--placeholder">
-          <span className="coll-card-cover-icon">{icon}</span>
-        </div>
-      )}
-      <div className="coll-card-body">
-        <div className="coll-card-meta-row">
-          <span className="coll-card-type">{label}</span>
-          {item.category && <span className="coll-card-cat">{item.category}</span>}
-        </div>
-        <h3 className="coll-card-title">{item.title}</h3>
-        {item.excerpt && <p className="coll-card-excerpt">{item.excerpt}</p>}
-        {item.quoteAuthor && (
-          <p className="coll-card-author">— {item.quoteAuthor}{item.quoteSource ? `, ${item.quoteSource}` : ""}</p>
+    <article
+      style={{
+        position: "relative",
+        background: "var(--paper)",
+        border: "1px solid var(--rule)",
+        borderRadius: "12px",
+        boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+        margin: "12px 16px",
+        padding: "1rem 1.25rem",
+        overflow: "hidden",
+        minWidth: 0,
+      }}
+    >
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+        <span style={{
+          display: "inline-flex", alignItems: "center",
+          background: "var(--cat-community-bg)", color: "var(--cat-community-fg)",
+          fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em",
+          textTransform: "uppercase", padding: "0.18rem 0.45rem", borderRadius: "2px",
+        }}>
+          Community
+        </span>
+        {item.category && (
+          <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: "0.6rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            · {item.category}
+          </span>
         )}
-        <div className="coll-card-footer">
-          <span className="coll-card-date">{relativeDate(item.date)}</span>
-          {item.likes > 0 && <span className="coll-card-likes">♥ {item.likes}</span>}
-          <span className="coll-card-arrow" aria-hidden="true">→</span>
-        </div>
+        <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>
+          {formatDate(item.date)}
+        </span>
       </div>
-    </Link>
+
+      {/* Body */}
+      <Link href={href} style={{ textDecoration: "none", display: "block" }}>
+        <div style={{
+          color: "var(--ink)",
+          fontSize: "0.97rem",
+          lineHeight: 1.6,
+          marginBottom: "0.5rem",
+        }}>
+          {item.title}
+        </div>
+        {displayText && (
+          <p style={{ color: "var(--ink-soft)", fontSize: "14px", lineHeight: 1.6, margin: 0, whiteSpace: "pre-line" }}>
+            {displayText}
+          </p>
+        )}
+        {isLong && (
+          <span style={{ color: "var(--cat-community-fg)", fontSize: "0.78rem", fontWeight: 600, display: "inline-block", marginTop: "0.25rem" }}>
+            Read more →
+          </span>
+        )}
+      </Link>
+
+      {/* Footer */}
+      {item.likes > 0 && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: "0.5rem",
+          paddingTop: "0.5rem", borderTop: "1px solid var(--rule)", marginTop: "0.5rem",
+          fontSize: "0.75rem", color: "var(--mute)",
+        }}>
+          <span>♥ {item.likes}</span>
+        </div>
+      )}
+    </article>
   );
 }
