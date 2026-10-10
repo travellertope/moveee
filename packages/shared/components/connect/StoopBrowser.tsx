@@ -131,6 +131,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
 
   /* Category filter */
   const [category, setCategory] = useState<StCategory>("all");
+  const [catSheetOpen, setCatSheetOpen] = useState(false);
 
   /* "Start a Stoop" wizard modal */
   const [showHostModal, setShowHostModal] = useState(false);
@@ -524,34 +525,79 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
         </div>
       )}
 
-      {/* ── Category filter chips ─────────────────────────────── */}
+      {/* ── Category filter button ────────────────────────────── */}
       <div className="stoop-cats-row">
-        <div className="stoop-cats-chips">
-          <button
-            type="button"
-            className={`stoop-cat-chip${category === "all" ? " stoop-cat-chip--active" : ""}`}
-            onClick={() => setCategory("all")}
-          >
-            All Stoops
-          </button>
-          {STOOP_CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              type="button"
-              className={`stoop-cat-chip${category === cat.key ? " stoop-cat-chip--active" : ""}`}
-              onClick={() => setCategory(cat.key as StCategory)}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          className={`stoop-cat-btn${category !== "all" ? " stoop-cat-btn--active" : ""}`}
+          onClick={() => setCatSheetOpen(true)}
+          aria-haspopup="dialog"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+          {category === "all"
+            ? "All categories"
+            : STOOP_CATEGORIES.find((c) => c.key === category)?.label ?? "Category"}
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
         {displayCount > 0 && (
           <span className="stoop-cats-count">
-            Showing {displayCount} stoop{displayCount !== 1 ? "s" : ""}
+            {displayCount} stoop{displayCount !== 1 ? "s" : ""}
             {cityDisplay ? ` near ${cityDisplay}` : ""}
           </span>
         )}
       </div>
+
+      {/* ── Category bottom-sheet ─────────────────────────────── */}
+      {catSheetOpen && (
+        <>
+          <div
+            className="stoop-cat-overlay"
+            onClick={() => setCatSheetOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-label="Filter by category"
+            className="stoop-cat-sheet"
+          >
+            <div className="stoop-cat-sheet-handle" aria-hidden="true" />
+            <p className="stoop-cat-sheet-title">Filter by category</p>
+            <div className="stoop-cat-sheet-list">
+              <button
+                type="button"
+                className={`stoop-cat-row${category === "all" ? " stoop-cat-row--active" : ""}`}
+                onClick={() => { setCategory("all"); setCatSheetOpen(false); }}
+              >
+                <span className="stoop-cat-row-label">All categories</span>
+                {category === "all" && (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+              {STOOP_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={`stoop-cat-row${category === cat.key ? " stoop-cat-row--active" : ""}`}
+                  onClick={() => { setCategory(cat.key as StCategory); setCatSheetOpen(false); }}
+                >
+                  <span className="stoop-cat-row-label">{cat.label}</span>
+                  {category === cat.key && (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Member's own Stoop card ───────────────────────────── */}
       {myCluster && (
