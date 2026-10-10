@@ -146,6 +146,7 @@ class Culture_Clusters {
             'addressVisible'    => get_post_meta( $cluster_id, '_cluster_address_visible', true ) ?: 'members_only',
             'hubId'             => $hub_id ?: null,
             'hubSlug'           => $hub_id ? ( get_post_meta( $hub_id, '_hub_slug', true ) ?: null ) : null,
+            'category'          => get_post_meta( $cluster_id, '_cluster_category', true ) ?: 'general',
         );
     }
 
@@ -364,6 +365,7 @@ class Culture_Clusters {
         update_post_meta( $post_id, '_cluster_accessible', (int) ( $data['accessible'] ?? 0 ) );
         update_post_meta( $post_id, '_cluster_address_visible', sanitize_text_field( $data['addressVisible'] ?? 'members_only' ) );
         update_post_meta( $post_id, '_cluster_host_locality_confirmed', (int) ( $data['localityConfirmed'] ?? 0 ) );
+        update_post_meta( $post_id, '_cluster_category', sanitize_key( $data['category'] ?? 'general' ) );
         if ( isset( $data['lat'] ) && is_numeric( $data['lat'] ) ) {
             update_post_meta( $post_id, '_cluster_lat', (float) $data['lat'] );
         }

@@ -25,6 +25,7 @@ interface Cluster {
   meetingTime: string;
   venueType: string;
   accessible: boolean;
+  category?: string;
   role?: string;
 }
 
@@ -68,21 +69,33 @@ function capacityBadge(memberCount: number, capacity: number): { label: string; 
 }
 
 /* Category filter definitions */
-type StCategory = "all" | "music" | "book" | "coffee" | "art";
-const CAT_LABELS: Record<StCategory, string> = {
-  all:    "All Active Stoops",
-  music:  "Vinyl & Music",
-  book:   "Book Circles",
-  coffee: "Coffee & Architecture",
-  art:    "Art & Creatives",
-};
-function clusterCategory(c: Cluster): StCategory {
-  const n = (c.name + " " + (c.hostMechanism || "") + " " + (c.venueType || "")).toLowerCase();
-  if (/vinyl|music|listen|jazz|record|sound/.test(n)) return "music";
-  if (/book|lit|read|poem|poetry|write|zine|novel/.test(n)) return "book";
-  if (/coffee|café|cafe|cowork|architect|design/.test(n)) return "coffee";
-  if (/art|creative|paint|photo|gallery|film|cinema/.test(n)) return "art";
-  return "all";
+export const STOOP_CATEGORIES = [
+  { key: "general",         label: "General" },
+  { key: "music",           label: "Music & Vinyl" },
+  { key: "books",           label: "Books & Reading" },
+  { key: "film",            label: "Film & TV" },
+  { key: "food",            label: "Food & Cooking" },
+  { key: "art",             label: "Art & Craft" },
+  { key: "photography",     label: "Photography" },
+  { key: "fashion",         label: "Fashion & Style" },
+  { key: "comedy",          label: "Comedy & Improv" },
+  { key: "gaming",          label: "Gaming" },
+  { key: "theatre",         label: "Theatre & Dance" },
+  { key: "poetry",          label: "Poetry & Writing" },
+  { key: "architecture",    label: "Architecture" },
+  { key: "sports",          label: "Sports & Fitness" },
+  { key: "tech",            label: "Tech & Code" },
+  { key: "wellness",        label: "Wellness" },
+  { key: "entrepreneurship",label: "Entrepreneurship" },
+  { key: "travel",          label: "Travel & Culture" },
+  { key: "language",        label: "Language Exchange" },
+  { key: "parenting",       label: "Parenting" },
+] as const;
+
+type StCategory = "all" | typeof STOOP_CATEGORIES[number]["key"];
+
+function clusterCategory(c: Cluster & { category?: string }): string {
+  return c.category || "general";
 }
 
 /* Deterministic cover gradients (no cover photo in DB yet) */
@@ -514,14 +527,21 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
       {/* ── Category filter chips ─────────────────────────────── */}
       <div className="stoop-cats-row">
         <div className="stoop-cats-chips">
-          {(Object.keys(CAT_LABELS) as StCategory[]).map((cat) => (
+          <button
+            type="button"
+            className={`stoop-cat-chip${category === "all" ? " stoop-cat-chip--active" : ""}`}
+            onClick={() => setCategory("all")}
+          >
+            All Stoops
+          </button>
+          {STOOP_CATEGORIES.map((cat) => (
             <button
-              key={cat}
+              key={cat.key}
               type="button"
-              className={`stoop-cat-chip${category === cat ? " stoop-cat-chip--active" : ""}`}
-              onClick={() => setCategory(cat)}
+              className={`stoop-cat-chip${category === cat.key ? " stoop-cat-chip--active" : ""}`}
+              onClick={() => setCategory(cat.key as StCategory)}
             >
-              {CAT_LABELS[cat]}
+              {cat.label}
             </button>
           ))}
         </div>

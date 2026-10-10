@@ -1521,6 +1521,48 @@ select.mem-field-input { cursor: pointer; }
 }
 .hfc-commitment--active .hfc-commitment-text { color: var(--ink); }
 
+/* Category picker grid */
+.hfc-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 20px;
+}
+@media (max-width: 400px) {
+  .hfc-cat-grid { grid-template-columns: 1fr; }
+}
+
+.hfc-cat-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.13s, background 0.13s;
+}
+.hfc-cat-option:hover { border-color: var(--ochre); }
+.hfc-cat-option--active {
+  border-color: var(--ochre);
+  background: color-mix(in srgb, var(--ochre) 6%, transparent);
+}
+.hfc-cat-label {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.hfc-cat-desc {
+  font-size: 0.7rem;
+  color: var(--mute);
+  line-height: 1.4;
+}
+.hfc-cat-option--active .hfc-cat-label { color: var(--ochre); }
+
 /* Address options */
 .hfc-addr-options { display: flex; flex-direction: column; gap: 10px; }
 
