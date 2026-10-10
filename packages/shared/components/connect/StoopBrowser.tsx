@@ -565,7 +565,19 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
             className="stoop-cat-sheet"
           >
             <div className="stoop-cat-sheet-handle" aria-hidden="true" />
-            <p className="stoop-cat-sheet-title">Filter by category</p>
+            <div className="stoop-cat-sheet-header">
+              <p className="stoop-cat-sheet-title">Filter by category</p>
+              <button
+                type="button"
+                className="stoop-cat-sheet-close"
+                onClick={() => setCatSheetOpen(false)}
+                aria-label="Close"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
             <div className="stoop-cat-sheet-list">
               <button
                 type="button"

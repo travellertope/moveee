@@ -931,14 +931,39 @@
   flex-shrink: 0;
 }
 
+.stoop-cat-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 10px;
+  flex-shrink: 0;
+}
+
 .stoop-cat-sheet-title {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--mute);
-  padding: 0 20px 10px;
-  flex-shrink: 0;
+  padding: 0;
+}
+
+.stoop-cat-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: var(--radius-full);
+  transition: color 0.15s, background 0.15s;
+}
+.stoop-cat-sheet-close:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .stoop-cat-sheet-list {
