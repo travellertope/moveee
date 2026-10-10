@@ -861,10 +861,9 @@
 .stoop-cats-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .stoop-cats-chips {
@@ -873,7 +872,8 @@
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 2px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
 }
 .stoop-cats-chips::-webkit-scrollbar { display: none; }
 
