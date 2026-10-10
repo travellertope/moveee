@@ -66,31 +66,27 @@
   .pulse-timeline            { border-right: none; }
 }
 
-/* ── Feed tabs — white card container matching mockup ───────────────── */
+/* ── Feed tabs — white card container ───────────────────────────────── */
 .feed-tabs {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 6px;
-  background: var(--paper, #fff);
+  background: #fff;
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl, 20px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   margin: 12px 16px 8px;
   min-width: 0;
 }
-.feed-tabs-pills {
-  display: flex;
-  gap: 2px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+
+/* Post type picker button */
+.feed-type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 1;
   min-width: 0;
-}
-.feed-tabs-pills::-webkit-scrollbar { display: none; }
-.feed-tab {
-  position: relative;
   background: none;
   border: none;
   cursor: pointer;
@@ -98,28 +94,111 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
-  padding: 7px 14px;
+  padding: 7px 10px 7px 14px;
   border-radius: var(--radius-xl, 12px);
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  text-align: left;
 }
-.feed-tab:hover {
+.feed-type-btn:hover {
   background: var(--paper-deep, #f2ede3);
   color: var(--ink);
 }
-.feed-tab--active {
-  background: var(--ochre, #7a241c);
-  color: #fff;
-  box-shadow: 0 1px 3px rgba(122,36,28,0.2);
+.feed-type-btn--active {
+  color: var(--ochre, #7a241c);
 }
-.feed-tab--active::after { display: none; }
-.feed-tab-emoji {
-  font-size: 14px;
-  line-height: 1;
+.feed-type-btn svg {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+/* Post type bottom-sheet */
+.feed-type-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20,17,13,0.45);
+  z-index: 1200;
+  animation: stoop-fade-in 0.18s;
+}
+.feed-type-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1201;
+  background: #fff;
+  border-radius: var(--radius-xl, 12px) var(--radius-xl, 12px) 0 0;
+  padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: stoop-sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.feed-type-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--rule);
+  margin: 0 auto 12px;
+}
+.feed-type-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 10px;
+  flex-shrink: 0;
+}
+.feed-type-sheet-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.feed-type-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-full, 9999px);
+  transition: color 0.15s, background 0.15s;
+}
+.feed-type-sheet-close:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.feed-type-sheet-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.feed-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 13px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-size: 15px;
+  text-align: left;
+  border-radius: var(--radius-lg, 6px);
+  color: var(--ink-soft);
+  transition: background 0.12s;
+}
+.feed-type-row:hover { background: var(--paper-deep, #f2ede3); }
+.feed-type-row--active { color: var(--ochre, #7a241c); font-weight: 700; }
+.feed-type-row-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ── Feed sort control ──────────────────────────────────────────── */
@@ -147,11 +226,6 @@
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0 center;
-  background-size: 10px 6px;
   outline: none;
   transition: color 0.12s;
 }

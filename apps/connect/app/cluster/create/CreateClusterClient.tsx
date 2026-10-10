@@ -8,7 +8,30 @@ type Country = "United Kingdom" | "Nigeria" | "Other";
 type VenueType = "home" | "cafe" | "coworking" | "other";
 type AddressVisible = "members_only" | "on_request" | "area_only";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
+
+const STOOP_CATEGORIES = [
+  { key: "general",          label: "General",            desc: "A Stoop for anyone — no specific theme, just good company." },
+  { key: "music",            label: "Music & Vinyl",      desc: "Listening sessions, record collecting, live music." },
+  { key: "books",            label: "Books & Reading",    desc: "Reading circles, literary discussion, shared reads." },
+  { key: "film",             label: "Film & TV",          desc: "Screenings, watch parties, film criticism." },
+  { key: "food",             label: "Food & Cooking",     desc: "Cooking together, tasting, food culture." },
+  { key: "art",              label: "Art & Craft",        desc: "Making, drawing, painting, sculpture, craft." },
+  { key: "photography",      label: "Photography",        desc: "Photo walks, editing sessions, portfolio sharing." },
+  { key: "fashion",          label: "Fashion & Style",    desc: "Style, design, vintage, personal expression." },
+  { key: "comedy",           label: "Comedy & Improv",    desc: "Stand-up, improv, storytelling." },
+  { key: "gaming",           label: "Gaming",             desc: "Board games, video games, tabletop RPGs." },
+  { key: "theatre",          label: "Theatre & Dance",    desc: "Performance, movement, stage arts." },
+  { key: "poetry",           label: "Poetry & Writing",   desc: "Spoken word, poetry slams, writing workshops." },
+  { key: "architecture",     label: "Architecture",       desc: "Built environment, design, city walks." },
+  { key: "sports",           label: "Sports & Fitness",   desc: "Active meetups, workouts, sports watching." },
+  { key: "tech",             label: "Tech & Code",        desc: "Coding, hacking, technology discussion." },
+  { key: "wellness",         label: "Wellness",           desc: "Mindfulness, yoga, mental health, rest." },
+  { key: "entrepreneurship", label: "Entrepreneurship",   desc: "Founders, side projects, creative business." },
+  { key: "travel",           label: "Travel & Culture",   desc: "Exploring the world through food, stories and maps." },
+  { key: "language",         label: "Language Exchange",  desc: "Practise languages, celebrate multilingualism." },
+  { key: "parenting",        label: "Parenting",          desc: "For parents and caregivers — shared experience." },
+] as const;
 
 const MEETING_DAYS = [
   { value: "monday",    label: "Monday" },
@@ -67,7 +90,9 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
   const [accessible, setAccessible] = useState(false);
   // Step 4 — locality
   const [localityConfirmed, setLocalityConfirmed] = useState(false);
-  // Step 5 — address visibility
+  // Step 5 — category
+  const [stoopCategory, setStoopCategory] = useState("general");
+  // Step 6 — address visibility
   const [addressVisible, setAddressVisible] = useState<AddressVisible>("members_only");
   // Step 6 — creation form
   const [name, setName] = useState("");
@@ -92,8 +117,9 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
     (step === 2 && venueType !== "") ||
     (step === 3) ||
     (step === 4 && localityConfirmed) ||
-    (step === 5) ||
-    (step === 6 && name.trim() && street.trim() && city.trim() && formCountry.trim() && meetingTime.trim());
+    (step === 5 && stoopCategory !== "") ||
+    (step === 6) ||
+    (step === 7 && name.trim() && street.trim() && city.trim() && formCountry.trim() && meetingTime.trim());
 
   const handleNext = () => {
     if (step < TOTAL_STEPS) {
@@ -129,6 +155,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           accessible: accessible ? 1 : 0,
           address_visible: addressVisible,
           locality_confirmed: localityConfirmed ? 1 : 0,
+          category: stoopCategory,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -379,8 +406,12 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
               className={`hfc-commitment${localityConfirmed ? " hfc-commitment--active" : ""}`}
               onClick={() => setLocalityConfirmed((v) => !v)}
             >
-              <span className={`hfc-commitment-check${localityConfirmed ? " hfc-commitment-check--active" : ""}`}>
-                {localityConfirmed ? "✓" : ""}
+              <span className={`hfc-commitment-check${localityConfirmed ? " hfc-commitment-check--active" : ""}`} aria-hidden="true">
+                {localityConfirmed && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 6.5l3 3 5-5.5" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                )}
               </span>
               <span className="hfc-commitment-text">
                 I'm committed to hosting within my local area and to attending most
@@ -390,8 +421,34 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           </div>
         )}
 
-        {/* ── Step 5: Address visibility ── */}
+        {/* ── Step 5: Category ── */}
         {step === 5 && (
+          <div className="hfc-step">
+            <h1 className="hfc-heading">What's your Stoop about?</h1>
+            <p className="hfc-sub">
+              Pick a theme. People browsing Stoops in your area can filter by
+              category to find the right group for them. Not sure? Go with{" "}
+              <strong>General</strong> — it's open to everyone.
+            </p>
+
+            <div className="hfc-cat-grid">
+              {STOOP_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={`hfc-cat-option${stoopCategory === cat.key ? " hfc-cat-option--active" : ""}`}
+                  onClick={() => setStoopCategory(cat.key)}
+                >
+                  <span className="hfc-cat-label">{cat.label}</span>
+                  <span className="hfc-cat-desc">{cat.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 6: Address visibility ── */}
+        {step === 6 && (
           <div className="hfc-step">
             <h1 className="hfc-heading">Who sees your address?</h1>
             <p className="hfc-sub">
@@ -432,8 +489,8 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           </div>
         )}
 
-        {/* ── Step 6: Creation form ── */}
-        {step === 6 && (
+        {/* ── Step 7: Creation form ── */}
+        {step === 7 && (
           <div className="hfc-step">
             <h1 className="hfc-heading">Name your Stoop.</h1>
             <p className="hfc-sub">
@@ -558,7 +615,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
           </div>
         )}
 
-        {/* Navigation — steps 1–5 only (step 6 uses form submit) */}
+        {/* Navigation — steps 1–6 only (step 7 uses form submit) */}
         {step < TOTAL_STEPS && (
           <div className="hfc-nav">
             {step > 1 && (

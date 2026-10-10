@@ -2642,6 +2642,7 @@ class Culture_REST_API {
             'accessible'        => (bool) $request->get_param( 'accessible' ),
             'addressVisible'    => (string) ( $request->get_param( 'address_visible' ) ?: 'members_only' ),
             'localityConfirmed' => (bool) $request->get_param( 'locality_confirmed' ),
+            'category'          => (string) ( $request->get_param( 'category' ) ?: 'general' ),
         );
         $raw_lat = $request->get_param( 'lat' );
         $raw_lng = $request->get_param( 'lng' );

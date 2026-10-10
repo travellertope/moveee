@@ -61,6 +61,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [activeTemplate, setActiveTemplate] = useState<string>("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [sortBy, setSortBy] = useState<"recent" | "top">("recent");
+  const [feedTypeSheetOpen, setFeedTypeSheetOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -363,28 +364,27 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
             initialTab={composerTab}
           />
 
-          {/* Feed tabs — All / content-type categories + Sort by */}
+          {/* Feed tabs — post type picker button + Sort by */}
           <div className="feed-tabs">
-            <div className="feed-tabs-pills">
-              <button
-                type="button"
-                className={`feed-tab${!forYou && !followingFilter && !activeTemplate ? " feed-tab--active" : ""}`}
-                onClick={handleAllPosts}
-              >
-                All
-              </button>
-              {TEMPLATE_TABS.map(tab => (
+            {(() => {
+              const activeTab = TEMPLATE_TABS.find(t => t.key === activeTemplate);
+              const label = activeTab ? `${activeTab.emoji} ${activeTab.label}` : "All Posts";
+              const isFiltered = !!(activeTemplate);
+              return (
                 <button
-                  key={tab.key}
                   type="button"
-                  className={`feed-tab feed-tab--category${activeTemplate === tab.key ? " feed-tab--active" : ""}`}
-                  onClick={() => handleTemplate(tab.key)}
+                  className={`feed-type-btn${isFiltered ? " feed-type-btn--active" : ""}`}
+                  onClick={() => setFeedTypeSheetOpen(true)}
+                  aria-haspopup="listbox"
+                  aria-expanded={feedTypeSheetOpen}
                 >
-                  <span className="feed-tab-emoji" aria-hidden="true">{tab.emoji}</span>
-                  {tab.label}
+                  {label}
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+                    <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
-              ))}
-            </div>
+              );
+            })()}
             <div className="feed-sort">
               <label htmlFor="feed-sort-select" className="feed-sort-label" aria-label="Sort by">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -403,6 +403,68 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               </select>
             </div>
           </div>
+
+          {/* Post type bottom-sheet */}
+          {feedTypeSheetOpen && (
+            <>
+              <div
+                className="feed-type-overlay"
+                aria-hidden="true"
+                onClick={() => setFeedTypeSheetOpen(false)}
+              />
+              <div role="listbox" aria-label="Filter by post type" className="feed-type-sheet">
+                <div className="feed-type-sheet-handle" aria-hidden="true" />
+                <div className="feed-type-sheet-header">
+                  <p className="feed-type-sheet-title">Filter by post type</p>
+                  <button
+                    type="button"
+                    className="feed-type-sheet-close"
+                    onClick={() => setFeedTypeSheetOpen(false)}
+                    aria-label="Close"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+                <div className="feed-type-sheet-list">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={!activeTemplate}
+                    className={`feed-type-row${!activeTemplate ? " feed-type-row--active" : ""}`}
+                    onClick={() => { handleAllPosts(); setFeedTypeSheetOpen(false); }}
+                  >
+                    <span className="feed-type-row-label">All Posts</span>
+                    {!activeTemplate && (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M2.5 8.5l3.5 3.5 7-7" stroke="var(--ochre)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                  {TEMPLATE_TABS.map(tab => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      role="option"
+                      aria-selected={activeTemplate === tab.key}
+                      className={`feed-type-row${activeTemplate === tab.key ? " feed-type-row--active" : ""}`}
+                      onClick={() => { handleTemplate(tab.key); setFeedTypeSheetOpen(false); }}
+                    >
+                      <span className="feed-type-row-label">
+                        <span aria-hidden="true">{tab.emoji}</span> {tab.label}
+                      </span>
+                      {activeTemplate === tab.key && (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path d="M2.5 8.5l3.5 3.5 7-7" stroke="var(--ochre)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           {activeTag && SECTION_HUB_SLUGS[activeTag] && (
             <Link

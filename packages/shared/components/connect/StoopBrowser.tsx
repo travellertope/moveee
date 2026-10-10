@@ -25,6 +25,7 @@ interface Cluster {
   meetingTime: string;
   venueType: string;
   accessible: boolean;
+  category?: string;
   role?: string;
 }
 
@@ -68,21 +69,33 @@ function capacityBadge(memberCount: number, capacity: number): { label: string; 
 }
 
 /* Category filter definitions */
-type StCategory = "all" | "music" | "book" | "coffee" | "art";
-const CAT_LABELS: Record<StCategory, string> = {
-  all:    "All Active Stoops",
-  music:  "Vinyl & Music",
-  book:   "Book Circles",
-  coffee: "Coffee & Architecture",
-  art:    "Art & Creatives",
-};
-function clusterCategory(c: Cluster): StCategory {
-  const n = (c.name + " " + (c.hostMechanism || "") + " " + (c.venueType || "")).toLowerCase();
-  if (/vinyl|music|listen|jazz|record|sound/.test(n)) return "music";
-  if (/book|lit|read|poem|poetry|write|zine|novel/.test(n)) return "book";
-  if (/coffee|café|cafe|cowork|architect|design/.test(n)) return "coffee";
-  if (/art|creative|paint|photo|gallery|film|cinema/.test(n)) return "art";
-  return "all";
+export const STOOP_CATEGORIES = [
+  { key: "general",         label: "General" },
+  { key: "music",           label: "Music & Vinyl" },
+  { key: "books",           label: "Books & Reading" },
+  { key: "film",            label: "Film & TV" },
+  { key: "food",            label: "Food & Cooking" },
+  { key: "art",             label: "Art & Craft" },
+  { key: "photography",     label: "Photography" },
+  { key: "fashion",         label: "Fashion & Style" },
+  { key: "comedy",          label: "Comedy & Improv" },
+  { key: "gaming",          label: "Gaming" },
+  { key: "theatre",         label: "Theatre & Dance" },
+  { key: "poetry",          label: "Poetry & Writing" },
+  { key: "architecture",    label: "Architecture" },
+  { key: "sports",          label: "Sports & Fitness" },
+  { key: "tech",            label: "Tech & Code" },
+  { key: "wellness",        label: "Wellness" },
+  { key: "entrepreneurship",label: "Entrepreneurship" },
+  { key: "travel",          label: "Travel & Culture" },
+  { key: "language",        label: "Language Exchange" },
+  { key: "parenting",       label: "Parenting" },
+] as const;
+
+type StCategory = "all" | typeof STOOP_CATEGORIES[number]["key"];
+
+function clusterCategory(c: Cluster & { category?: string }): string {
+  return c.category || "general";
 }
 
 /* Deterministic cover gradients (no cover photo in DB yet) */
@@ -118,6 +131,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
 
   /* Category filter */
   const [category, setCategory] = useState<StCategory>("all");
+  const [catSheetOpen, setCatSheetOpen] = useState(false);
 
   /* "Start a Stoop" wizard modal */
   const [showHostModal, setShowHostModal] = useState(false);
@@ -511,27 +525,91 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
         </div>
       )}
 
-      {/* ── Category filter chips ─────────────────────────────── */}
+      {/* ── Category filter button ────────────────────────────── */}
       <div className="stoop-cats-row">
-        <div className="stoop-cats-chips">
-          {(Object.keys(CAT_LABELS) as StCategory[]).map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              className={`stoop-cat-chip${category === cat ? " stoop-cat-chip--active" : ""}`}
-              onClick={() => setCategory(cat)}
-            >
-              {CAT_LABELS[cat]}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          className={`stoop-cat-btn${category !== "all" ? " stoop-cat-btn--active" : ""}`}
+          onClick={() => setCatSheetOpen(true)}
+          aria-haspopup="dialog"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+          {category === "all"
+            ? "All categories"
+            : STOOP_CATEGORIES.find((c) => c.key === category)?.label ?? "Category"}
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
         {displayCount > 0 && (
           <span className="stoop-cats-count">
-            Showing {displayCount} stoop{displayCount !== 1 ? "s" : ""}
+            {displayCount} stoop{displayCount !== 1 ? "s" : ""}
             {cityDisplay ? ` near ${cityDisplay}` : ""}
           </span>
         )}
       </div>
+
+      {/* ── Category bottom-sheet ─────────────────────────────── */}
+      {catSheetOpen && (
+        <>
+          <div
+            className="stoop-cat-overlay"
+            onClick={() => setCatSheetOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-label="Filter by category"
+            className="stoop-cat-sheet"
+          >
+            <div className="stoop-cat-sheet-handle" aria-hidden="true" />
+            <div className="stoop-cat-sheet-header">
+              <p className="stoop-cat-sheet-title">Filter by category</p>
+              <button
+                type="button"
+                className="stoop-cat-sheet-close"
+                onClick={() => setCatSheetOpen(false)}
+                aria-label="Close"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="stoop-cat-sheet-list">
+              <button
+                type="button"
+                className={`stoop-cat-row${category === "all" ? " stoop-cat-row--active" : ""}`}
+                onClick={() => { setCategory("all"); setCatSheetOpen(false); }}
+              >
+                <span className="stoop-cat-row-label">All categories</span>
+                {category === "all" && (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+              {STOOP_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  type="button"
+                  className={`stoop-cat-row${category === cat.key ? " stoop-cat-row--active" : ""}`}
+                  onClick={() => { setCategory(cat.key as StCategory); setCatSheetOpen(false); }}
+                >
+                  <span className="stoop-cat-row-label">{cat.label}</span>
+                  {category === cat.key && (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Member's own Stoop card ───────────────────────────── */}
       {myCluster && (
