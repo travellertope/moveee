@@ -379,8 +379,12 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
               className={`hfc-commitment${localityConfirmed ? " hfc-commitment--active" : ""}`}
               onClick={() => setLocalityConfirmed((v) => !v)}
             >
-              <span className={`hfc-commitment-check${localityConfirmed ? " hfc-commitment-check--active" : ""}`}>
-                {localityConfirmed ? "✓" : ""}
+              <span className={`hfc-commitment-check${localityConfirmed ? " hfc-commitment-check--active" : ""}`} aria-hidden="true">
+                {localityConfirmed && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 6.5l3 3 5-5.5" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                )}
               </span>
               <span className="hfc-commitment-text">
                 I'm committed to hosting within my local area and to attending most
