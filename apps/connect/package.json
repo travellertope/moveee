@@ -12,6 +12,7 @@
     "@google/generative-ai": "^0.24.1",
     "@moveee/shared": "file:../../packages/shared",
     "@moveee/utils": "file:../../packages/utils",
+    "@serwist/next": "^9.5.13",
     "@simplewebauthn/browser": "^13.3.0",
     "@upstash/ratelimit": "^2.0.8",
     "@vercel/kv": "^3.0.0",
@@ -22,6 +23,7 @@
     "qrcode.react": "^4.2.0",
     "react": "latest",
     "react-dom": "latest",
+    "serwist": "^9.5.13",
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.2.1"
   },

@@ -9,6 +9,7 @@ import SessionProvider from "@/components/SessionProvider";
 import ConnectHeader from "@/components/Header";
 import TopBar from "@/components/TopBar";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,6 +27,18 @@ export const metadata: Metadata = {
     template: "%s | Moveee",
   },
   description: "Discover events, creative people, and cultural experiences. A community open to everyone.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Moveee",
+    startupImage: [
+      { url: "/icons/apple-touch-icon.png" },
+    ],
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -64,6 +77,9 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem("moveee-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`,
           }}
         />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3ece0" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14110d" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className={inter.variable}>
         <SessionProvider>
@@ -78,6 +94,7 @@ export default function RootLayout({
                   </div>
                 </div>
                 <GlobalAuthModal />
+                <PWAInstallPrompt />
               </ThemeProvider>
             </LanguageProvider>
           </CurrencyProvider>
