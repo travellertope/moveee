@@ -30,7 +30,7 @@ export default function StoopPlacesInput({
   const [open, setOpen] = useState(false);
   const [manual, setManual] = useState(false);
   const [selected, setSelected] = useState<PlaceResult | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (manual || selected || query.length < 2) { setResults([]); return; }
