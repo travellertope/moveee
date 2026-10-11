@@ -1,13 +1,5 @@
-import type { Metadata } from "next";
-import GamesHubClient from "./GamesHubClient";
-import "@/app/games.css";
-
-export const metadata: Metadata = {
-  title: { absolute: "Culture Games | Moveee" },
-  description:
-    "Test your knowledge of culture through trivia, quotes, and daily challenges.",
-};
+import { redirect } from 'next/navigation';
 
 export default function GamesHub() {
-  return <GamesHubClient />;
+  redirect('/games/trivia');
 }

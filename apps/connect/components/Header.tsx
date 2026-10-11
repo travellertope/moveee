@@ -203,8 +203,8 @@ export default function ConnectHeader() {
           <Link href="/events" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
             <RailIcon name="events" /> Events
           </Link>
-          <Link href="/games" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
-            <RailIcon name="games" /> Games
+          <Link href="/games/trivia" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
+            <RailIcon name="games" /> Trivia
           </Link>
         </div>
 

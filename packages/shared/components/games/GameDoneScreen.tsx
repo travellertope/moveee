@@ -176,8 +176,8 @@ export default function GameDoneScreen({ game, score, total, date, alreadyDone }
             <Link href={otherGame.href} className="gds-btn gds-btn--primary">
               Try {otherGame.label} →
             </Link>
-            <Link href="/games" className="gds-btn gds-btn--ghost">
-              All Games
+            <Link href="/games/trivia" className="gds-btn gds-btn--ghost">
+              Play Trivia
             </Link>
           </div>
         </div>

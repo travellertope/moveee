@@ -96,7 +96,7 @@ const Footer = () => {
               <li><a href={`${CONNECT_URL}/feed`}>Feed</a></li>
               <li><a href={`${CONNECT_URL}/events`}>Happenings</a></li>
               <li><a href={`${CONNECT_URL}/directory`}>Culture Directory</a></li>
-              <li><a href={`${CONNECT_URL}/games`}>Games</a></li>
+              <li><a href={`${CONNECT_URL}/games/trivia`}>Trivia</a></li>
               <li><Link href="/shop">Shop</Link></li>
             </ul>
           </div>

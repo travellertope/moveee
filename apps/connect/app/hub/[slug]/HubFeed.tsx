@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import FeedCard from "@/components/pulse/FeedCard";
+import ComposerModal from "@/components/pulse/ComposerModal";
 import type { FeedItem } from "@/lib/unified-feed";
 
 /**
@@ -25,11 +25,11 @@ export default function HubFeed({
   isMember: boolean;
   isModerator: boolean;
 }) {
-  const router = useRouter();
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyWpId, setBusyWpId] = useState<string | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,7 +98,7 @@ export default function HubFeed({
             <button
               type="button"
               className="composer-box-placeholder"
-              onClick={() => router.push(`/hub/${hubSlug}/post/new`)}
+              onClick={() => setComposerOpen(true)}
             >
               Share something with this Hub…
             </button>
@@ -148,6 +148,12 @@ export default function HubFeed({
           ))}
         </div>
       )}
+      <ComposerModal
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        hubId={hubId}
+        onSuccess={load}
+      />
     </div>
   );
 }

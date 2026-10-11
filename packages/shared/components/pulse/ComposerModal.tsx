@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import DirectorySearch from "@/components/composer/DirectorySearch";
 
 export type ComposerTab = "update" | "review" | "art" | "poll" | "quote" | "itinerary" | "event";
 type ReviewSubtype = "place" | "food" | "music" | "book" | "film";
@@ -40,6 +41,7 @@ interface Props {
   onClose: () => void;
   onSuccess?: () => void;
   initialTab?: ComposerTab;
+  hubId?: number;
 }
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -109,7 +111,7 @@ function ImageUpload({ url, onUpload, onRemove, uploading }: {
   );
 }
 
-export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update" }: Props) {
+export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId }: Props) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
@@ -120,6 +122,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   // Review
   const [revSubtype, setRevSubtype] = useState<ReviewSubtype>("place");
   const [revTitle, setRevTitle]     = useState("");
+  const [revEntry, setRevEntry]     = useState<any>(null);
   const [revRating, setRevRating]   = useState(5);
   const [revContent, setRevContent] = useState("");
 
@@ -169,7 +172,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   const resetAll = useCallback(() => {
     setUpdTitle(""); setUpdContent("");
-    setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place");
+    setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place"); setRevEntry(null);
     setArtTitle(""); setArtContent("");
     setPollQ(""); setPollOpts(["", ""]);
     setQText(""); setQAuthor(""); setQSource(""); setQReflection("");
@@ -245,8 +248,25 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           if (revSubtype === "place") {
             payload.location_name = revTitle.trim();
             payload.text = revContent.trim();
-          } else {
+          } else if (revSubtype === "food") {
             payload.text = revTitle.trim() ? `${revTitle.trim()}\n\n${revContent.trim()}` : revContent.trim();
+          } else {
+            // book / music / film — use linked directory entry when available
+            const entryTitle = revEntry?.title || revTitle.trim();
+            payload.text = entryTitle ? `${entryTitle}\n\n${revContent.trim()}` : revContent.trim();
+            if (revEntry?.id) {
+              payload.linked_directory_id = revEntry.id;
+              if (revSubtype === "book") {
+                payload.book_title = revEntry.title;
+                payload.book_author = revEntry.about;
+              } else if (revSubtype === "music") {
+                payload.music_title = revEntry.title;
+                payload.music_artist = revEntry.about;
+              } else if (revSubtype === "film") {
+                payload.film_title = revEntry.title;
+                payload.film_director = revEntry.about;
+              }
+            }
           }
           payload.star_rating = revRating;
           if (imageUrl) payload.imageUrl = imageUrl;
@@ -293,6 +313,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         }
 
         payload.template_type = template_type;
+        if (hubId) payload.hub_id = hubId;
 
         const res = await fetch("/api/community/submit", {
           method: "POST",
@@ -397,7 +418,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                       key={sub}
                       type="button"
                       className={`cm-pill${revSubtype === sub ? " cm-pill--active" : ""}`}
-                      onClick={() => setRevSubtype(sub)}
+                      onClick={() => { setRevSubtype(sub); setRevEntry(null); setRevTitle(""); }}
                     >
                       {{ place: "📍 Place", food: "🍽 Food", music: "🎵 Music", book: "📚 Book", film: "🎬 Film" }[sub]}
                     </button>
@@ -405,17 +426,33 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                <label className="cm-label">
-                  {{ place: "Place name", food: "Restaurant / dish", music: "Artist / album / track", book: "Book title", film: "Film title" }[revSubtype]}
-                </label>
-                <input
-                  className="cm-input"
-                  placeholder={
-                    { place: "Name of the place…", food: "e.g. Suya Spot Lagos, jollof rice", music: "e.g. Fela Kuti – Zombie", book: "e.g. Homegoing by Yaa Gyasi", film: "e.g. Moonlight (2016)" }[revSubtype]
-                  }
-                  value={revTitle}
-                  onChange={e => setRevTitle(e.target.value)}
-                />
+                {(revSubtype === "book" || revSubtype === "music" || revSubtype === "film") ? (
+                  <>
+                    <label className="cm-label">
+                      {{ book: "Book", music: "Album", film: "Film" }[revSubtype]}
+                    </label>
+                    <DirectorySearch
+                      value={revEntry}
+                      onChange={(entry) => { setRevEntry(entry); if (entry) setRevTitle(entry.title); }}
+                      typeFilter={{ book: "book", music: "album", film: "film" }[revSubtype]}
+                      aboutFieldLabel={{ book: "Author", music: "Artist", film: "Director" }[revSubtype]}
+                      externalSource={({ book: "google_books", music: "spotify", film: "tmdb" } as const)[revSubtype]}
+                      placeholder={{ book: "Search for a book…", music: "Search for an album…", film: "Search for a film…" }[revSubtype]}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <label className="cm-label">
+                      {{ place: "Place name", food: "Restaurant / dish" }[revSubtype] ?? "Title"}
+                    </label>
+                    <input
+                      className="cm-input"
+                      placeholder={{ place: "Name of the place…", food: "e.g. Suya Spot Lagos, jollof rice" }[revSubtype] ?? ""}
+                      value={revTitle}
+                      onChange={e => setRevTitle(e.target.value)}
+                    />
+                  </>
+                )}
               </div>
               <div className="cm-field">
                 <label className="cm-label">Your rating</label>

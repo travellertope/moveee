@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import ComposerModal from "@/components/pulse/ComposerModal";
 import "./bottom-nav.css";
 
 function NavIcon({ name }: { name: string }) {
@@ -54,7 +56,9 @@ const TABS = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { status } = useSession();
+  const [composerOpen, setComposerOpen] = useState(false);
 
   function isActive(href: string) {
     if (href === "/feed") return pathname === "/feed";
@@ -76,15 +80,22 @@ export default function BottomNav() {
       </Link>
 
       {/* Compose — centre action button */}
-      <Link
-        href={status === "unauthenticated" ? "/login" : "/post/new"}
+      <button
+        type="button"
         className="bn-compose"
         aria-label="New post"
+        onClick={() => {
+          if (status === "unauthenticated") {
+            router.push("/login");
+          } else {
+            setComposerOpen(true);
+          }
+        }}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />
         </svg>
-      </Link>
+      </button>
 
       {/* Stoop IRL */}
       <Link href="/connect/stoop" className={`bn-tab${isActive("/connect/stoop") ? " bn-tab--active" : ""}`}>
@@ -98,5 +109,6 @@ export default function BottomNav() {
         <span className="bn-label">Profile</span>
       </Link>
     </nav>
+    <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} />
   );
 }
