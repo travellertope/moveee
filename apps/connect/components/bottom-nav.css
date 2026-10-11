@@ -1,0 +1,93 @@
+/* BottomNav — 5-tab sticky bottom navigation bar, mobile only (<860px).
+   bn = bottom-nav namespace */
+
+.bn-bar {
+  display: none;
+}
+
+@media (max-width: 859px) {
+  .bn-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    height: 58px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #fff;
+    border-top: 1px solid var(--rule);
+    box-shadow: 0 -2px 12px rgba(20, 17, 13, 0.06);
+  }
+
+  .bn-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--mute);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: var(--radius-lg);
+    transition: color 0.15s;
+    flex: 1;
+  }
+
+  .bn-tab:hover { color: var(--ink); }
+
+  .bn-tab--active { color: var(--ochre); }
+
+  .bn-label {
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--font-inter), 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .bn-compose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-full);
+    background: var(--ochre);
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.15s;
+    box-shadow: 0 2px 10px rgba(122, 36, 28, 0.35);
+    /* lift the FAB slightly above the bar line */
+    margin-bottom: 6px;
+  }
+
+  .bn-compose:hover {
+    background: var(--ochre-deep);
+    transform: scale(1.06);
+  }
+
+  .bn-compose:active {
+    transform: scale(0.96);
+  }
+
+  /* Bottom padding so page content isn't hidden behind the bar */
+  .cw-shell-content {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Dark mode */
+[data-theme="dark"] .bn-bar {
+  background: #1a1714;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bn-bar {
+    background: #1a1714;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.3);
+  }
+}
