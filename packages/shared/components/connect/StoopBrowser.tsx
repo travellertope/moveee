@@ -462,7 +462,6 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
       {/* ── Hero banner ───────────────────────────────────────── */}
       <div className="stoop-hero">
         <div className="stoop-hero-content">
-          <span className="stoop-hero-badge">Stoop IRL Gatherings</span>
           <h2 className="stoop-hero-heading">Real-world cultural meetups, vinyl sessions &amp; neighbourhood stoops.</h2>
           <p className="stoop-hero-sub">
             Connect with creators, readers, and listeners in your city.
