@@ -17,7 +17,7 @@ export default async function CollectionPage() {
   if (!session?.user) redirect("/login?callbackUrl=/member/collection");
 
   return (
-    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+    <div style={{ background: "var(--paper)" }}>
       <div className="pulse-layout pulse-layout--feed">
         <main className="pulse-timeline">
           <div className="pulse-timeline-inner" style={{ padding: "20px 20px 40px" }}>

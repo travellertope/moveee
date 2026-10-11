@@ -66,6 +66,7 @@ export default function BottomNav() {
   }
 
   return (
+    <>
     <nav className="bn-bar" aria-label="Main navigation">
       {/* Feed */}
       <Link href="/feed" className={`bn-tab${isActive("/feed") ? " bn-tab--active" : ""}`}>
@@ -110,5 +111,6 @@ export default function BottomNav() {
       </Link>
     </nav>
     <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} />
+    </>
   );
 }
