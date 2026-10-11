@@ -35,6 +35,18 @@ interface AnalyticsData {
   top_posts: TopPost[];
 }
 
+// ── How to Earn — static table ───────────────────────────────────────────────
+
+const HOW_TO_EARN = [
+  { action: "Create a post",       credits: "+3",  points: "+15" },
+  { action: "Get a reaction",      credits: "+1",  points: "+5"  },
+  { action: "Get a comment",       credits: "+2",  points: "+8"  },
+  { action: "Refer a new member",  credits: "+10", points: "+25" },
+  { action: "Complete your profile", credits: "+5", points: "+20" },
+  { action: "Daily visit",         credits: "+1",  points: "+3"  },
+  { action: "Attend an event",     credits: "+5",  points: "+15" },
+];
+
 // ── SVG Bar Chart ────────────────────────────────────────────────────────────
 
 function BarChart({
@@ -69,7 +81,6 @@ function BarChart({
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
-      {/* Y axis ticks */}
       {Array.from({ length: yTicks + 1 }).map((_, i) => {
         const val = Math.round((maxVal * i) / yTicks);
         const y = PAD.top + chartH - (chartH * i) / yTicks;
@@ -81,7 +92,6 @@ function BarChart({
         );
       })}
 
-      {/* Bars */}
       {data.map((d, gi) => {
         const xBase = PAD.left + gi * groupW + gap;
         return bars.map((b, bi) => {
@@ -97,7 +107,6 @@ function BarChart({
         });
       })}
 
-      {/* X axis labels — show every Nth to avoid crowding */}
       {data.map((d, gi) => {
         const step = Math.ceil(data.length / 10);
         if (gi % step !== 0) return null;
@@ -111,7 +120,6 @@ function BarChart({
         );
       })}
 
-      {/* Legend */}
       {bars.map((b, bi) => (
         <g key={b} transform={`translate(${PAD.left + bi * 80}, ${H - 6})`}>
           <rect width={8} height={8} fill={colors[bi]} rx={1} />
@@ -159,7 +167,6 @@ function LineChart({
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
-      {/* Grid */}
       {[0, 0.25, 0.5, 0.75, 1].map((t) => {
         const y = PAD.top + chartH - t * chartH;
         const val = Math.round(maxVal * t);
@@ -171,21 +178,17 @@ function LineChart({
         );
       })}
 
-      {/* Area fill */}
       <polygon points={areaPoints} fill={color} fillOpacity={0.08} />
 
-      {/* Line */}
       {vals.length > 1 && (
         <polyline points={polyline} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
       )}
 
-      {/* Dots */}
       {vals.map((v, i) => {
         const [x, y] = points[i].split(",").map(Number);
         return <circle key={i} cx={x} cy={y} r={2.5} fill={color} />;
       })}
 
-      {/* X labels */}
       {data.map((d, i) => {
         const step = Math.ceil(data.length / 6);
         if (i % step !== 0 && i !== data.length - 1) return null;
@@ -202,21 +205,9 @@ function LineChart({
   );
 }
 
-// ── Stat Card ────────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, sub, valueColor }: { label: string; value: string | number; sub?: string; valueColor?: string }) {
-  return (
-    <div className="an-stat">
-      <div className="an-stat-label">{label}</div>
-      <div className="an-stat-value" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
-      {sub && <div className="an-stat-sub">{sub}</div>}
-    </div>
-  );
-}
-
 // ── Main Component ───────────────────────────────────────────────────────────
 
-export default function AnalyticsClient({ userId }: { userId: string }) {
+export default function AnalyticsClient({ userId, isPatron }: { userId: string; isPatron: boolean }) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState(false);
 
@@ -233,85 +224,161 @@ export default function AnalyticsClient({ userId }: { userId: string }) {
   if (error) {
     return (
       <div style={{ padding: "40px 0", textAlign: "center", color: "var(--mute)", fontSize: "0.85rem" }}>
-        Could not load analytics. Please try again later.
+        Could not load dashboard. Please try again later.
       </div>
     );
   }
 
-  if (!data) {
-    return (
-      <div style={{ padding: "40px 0", textAlign: "center", color: "var(--mute)", fontSize: "0.85rem" }}>
-        Loading analytics…
-      </div>
-    );
-  }
+  const skeleton = !data;
 
-  const totalEarned = data.credit_days.reduce((s, d) => s + parseFloat(d.earned ?? "0"), 0);
-  const totalSpent  = data.credit_days.reduce((s, d) => s + parseFloat(d.spent ?? "0"), 0);
+  const totalEarned = data ? data.credit_days.reduce((s, d) => s + parseFloat(d.earned ?? "0"), 0) : 0;
+  const totalSpent  = data ? data.credit_days.reduce((s, d) => s + parseFloat(d.spent ?? "0"), 0) : 0;
+
+  const STAT_CARDS = [
+    {
+      label: "Credits",
+      value: skeleton ? "—" : data!.balance.toLocaleString(),
+      sub: "spendable balance",
+      icon: "💳",
+    },
+    {
+      label: "Points",
+      value: skeleton ? "—" : data!.reputation.toLocaleString(),
+      sub: "reputation score",
+      icon: "⭐",
+    },
+    {
+      label: "Badges",
+      value: skeleton ? "—" : String(data!.badge_count),
+      sub: "earned",
+      icon: "🏅",
+    },
+    {
+      label: "Posts",
+      value: skeleton ? "—" : String(data!.posts_published),
+      sub: data && data.posts_pending ? `+${data.posts_pending} pending` : "published",
+      icon: "✏️",
+    },
+    {
+      label: "Membership",
+      value: isPatron ? "Pro" : "Citizen",
+      sub: isPatron ? "Moveee Pro" : "Free tier",
+      icon: isPatron ? "🌟" : "👤",
+      accent: isPatron,
+    },
+  ];
 
   return (
     <>
-      {/* ── Stat summary ── */}
-      <div className="an-stats">
-        <StatCard label="Credit Balance" value={data.balance} sub="spendable credits" />
-        <StatCard label="Points" value={data.reputation} sub="all-time points" />
-        <StatCard label="Posts" value={data.posts_published} sub={data.posts_pending ? `+${data.posts_pending} pending` : "published"} />
-        <StatCard label="Badges" value={data.badge_count} sub="earned badges" />
-        <StatCard label="Earned (30d)" value={Math.round(totalEarned)} sub="credits earned" valueColor="var(--success)" />
-        <StatCard label="Spent (30d)" value={Math.round(totalSpent)} sub="credits spent" valueColor="var(--error)" />
+      {/* ── Stat cards grid ── */}
+      <div className="dash-stat-grid">
+        {STAT_CARDS.map((card) => (
+          <div
+            key={card.label}
+            className={`dash-stat-card${card.accent ? " dash-stat-card--accent" : ""}`}
+          >
+            <div className="dash-stat-icon">{card.icon}</div>
+            <div className="dash-stat-label">{card.label}</div>
+            <div className="dash-stat-value">{card.value}</div>
+            <div className="dash-stat-sub">{card.sub}</div>
+          </div>
+        ))}
       </div>
 
       {/* ── Credits chart ── */}
-      <section className="acct-card" style={{ marginBottom: 20 }}>
-        <div className="an-chart-title">Credits — Last 30 Days</div>
-        {data.credit_days.length === 0 ? (
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No credit activity in the last 30 days.</p>
-        ) : (
-          <BarChart
-            data={data.credit_days}
-            bars={["earned", "spent"]}
-            colors={["#b38238", "#7a241c"]}
-            labels={["Earned", "Spent"]}
-          />
-        )}
-      </section>
+      {(skeleton || (data && data.credit_days.length > 0)) && (
+        <section className="dash-chart-card">
+          <div className="an-chart-title">Credits — Last 30 Days</div>
+          {skeleton ? (
+            <div className="dash-chart-skeleton" />
+          ) : data!.credit_days.length === 0 ? null : (
+            <BarChart
+              data={data!.credit_days}
+              bars={["earned", "spent"]}
+              colors={["#b38238", "#7a241c"]}
+              labels={["Earned", "Spent"]}
+            />
+          )}
+        </section>
+      )}
 
       {/* ── Points chart ── */}
-      <section className="acct-card" style={{ marginBottom: 20 }}>
-        <div className="an-chart-title">Points Earned — Last 6 Months</div>
-        {data.rep_months.length === 0 ? (
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: 0 }}>No points activity yet.</p>
-        ) : (
-          <LineChart data={data.rep_months} valueKey="rep_earned" color="#2a6496" />
-        )}
+      {(skeleton || (data && data.rep_months.length > 0)) && (
+        <section className="dash-chart-card">
+          <div className="an-chart-title">Points Earned — Last 6 Months</div>
+          {skeleton ? (
+            <div className="dash-chart-skeleton" />
+          ) : data!.rep_months.length === 0 ? null : (
+            <LineChart data={data!.rep_months} valueKey="rep_earned" color="#2a6496" />
+          )}
+        </section>
+      )}
+
+      {/* ── How to Earn ── */}
+      <section className="dash-chart-card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="an-chart-title" style={{ padding: "18px 22px 14px" }}>How to Earn Credits & Points</div>
+        <table className="dash-earn-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Credits</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {HOW_TO_EARN.map((row) => (
+              <tr key={row.action}>
+                <td>{row.action}</td>
+                <td className="dash-earn-val dash-earn-val--credit">{row.credits}</td>
+                <td className="dash-earn-val dash-earn-val--point">{row.points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ padding: "12px 22px", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--mute)" }}>
+            <strong style={{ color: "var(--ink)" }}>Earned (30d):</strong>{" "}
+            {skeleton ? "—" : `${Math.round(totalEarned)} credits · ${data!.rep_months.reduce((s, m) => s + parseFloat(m.rep_earned ?? "0"), 0).toLocaleString()} pts`}
+            <span style={{ marginLeft: "16px" }}>
+              <strong style={{ color: "var(--ink)" }}>Spent (30d):</strong>{" "}
+              {skeleton ? "—" : `${Math.round(totalSpent)} credits`}
+            </span>
+          </div>
+        </div>
       </section>
 
       {/* ── Top posts ── */}
-      <section className="acct-card" style={{ padding: 0, overflow: "hidden" }}>
-        <div className="an-chart-title" style={{ padding: "18px 22px 0", marginBottom: 8 }}>Top Posts — Last 90 Days</div>
-        {data.top_posts.length === 0 ? (
-          <p style={{ fontSize: "0.78rem", color: "var(--mute)", padding: "0 22px 20px" }}>No published posts yet.</p>
-        ) : (
-          data.top_posts.map((p, i) => {
-            const engagement = parseInt(p.reactions ?? "0") + parseInt(p.comment_count ?? "0");
-            return (
-              <div key={p.ID} className="an-post-row">
-                <div className={`an-rank${i === 0 ? " an-rank--1" : ""}`}>{i + 1}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="an-post-title">{p.post_title || "Untitled"}</div>
-                  <div className="an-post-date">
-                    {new Date(p.post_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+      {(skeleton || (data && data.top_posts.length > 0)) && (
+        <section className="dash-chart-card" style={{ padding: 0, overflow: "hidden" }}>
+          <div className="an-chart-title" style={{ padding: "18px 22px 0", marginBottom: 8 }}>Top Posts — Last 90 Days</div>
+          {skeleton ? (
+            <div style={{ padding: "0 22px 20px" }}>
+              {[1, 2, 3].map(i => <div key={i} className="dash-chart-skeleton" style={{ height: "48px", marginBottom: "8px" }} />)}
+            </div>
+          ) : data!.top_posts.length === 0 ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--mute)", padding: "0 22px 20px" }}>No published posts yet.</p>
+          ) : (
+            data!.top_posts.map((p, i) => {
+              const engagement = parseInt(p.reactions ?? "0") + parseInt(p.comment_count ?? "0");
+              return (
+                <div key={p.ID} className="an-post-row">
+                  <div className={`an-rank${i === 0 ? " an-rank--1" : ""}`}>{i + 1}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="an-post-title">{p.post_title || "Untitled"}</div>
+                    <div className="an-post-date">
+                      {new Date(p.post_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </div>
+                  </div>
+                  <div style={{ flexShrink: 0 }}>
+                    <div className="an-post-eng"><span>❤️ {p.reactions ?? 0}</span><span>💬 {p.comment_count ?? 0}</span></div>
+                    <div className="an-post-total">{engagement} Eng</div>
                   </div>
                 </div>
-                <div style={{ flexShrink: 0 }}>
-                  <div className="an-post-eng"><span>❤️ {p.reactions ?? 0}</span><span>💬 {p.comment_count ?? 0}</span></div>
-                  <div className="an-post-total">{engagement} Eng</div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </section>
+              );
+            })
+          )}
+        </section>
+      )}
     </>
   );
 }
