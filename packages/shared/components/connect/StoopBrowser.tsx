@@ -538,9 +538,6 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
           {category === "all"
             ? "All categories"
             : STOOP_CATEGORIES.find((c) => c.key === category)?.label ?? "Category"}
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
         </button>
         {displayCount > 0 && (
           <span className="stoop-cats-count">
