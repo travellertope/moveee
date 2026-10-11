@@ -59,7 +59,7 @@ export default function DashboardSidebar({ profileUrl }: { profileUrl: string })
         </p>
         <div style={{
           display: "flex", gap: "6px", alignItems: "stretch",
-          background: "var(--paper-deep, #f0ebe0)",
+          background: "#f5f5f3",
           borderRadius: "var(--radius-lg, 6px)",
           border: "1px solid var(--rule, #e8e2d8)",
           padding: "6px 8px",

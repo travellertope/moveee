@@ -330,7 +330,7 @@
 }
 
 .dir-wiki-sidebar-card {
-  background: var(--paper, #fff);
+  background: #fff;
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl, 20px);
   padding: 20px;
@@ -523,10 +523,10 @@
 .dir-wiki-infobox {
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl, 20px);
-  background: var(--paper, #fff);
+  background: #fff;
   font-size: 13px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .dir-wiki-infobox-img {
@@ -544,7 +544,7 @@
   text-align: center;
   padding: 12px 14px 10px;
   border-bottom: 1px solid var(--rule, #e8e2d8);
-  background: var(--paper-deep, #f0ebe0);
+  background: #fff;
 }
 
 .dir-wiki-infobox-row {

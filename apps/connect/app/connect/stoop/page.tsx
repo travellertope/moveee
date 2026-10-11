@@ -19,9 +19,9 @@ export default async function StoopPage() {
   const viewerCountry = (session?.user as any)?.countryOfResidence ?? "";
 
   return (
-    <div style={{ background: "var(--paper, #f3ece0)", minHeight: "100vh" }}>
+    <div style={{ background: "#fff", minHeight: "100vh" }}>
       <div className="pulse-layout pulse-layout--feed">
-        <main className="pulse-timeline" style={{ background: "var(--paper, #f3ece0)" }}>
+        <main className="pulse-timeline" style={{ background: "#fff" }}>
           <div className="stoop-wrap" style={{ maxWidth: "none", padding: "0 0 40px" }}>
             {loggedIn ? (
               <StoopBrowser viewerCity={viewerCity} viewerCountry={viewerCountry} />
@@ -36,7 +36,7 @@ export default async function StoopPage() {
           </div>
         </main>
 
-        <aside className="pulse-sidebar-right" style={{ background: "var(--paper, #f3ece0)" }}>
+        <aside className="pulse-sidebar-right" style={{ background: "#fff" }}>
           <FeedRightSidebar />
         </aside>
       </div>
