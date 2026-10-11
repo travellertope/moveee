@@ -12,7 +12,6 @@ const SITE_URL = "https://themoveee.com";
 
 const NAV = [
   { href: "/feed",                 label: "Feed",            icon: "feed"      },
-  { href: "/discover",             label: "Explore Topics",  icon: "discover"  },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
   { href: "/member/notifications", label: "Notifications",   icon: "bell"      },
   { href: "/connect/stoop",         label: "Stoop IRL",       icon: "stoop"     },
