@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Flag } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
@@ -191,59 +192,6 @@ function RsvpDisplay({
   );
 }
 
-/** Duplicated from FeedCard.tsx — see the note there (docs/hubs-plan.md
- * §10.4) on why this always starts on "Join" rather than checking status. */
-function HubBadgeRow({ hubId }: { hubId: number }) {
-  const [joined, setJoined] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function join(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (loading || joined) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
-      const data = await res.json().catch(() => null);
-      // Trust the server's actual isMember, not just the HTTP status — a
-      // write that silently failed server-side (e.g. a DB error) can still
-      // come back as a 200 with isMember still false.
-      if (res.ok && data?.isMember) {
-        setJoined(true);
-      } else {
-        setError(data?.message || "Couldn't join — try again");
-      }
-    } catch {
-      setError("Couldn't join — try again");
-    }
-    setLoading(false);
-  }
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.75rem" }}>
-      <button
-        type="button"
-        onClick={join}
-        disabled={loading || joined}
-        title={error || undefined}
-        style={{
-          background: joined ? "transparent" : error ? "var(--error, #c62828)" : "var(--ink)",
-          color: joined ? "var(--mute)" : "#fff",
-          border: joined ? "1px solid var(--rule)" : "none",
-          borderRadius: "9999px",
-          padding: "4px 11px",
-          fontSize: "0.64rem",
-          fontWeight: 700,
-          cursor: joined ? "default" : "pointer",
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        {joined ? "Joined ✓" : error ? "Retry" : "Join"}
-      </button>
-    </div>
-  );
-}
 
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
   if (!sourceUrl) return text;
@@ -262,6 +210,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const closeLightbox = useCallback(() => setLightbox(null), []);
+  const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
+
+  async function submitReport(reason: "spam" | "harassment" | "inappropriate") {
+    if (!item.wpId) return;
+    try {
+      const res = await fetch("/api/community/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: item.wpId, reason }),
+      });
+      setReportState(res.ok ? "sent" : "error");
+    } catch {
+      setReportState("error");
+    }
+  }
 
   const close = useCallback(() => onClose(), [onClose]);
 
@@ -313,7 +276,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1.25rem",
+          padding: "0.5rem 1.25rem",
           borderBottom: "1px solid var(--rule)",
           position: "sticky", top: 0,
           background: "var(--paper-header)", zIndex: 1,
@@ -325,9 +288,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "999px",
             }}>Community</span>
-            {/* Hidden when a Hub badge will also render below (HubBadgeRow) —
-                Hub Phase 6 auto-links every Section to an official Hub, so
-                the two used to show the same label ("Literature") twice. */}
             {item.communityTag && !item.hubId && (
               <span style={{ fontSize: "0.62rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.communityTag}
@@ -397,6 +357,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                       href={tagSlug ? `/hub/${tagSlug}` : "/hub/discover"}
                       onClick={(e) => e.stopPropagation()}
                       style={{
+                        marginLeft: "auto",
                         fontSize: "0.6rem", fontWeight: 500,
                         padding: "2px 7px", borderRadius: "4px",
                         background: "rgba(168,162,158,0.15)", color: "var(--mute)",
@@ -409,6 +370,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   );
                 })()}
               </div>
+              {item.communityAuthorUsername && (
+                <div style={{ color: "var(--mute)", fontSize: "0.7rem", marginBottom: "1px" }}>
+                  @{item.communityAuthorUsername}
+                </div>
+              )}
               <span style={{ color: "var(--mute)", fontSize: "0.72rem" }}>
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </span>
@@ -419,10 +385,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               </div>
             )}
           </div>
-
-          {item.hubId && (
-            <HubBadgeRow hubId={item.hubId} />
-          )}
 
           {/* Template badge */}
           {item.templateType && item.templateType !== "post" && (
@@ -492,7 +454,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
             wordBreak: "break-word",
             overflowWrap: "break-word",
           }}>
-            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={onMentionClick} />
+            {(() => {
+              const fullText = stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined);
+              const nlIdx = fullText.indexOf("\n\n");
+              if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={onMentionClick} />;
+              const titlePart = fullText.slice(0, nlIdx).trim();
+              const bodyPart = fullText.slice(nlIdx + 2).trim();
+              return (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--ink)", marginBottom: "0.45rem", lineHeight: 1.4 }}>
+                    <HashtagText text={titlePart} onMentionClick={onMentionClick} />
+                  </div>
+                  {bodyPart && <HashtagText text={bodyPart} onMentionClick={onMentionClick} />}
+                </>
+              );
+            })()}
           </div>
 
           {/* Food review ratings */}
@@ -728,6 +704,35 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                 itemType="community"
                 initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
                 shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/community/${item.slug}`}
+                flagSlot={
+                  reportState === "idle" ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setReportState("confirm"); }}
+                      title="Report this post"
+                      style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "4px 2px", cursor: "pointer", color: "var(--mute)", lineHeight: 1 }}
+                    >
+                      <Flag size={13} strokeWidth={1.8} />
+                    </button>
+                  ) : reportState === "confirm" ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <span style={{ fontSize: "0.6rem", color: "var(--mute)", whiteSpace: "nowrap" }}>Report:</span>
+                      {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                        <button
+                          key={r}
+                          onClick={(e) => { e.stopPropagation(); submitReport(r); }}
+                          style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 5px", fontSize: "0.58rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                      <button onClick={(e) => { e.stopPropagation(); setReportState("idle"); }} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer", padding: "0 2px" }}>✕</button>
+                    </div>
+                  ) : reportState === "sent" ? (
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--mute)", whiteSpace: "nowrap" }}>Reported ✓</span>
+                  ) : (
+                    <span style={{ fontSize: "0.62rem", color: "var(--error)", whiteSpace: "nowrap" }}>Couldn't send.</span>
+                  )
+                }
               />
             </div>
           )}

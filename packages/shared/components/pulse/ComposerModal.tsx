@@ -156,7 +156,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [evTicketUrl, setEvTicketUrl] = useState("");
 
   // Shared
-  const [category, setCategory]     = useState("Music");
+  const [category, setCategory]     = useState("");
   const [imageUrl, setImageUrl]     = useState("");
   const [uploading, setUploading]   = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -761,6 +761,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               onChange={e => setCategory(e.target.value)}
               aria-label="Category"
             >
+              <option value="">— Select Space —</option>
               {CATEGORIES.map(c => (
                 <option key={c} value={c}>#{c}</option>
               ))}

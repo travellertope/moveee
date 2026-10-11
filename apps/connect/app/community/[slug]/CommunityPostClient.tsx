@@ -265,17 +265,29 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      {/* Post text */}
-      <p style={{
-        color: "#14110d",
-        fontFamily: "var(--font-inter), 'Inter', sans-serif",
-        fontSize: "1rem",
-        lineHeight: 1.75,
-        margin: "0 0 1.25rem",
-        whiteSpace: "pre-wrap",
-      }}>
-        <HashtagText text={text} onMentionClick={handleMentionClick} />
-      </p>
+      {/* Post text — first paragraph (before \n\n) is the title, rest is body */}
+      {(() => {
+        const nlIdx = text.indexOf("\n\n");
+        if (nlIdx === -1) return (
+          <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
+            <HashtagText text={text} onMentionClick={handleMentionClick} />
+          </p>
+        );
+        const titlePart = text.slice(0, nlIdx).trim();
+        const bodyPart = text.slice(nlIdx + 2).trim();
+        return (
+          <>
+            <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1.1rem", fontWeight: 700, lineHeight: 1.45, margin: "0 0 0.6rem" }}>
+              <HashtagText text={titlePart} onMentionClick={handleMentionClick} />
+            </p>
+            {bodyPart && (
+              <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
+                <HashtagText text={bodyPart} onMentionClick={handleMentionClick} />
+              </p>
+            )}
+          </>
+        );
+      })()}
 
       {/* Food ratings */}
       {templateType === "food-review" && foodRatingTaste && (

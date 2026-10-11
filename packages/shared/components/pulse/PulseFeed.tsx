@@ -214,6 +214,62 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTab, setComposerTab] = useState<ComposerTab>("update");
 
+  // ── Pull-to-refresh (custom — iOS standalone PWA has no native PTR) ──
+  const PTR_THRESHOLD = 70;
+  const ptrPhaseRef = useRef<"idle" | "pulling" | "refreshing">("idle");
+  const touchStartYRef = useRef(0);
+  const ptrYRef = useRef(0);
+  const [ptrY, setPtrY] = useState(0);
+  const [ptrRefreshing, setPtrRefreshing] = useState(false);
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY > 4) return;
+      touchStartYRef.current = e.touches[0].clientY;
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (ptrPhaseRef.current === "refreshing") return;
+      if (window.scrollY > 4) { touchStartYRef.current = 0; return; }
+      if (!touchStartYRef.current) return;
+      const delta = e.touches[0].clientY - touchStartYRef.current;
+      if (delta <= 0) { ptrYRef.current = 0; setPtrY(0); return; }
+      e.preventDefault();
+      const clamped = Math.min(delta * 0.45, PTR_THRESHOLD + 16);
+      ptrYRef.current = clamped;
+      setPtrY(clamped);
+      ptrPhaseRef.current = "pulling";
+    };
+    const handleTouchEnd = () => {
+      if (ptrPhaseRef.current !== "pulling") {
+        touchStartYRef.current = 0;
+        return;
+      }
+      const y = ptrYRef.current;
+      touchStartYRef.current = 0;
+      ptrYRef.current = 0;
+      setPtrY(0);
+      if (y >= PTR_THRESHOLD * 0.55) {
+        ptrPhaseRef.current = "refreshing";
+        setPtrRefreshing(true);
+        router.refresh();
+        setTimeout(() => {
+          ptrPhaseRef.current = "idle";
+          setPtrRefreshing(false);
+        }, 1600);
+      } else {
+        ptrPhaseRef.current = "idle";
+      }
+    };
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [router]);
+
   const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
 
   // Writers to follow — derive from feed items already in memory; no new API call needed.
@@ -322,6 +378,49 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
 
   return (
     <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+
+      {/* Pull-to-refresh indicator */}
+      {(ptrY > 0 || ptrRefreshing) && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0,
+          display: "flex", justifyContent: "center", alignItems: "flex-start",
+          paddingTop: `max(env(safe-area-inset-top, 0px), ${ptrRefreshing ? 12 : Math.min(ptrY * 0.6, 18)}px)`,
+          zIndex: 999,
+          pointerEvents: "none",
+          transition: ptrRefreshing ? "none" : "padding-top 0.05s linear",
+        }}>
+          <div style={{
+            width: "34px", height: "34px", borderRadius: "50%",
+            background: "var(--paper, #fff)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transform: ptrRefreshing ? "none" : `scale(${Math.min(ptrY / PTR_THRESHOLD, 1)})`,
+            opacity: ptrRefreshing ? 1 : Math.min(ptrY / (PTR_THRESHOLD * 0.5), 1),
+            transition: ptrRefreshing ? "none" : "transform 0.05s linear, opacity 0.05s linear",
+          }}>
+            <svg
+              width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="var(--ochre, #7a241c)" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                animation: ptrRefreshing ? "ptr-spin 0.7s linear infinite" : "none",
+                transform: ptrRefreshing ? "none" : `rotate(${Math.min(ptrY / PTR_THRESHOLD, 1) * 270}deg)`,
+              }}
+            >
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes ptr-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
+
       <div className="pulse-layout pulse-layout--feed">
 
         {/* ── Center Timeline ── */}
