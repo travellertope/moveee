@@ -109,7 +109,7 @@ export default function CommunityTab({ username }: Props) {
         <p className="prf-empty">No posts yet.</p>
       ) : (
         <>
-          <div className="prf-posts-grid">
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {posts.map(post => <PostRow key={post.id} post={post} />)}
           </div>
           {hasMore && (
@@ -131,36 +131,48 @@ function PostRow({ post }: { post: Post }) {
   return (
     <a
       href={`/community/${post.slug}`}
-      className="prf-post-row"
       style={{
         display: "flex",
         gap: "14px",
-        padding: "16px",
-        background: "var(--paper)",
+        padding: "1rem 1.1rem",
+        background: "var(--paper, #fff)",
+        borderRadius: "var(--radius-lg, 6px)",
+        border: "1px solid var(--rule, #e8e2d8)",
         textDecoration: "none",
         alignItems: "flex-start",
-        transition: "background .15s",
+        transition: "border-color .15s, box-shadow .15s",
       }}
-      onMouseEnter={e => (e.currentTarget.style.background = "rgba(42,36,28,.03)")}
-      onMouseLeave={e => (e.currentTarget.style.background = "var(--paper)")}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(42,36,28,.2)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(20,17,13,0.06)";
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--rule, #e8e2d8)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+      }}
     >
       {thumb ? (
-        <img src={thumb} alt="" style={{ width: "60px", height: "60px", objectFit: "cover", flexShrink: 0 }} />
+        <img src={thumb} alt="" style={{
+          width: "60px", height: "60px", objectFit: "cover", flexShrink: 0,
+          borderRadius: "var(--radius-md, 4px)",
+        }} />
       ) : (
         <div style={{
           width: "60px", height: "60px", flexShrink: 0,
           background: "rgba(42,36,28,.05)", display: "flex",
           alignItems: "center", justifyContent: "center", fontSize: "22px",
+          borderRadius: "var(--radius-md, 4px)",
         }}>{emoji}</div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "5px", flexWrap: "wrap" }}>
           {post.tag && (
             <span style={{
               fontFamily: "'JetBrains Mono', monospace", fontSize: "8px",
               letterSpacing: ".12em", textTransform: "uppercase",
-              color: "var(--ochre)", background: "rgba(179,130,56,.08)",
-              border: "1px solid rgba(179,130,56,.2)", padding: "2px 6px",
+              color: "var(--ochre)", background: "rgba(122,36,28,.07)",
+              border: "1px solid rgba(122,36,28,.15)", padding: "2px 6px",
+              borderRadius: "var(--radius-sm, 2px)",
             }}>{post.tag}</span>
           )}
           {post.location_name && (
@@ -168,9 +180,10 @@ function PostRow({ post }: { post: Post }) {
           )}
         </div>
         <p style={{
-          margin: "0 0 6px", fontSize: "14px", color: "var(--ink)",
+          margin: "0 0 6px", fontSize: "0.875rem", color: "var(--ink)",
           lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2,
           WebkitBoxOrient: "vertical", overflow: "hidden",
+          fontWeight: 500,
         }}>{post.food_dish_name ? `${post.food_dish_name} — ` : ""}{post.text}</p>
         <div style={{
           fontFamily: "'JetBrains Mono', monospace", fontSize: "9px",
@@ -179,8 +192,8 @@ function PostRow({ post }: { post: Post }) {
         }}>
           <span>{formatDate(post.date)}</span>
           {post.star_rating > 0 && <span>{"★".repeat(post.star_rating)}{"☆".repeat(5 - post.star_rating)}</span>}
-          {totalReactions > 0 && <span>{totalReactions} reactions</span>}
-          {post.comment_count > 0 && <span>{post.comment_count} comments</span>}
+          {totalReactions > 0 && <span>{totalReactions} reaction{totalReactions === 1 ? "" : "s"}</span>}
+          {post.comment_count > 0 && <span>{post.comment_count} comment{post.comment_count === 1 ? "" : "s"}</span>}
         </div>
       </div>
     </a>

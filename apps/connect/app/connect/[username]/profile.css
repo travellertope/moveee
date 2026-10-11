@@ -3,41 +3,10 @@
    prf = profile namespace
    ═══════════════════════════════════════════════════ */
 
-/* ── Header ── */
-.prf-page { background: var(--paper); min-height: 100vh; }
-
-.prf-header {
-  background: var(--paper);
-  border-bottom: 1px solid rgba(42,36,28,.1);
-}
-.prf-header-inner {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 48px 48px 0;
-}
-
-.prf-cover {
-  width: 100%;
-  height: 220px;
-  overflow: hidden;
-  background: rgba(42,36,28,.06);
-}
-.prf-cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.prf-identity {
-  display: flex;
-  gap: 28px;
-  align-items: flex-start;
-}
-
-.prf-avatar {
-  width: 72px;
-  height: 72px;
+/* ── New card-based avatar ── */
+.prf-avatar-new {
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   background: var(--ink);
   color: var(--paper);
@@ -45,21 +14,26 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-fraunces), serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 300;
   flex-shrink: 0;
   overflow: hidden;
+  border: 4px solid #fff;
+  box-shadow: 0 2px 8px rgba(20,17,13,0.12);
 }
-.prf-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.prf-avatar--patron {
-  background: var(--ochre);
-  box-shadow: 0 0 0 3px var(--ochre), 0 0 20px 5px rgba(179,130,56,.65);
+.prf-avatar-new img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.prf-avatar-new--patron {
+  border-color: var(--ochre);
+  box-shadow: 0 0 0 3px var(--ochre), 0 0 20px 5px rgba(179,130,56,.45);
   animation: prf-pro-glow 2.6s ease-in-out infinite;
 }
 @keyframes prf-pro-glow {
-  0%, 100% { box-shadow: 0 0 0 3px var(--ochre), 0 0 20px 5px rgba(179,130,56,.65); }
-  50% { box-shadow: 0 0 0 3px var(--ochre), 0 0 28px 8px rgba(179,130,56,.35); }
+  0%, 100% { box-shadow: 0 0 0 3px var(--ochre), 0 0 20px 5px rgba(179,130,56,.45); }
+  50%       { box-shadow: 0 0 0 3px var(--ochre), 0 0 28px 8px rgba(179,130,56,.2); }
 }
+
+/* ── Legacy header (kept for any remnants) ── */
+.prf-page { background: var(--paper); min-height: 100vh; }
 
 .prf-pro-check { flex-shrink: 0; }
 

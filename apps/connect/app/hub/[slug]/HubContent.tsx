@@ -70,7 +70,7 @@ export default function HubContent({
           Discussions &amp; Posts
         </button>
         <button style={tabStyle(tab === "members")} onClick={() => switchTab("members")}>
-          Members
+          Followers
         </button>
       </div>
 
@@ -92,7 +92,7 @@ export default function HubContent({
           {membersLoading ? (
             <p style={{ color: "#7a6f5c", fontSize: "0.85rem", margin: 0 }}>Loading…</p>
           ) : members.length === 0 ? (
-            <p style={{ color: "#7a6f5c", fontSize: "0.85rem", margin: 0 }}>No members yet.</p>
+            <p style={{ color: "#7a6f5c", fontSize: "0.85rem", margin: 0 }}>No followers yet.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
               {members.map((m) => (

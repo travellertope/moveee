@@ -260,7 +260,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                       <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM0 14s-1 0-1-1 1-4 9-4 9 3 9 4-1 1-1 1H0Z"/>
                     </svg>
                     <strong style={{ color: "#14110d" }}>{hub.memberCount.toLocaleString()}</strong>
-                    {" "}member{hub.memberCount === 1 ? "" : "s"}
+                    {" "}follower{hub.memberCount === 1 ? "" : "s"}
                   </span>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

@@ -7,6 +7,7 @@ import FollowButton from "./FollowButton";
 import BadgeShelf from "./BadgeShelf";
 import ProBadge from "@/components/ProBadge";
 import "./profile.css";
+import "@/app/pulse-layout.css";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
@@ -53,7 +54,7 @@ const REP_TIER_LABELS: Record<string, string> = {
 };
 
 function formatJoined(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 }
 
 export async function generateMetadata(
@@ -101,73 +102,232 @@ export default async function PublicProfilePage(
   const profileUrl = `${SITE_URL}/connect/${profile.username}`;
 
   return (
-    <div className="prf-page">
-      <div className="prf-header">
-        {profile.cover_photo_url ? (
-          <div className="prf-cover">
-            <img src={profile.cover_photo_url} alt="" className="prf-cover-img" />
-          </div>
-        ) : null}
-        <div className="prf-header-inner">
-          <div className="prf-identity">
-            <div className={`prf-avatar${isPatron ? " prf-avatar--patron" : ""}`}>
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.display_name} />
-              ) : initial}
-            </div>
+    <div>
+      <div className="pulse-layout pulse-layout--feed">
 
-            <div className="prf-identity-body">
-              <h1 className="prf-name">
-                {profile.display_name}
-                {isPatron && <ProBadge size={20} />}
-              </h1>
+        <main className="pulse-timeline">
+          <div className="pulse-timeline-inner">
 
-              <p className="prf-handle-line">
-                <span>@{profile.username}</span>
-                {locationParts.length > 0 && (
-                  <>
-                    <span className="prf-handle-sep">·</span>
-                    <span>{locationParts.join(", ")}</span>
-                  </>
-                )}
-                {profile.occupation && (
-                  <>
-                    <span className="prf-handle-sep">·</span>
-                    <span>{profile.occupation}</span>
-                  </>
-                )}
-              </p>
+            {/* Hero card */}
+            <article style={{
+              background: "#fff",
+              borderRadius: "var(--radius-xl, 12px)",
+              border: "1px solid var(--rule, #e8e2d8)",
+              overflow: "hidden",
+              boxShadow: "0 1px 4px rgba(20,17,13,0.06)",
+              margin: "1rem 1.25rem 0",
+            }}>
+              {/* Cover photo */}
+              {profile.cover_photo_url ? (
+                <div style={{ position: "relative", height: "200px", background: "#1a1612", overflow: "hidden" }}>
+                  <img
+                    src={profile.cover_photo_url}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.9, display: "block" }}
+                  />
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to top, rgba(20,17,13,0.5) 0%, transparent 55%)",
+                  }} />
+                </div>
+              ) : (
+                <div style={{ height: "100px", background: "var(--ochre, #7a241c)", opacity: 0.85 }} />
+              )}
 
-              <div className="prf-badges">
+              {/* Info section */}
+              <div style={{ padding: "0 1.5rem 1.5rem" }}>
+                {/* Avatar + actions row */}
+                <div style={{
+                  display: "flex", alignItems: "flex-end",
+                  justifyContent: "space-between", flexWrap: "wrap",
+                  marginTop: "-44px", marginBottom: "1rem", gap: "0.75rem",
+                }}>
+                  {/* Avatar */}
+                  <div className={`prf-avatar-new${isPatron ? " prf-avatar-new--patron" : ""}`}>
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} alt={profile.display_name} />
+                    ) : initial}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", paddingBottom: "2px" }}>
+                    <FollowButton
+                      username={profile.username}
+                      initialFollowersCount={profile.followers_count}
+                    />
+                    <ShareButton url={profileUrl} name={profile.display_name} />
+                  </div>
+                </div>
+
+                {/* Name + tier */}
+                <div style={{ marginBottom: "0.35rem" }}>
+                  <h1 style={{
+                    display: "flex", alignItems: "center", gap: "0.4rem",
+                    fontSize: "clamp(1.25rem, 3vw, 1.75rem)",
+                    fontFamily: "var(--font-fraunces), serif",
+                    fontWeight: 300, letterSpacing: "-0.02em",
+                    color: "#14110d", margin: 0, lineHeight: 1.15,
+                  }}>
+                    {profile.display_name}
+                    {isPatron && <ProBadge size={18} />}
+                  </h1>
+                </div>
+
+                {/* Handle · location · occupation */}
+                <p style={{
+                  fontSize: "0.72rem", letterSpacing: "0.06em",
+                  color: "var(--mute, #7a6f5c)", margin: "0 0 0.85rem",
+                  display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center",
+                }}>
+                  <span style={{ color: "var(--ochre, #7a241c)", fontWeight: 600 }}>@{profile.username}</span>
+                  {locationParts.length > 0 && (
+                    <><span style={{ opacity: 0.4 }}>·</span><span>{locationParts.join(", ")}</span></>
+                  )}
+                  {profile.occupation && (
+                    <><span style={{ opacity: 0.4 }}>·</span><span>{profile.occupation}</span></>
+                  )}
+                </p>
+
+                {/* Reputation tier pill */}
                 {profile.reputation_tier !== "member" && (
-                  <span className="prf-rep-badge">{repLabel}</span>
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <span style={{
+                      display: "inline-block",
+                      background: "var(--ink, #14110d)", color: "var(--paper, #fff)",
+                      fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em",
+                      textTransform: "uppercase", padding: "0.2rem 0.6rem",
+                      borderRadius: "var(--radius-full, 9999px)",
+                    }}>
+                      {repLabel}
+                    </span>
+                  </div>
                 )}
+
+                {/* Badge shelf */}
+                <BadgeShelf badges={profile.badges} />
+
+                {/* Bio */}
+                {profile.bio && (
+                  <p style={{
+                    fontFamily: "var(--font-fraunces), serif",
+                    fontSize: "0.875rem", fontStyle: "italic",
+                    color: "var(--ink-soft, #3a342b)", lineHeight: 1.6,
+                    margin: "0 0 1rem",
+                    background: "rgba(42,36,28,0.03)",
+                    border: "1px solid var(--rule, #e8e2d8)",
+                    borderRadius: "var(--radius-lg, 6px)",
+                    padding: "0.65rem 0.85rem",
+                  }}>
+                    {profile.bio}
+                  </p>
+                )}
+
+                {/* Stats row */}
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: "0.5rem",
+                  paddingTop: "1rem",
+                  borderTop: "1px solid var(--rule, #e8e2d8)",
+                }}>
+                  {[
+                    { label: "Points", value: profile.reputation.toLocaleString() },
+                    { label: "Posts", value: profile.post_count.toString() },
+                    { label: "Followers", value: profile.followers_count.toString() },
+                    { label: "Joined", value: formatJoined(profile.joined) },
+                  ].map(stat => (
+                    <div key={stat.label} style={{
+                      background: "rgba(42,36,28,0.03)",
+                      borderRadius: "var(--radius-lg, 6px)",
+                      border: "1px solid var(--rule, #e8e2d8)",
+                      padding: "0.65rem 0.5rem",
+                      textAlign: "center",
+                    }}>
+                      <p style={{
+                        margin: "0 0 0.2rem",
+                        fontSize: "0.55rem", fontWeight: 700,
+                        letterSpacing: "0.12em", textTransform: "uppercase",
+                        color: "var(--mute, #7a6f5c)",
+                      }}>
+                        {stat.label}
+                      </p>
+                      <p style={{
+                        margin: 0, fontSize: "1rem", fontWeight: 800,
+                        color: "#14110d", lineHeight: 1.1,
+                      }}>
+                        {stat.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
+            </article>
 
-              <BadgeShelf badges={profile.badges} />
+            {/* Tabbed content */}
+            <div style={{ margin: "0 1.25rem" }}>
+              <ProfileTabs profile={{
+                id: profile.id,
+                username: profile.username,
+                reputation: profile.reputation,
+                reputation_tier: profile.reputation_tier,
+              }} />
+            </div>
 
-              {profile.bio && <p className="prf-bio">{profile.bio}</p>}
+          </div>
+        </main>
 
-              <div className="prf-stats">
-                <span className="prf-stat"><strong>{profile.reputation.toLocaleString()}</strong> pts</span>
-                <span className="prf-stat"><strong>{profile.post_count}</strong> posts</span>
-                <span className="prf-stat">Joined <strong>{formatJoined(profile.joined)}</strong></span>
-              </div>
-
-              <div className="prf-actions">
-                <FollowButton username={profile.username} initialFollowersCount={profile.followers_count} />
-                <ShareButton url={profileUrl} name={profile.display_name} />
+        {/* Right rail */}
+        <aside className="pulse-sidebar-right">
+          <div style={{ padding: "1.25rem 1rem" }}>
+            <div style={{
+              background: "var(--paper, #fff)",
+              border: "1px solid var(--rule, #e8e2d8)",
+              borderRadius: "var(--radius-xl, 12px)",
+              padding: "1rem 1.25rem",
+              marginBottom: "1rem",
+            }}>
+              <p style={{
+                color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
+                letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 0.65rem",
+              }}>
+                Profile
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
+                  <span style={{ color: "#7a6f5c" }}>Reputation</span>
+                  <strong style={{ color: "#14110d" }}>{profile.reputation.toLocaleString()} pts</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
+                  <span style={{ color: "#7a6f5c" }}>Posts</span>
+                  <strong style={{ color: "#14110d" }}>{profile.post_count}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
+                  <span style={{ color: "#7a6f5c" }}>Followers</span>
+                  <strong style={{ color: "#14110d" }}>{profile.followers_count}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
+                  <span style={{ color: "#7a6f5c" }}>Tier</span>
+                  <strong style={{ color: "#14110d" }}>{repLabel}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
+                  <span style={{ color: "#7a6f5c" }}>Joined</span>
+                  <strong style={{ color: "#14110d" }}>{formatJoined(profile.joined)}</strong>
+                </div>
               </div>
             </div>
-          </div>
 
-          <ProfileTabs profile={{
-            id: profile.id,
-            username: profile.username,
-            reputation: profile.reputation,
-            reputation_tier: profile.reputation_tier,
-          }} />
-        </div>
+            <p style={{ margin: "1rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
+              © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+              <br />
+              <Link href="/terms" style={{ color: "#7a6f5c" }}>Terms</Link>
+              {" · "}
+              <Link href="/privacy" style={{ color: "#7a6f5c" }}>Privacy</Link>
+              {" · "}
+              <Link href="/contact" style={{ color: "#7a6f5c" }}>Contact</Link>
+            </p>
+          </div>
+        </aside>
+
       </div>
     </div>
   );
