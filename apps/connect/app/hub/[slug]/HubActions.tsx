@@ -22,16 +22,16 @@ export default function HubActions({
   const [error, setError] = useState("");
 
   const primaryBtnStyle: CSSProperties = {
-    display: "inline-block", background: "#c93c2a", color: "#fff",
-    padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
-    letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none",
-    border: "none", cursor: "pointer",
+    display: "inline-flex", alignItems: "center", gap: "0.35rem",
+    background: "var(--ochre, #7a241c)", color: "#fff",
+    padding: "0.5rem 1.25rem", fontSize: "0.8rem", fontWeight: 600,
+    borderRadius: "var(--radius-full, 9999px)", border: "none", cursor: "pointer",
   };
   const ghostBtnStyle: CSSProperties = {
-    display: "inline-block", background: "#fff", color: "#3a342b",
-    padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
-    letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none",
-    border: "1px solid #e8e2d8", cursor: "pointer",
+    display: "inline-flex", alignItems: "center",
+    background: "var(--paper, #fff)", color: "var(--ink-soft, #3a342b)",
+    padding: "0.5rem 1.25rem", fontSize: "0.8rem", fontWeight: 600,
+    borderRadius: "var(--radius-full, 9999px)", border: "1px solid var(--rule, #e8e2d8)", cursor: "pointer",
   };
 
   if (!loggedIn) {
@@ -139,9 +139,10 @@ export default function HubActions({
               onClick={leave}
               disabled={busy}
               style={{
-                background: "none", border: "1px solid #e8e2d8", cursor: "pointer",
-                padding: "0.5rem 1rem", fontSize: "0.75rem", fontWeight: 700,
-                letterSpacing: "0.06em", textTransform: "uppercase", color: "#c0392b",
+                display: "inline-flex", alignItems: "center",
+                background: "none", border: "1px solid var(--rule, #e8e2d8)", cursor: "pointer",
+                padding: "0.5rem 1.25rem", fontSize: "0.8rem", fontWeight: 600,
+                borderRadius: "var(--radius-full, 9999px)", color: "#c0392b",
               }}
             >
               {busy ? "Leaving…" : "Leave Hub"}
@@ -149,7 +150,14 @@ export default function HubActions({
           )
         ) : (
           <button type="button" onClick={join} disabled={busy} style={primaryBtnStyle}>
-            {busy ? "Joining…" : "Join →"}
+            {busy ? "Joining…" : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14 14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1ZM14 6h-1V5a1 1 0 0 0-2 0v1h-1a1 1 0 0 0 0 2h1v1a1 1 0 0 0 2 0V8h1a1 1 0 0 0 0-2Z"/>
+                </svg>
+                Join Hub
+              </>
+            )}
           </button>
         )}
         {isMember && (
