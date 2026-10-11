@@ -192,59 +192,6 @@ function RsvpDisplay({
   );
 }
 
-/** Duplicated from FeedCard.tsx — see the note there (docs/hubs-plan.md
- * §10.4) on why this always starts on "Join" rather than checking status. */
-function HubBadgeRow({ hubId }: { hubId: number }) {
-  const [joined, setJoined] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function join(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (loading || joined) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/hub/${hubId}/join`, { method: "POST" });
-      const data = await res.json().catch(() => null);
-      // Trust the server's actual isMember, not just the HTTP status — a
-      // write that silently failed server-side (e.g. a DB error) can still
-      // come back as a 200 with isMember still false.
-      if (res.ok && data?.isMember) {
-        setJoined(true);
-      } else {
-        setError(data?.message || "Couldn't join — try again");
-      }
-    } catch {
-      setError("Couldn't join — try again");
-    }
-    setLoading(false);
-  }
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.75rem" }}>
-      <button
-        type="button"
-        onClick={join}
-        disabled={loading || joined}
-        title={error || undefined}
-        style={{
-          background: joined ? "transparent" : error ? "var(--error, #c62828)" : "var(--ink)",
-          color: joined ? "var(--mute)" : "#fff",
-          border: joined ? "1px solid var(--rule)" : "none",
-          borderRadius: "9999px",
-          padding: "4px 11px",
-          fontSize: "0.64rem",
-          fontWeight: 700,
-          cursor: joined ? "default" : "pointer",
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        {joined ? "Joined ✓" : error ? "Retry" : "Join"}
-      </button>
-    </div>
-  );
-}
 
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
   if (!sourceUrl) return text;
@@ -341,9 +288,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               letterSpacing: "0.1em", textTransform: "uppercase",
               padding: "0.18rem 0.45rem", borderRadius: "999px",
             }}>Community</span>
-            {/* Hidden when a Hub badge will also render below (HubBadgeRow) —
-                Hub Phase 6 auto-links every Section to an official Hub, so
-                the two used to show the same label ("Literature") twice. */}
             {item.communityTag && !item.hubId && (
               <span style={{ fontSize: "0.62rem", color: "var(--mute)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 {item.communityTag}
@@ -413,6 +357,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                       href={tagSlug ? `/hub/${tagSlug}` : "/hub/discover"}
                       onClick={(e) => e.stopPropagation()}
                       style={{
+                        marginLeft: "auto",
                         fontSize: "0.6rem", fontWeight: 500,
                         padding: "2px 7px", borderRadius: "4px",
                         background: "rgba(168,162,158,0.15)", color: "var(--mute)",
@@ -435,10 +380,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
               </div>
             )}
           </div>
-
-          {item.hubId && (
-            <HubBadgeRow hubId={item.hubId} />
-          )}
 
           {/* Template badge */}
           {item.templateType && item.templateType !== "post" && (
