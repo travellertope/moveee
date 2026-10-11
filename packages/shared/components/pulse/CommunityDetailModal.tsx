@@ -276,7 +276,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1.25rem",
+          padding: "0.5rem 1.25rem",
           borderBottom: "1px solid var(--rule)",
           position: "sticky", top: 0,
           background: "var(--paper-header)", zIndex: 1,
@@ -370,6 +370,11 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   );
                 })()}
               </div>
+              {item.communityAuthorUsername && (
+                <div style={{ color: "var(--mute)", fontSize: "0.7rem", marginBottom: "1px" }}>
+                  @{item.communityAuthorUsername}
+                </div>
+              )}
               <span style={{ color: "var(--mute)", fontSize: "0.72rem" }}>
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </span>
@@ -449,7 +454,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
             wordBreak: "break-word",
             overflowWrap: "break-word",
           }}>
-            <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={onMentionClick} />
+            {(() => {
+              const fullText = stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined);
+              const nlIdx = fullText.indexOf("\n\n");
+              if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={onMentionClick} />;
+              const titlePart = fullText.slice(0, nlIdx).trim();
+              const bodyPart = fullText.slice(nlIdx + 2).trim();
+              return (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--ink)", marginBottom: "0.45rem", lineHeight: 1.4 }}>
+                    <HashtagText text={titlePart} onMentionClick={onMentionClick} />
+                  </div>
+                  {bodyPart && <HashtagText text={bodyPart} onMentionClick={onMentionClick} />}
+                </>
+              );
+            })()}
           </div>
 
           {/* Food review ratings */}

@@ -79,6 +79,7 @@ export default async function CommunityPostPage({
 
   const rawText  = post.content.rendered.replace(/<[^>]+>/g, "").trim();
   const author   = post.meta.community_author_name ?? "Community Member";
+  const authorUsername = (post.meta.community_author_username as string | undefined) ?? "";
   const tag      = post.meta.community_tag ?? "";
   const image    = post.meta.community_image_url ?? null;
   const initials = author.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
@@ -178,6 +179,9 @@ export default async function CommunityPostPage({
                 <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.65rem", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                     <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 700 }}>{author}</span>
+                    {authorUsername && (
+                      <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>@{authorUsername}</span>
+                    )}
                     <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>{formatDate(post.date)}</span>
                   </div>
                   {tag && (

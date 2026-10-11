@@ -578,19 +578,26 @@ export default function FeedCard({
             {/* Header: author info LEFT, type + hub badges RIGHT */}
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem" }}>
               {/* Left: name + pro + timestamp */}
-              <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", minWidth: 0 }}>
-                {item.communityAuthorUsername ? (
-                  <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
-                    {item.communityAuthor || "Community Member"}
-                  </Link>
-                ) : (
-                  <span style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700 }}>
-                    {item.communityAuthor || "Community Member"}
-                  </span>
-                )}
-                {isPro && <ProBadge size={13} />}
-                <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace" }}>·</span>
-                <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace" }}>{formatDate(item.date)}</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1px", minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" }}>
+                  {item.communityAuthorUsername ? (
+                    <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700, textDecoration: "none" }} onClick={e => e.stopPropagation()}>
+                      {item.communityAuthor || "Community Member"}
+                    </Link>
+                  ) : (
+                    <span style={{ color: "var(--ink)", fontSize: "0.9rem", fontWeight: 700 }}>
+                      {item.communityAuthor || "Community Member"}
+                    </span>
+                  )}
+                  {isPro && <ProBadge size={13} />}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  {item.communityAuthorUsername && (
+                    <span style={{ color: "var(--mute)", fontSize: "0.68rem" }}>@{item.communityAuthorUsername}</span>
+                  )}
+                  <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace" }}>·</span>
+                  <span style={{ color: "var(--mute)", fontSize: "0.7rem", fontFamily: "var(--font-mono), monospace" }}>{formatDate(item.date)}</span>
+                </div>
               </div>
               {/* Right: type badge + hub/section badge */}
               <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", flexShrink: 0 }}>
@@ -663,7 +670,21 @@ export default function FeedCard({
                 lineHeight: 1.6,
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
               }}>
-                <HashtagText text={stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined)} onMentionClick={handleMentionClick} clamp={6} />
+                {(() => {
+                  const fullText = stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined);
+                  const nlIdx = fullText.indexOf("\n\n");
+                  if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
+                  const titlePart = fullText.slice(0, nlIdx).trim();
+                  const bodyPart = fullText.slice(nlIdx + 2).trim();
+                  return (
+                    <>
+                      <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>
+                        <HashtagText text={titlePart} onMentionClick={handleMentionClick} />
+                      </div>
+                      {bodyPart && <HashtagText text={bodyPart} onMentionClick={handleMentionClick} clamp={4} />}
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
