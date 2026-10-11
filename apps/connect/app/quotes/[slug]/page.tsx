@@ -80,7 +80,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
   };
 
   return (
-    <div style={{ background: '#ffffff' }}>
+    <div style={{ background: 'var(--paper)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="pulse-layout pulse-layout--feed">
@@ -191,7 +191,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
         <aside className="pulse-sidebar-right">
           <div style={{ padding: '1.25rem 1rem' }}>
             <div style={{
-              background: '#fff', border: '1px solid rgba(20,17,13,0.09)',
+              background: 'var(--paper-deep)', border: '1px solid rgba(20,17,13,0.09)',
               borderRadius: '12px', padding: '0.85rem',
               boxShadow: '0 1px 3px rgba(20,17,13,0.05)',
             }}>
