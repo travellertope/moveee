@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Heart, Bookmark, Share2 } from "lucide-react";
 
@@ -27,6 +27,9 @@ interface ReactionBarProps {
   initialCounts: { love: number; fire?: number; clap?: number };
   shareUrl?:     string;
   noBorder?:     boolean;
+  onComment?:    () => void;
+  commentCount?: number;
+  flagSlot?:     React.ReactNode;
 }
 
 export default function ReactionBar({
@@ -35,6 +38,9 @@ export default function ReactionBar({
   initialCounts,
   shareUrl,
   noBorder,
+  onComment,
+  commentCount,
+  flagSlot,
 }: ReactionBarProps) {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
@@ -179,13 +185,14 @@ export default function ReactionBar({
       alignItems: "center",
       ...(noBorder ? {} : { paddingTop: "0.75rem", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: "0.25rem" }),
     }}>
-      {/* Floating pill */}
+      {/* Action pill */}
       <div style={{
-        display: "inline-flex",
+        display: "flex",
         alignItems: "center",
+        width: "100%",
         background: "#fff",
         border: "1.5px solid var(--rule, #e0d8ce)",
-        borderRadius: "999px",
+        borderRadius: "10px",
         boxShadow: "0 2px 14px rgba(20,17,13,0.10), 0 1px 4px rgba(20,17,13,0.06)",
         overflow: "hidden",
       }}>
@@ -280,6 +287,43 @@ export default function ReactionBar({
             <Share2 size={16} strokeWidth={2.5} color="currentColor" />
           )}
         </button>
+
+        {/* Comment button — optional */}
+        {onComment !== undefined && (
+          <>
+            <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+            <button
+              onClick={(e) => { e.stopPropagation(); onComment(); }}
+              aria-label="View comments"
+              style={{
+                display: "flex", alignItems: "center", gap: "5px",
+                padding: "8px 14px",
+                background: "transparent", border: "none", cursor: "pointer",
+                color: "var(--ink-soft, #5a5248)", transition: "color 0.15s",
+                fontSize: "0.72rem", fontWeight: 600, lineHeight: 1,
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ochre, #7a241c)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ink-soft, #5a5248)"; }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              {(commentCount ?? 0) > 0 && (
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>{commentCount}</span>
+              )}
+            </button>
+          </>
+        )}
+
+        {/* Flag slot — optional, renders whatever the parent passes */}
+        {flagSlot !== undefined && (
+          <>
+            <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+            <div style={{ display: "flex", alignItems: "center", padding: "0 6px" }}>
+              {flagSlot}
+            </div>
+          </>
+        )}
 
       </div>
     </div>

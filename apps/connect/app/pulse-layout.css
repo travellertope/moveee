@@ -550,16 +550,17 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: none;
+  background: rgba(122,36,28,0.08);
   border: none;
   border-radius: var(--radius-full);
   color: var(--ochre, #7a241c);
   cursor: pointer;
-  transition: background 0.12s, transform 0.12s;
+  transition: background 0.12s, color 0.12s, transform 0.12s;
   padding: 0;
 }
 .composer-box-review-btn:hover {
-  background: rgba(122,36,28,0.08);
+  background: var(--ochre, #7a241c);
+  color: #fff;
   transform: scale(1.1);
 }
 
