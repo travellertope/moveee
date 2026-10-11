@@ -95,7 +95,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
   const hub = await fetchHub(slug);
   if (!hub) {
     return (
-      <div style={{ background: "#ffffff" }}>
+      <div>
         <div className="pulse-layout pulse-layout--feed">
           <main className="pulse-timeline">
             <div className="pulse-timeline-inner" style={{ padding: "2rem 1.25rem" }}>
@@ -119,7 +119,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
   const relatedEvents = await fetchRelatedEvents(hub.id);
 
   return (
-    <div style={{ background: "#ffffff" }}>
+    <div>
       {/* Same 2-column track as /feed and /community/[slug] (.pulse-layout--feed:
           timeline + right rail) — a Hub is an extension of the feed, not its
           own distinct section with different chrome. */}

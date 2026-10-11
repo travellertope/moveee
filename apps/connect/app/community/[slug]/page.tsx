@@ -134,7 +134,7 @@ export default async function CommunityPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div style={{ background: "#ffffff" }}>
+      <div>
         {/* Same 2-column track as /feed (.pulse-layout--feed: timeline +
             right rail, no separate content-type sidebar) — this page is an
             extension of the feed, not a distinct section with its own nav. */}

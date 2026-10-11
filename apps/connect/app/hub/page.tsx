@@ -58,7 +58,7 @@ export default async function HubBrowsePage() {
   ]);
 
   return (
-    <div style={{ background: "#ffffff" }}>
+    <div>
       {/* Same 2-column track as /feed (.pulse-layout--feed: timeline +
           right rail) — Hubs are an extension of the feed, not their own
           distinct section with different chrome. */}
