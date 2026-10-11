@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Alert, Image, FlatList,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNav } from "../../hooks/useNav";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -316,6 +317,7 @@ export default function NewPostScreen() {
   const route = useRoute<any>();
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
+  const tabBarHeight = useBottomTabBarHeight();
   const tabletCap = useTabletContentStyle(680);
   const { user } = useAuthStore();
   const userRegion = useMemo(() => detectRegion(user?.countryOfResidence) ?? undefined, [user?.countryOfResidence]);
@@ -2295,7 +2297,7 @@ const uploadImages = async (): Promise<string[]> => {
         </ScrollView>
 
         {/* ── Bottom toolbar ── */}
-        <View style={styles.toolbar}>
+        <View style={[styles.toolbar, { paddingBottom: tabBarHeight || space[2] }]}>
           <View style={styles.toolbarLeft}>
             {toolbarIcons}
           </View>
