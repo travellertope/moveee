@@ -203,8 +203,8 @@ export default function ReactionBar({
           title={loveActive ? "Unlike" : "Love this"}
           aria-label={`Love: ${loveCount}`}
           style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "8px 16px",
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+            padding: "8px 4px",
             background: "transparent", border: "none", cursor: "pointer",
             color: loveActive ? "#E53E3E" : "var(--ink-soft, #5a5248)",
             transition: "all 0.15s",
@@ -241,8 +241,8 @@ export default function ReactionBar({
           title={bookmarked ? "Remove bookmark" : "Save for later"}
           aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
           style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "8px 14px",
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "8px 4px",
             background: "transparent", border: "none", cursor: "pointer",
             color: bookmarked ? "var(--gold, #b38238)" : "var(--ink-soft, #5a5248)",
             transition: "all 0.15s",
@@ -269,8 +269,8 @@ export default function ReactionBar({
           title={copied ? "Copied!" : "Share"}
           aria-label="Share"
           style={{
-            display: "flex", alignItems: "center", gap: "5px",
-            padding: "8px 14px",
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+            padding: "8px 4px",
             background: "transparent", border: "none", cursor: "pointer",
             color: copied ? "#2e7d32" : "var(--ink-soft, #5a5248)",
             transition: "all 0.15s",
@@ -296,8 +296,8 @@ export default function ReactionBar({
               onClick={(e) => { e.stopPropagation(); onComment(); }}
               aria-label="View comments"
               style={{
-                display: "flex", alignItems: "center", gap: "5px",
-                padding: "8px 14px",
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                padding: "8px 4px",
                 background: "transparent", border: "none", cursor: "pointer",
                 color: "var(--ink-soft, #5a5248)", transition: "color 0.15s",
                 fontSize: "0.72rem", fontWeight: 600, lineHeight: 1,
@@ -319,7 +319,7 @@ export default function ReactionBar({
         {flagSlot !== undefined && (
           <>
             <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
-            <div style={{ display: "flex", alignItems: "center", padding: "0 6px" }}>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
               {flagSlot}
             </div>
           </>

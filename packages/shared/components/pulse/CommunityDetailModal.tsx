@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Flag } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
@@ -262,6 +263,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const closeLightbox = useCallback(() => setLightbox(null), []);
+  const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
+
+  async function submitReport(reason: "spam" | "harassment" | "inappropriate") {
+    if (!item.wpId) return;
+    try {
+      const res = await fetch("/api/community/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: item.wpId, reason }),
+      });
+      setReportState(res.ok ? "sent" : "error");
+    } catch {
+      setReportState("error");
+    }
+  }
 
   const close = useCallback(() => onClose(), [onClose]);
 
@@ -728,6 +744,35 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                 itemType="community"
                 initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
                 shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/community/${item.slug}`}
+                flagSlot={
+                  reportState === "idle" ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setReportState("confirm"); }}
+                      title="Report this post"
+                      style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "4px 2px", cursor: "pointer", color: "var(--mute)", lineHeight: 1 }}
+                    >
+                      <Flag size={13} strokeWidth={1.8} />
+                    </button>
+                  ) : reportState === "confirm" ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <span style={{ fontSize: "0.6rem", color: "var(--mute)", whiteSpace: "nowrap" }}>Report:</span>
+                      {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                        <button
+                          key={r}
+                          onClick={(e) => { e.stopPropagation(); submitReport(r); }}
+                          style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 5px", fontSize: "0.58rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                      <button onClick={(e) => { e.stopPropagation(); setReportState("idle"); }} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer", padding: "0 2px" }}>✕</button>
+                    </div>
+                  ) : reportState === "sent" ? (
+                    <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--mute)", whiteSpace: "nowrap" }}>Reported ✓</span>
+                  ) : (
+                    <span style={{ fontSize: "0.62rem", color: "var(--error)", whiteSpace: "nowrap" }}>Couldn't send.</span>
+                  )
+                }
               />
             </div>
           )}
