@@ -1334,6 +1334,21 @@ class Culture_Mobile_API {
             'callback'            => array( __CLASS__, 'handle_the_edit' ),
             'permission_callback' => '__return_true',
         ) );
+
+        // OG / link preview — scrapes og:title, og:description, og:image from any URL.
+        // Called by the mobile composer when the user pastes a link.
+        register_rest_route( 'culture/v1', '/mobile/community/og-preview', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_og_preview' ),
+            'permission_callback' => array( __CLASS__, 'mobile_permission' ),
+            'args'                => array(
+                'url' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ),
+            ),
+        ) );
     }
 
     // -------------------------------------------------------------------------
@@ -1701,6 +1716,81 @@ class Culture_Mobile_API {
         return $url;
     }
 
+    /**
+     * GET /culture/v1/mobile/community/og-preview?url=...
+     *
+     * Scrapes og:title, og:description, og:image from the given URL so the
+     * mobile composer can show a link-preview card before submitting.
+     * Blocks private-network addresses (SSRF protection mirrors og-scraper.ts).
+     */
+    public static function handle_og_preview( $request ) {
+        $url = $request->get_param( 'url' );
+        if ( ! $url || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+            return new WP_Error( 'invalid_url', 'A valid URL is required.', array( 'status' => 400 ) );
+        }
+
+        // SSRF guard — block private/loopback IP ranges.
+        $host = wp_parse_url( $url, PHP_URL_HOST );
+        if ( $host ) {
+            $ip = @gethostbyname( $host );
+            if ( $ip && filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+                foreach ( array( '10.', '172.', '192.168.', '127.', '169.254.' ) as $prefix ) {
+                    if ( 0 === strpos( $ip, $prefix ) ) {
+                        return rest_ensure_response( array( 'title' => '', 'description' => '', 'image' => '' ) );
+                    }
+                }
+            }
+        }
+
+        // YouTube shortlink — build thumbnail from video ID, skip HTTP fetch.
+        if ( preg_match( '#(?:youtu\.be/|youtube\.com/(?:watch\?v=|embed/|shorts/))([A-Za-z0-9_\-]{11})#', $url, $ym ) ) {
+            $vid_id = $ym[1];
+            return rest_ensure_response( array(
+                'title'       => '',
+                'description' => '',
+                'image'       => "https://img.youtube.com/vi/{$vid_id}/hqdefault.jpg",
+                'isYoutube'   => true,
+                'videoId'     => $vid_id,
+            ) );
+        }
+
+        $response = wp_remote_get( $url, array(
+            'timeout'    => 6,
+            'user-agent' => 'Moveee/1.0 (link preview)',
+            'headers'    => array( 'Accept' => 'text/html' ),
+        ) );
+
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            return rest_ensure_response( array( 'title' => '', 'description' => '', 'image' => '' ) );
+        }
+
+        $html = substr( wp_remote_retrieve_body( $response ), 0, 50000 );
+
+        $og_title       = '';
+        $og_description = '';
+        $og_image       = '';
+
+        if ( preg_match( '/<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m ) ) {
+            $og_title = html_entity_decode( trim( $m[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        } elseif ( preg_match( '/<title[^>]*>([^<]+)<\/title>/i', $html, $m ) ) {
+            $og_title = html_entity_decode( trim( $m[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        }
+
+        if ( preg_match( '/<meta[^>]+(?:property=["\']og:description["\']|name=["\']description["\'])[^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m ) ) {
+            $og_description = html_entity_decode( trim( $m[1] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        }
+
+        if ( preg_match( '/<meta[^>]+(?:property=["\']og:image["\']|name=["\']twitter:image["\'])[^>]+content=["\']([^"\']+)["\'][^>]*>/i', $html, $m ) ) {
+            $og_image = esc_url_raw( trim( $m[1] ) );
+        }
+
+        return rest_ensure_response( array(
+            'title'       => $og_title,
+            'description' => $og_description,
+            'image'       => $og_image,
+        ) );
+    }
+
     public static function handle_submit_post( $request ) {
         $user_id = get_current_user_id();
         $content = $request->get_param( 'content' );
@@ -2059,6 +2149,19 @@ class Culture_Mobile_API {
                 // Silently ignored for non-Pro members rather than failing the whole
                 // post — the composer UI already gates the toggle behind a lock icon.
             }
+        }
+
+        // Link preview meta — only saved when a non-citizen user posts a URL.
+        // Citizens are blocked from posting links entirely (see check above).
+        $link_url = esc_url_raw( $request->get_param( 'link_url' ) ?: '' );
+        if ( $link_url ) {
+            update_post_meta( $post_id, 'community_link_url', $link_url );
+            $og_title = sanitize_text_field( $request->get_param( 'og_title' ) ?: '' );
+            $og_desc  = sanitize_text_field( $request->get_param( 'og_description' ) ?: '' );
+            $og_image = esc_url_raw( $request->get_param( 'og_image' ) ?: '' );
+            if ( $og_title ) update_post_meta( $post_id, 'community_og_title',       $og_title );
+            if ( $og_desc )  update_post_meta( $post_id, 'community_og_description', $og_desc );
+            if ( $og_image ) update_post_meta( $post_id, 'community_og_image',       $og_image );
         }
 
         if ( class_exists( 'Culture_Gamification' ) ) {

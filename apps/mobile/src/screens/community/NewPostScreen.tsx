@@ -292,6 +292,10 @@ function InlinePhotosSection({
   );
 }
 
+function extractDomain(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
+}
+
 // ── Book ratings breakdown ────────────────────────────────────────────────────
 function BookRatingsRow({
   label,
@@ -418,6 +422,12 @@ export default function NewPostScreen() {
   const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
   const [filmGenreInput, setFilmGenreInput] = useState("");
 
+  // Link preview state (standard post template only)
+  const [linkPreviewUrl, setLinkPreviewUrl] = useState("");
+  const [linkPreview, setLinkPreview] = useState<{ title: string; description: string; image: string; isYoutube?: boolean; videoId?: string } | null>(null);
+  const [linkPreviewDismissed, setLinkPreviewDismissed] = useState(false);
+  const linkPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   // Overall rating auto-calculates as the rounded average of the breakdown
   // ratings until the user taps a star on Overall themselves, at which
   // point it's manually controlled for the rest of the draft — mirrors
@@ -434,6 +444,24 @@ export default function NewPostScreen() {
     if (filmOverallManual) return;
     setFilmOverallRating(averageRating(filmRatings));
   }, [filmRatings, filmOverallManual]);
+
+  // Detect the first URL in text and fetch a link preview (standard post only).
+  useEffect(() => {
+    if (template !== "post" || linkPreviewDismissed) return;
+    const urlMatch = text.match(/https?:\/\/[^\s]+/);
+    const url = urlMatch ? urlMatch[0] : "";
+    if (url === linkPreviewUrl) return;
+    setLinkPreviewUrl(url);
+    if (!url) { setLinkPreview(null); return; }
+    if (linkPreviewTimerRef.current) clearTimeout(linkPreviewTimerRef.current);
+    linkPreviewTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await api.get<any>(`${MOBILE_API}/community/og-preview?url=${encodeURIComponent(url)}`);
+        if (res?.title || res?.image) setLinkPreview(res);
+      } catch {}
+    }, 700);
+    return () => { if (linkPreviewTimerRef.current) clearTimeout(linkPreviewTimerRef.current); };
+  }, [text, template, linkPreviewDismissed]);
 
   // Itinerary extras
   const [itineraryTitle, setItineraryTitle] = useState("");
@@ -753,6 +781,10 @@ const uploadImages = async (): Promise<string[]> => {
         community_region: userRegion ?? undefined,
         city:             user?.city ?? undefined,
         hub_id:           hubId || undefined,
+        link_url:         template === "post" && !linkPreviewDismissed && linkPreviewUrl ? linkPreviewUrl : undefined,
+        og_title:         template === "post" && !linkPreviewDismissed && linkPreview?.title ? linkPreview.title : undefined,
+        og_description:   template === "post" && !linkPreviewDismissed && linkPreview?.description ? linkPreview.description : undefined,
+        og_image:         template === "post" && !linkPreviewDismissed && linkPreview?.image ? linkPreview.image : undefined,
       };
 
       if (template === "hidden-gem") {
@@ -1049,6 +1081,27 @@ const uploadImages = async (): Promise<string[]> => {
         textAlignVertical="top"
         autoFocus
       />
+      {linkPreview && !linkPreviewDismissed && (
+        <View style={styles.linkPreviewCard}>
+          {linkPreview.image ? (
+            <View style={styles.linkPreviewThumbWrap}>
+              <Image source={{ uri: linkPreview.image }} style={[StyleSheet.absoluteFillObject, { borderRadius: 0 }]} resizeMode="cover" />
+              {linkPreview.isYoutube && (
+                <View style={styles.linkPreviewPlayOverlay}>
+                  <Ionicons name="play-circle" size={34} color="#fff" />
+                </View>
+              )}
+            </View>
+          ) : null}
+          <View style={styles.linkPreviewText}>
+            {linkPreview.title ? <Text style={styles.linkPreviewTitle} numberOfLines={2}>{linkPreview.title}</Text> : null}
+            <Text style={styles.linkPreviewDomain} numberOfLines={1}>{extractDomain(linkPreviewUrl)}</Text>
+          </View>
+          <TouchableOpacity onPress={() => { setLinkPreviewDismissed(true); setLinkPreview(null); }} style={styles.linkPreviewDismiss}>
+            <Ionicons name="close" size={18} color={c.mute} />
+          </TouchableOpacity>
+        </View>
+      )}
       {/* What are you writing about? — optional directory link (July 2026).
           This is what used to be the standalone Cultural Take template's
           required directory field; folding Cultural Take into Update made
@@ -2661,5 +2714,22 @@ function createStyles(c: ColorPalette) {
     toolbarAt:    { fontFamily: fonts.sansBold, fontSize: 18, color: c.inkSoft, lineHeight: 22 },
     toolbarCount:      { fontFamily: fonts.mono, fontSize: fontSize.xs, color: c.ghost },
     toolbarCountError: { color: c.error },
+
+    // Link preview card
+    linkPreviewCard: {
+      flexDirection: "row", alignItems: "center", marginTop: space[3],
+      borderWidth: 1, borderColor: c.rule, borderRadius: radius.lg,
+      overflow: "hidden", backgroundColor: c.paperDeep,
+    },
+    linkPreviewThumbWrap: { width: 60, height: 60, overflow: "hidden" },
+    linkPreviewPlayOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: "center", justifyContent: "center",
+      backgroundColor: "rgba(0,0,0,0.35)",
+    },
+    linkPreviewText: { flex: 1, paddingHorizontal: space[3], paddingVertical: space[2] },
+    linkPreviewTitle: { fontFamily: fonts.sans, fontSize: fontSize.sm, color: c.ink, marginBottom: 2 },
+    linkPreviewDomain: { fontFamily: fonts.sans, fontSize: fontSize.xs, color: c.mute },
+    linkPreviewDismiss: { padding: space[3] },
   });
 }
