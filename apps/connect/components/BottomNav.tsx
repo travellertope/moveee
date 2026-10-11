@@ -11,9 +11,12 @@ function NavIcon({ name }: { name: string }) {
     case "feed":
       return (
         <svg {...s} viewBox="0 0 24 24">
-          <rect x="3" y="4" width="18" height="4" rx="1" />
-          <rect x="3" y="10" width="18" height="4" rx="1" />
-          <rect x="3" y="16" width="18" height="4" rx="1" />
+          <circle cx="6" cy="7" r="2.5" />
+          <line x1="11" y1="5.8" x2="21" y2="5.8" />
+          <line x1="11" y1="8.2" x2="17" y2="8.2" />
+          <line x1="3" y1="14" x2="21" y2="14" />
+          <line x1="3" y1="17.5" x2="21" y2="17.5" />
+          <line x1="3" y1="21" x2="14" y2="21" />
         </svg>
       );
     case "discover":
