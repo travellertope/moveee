@@ -44,7 +44,7 @@ interface Props {
    * directory and offers each result as a one-tap create (prefilled
    * title/about/cover, deduped server-side by external ID) — no manual
    * quick-create form needed for these. */
-  externalSource?: "google_books" | "spotify" | "tmdb";
+  externalSource?: "google_books" | "spotify" | "tmdb" | "google_places";
 }
 
 export default function DirectorySearch({ value, onChange, typeFilter, placeholder, aboutFieldLabel, externalSource }: Props) {
@@ -209,7 +209,11 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     );
   }
 
-  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "Spotify" : "TMDB";
+  const externalSourceLabel =
+    externalSource === "google_books" ? "Google Books" :
+    externalSource === "spotify" ? "Spotify" :
+    externalSource === "google_places" ? "Google Maps" :
+    "TMDB";
 
   return (
     <div className="composer-dir-search">

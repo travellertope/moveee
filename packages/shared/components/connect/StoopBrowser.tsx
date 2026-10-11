@@ -7,6 +7,7 @@ import { openSearchModal } from "@/lib/searchModalBus";
 import { onStoopFilters } from "@/lib/stoopFiltersBus";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 import StoopDetailPanel from "@/components/connect/StoopDetailPanel";
+import StoopPlacesInput from "@/components/connect/StoopPlacesInput";
 
 /* ─── Data types ─────────────────────────────────────────────── */
 interface Cluster {
@@ -979,14 +980,19 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
                     />
 
                     <label className="stoop-modal-label" htmlFor="wiz-street">Street address <span className="stoop-wiz-required">*</span></label>
-                    <input
-                      id="wiz-street"
-                      type="text"
-                      className="stoop-modal-input"
-                      placeholder="e.g. 14 Rye Lane — used for proximity matching"
+                    <StoopPlacesInput
                       value={hostStreet}
-                      onChange={(e) => { setHostStreet(e.target.value); setHostLat(null); setHostLng(null); }}
+                      onChange={(val) => { setHostStreet(val); setHostLat(null); setHostLng(null); }}
+                      onPlaceSelect={(place) => {
+                        setHostStreet(place.street);
+                        if (place.city) setHostCity(place.city);
+                        if (place.country) setHostFormCountry(place.country);
+                        if (place.lat !== null) setHostLat(place.lat);
+                        if (place.lng !== null) setHostLng(place.lng);
+                      }}
                       onBlur={geocodeAddress}
+                      className="stoop-modal-input"
+                      placeholder="Search for a street or venue…"
                     />
                     <p className="stoop-wiz-geo-note">Exact address is only shown to members per your privacy setting.</p>
 

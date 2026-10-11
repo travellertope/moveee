@@ -1152,6 +1152,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
               <DirectorySearch
                 value={directoryEntry}
                 onChange={setDirectoryEntry}
+                typeFilter="place"
+                externalSource="google_places"
                 placeholder="Search or add a location *"
               />
             )}
