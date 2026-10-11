@@ -11,7 +11,7 @@ import "./header.css";
 const SITE_URL = "https://themoveee.com";
 
 const NAV = [
-  { href: "/feed",                 label: "Home Feed",       icon: "feed"      },
+  { href: "/feed",                 label: "Feed",            icon: "feed"      },
   { href: "/discover",             label: "Explore Topics",  icon: "discover"  },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
   { href: "/member/notifications", label: "Notifications",   icon: "bell"      },
@@ -35,7 +35,16 @@ function RailIcon({ name }: { name: string }) {
     case "hub":
       return <svg {...common} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><ellipse cx="12" cy="12" rx="4" ry="10" /><path d="M2 12h20" /></svg>;
     case "feed":
-      return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1" /><rect x="3" y="10" width="18" height="4" rx="1" /><rect x="3" y="16" width="18" height="4" rx="1" /></svg>;
+      return (
+        <svg {...common} strokeWidth={1.6} viewBox="0 0 24 24">
+          <circle cx="6" cy="7" r="2.5" />
+          <line x1="11" y1="5.8" x2="21" y2="5.8" />
+          <line x1="11" y1="8.2" x2="17" y2="8.2" />
+          <line x1="3" y1="14" x2="21" y2="14" />
+          <line x1="3" y1="17.5" x2="21" y2="17.5" />
+          <line x1="3" y1="21" x2="14" y2="21" />
+        </svg>
+      );
     case "events":
       return <svg {...common} strokeWidth={1.8} viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>;
     case "games":
