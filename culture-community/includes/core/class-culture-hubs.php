@@ -116,6 +116,7 @@ class Culture_Hubs {
         add_action( 'culture_notify_hub_followers_batch', array( __CLASS__, 'process_notify_hub_post_batch' ), 10, 3 );
         add_action( 'added_post_meta', array( __CLASS__, 'on_community_tag_meta_added' ), 10, 4 );
         add_action( 'updated_post_meta', array( __CLASS__, 'on_community_tag_meta_added' ), 10, 4 );
+        add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'on_post_hashtag_hubs_saved' ), 20, 2 );
         self::maybe_seed_official_hubs();
         self::maybe_backfill_section_hub_links();
         self::maybe_merge_duplicate_official_hubs();
@@ -223,6 +224,129 @@ class Culture_Hubs {
     public static function get_official_hub_id_for_section( string $section ) : int {
         $map = get_option( 'culture_section_hub_map', array() );
         return isset( $map[ $section ] ) ? (int) $map[ $section ] : 0;
+    }
+
+    /* ——————————————————————————————————————
+     *  Hashtag-driven Hub creation + pivot table (v3.7.0)
+     *
+     *  A #hashtag in a culture_post's content auto-creates a Hub for that
+     *  tag (if one doesn't exist) and links the post to it via
+     *  wp_culture_post_hubs. Posts remain in the main feed — the pivot
+     *  table is additive, unlike the legacy _hub_id which excludes a post
+     *  from the main feed. Hub feed queries pull from both sources via UNION.
+     * —————————————————————————————————————— */
+
+    /**
+     * Fires on rest_after_insert_culture_post (priority 20, after all meta
+     * is saved). Parses #hashtags from post_content and wires up the hubs.
+     */
+    public static function on_post_hashtag_hubs_saved( WP_Post $post, WP_REST_Request $request ) {
+        if ( 'culture_post' !== $post->post_type || 'publish' !== $post->post_status ) {
+            return;
+        }
+        $content = $post->post_content;
+        if ( ! $content ) {
+            return;
+        }
+        preg_match_all( '/#(\w{2,50})\b/u', $content, $matches );
+        $raw_tags = array_unique( $matches[1] ?? array() );
+        if ( empty( $raw_tags ) ) {
+            return;
+        }
+        $hub_ids = array();
+        foreach ( $raw_tags as $tag ) {
+            $hub_id = self::find_or_create_from_hashtag( $tag );
+            if ( $hub_id ) {
+                $hub_ids[] = $hub_id;
+            }
+        }
+        if ( ! empty( $hub_ids ) ) {
+            self::sync_post_hashtag_hubs( $post->ID, $hub_ids );
+        }
+    }
+
+    /**
+     * Return the Hub post ID for a hashtag, auto-creating the Hub if needed.
+     *
+     * @return int Hub ID, or 0 on failure.
+     */
+    public static function find_or_create_from_hashtag( string $raw_tag ) : int {
+        $slug = sanitize_title( $raw_tag );
+        if ( '' === $slug ) {
+            return 0;
+        }
+        $existing = self::get_hub_by_slug( $slug );
+        if ( $existing ) {
+            return (int) $existing['id'];
+        }
+        $system_user_id = (int) get_option( 'culture_system_author_id', 1 );
+        if ( ! $system_user_id ) {
+            $system_user_id = 1;
+        }
+        $display_name = '#' . $raw_tag;
+        $post_id      = wp_insert_post( array(
+            'post_type'   => 'culture_hub',
+            'post_title'  => $display_name,
+            'post_status' => 'publish',
+            'post_author' => $system_user_id,
+        ), true );
+        if ( is_wp_error( $post_id ) ) {
+            return 0;
+        }
+        $now = current_time( 'mysql' );
+        update_post_meta( $post_id, '_hub_name', $display_name );
+        update_post_meta( $post_id, '_hub_slug', $slug );
+        update_post_meta( $post_id, '_hub_description', 'Posts tagged #' . esc_html( $raw_tag ) . '.' );
+        update_post_meta( $post_id, '_hub_creator_id', 0 );
+        update_post_meta( $post_id, '_hub_status', self::STATUS_ACTIVE );
+        update_post_meta( $post_id, '_hub_allowed_templates', wp_json_encode( self::ALLOWED_TEMPLATES ) );
+        update_post_meta( $post_id, '_hub_member_count', 0 );
+        update_post_meta( $post_id, '_hub_post_count', 0 );
+        update_post_meta( $post_id, '_hub_created_at', $now );
+        update_post_meta( $post_id, '_hub_is_hashtag', '1' );
+        if ( class_exists( 'Culture_Newsletter_Lists' ) ) {
+            Culture_Newsletter_Lists::get_or_create_for_hub( $post_id, $display_name, $slug );
+        }
+        return $post_id;
+    }
+
+    /**
+     * Sync the wp_culture_post_hubs pivot table rows for a post.
+     * Adds new rows and removes stale ones, keeping _hub_post_count in sync.
+     */
+    public static function sync_post_hashtag_hubs( int $post_id, array $hub_ids ) : void {
+        if ( ! $post_id ) {
+            return;
+        }
+        global $wpdb;
+        $table        = self::post_hubs_table();
+        $existing_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT hub_id FROM {$table} WHERE post_id = %d",
+            $post_id
+        ) );
+        $existing_ids = array_map( 'intval', $existing_ids );
+        $hub_ids      = array_map( 'intval', $hub_ids );
+        $removed = array_diff( $existing_ids, $hub_ids );
+        if ( $removed ) {
+            $placeholders = implode( ',', array_fill( 0, count( $removed ), '%d' ) );
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            $wpdb->query( $wpdb->prepare(
+                "DELETE FROM {$table} WHERE post_id = %d AND hub_id IN ({$placeholders})",
+                array_merge( array( $post_id ), $removed )
+            ) );
+            foreach ( $removed as $rid ) {
+                update_post_meta( $rid, '_hub_post_count', max( 0, (int) get_post_meta( $rid, '_hub_post_count', true ) - 1 ) );
+            }
+        }
+        $added = array_diff( $hub_ids, $existing_ids );
+        foreach ( $added as $hid ) {
+            $wpdb->insert( $table, array(
+                'post_id'    => $post_id,
+                'hub_id'     => $hid,
+                'created_at' => current_time( 'mysql' ),
+            ), array( '%d', '%d', '%s' ) );
+            update_post_meta( $hid, '_hub_post_count', (int) get_post_meta( $hid, '_hub_post_count', true ) + 1 );
+        }
     }
 
     public static function is_official( int $hub_id ) : bool {
@@ -599,6 +723,28 @@ class Culture_Hubs {
             PRIMARY KEY  (id),
             UNIQUE KEY hub_user (hub_id, user_id),
             KEY user_idx (user_id)
+        ) {$charset_collate};" );
+    }
+
+    public static function post_hubs_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_post_hubs';
+    }
+
+    public static function create_post_hubs_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $table = self::post_hubs_table();
+        dbDelta( "CREATE TABLE {$table} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            post_id bigint(20) NOT NULL,
+            hub_id bigint(20) NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY post_hub (post_id, hub_id),
+            KEY post_idx (post_id),
+            KEY hub_idx (hub_id)
         ) {$charset_collate};" );
     }
 

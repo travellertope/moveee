@@ -3860,11 +3860,31 @@ class Culture_Mobile_API {
         // its natural date-order position.
         $pinned_id = 1 === $page ? (int) get_post_meta( $hub_id, '_hub_pinned_post_id', true ) : 0;
 
+        // Collect post IDs from both the legacy _hub_id meta (explicitly
+        // hub-scoped posts) and the pivot table (hashtag auto-linked posts).
+        global $wpdb;
+        $ph_table = Culture_Hubs::post_hubs_table();
+        $post_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT pm.post_id
+             FROM {$wpdb->postmeta} pm
+             WHERE pm.meta_key = '_hub_id' AND pm.meta_value = %d
+             UNION
+             SELECT DISTINCT ph.post_id
+             FROM {$ph_table} ph
+             WHERE ph.hub_id = %d",
+            $hub_id,
+            $hub_id
+        ) );
+
+        if ( empty( $post_ids ) ) {
+            return array( 'items' => array(), 'total' => 0, 'page' => $page, 'perPage' => $per_page );
+        }
+        $post_ids = array_map( 'intval', $post_ids );
+
         $query_args = array(
             'post_type'      => 'culture_post',
             'post_status'    => 'publish',
-            'meta_key'       => '_hub_id',
-            'meta_value'     => $hub_id,
+            'post__in'       => $post_ids,
             'posts_per_page' => $per_page,
             'paged'          => $page,
             'orderby'        => 'date',

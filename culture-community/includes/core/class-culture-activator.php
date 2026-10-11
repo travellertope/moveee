@@ -237,6 +237,8 @@ class Culture_Activator {
         // Hub membership + follow tables (docs/hubs-plan.md, Phase 1).
         Culture_Hubs::create_members_table();
         Culture_Hubs::create_follows_table();
+        // Hub–post pivot table for hashtag-driven multi-hub assignment (v3.7.0).
+        Culture_Hubs::create_post_hubs_table();
 
         // The Moveee Literary — pending-payment table for the online submission
         // form's $3 fee (Paystack/Stripe), added September 2026.
