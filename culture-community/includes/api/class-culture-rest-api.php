@@ -5225,10 +5225,16 @@ class Culture_REST_API {
             $url = '/magazine/' . $slug;
         }
 
+        // For quotes, use post_content as the title (full quote text, no truncation).
+        // get_the_title() decodes HTML entities (e.g. &hellip; → …) unlike $post->post_title.
+        $display_title = $is_quote
+            ? wp_strip_all_tags( $post->post_content )
+            : get_the_title( $post );
+
         $base = array(
             'id'      => $post->ID,
             'type'    => $is_quote ? 'quote' : ( $is_community ? 'community' : 'article' ),
-            'title'   => $post->post_title,
+            'title'   => $display_title,
             'slug'    => $slug,
             'url'     => $url,
             'excerpt' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 20 ),

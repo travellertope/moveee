@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
-import { useTheme } from "@/context/ThemeContext";
 import { onOpenSearchModal } from "@/lib/searchModalBus";
 import SearchModal from "@/components/SearchModal";
+import NotificationBell from "@/components/NotificationBell";
 import "./top-bar.css";
 
 export default function TopBar() {
   const { data: session, status } = useSession();
-  const { theme, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -69,8 +68,8 @@ export default function TopBar() {
             <img
               src="https://mltvzlykp9yb.i.optimole.com/cb:k_0z.862/w:920/h:144/q:mauto/f:best/https://cms.themoveee.com/wp-content/uploads/2024/04/logo-1-e1713978527703.png"
               alt="Moveee"
-              height={28}
-              width={178}
+              height={22}
+              width={140}
               className="tb-brand-img"
             />
           </Link>
@@ -93,18 +92,7 @@ export default function TopBar() {
               </svg>
             </button>
 
-            <button type="button" className="tb-icon-btn" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
-              {theme === "dark" ? (
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-                </svg>
-              ) : (
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
-            </button>
+            <NotificationBell />
 
             {status === "authenticated" && (
               <Link href="/post/new" className="tb-new-post-btn">

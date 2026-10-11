@@ -12,9 +12,7 @@ const SITE_URL = "https://themoveee.com";
 
 const NAV = [
   { href: "/feed",                 label: "Feed",            icon: "feed"      },
-  { href: "/discover",             label: "Explore Topics",  icon: "discover"  },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
-  { href: "/member/notifications", label: "Notifications",   icon: "bell"      },
   { href: "/connect/stoop",         label: "Stoop IRL",       icon: "stoop"     },
 ] as const;
 
@@ -203,8 +201,8 @@ export default function ConnectHeader() {
           <Link href="/events" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
             <RailIcon name="events" /> Events
           </Link>
-          <Link href="/games" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
-            <RailIcon name="games" /> Games
+          <Link href="/games/trivia" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
+            <RailIcon name="games" /> Trivia
           </Link>
         </div>
 

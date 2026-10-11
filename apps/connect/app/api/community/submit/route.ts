@@ -266,7 +266,7 @@ export async function POST(req: NextRequest) {
         community_author_name:   authorName,
         community_author_id:     authorId,
         community_author_username: user?.username ?? "",
-        community_author_avatar: authorAvatar?.trim() || "",
+        community_author_avatar: authorAvatar?.trim() || (user?.avatarUrl ?? ""),
         community_image_url:     imageUrl?.trim() || "",
         community_tag:          validTag ?? "",
         community_region:       region?.trim() || "",

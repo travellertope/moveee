@@ -7,6 +7,7 @@ import { getWPQuoteById } from '@/lib/wp';
 import { getPostComments } from '@/lib/community-wordpress';
 import ReactionBar from '@/components/pulse/ReactionBar';
 import QuoteComments from './QuoteComments';
+import QuoteShareButton from './QuoteShareButton';
 import '@/app/pulse-layout.css';
 
 // This is a bare permalink page, not a browsable product — there is no
@@ -79,7 +80,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
   };
 
   return (
-    <div style={{ background: '#ffffff' }}>
+    <div style={{ background: 'var(--paper)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="pulse-layout pulse-layout--feed">
@@ -167,6 +168,14 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
                   initialCounts={{ love: 0, fire: 0, clap: 0 }}
                   shareUrl={`https://web.themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
                 />
+                <div style={{ marginTop: '0.85rem' }}>
+                  <QuoteShareButton
+                    quoteText={plainText}
+                    quoteAuthor={author}
+                    quoteSource={quote.quoteSource || null}
+                    quoteUrl={`https://web.themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
+                  />
+                </div>
               </div>
             </article>
 
@@ -182,7 +191,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
         <aside className="pulse-sidebar-right">
           <div style={{ padding: '1.25rem 1rem' }}>
             <div style={{
-              background: '#fff', border: '1px solid rgba(20,17,13,0.09)',
+              background: 'var(--paper-deep)', border: '1px solid rgba(20,17,13,0.09)',
               borderRadius: '12px', padding: '0.85rem',
               boxShadow: '0 1px 3px rgba(20,17,13,0.05)',
             }}>
