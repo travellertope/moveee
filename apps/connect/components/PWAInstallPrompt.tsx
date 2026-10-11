@@ -137,17 +137,6 @@ function IOSTooltip({ onDismiss }: { onDismiss: () => void }) {
         </li>
       </ol>
 
-      {/* Caret pointing to Safari toolbar */}
-      <div style={{
-        position: "absolute",
-        bottom: -8,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: 0, height: 0,
-        borderLeft: "8px solid transparent",
-        borderRight: "8px solid transparent",
-        borderTop: "8px solid var(--ink)",
-      }} />
 
       <style>{`
         @keyframes pwa-slide-up {

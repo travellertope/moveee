@@ -12,6 +12,7 @@ import BottomNav from "@/components/BottomNav";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import PullToRefresh from "@/components/PullToRefresh";
+import NavigationLoader from "@/components/NavigationLoader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -99,6 +100,7 @@ export default function RootLayout({
                 <GlobalAuthModal />
                 <PWAInstallPrompt />
                 <PullToRefresh />
+                <NavigationLoader />
               </ThemeProvider>
             </LanguageProvider>
           </CurrencyProvider>

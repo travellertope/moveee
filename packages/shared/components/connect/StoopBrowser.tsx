@@ -462,7 +462,6 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
       {/* ── Hero banner ───────────────────────────────────────── */}
       <div className="stoop-hero">
         <div className="stoop-hero-content">
-          <span className="stoop-hero-badge">Stoop IRL Gatherings</span>
           <h2 className="stoop-hero-heading">Real-world cultural meetups, vinyl sessions &amp; neighbourhood stoops.</h2>
           <p className="stoop-hero-sub">
             Connect with creators, readers, and listeners in your city.
@@ -539,9 +538,6 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
           {category === "all"
             ? "All categories"
             : STOOP_CATEGORIES.find((c) => c.key === category)?.label ?? "Category"}
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
         </button>
         {displayCount > 0 && (
           <span className="stoop-cats-count">
@@ -933,14 +929,16 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
                       <strong>Why this matters:</strong> When people join a Stoop they're signing up to a recurring local thing, not a one-off event.
                       Hosts who move or go quiet disrupt the whole group.
                     </div>
-                    <button
-                      type="button"
-                      className={`stoop-wiz-commit${hostLocalityConfirmed ? " stoop-wiz-commit--active" : ""}`}
-                      onClick={() => setHostLocalityConfirmed((v) => !v)}
-                    >
-                      {hostLocalityConfirmed ? "✓ " : ""}
-                      I&apos;m local to this area and I commit to hosting at least monthly
-                    </button>
+                    <label className="stoop-wiz-accessible-row">
+                      <input
+                        type="checkbox"
+                        checked={hostLocalityConfirmed}
+                        onChange={(e) => setHostLocalityConfirmed(e.target.checked)}
+                      />
+                      <span>
+                        <strong>I&apos;m local to this area and I commit to hosting at least monthly</strong>
+                      </span>
+                    </label>
                   </>
                 ) : wizStep === 5 ? (
                   /* Step 5 — Address visibility */

@@ -16,6 +16,13 @@ export default function PullToRefresh() {
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       if (window.scrollY > 4) return;
+      // Don't arm PTR if the touch is inside a scrollable container that's been scrolled down
+      let el = e.target as Element | null;
+      while (el && el !== document.body) {
+        const ov = window.getComputedStyle(el).overflowY;
+        if (/auto|scroll/.test(ov) && (el as HTMLElement).scrollTop > 0) return;
+        el = el.parentElement;
+      }
       touchStartYRef.current = e.touches[0].clientY;
     };
 
