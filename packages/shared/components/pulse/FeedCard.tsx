@@ -620,16 +620,25 @@ export default function FeedCard({
                     </span>
                   );
                 })()}
-                {(item.hubName || item.hubSlug || (item.communityTag && !item.hubId)) && (
-                  <span style={{
-                    fontSize: "0.6rem", fontWeight: 500,
-                    padding: "2px 7px", borderRadius: "4px",
-                    background: "rgba(168,162,158,0.15)", color: "var(--mute)",
-                    whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
-                  }}>
-                    #{item.hubName || item.communityTag}
-                  </span>
-                )}
+                {(item.hubName || item.hubSlug || (item.communityTag && !item.hubId)) && (() => {
+                  const tagLabel = item.hubName || item.communityTag;
+                  const tagSlug  = item.hubSlug || item.communityTag?.toLowerCase();
+                  return (
+                    <Link
+                      href={tagSlug ? `/hub/${tagSlug}` : "/hub/discover"}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        fontSize: "0.6rem", fontWeight: 500,
+                        padding: "2px 7px", borderRadius: "4px",
+                        background: "rgba(168,162,158,0.15)", color: "var(--mute)",
+                        whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
+                        textDecoration: "none",
+                      }}
+                    >
+                      #{tagLabel}
+                    </Link>
+                  );
+                })()}
               </div>
             </div>
           </div>
