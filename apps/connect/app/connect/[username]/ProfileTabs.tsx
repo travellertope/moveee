@@ -7,6 +7,9 @@ import PortfolioTab from "./PortfolioTab";
 interface Profile {
   id: number;
   username: string;
+  display_name: string;
+  avatar_url: string;
+  tier: string;
   reputation: number;
   reputation_tier: string;
 }
@@ -53,7 +56,14 @@ export default function ProfileTabs({ profile }: Props) {
       </div>
 
       <div style={{ paddingTop: "1.25rem" }}>
-        {tab === "community" && <CommunityTab username={profile.username} />}
+        {tab === "community" && (
+          <CommunityTab
+            username={profile.username}
+            displayName={profile.display_name}
+            avatarUrl={profile.avatar_url}
+            tier={profile.tier}
+          />
+        )}
         {tab === "portfolio" && (
           <PortfolioTab
             username={profile.username}

@@ -268,6 +268,9 @@ export default async function PublicProfilePage(
               <ProfileTabs profile={{
                 id: profile.id,
                 username: profile.username,
+                display_name: profile.display_name,
+                avatar_url: profile.avatar_url,
+                tier: profile.tier,
                 reputation: profile.reputation,
                 reputation_tier: profile.reputation_tier,
               }} />
