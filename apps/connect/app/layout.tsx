@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import SessionProvider from "@/components/SessionProvider";
 import ConnectHeader from "@/components/Header";
 import TopBar from "@/components/TopBar";
+import BottomNav from "@/components/BottomNav";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
@@ -93,6 +94,7 @@ export default function RootLayout({
                     <main>{children}</main>
                   </div>
                 </div>
+                <BottomNav />
                 <GlobalAuthModal />
                 <PWAInstallPrompt />
               </ThemeProvider>

@@ -1,6 +1,5 @@
 "use client";
-
-const MENTION_RE = /@(\w+)/g;
+import Link from "next/link";
 
 interface HashtagTextProps {
   text: string;
@@ -8,16 +7,18 @@ interface HashtagTextProps {
   clamp?: number;
 }
 
+function toHubSlug(tag: string): string {
+  return tag.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/, "");
+}
+
 function InlineTokens({ text, onMentionClick }: { text: string; onMentionClick?: (u: string) => void }) {
-  const parts = text.split(/((@\w+))/g).filter((_, i) => i % 3 !== 2); // drop full-match group
-  // Re-split cleanly
   const segments: string[] = [];
   let last = 0;
   let match: RegExpExecArray | null;
-  const re = /@(\w+)/g;
+  const re = /(@\w+|#\w{2,50})/g;
   while ((match = re.exec(text)) !== null) {
     if (match.index > last) segments.push(text.slice(last, match.index));
-    segments.push(match[0]); // the @username token
+    segments.push(match[0]);
     last = match.index + match[0].length;
   }
   if (last < text.length) segments.push(text.slice(last));
@@ -35,6 +36,19 @@ function InlineTokens({ text, onMentionClick }: { text: string; onMentionClick?:
             >
               {part}
             </button>
+          );
+        }
+        if (/^#\w{2,50}$/.test(part)) {
+          const slug = toHubSlug(part.slice(1));
+          return (
+            <Link
+              key={i}
+              href={`/hub/${slug}`}
+              onClick={(e) => e.stopPropagation()}
+              style={{ color: "var(--ochre, #7a241c)", textDecoration: "none", fontWeight: 600 }}
+            >
+              {part}
+            </Link>
           );
         }
         return <span key={i}>{part}</span>;
