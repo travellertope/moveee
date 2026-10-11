@@ -148,19 +148,19 @@ export default function HubActions({
             </button>
           )
         ) : (
-          <>
-            <button type="button" onClick={join} disabled={busy} style={primaryBtnStyle}>
-              {busy ? "Joining…" : "Join →"}
-            </button>
-            <button
-              type="button"
-              onClick={isFollowing ? unfollow : follow}
-              disabled={busy}
-              style={ghostBtnStyle}
-            >
-              {isFollowing ? "Following ✓" : "Follow"}
-            </button>
-          </>
+          <button type="button" onClick={join} disabled={busy} style={primaryBtnStyle}>
+            {busy ? "Joining…" : "Join →"}
+          </button>
+        )}
+        {isMember && (
+          <button
+            type="button"
+            onClick={isFollowing ? unfollow : follow}
+            disabled={busy}
+            style={ghostBtnStyle}
+          >
+            {isFollowing ? "Following ✓" : "Follow"}
+          </button>
         )}
       </div>
 

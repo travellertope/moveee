@@ -6163,6 +6163,27 @@ class Culture_REST_API {
     // Shared per-post field shape (snake_case, web's community-post listing shape)
     // — used by handle_get_community_posts() and the portfolio pinned-posts resolver
     // so both surfaces render identically.
+    /**
+     * Return the stored community_author_avatar for a post, with a lazy
+     * backfill from _culture_avatar_url the first time it is missing.
+     * Older posts were created before the avatar was snapshotted at save time.
+     */
+    private static function resolve_author_avatar( int $pid ): string {
+        $avatar = get_post_meta( $pid, 'community_author_avatar', true ) ?: '';
+        if ( $avatar ) {
+            return $avatar;
+        }
+        $author_id = (int) get_post_meta( $pid, 'community_author_id', true );
+        if ( ! $author_id ) {
+            return '';
+        }
+        $avatar = get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '';
+        if ( $avatar ) {
+            update_post_meta( $pid, 'community_author_avatar', $avatar );
+        }
+        return $avatar;
+    }
+
     private static function format_community_post_row( WP_Post $post ): array {
         $pid = $post->ID;
         return array(
@@ -6176,7 +6197,7 @@ class Culture_REST_API {
             'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
             'author_username' => get_post_meta( $pid, 'community_author_username', true ) ?: '',
             'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
-            'author_avatar'  => get_post_meta( $pid, 'community_author_avatar', true ) ?: '',
+            'author_avatar'  => self::resolve_author_avatar( $pid ),
             'template_type'  => get_post_meta( $pid, '_template_type', true ) ?: 'post',
             'star_rating'    => (int) get_post_meta( $pid, '_star_rating', true ),
             'location_name'  => get_post_meta( $pid, '_location_name', true ) ?: '',
