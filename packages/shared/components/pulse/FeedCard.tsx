@@ -620,16 +620,25 @@ export default function FeedCard({
                     </span>
                   );
                 })()}
-                {(item.hubName || item.hubSlug || (item.communityTag && !item.hubId)) && (
-                  <span style={{
-                    fontSize: "0.6rem", fontWeight: 500,
-                    padding: "2px 7px", borderRadius: "4px",
-                    background: "rgba(168,162,158,0.15)", color: "var(--mute)",
-                    whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
-                  }}>
-                    #{item.hubName || item.communityTag}
-                  </span>
-                )}
+                {(item.hubName || item.hubSlug || (item.communityTag && !item.hubId)) && (() => {
+                  const tagLabel = item.hubName || item.communityTag;
+                  const tagSlug  = item.hubSlug || item.communityTag?.toLowerCase();
+                  return (
+                    <Link
+                      href={tagSlug ? `/hub/${tagSlug}` : "/hub/discover"}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        fontSize: "0.6rem", fontWeight: 500,
+                        padding: "2px 7px", borderRadius: "4px",
+                        background: "rgba(168,162,158,0.15)", color: "var(--mute)",
+                        whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
+                        textDecoration: "none",
+                      }}
+                    >
+                      #{tagLabel}
+                    </Link>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -845,72 +854,53 @@ export default function FeedCard({
               </div>
             )}
 
-            {/* Reactions + comment button */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: "0.5rem",
-              minWidth: 0, paddingTop: "0.5rem",
-              borderTop: "1px solid var(--rule)", marginTop: "0.25rem",
-            }}>
-              {item.wpId && (
-                <div style={{ flex: 1, minWidth: 0, opacity: reportState === "idle" ? 1 : 0.5, transition: "opacity 0.15s" }}>
-                  <ReactionBar
-                    noBorder
-                    itemId={item.wpId}
-                    itemType="community"
-                    initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-                    shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/community/${item.slug}`}
-                  />
-                </div>
-              )}
-              <button
-                onClick={openPost}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.3rem",
-                  color: "var(--mute)", background: "none", border: "none",
-                  cursor: "pointer", fontSize: "0.75rem", flexShrink: 0,
-                  padding: 0, fontFamily: "inherit",
-                  opacity: reportState === "idle" ? 1 : 0.5, transition: "opacity 0.15s",
-                }}
-                aria-label="View comments"
-              >
-                <MessageCircle size={15} strokeWidth={1.8} />
-                {(item.commentCount ?? 0) > 0 && (
-                  <span style={{ fontVariantNumeric: "tabular-nums" }}>{item.commentCount}</span>
-                )}
-              </button>
-
-              {/* Report */}
-              {reportState === "idle" && (
-                <button
-                  onClick={() => setReportState("confirm")}
-                  title="Report this post"
-                  style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "0 0 0 4px", cursor: "pointer", color: "var(--mute)", flexShrink: 0, lineHeight: 1 }}
-                >
-                  <Flag size={13} strokeWidth={1.8} />
-                </button>
-              )}
-              {reportState === "confirm" && (
-                <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 }}>
-                  <span style={{ fontSize: "0.68rem", color: "var(--mute)" }}>Report as:</span>
-                  {(["spam", "harassment", "inappropriate"] as const).map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => submitReport(r)}
-                      style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 6px", fontSize: "0.62rem", cursor: "pointer", fontFamily: "inherit" }}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                  <button onClick={() => setReportState("idle")} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer" }}>✕</button>
-                </div>
-              )}
-              {reportState === "sent" && (
-                <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--mute)", flexShrink: 0 }}>Reported — thank you.</span>
-              )}
-              {reportState === "error" && (
-                <span style={{ fontSize: "0.68rem", color: "var(--error)", flexShrink: 0 }}>Couldn't send report.</span>
-              )}
-            </div>
+            {/* Reactions + comment + flag — all inside the action pill */}
+            {item.wpId && (
+              <div style={{
+                minWidth: 0, paddingTop: "0.5rem",
+                borderTop: "1px solid var(--rule)", marginTop: "0.25rem",
+                opacity: reportState === "idle" ? 1 : 0.6, transition: "opacity 0.15s",
+              }}>
+                <ReactionBar
+                  noBorder
+                  itemId={item.wpId}
+                  itemType="community"
+                  initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+                  shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/community/${item.slug}`}
+                  onComment={openPost}
+                  commentCount={item.commentCount ?? 0}
+                  flagSlot={
+                    reportState === "idle" ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setReportState("confirm"); }}
+                        title="Report this post"
+                        style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "4px 2px", cursor: "pointer", color: "var(--mute)", lineHeight: 1 }}
+                      >
+                        <Flag size={13} strokeWidth={1.8} />
+                      </button>
+                    ) : reportState === "confirm" ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                        <span style={{ fontSize: "0.6rem", color: "var(--mute)", whiteSpace: "nowrap" }}>Report:</span>
+                        {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                          <button
+                            key={r}
+                            onClick={(e) => { e.stopPropagation(); submitReport(r); }}
+                            style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 5px", fontSize: "0.58rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                        <button onClick={(e) => { e.stopPropagation(); setReportState("idle"); }} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer", padding: "0 2px" }}>✕</button>
+                      </div>
+                    ) : reportState === "sent" ? (
+                      <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--mute)", whiteSpace: "nowrap" }}>Reported ✓</span>
+                    ) : (
+                      <span style={{ fontSize: "0.62rem", color: "var(--error)", whiteSpace: "nowrap" }}>Couldn't send.</span>
+                    )
+                  }
+                />
+              </div>
+            )}
         </article>
         {modalOpen && (
           <>

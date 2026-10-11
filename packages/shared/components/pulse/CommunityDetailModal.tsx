@@ -193,7 +193,7 @@ function RsvpDisplay({
 
 /** Duplicated from FeedCard.tsx — see the note there (docs/hubs-plan.md
  * §10.4) on why this always starts on "Join" rather than checking status. */
-function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number; hubName?: string; hubSlug?: string; hubIsOfficial?: boolean }) {
+function HubBadgeRow({ hubId }: { hubId: number }) {
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -222,19 +222,6 @@ function HubBadgeRow({ hubId, hubName, hubSlug, hubIsOfficial }: { hubId: number
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "0.75rem" }}>
-      <Link
-        href={hubSlug ? `/hub/${hubSlug}` : "/hub/discover"}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: "4px",
-          background: hubIsOfficial ? "var(--ochre)" : "var(--gold)",
-          color: "#fff", fontSize: "0.64rem", fontWeight: 700,
-          letterSpacing: "0.04em", padding: "4px 11px", borderRadius: "9999px",
-          textDecoration: "none", whiteSpace: "nowrap",
-        }}
-      >
-        🏷 {hubName ?? "Hub"}
-      </Link>
       <button
         type="button"
         onClick={join}
@@ -402,6 +389,25 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                   {item.communityAuthor || "Community Member"}
                 </span>
                 {item.communityTier === "patron" && <ProBadge size={13} />}
+                {(item.hubName || item.hubSlug || (item.communityTag && !item.hubId)) && (() => {
+                  const tagLabel = item.hubName || item.communityTag;
+                  const tagSlug  = item.hubSlug || item.communityTag?.toLowerCase();
+                  return (
+                    <Link
+                      href={tagSlug ? `/hub/${tagSlug}` : "/hub/discover"}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        fontSize: "0.6rem", fontWeight: 500,
+                        padding: "2px 7px", borderRadius: "4px",
+                        background: "rgba(168,162,158,0.15)", color: "var(--mute)",
+                        whiteSpace: "nowrap", fontFamily: "var(--font-sans), sans-serif",
+                        textDecoration: "none",
+                      }}
+                    >
+                      #{tagLabel}
+                    </Link>
+                  );
+                })()}
               </div>
               <span style={{ color: "var(--mute)", fontSize: "0.72rem" }}>
                 {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
@@ -415,12 +421,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           </div>
 
           {item.hubId && (
-            <HubBadgeRow
-              hubId={item.hubId}
-              hubName={item.hubName}
-              hubSlug={item.hubSlug}
-              hubIsOfficial={item.hubIsOfficial}
-            />
+            <HubBadgeRow hubId={item.hubId} />
           )}
 
           {/* Template badge */}
