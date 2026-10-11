@@ -932,14 +932,16 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
                       <strong>Why this matters:</strong> When people join a Stoop they're signing up to a recurring local thing, not a one-off event.
                       Hosts who move or go quiet disrupt the whole group.
                     </div>
-                    <button
-                      type="button"
-                      className={`stoop-wiz-commit${hostLocalityConfirmed ? " stoop-wiz-commit--active" : ""}`}
-                      onClick={() => setHostLocalityConfirmed((v) => !v)}
-                    >
-                      {hostLocalityConfirmed ? "✓ " : ""}
-                      I&apos;m local to this area and I commit to hosting at least monthly
-                    </button>
+                    <label className="stoop-wiz-accessible-row">
+                      <input
+                        type="checkbox"
+                        checked={hostLocalityConfirmed}
+                        onChange={(e) => setHostLocalityConfirmed(e.target.checked)}
+                      />
+                      <span>
+                        <strong>I&apos;m local to this area and I commit to hosting at least monthly</strong>
+                      </span>
+                    </label>
                   </>
                 ) : wizStep === 5 ? (
                   /* Step 5 — Address visibility */
