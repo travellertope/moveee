@@ -62,7 +62,6 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/og-fallback.png",
         sizes: "1200x630",
         type: "image/png",
-        // @ts-expect-error - form_factor is valid but not yet in Next.js types
         form_factor: "wide",
         label: "Moveee — Connect to Culture",
       },
