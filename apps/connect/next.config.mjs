@@ -5,6 +5,7 @@ import withSerwist from "@serwist/next";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
+  turbopack: {},
   transpilePackages: ["@moveee/shared", "@moveee/utils"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
