@@ -317,10 +317,10 @@ class Culture_Gamification {
         ),
         'hub_founder' => array(
             'name'        => 'Hub Founder',
-            'description' => 'Created a Hub that reached 10 members.',
+            'description' => 'Created a Hub with 25 or more followers.',
             'icon'        => 'dashicons-networking',
             'trigger'     => 'hub_max_members',
-            'threshold'   => 10,
+            'threshold'   => 25,
         ),
     );
 

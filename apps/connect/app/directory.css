@@ -330,10 +330,10 @@
 }
 
 .dir-wiki-sidebar-card {
-  background: #faf7f2;
-  border: 1px solid var(--dir-border);
-  border-radius: 8px;
-  padding: 18px 16px;
+  background: #fff;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-2xl, 20px);
+  padding: 20px;
   margin-bottom: 16px;
 }
 
@@ -521,12 +521,12 @@
 }
 
 .dir-wiki-infobox {
-  border: 1px solid var(--dir-border);
-  border-radius: 8px;
-  background: #faf7f2;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-2xl, 20px);
+  background: #fff;
   font-size: 13px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .dir-wiki-infobox-img {
@@ -543,8 +543,8 @@
   color: var(--dir-ink);
   text-align: center;
   padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--dir-border);
-  background: #f3ede0;
+  border-bottom: 1px solid var(--rule, #e8e2d8);
+  background: #fff;
 }
 
 .dir-wiki-infobox-row {

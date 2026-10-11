@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import FeedCard from "@/components/pulse/FeedCard";
+import type { FeedItem } from "@/lib/unified-feed";
 
 interface Post {
   id: number;
@@ -28,19 +30,42 @@ const TEMPLATE_FILTERS = [
   { value: "poll",             label: "Polls" },
 ];
 
-const TEMPLATE_EMOJI: Record<string, string> = {
-  post: "📝", "hidden-gem": "💎", "cultural-take": "💬",
-  "food-review": "🍽️", "creative-showcase": "🎨",
-  poll: "📊", itinerary: "🗺️", event: "📅", quote: "✦",
-};
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+interface Props {
+  username: string;
+  displayName: string;
+  avatarUrl: string;
+  tier: string;
 }
 
-interface Props { username: string }
+function toFeedItem(post: Post, username: string, displayName: string, avatarUrl: string, tier: string): FeedItem {
+  return {
+    id: String(post.id),
+    wpId: String(post.id),
+    type: "community",
+    title: post.text?.slice(0, 120) ?? "",
+    slug: post.slug,
+    date: post.date,
+    excerpt: post.text,
+    image: post.gallery_images?.[0] ?? post.image_url,
+    href: `/community/${post.slug}`,
+    communityAuthor: displayName,
+    communityAuthorUsername: username,
+    communityAuthorAvatar: avatarUrl,
+    communityTag: post.tag,
+    communityTier: tier,
+    templateType: post.template_type,
+    starRating: post.star_rating,
+    locationName: post.location_name,
+    galleryImages: post.gallery_images,
+    videoUrl: post.video_url,
+    foodDishName: post.food_dish_name,
+    reactions: post.reactions,
+    commentCount: post.comment_count,
+  };
+}
 
-export default function CommunityTab({ username }: Props) {
+export default function CommunityTab({ username, displayName, avatarUrl, tier }: Props) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [template, setTemplate] = useState("");
@@ -109,8 +134,10 @@ export default function CommunityTab({ username }: Props) {
         <p className="prf-empty">No posts yet.</p>
       ) : (
         <>
-          <div className="prf-posts-grid">
-            {posts.map(post => <PostRow key={post.id} post={post} />)}
+          <div>
+            {posts.map(post => (
+              <FeedCard key={post.id} item={toFeedItem(post, username, displayName, avatarUrl, tier)} />
+            ))}
           </div>
           {hasMore && (
             <button onClick={loadMore} disabled={loading} className="prf-load-more">
@@ -123,66 +150,3 @@ export default function CommunityTab({ username }: Props) {
   );
 }
 
-function PostRow({ post }: { post: Post }) {
-  const thumb = post.gallery_images?.[0] ?? post.image_url;
-  const emoji = TEMPLATE_EMOJI[post.template_type] ?? "📝";
-  const totalReactions = (post.reactions?.love ?? 0) + (post.reactions?.fire ?? 0) + (post.reactions?.clap ?? 0);
-
-  return (
-    <a
-      href={`/community/${post.slug}`}
-      className="prf-post-row"
-      style={{
-        display: "flex",
-        gap: "14px",
-        padding: "16px",
-        background: "var(--paper)",
-        textDecoration: "none",
-        alignItems: "flex-start",
-        transition: "background .15s",
-      }}
-      onMouseEnter={e => (e.currentTarget.style.background = "rgba(42,36,28,.03)")}
-      onMouseLeave={e => (e.currentTarget.style.background = "var(--paper)")}
-    >
-      {thumb ? (
-        <img src={thumb} alt="" style={{ width: "60px", height: "60px", objectFit: "cover", flexShrink: 0 }} />
-      ) : (
-        <div style={{
-          width: "60px", height: "60px", flexShrink: 0,
-          background: "rgba(42,36,28,.05)", display: "flex",
-          alignItems: "center", justifyContent: "center", fontSize: "22px",
-        }}>{emoji}</div>
-      )}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "4px", flexWrap: "wrap" }}>
-          {post.tag && (
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: "8px",
-              letterSpacing: ".12em", textTransform: "uppercase",
-              color: "var(--ochre)", background: "rgba(179,130,56,.08)",
-              border: "1px solid rgba(179,130,56,.2)", padding: "2px 6px",
-            }}>{post.tag}</span>
-          )}
-          {post.location_name && (
-            <span style={{ fontSize: "11px", color: "var(--mute)" }}>📍 {post.location_name}</span>
-          )}
-        </div>
-        <p style={{
-          margin: "0 0 6px", fontSize: "14px", color: "var(--ink)",
-          lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical", overflow: "hidden",
-        }}>{post.food_dish_name ? `${post.food_dish_name} — ` : ""}{post.text}</p>
-        <div style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: "9px",
-          letterSpacing: ".08em", color: "var(--mute)",
-          display: "flex", gap: "12px", flexWrap: "wrap",
-        }}>
-          <span>{formatDate(post.date)}</span>
-          {post.star_rating > 0 && <span>{"★".repeat(post.star_rating)}{"☆".repeat(5 - post.star_rating)}</span>}
-          {totalReactions > 0 && <span>{totalReactions} reactions</span>}
-          {post.comment_count > 0 && <span>{post.comment_count} comments</span>}
-        </div>
-      </div>
-    </a>
-  );
-}

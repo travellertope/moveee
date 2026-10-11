@@ -2940,6 +2940,196 @@ select.mem-field-input { cursor: pointer; }
 .an-post-eng { display: flex; gap: 10px; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--ink-soft); }
 .an-post-total { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: var(--ink); text-align: right; margin-top: 2px; }
 
+/* ── Dashboard redesign — dash-* namespace ── */
+
+.dash-user-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-xl, 12px);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(20,17,13,0.05);
+}
+
+.dash-user-avatar-wrap { flex-shrink: 0; }
+
+.dash-user-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--ink, #14110d);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  overflow: hidden;
+  border: 2px solid var(--rule, #e8e2d8);
+}
+.dash-user-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.dash-user-avatar--patron { border-color: var(--ochre, #7a241c); }
+
+.dash-user-info { flex: 1; min-width: 0; }
+
+.dash-user-name {
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--ink, #14110d);
+  margin: 0 0 6px;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dash-user-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dash-tier-pill {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+  background: #f0f0ee;
+  color: var(--mute, #7a6f5c);
+  border: 1px solid var(--rule, #e8e2d8);
+}
+.dash-tier-pill--patron {
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border-color: transparent;
+}
+.dash-tier-pill--lit {
+  background: var(--ink, #14110d);
+  color: #fff;
+  border-color: transparent;
+}
+
+.dash-user-city {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--mute, #7a6f5c);
+}
+
+/* Stat cards grid */
+.dash-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) { .dash-stat-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 420px) { .dash-stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.dash-stat-card {
+  background: #fff;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-xl, 12px);
+  padding: 16px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 1px 3px rgba(20,17,13,0.04);
+}
+.dash-stat-card--accent {
+  background: var(--ochre, #7a241c);
+  border-color: transparent;
+  color: #fff;
+}
+.dash-stat-card--accent .dash-stat-label,
+.dash-stat-card--accent .dash-stat-sub { color: rgba(255,255,255,0.7); }
+.dash-stat-card--accent .dash-stat-value { color: #fff; }
+
+.dash-stat-icon { font-size: 16px; margin-bottom: 4px; line-height: 1; }
+.dash-stat-label {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute, #7a6f5c);
+}
+.dash-stat-value {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink, #14110d);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.dash-stat-sub {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  color: var(--mute, #7a6f5c);
+  margin-top: 1px;
+}
+
+/* Chart card */
+.dash-chart-card {
+  background: #fff;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-xl, 12px);
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(20,17,13,0.04);
+}
+
+.dash-chart-skeleton {
+  background: #f0f0ee;
+  border-radius: var(--radius-md, 4px);
+  height: 140px;
+  animation: dash-pulse 1.4s ease-in-out infinite;
+}
+@keyframes dash-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* How to Earn table */
+.dash-earn-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dash-earn-table th {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute, #7a6f5c);
+  text-align: left;
+  padding: 0 22px 8px;
+  border-bottom: 1px solid var(--rule, #e8e2d8);
+}
+.dash-earn-table th:not(:first-child) { text-align: right; }
+.dash-earn-table td {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: var(--ink, #14110d);
+  padding: 9px 22px;
+  border-bottom: 1px solid var(--rule, #e8e2d8);
+  line-height: 1.3;
+}
+.dash-earn-table tr:last-child td { border-bottom: none; }
+.dash-earn-val { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dash-earn-val--credit { color: var(--gold, #b38238); }
+.dash-earn-val--point { color: #2a6496; }
+
 /* ═══════════════════════════════════════════════════
    ACCOUNT DASHBOARD — PHASE 5: MY EVENTS + REFERRALS
    Same .acct-* shell as prior phases. Both client components moved
