@@ -86,25 +86,23 @@ export default function HubFeed({
     <div>
       {isMember && (
         <div style={{ marginBottom: 16 }}>
-          {/* Same composer-pill → type-picker-modal → dedicated-page flow as
-              /feed (PulseFeed.tsx) — picking a template navigates to
-              /hub/{slug}/post/new instead of expanding a form inline. */}
-          <button
-            type="button"
-            className="composer-pill"
-            onClick={() => router.push(`/hub/${hubSlug}/post/new`)}
-          >
-            <span className="composer-pill-avatar">
+          <div className="composer-box">
+            <div className="composer-box-avatar">
               {(session?.user as any)?.avatarUrl ? (
                 <img src={(session!.user as any).avatarUrl} alt="" />
               ) : (
                 (session?.user?.name ?? (session?.user as any)?.displayName ?? "?")
                   .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()
               )}
-            </span>
-            <span className="composer-pill-input">Share something with this Hub…</span>
-            <span className="composer-pill-post">Post</span>
-          </button>
+            </div>
+            <button
+              type="button"
+              className="composer-box-placeholder"
+              onClick={() => router.push(`/hub/${hubSlug}/post/new`)}
+            >
+              Share something with this Hub…
+            </button>
+          </div>
         </div>
       )}
 
