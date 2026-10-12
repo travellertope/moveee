@@ -223,6 +223,7 @@ export default async function CommunityPostPage({
                 text={rawText}
                 wpId={String(post.id)}
                 postId={post.id}
+                authorId={post.meta.community_author_id ? Number(post.meta.community_author_id) : undefined}
                 initialReactions={{
                   love: Number(post.meta.reaction_love ?? 0),
                   fire: Number(post.meta.reaction_fire ?? 0),
