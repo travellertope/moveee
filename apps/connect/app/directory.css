@@ -523,7 +523,7 @@
 .dir-wiki-infobox {
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-2xl, 20px);
-  background: #fff;
+  background: var(--paper, #f3ece0);
   font-size: 13px;
   overflow: hidden;
   margin-bottom: 12px;
@@ -544,7 +544,7 @@
   text-align: center;
   padding: 12px 14px 10px;
   border-bottom: 1px solid var(--rule, #e8e2d8);
-  background: #fff;
+  background: var(--paper, #f3ece0);
 }
 
 .dir-wiki-infobox-row {
