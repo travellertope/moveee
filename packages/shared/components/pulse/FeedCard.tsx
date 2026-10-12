@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { MessageCircle, Flag } from "lucide-react";
@@ -383,14 +384,18 @@ export default function FeedCard({
   onTagClick,
   onMentionClick,
   interestMatch,
+  onDelete,
 }: {
   item: FeedItem;
   onTagClick?: (tag: string) => void;
   onMentionClick?: (username: string) => void;
   interestMatch?: boolean;
+  onDelete?: (id: string) => void;
 }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const router = useRouter();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { data: session } = useSession();
   const handleMentionClick = onMentionClick ?? ((username: string) => router.push(`/${username}`));
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
@@ -508,6 +513,72 @@ export default function FeedCard({
     const openPost = useCallback(() => setModalOpen(true), []);
 
     const isPro = item.communityTier === "patron";
+
+    // Ownership / owner menu state
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [deleting, setDeleting] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [editOpen, setEditOpen] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [editText, setEditText] = useState("");
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [editing, setEditing] = useState(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [editError, setEditError] = useState("");
+
+    const sessionUser = session?.user as any;
+    const sessionUserId = sessionUser?.id ? Number(sessionUser.id) : sessionUser?.databaseId ? Number(sessionUser.databaseId) : null;
+    const isOwn = !!(sessionUserId && item.communityAuthorId && sessionUserId === item.communityAuthorId);
+    const canEdit = isOwn && (sessionUser?.tier === "patron" || sessionUser?.tier === "lit" || sessionUser?.isAdmin === true);
+
+    async function handleDelete() {
+      setDeleting(true);
+      try {
+        const res = await fetch("/api/community/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId: item.wpId }),
+        });
+        if (res.ok) {
+          onDelete?.(item.id);
+        } else {
+          const d = await res.json().catch(() => ({}));
+          alert(d.error ?? "Could not delete post.");
+          setDeleting(false);
+          setDeleteConfirm(false);
+        }
+      } catch {
+        alert("Could not delete post.");
+        setDeleting(false);
+        setDeleteConfirm(false);
+      }
+    }
+
+    async function handleEdit() {
+      if (!editText.trim()) return;
+      setEditing(true);
+      setEditError("");
+      try {
+        const res = await fetch("/api/community/edit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId: item.wpId, text: editText }),
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setEditError(d.error ?? "Edit failed.");
+        } else {
+          setEditOpen(false);
+        }
+      } catch {
+        setEditError("Network error.");
+      }
+      setEditing(false);
+    }
 
     async function submitReport(reason: string) {
       setReportState("sent");
@@ -688,6 +759,19 @@ export default function FeedCard({
                     </Link>
                   );
                 })()}
+                {isOwn && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setOwnerMenuOpen(v => !v); }}
+                    title="Post options"
+                    style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--mute)", padding: "2px 4px", borderRadius: "4px",
+                      fontSize: "1rem", lineHeight: 1, display: "flex", alignItems: "center",
+                    }}
+                  >
+                    ···
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1002,6 +1086,175 @@ export default function FeedCard({
                   }}
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Owner menu dropdown */}
+        {ownerMenuOpen && (
+          <>
+            <div onClick={(e) => { e.stopPropagation(); setOwnerMenuOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9000 }} />
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+                width: "min(480px, 100%)", zIndex: 9001,
+                background: "var(--paper, #f3ece0)",
+                borderRadius: "20px 20px 0 0",
+                padding: "0.75rem 1.25rem 1.5rem",
+                boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
+              }}
+            >
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+              <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", fontWeight: 700, color: "var(--ink)", textAlign: "center", letterSpacing: "0.02em" }}>Post options</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {canEdit && (
+                  <button
+                    onClick={() => { setOwnerMenuOpen(false); setEditText(item.body ?? item.excerpt ?? ""); setEditOpen(true); }}
+                    style={{
+                      width: "100%", padding: "0.75rem 1rem",
+                      background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                      borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                      textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
+                      fontFamily: "inherit", fontWeight: 500,
+                    }}
+                  >
+                    ✏️ Edit post
+                  </button>
+                )}
+                <button
+                  onClick={() => { setOwnerMenuOpen(false); setDeleteConfirm(true); }}
+                  style={{
+                    width: "100%", padding: "0.75rem 1rem",
+                    background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                    borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                    textAlign: "left", fontSize: "0.88rem", color: "#c0392b",
+                    fontFamily: "inherit", fontWeight: 500,
+                  }}
+                >
+                  🗑 Delete post
+                </button>
+                <button
+                  onClick={() => setOwnerMenuOpen(false)}
+                  style={{
+                    width: "100%", marginTop: "0.25rem", padding: "0.75rem 1rem",
+                    background: "transparent", border: "none",
+                    borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                    fontSize: "0.85rem", color: "var(--mute)", fontFamily: "inherit", fontWeight: 600,
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Delete confirm sheet */}
+        {deleteConfirm && (
+          <>
+            <div onClick={(e) => { e.stopPropagation(); if (!deleting) setDeleteConfirm(false); }} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }} />
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+                width: "min(480px, 100%)", zIndex: 9001,
+                background: "var(--paper, #f3ece0)",
+                borderRadius: "20px 20px 0 0",
+                padding: "0.75rem 1.25rem 1.5rem",
+                boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
+              }}
+            >
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+              <p style={{ margin: "0 0 0.5rem", fontSize: "0.95rem", fontWeight: 700, color: "var(--ink)", textAlign: "center" }}>Delete this post?</p>
+              <p style={{ margin: "0 0 1.25rem", fontSize: "0.8rem", color: "var(--mute)", textAlign: "center", lineHeight: 1.5 }}>This can't be undone.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{
+                    width: "100%", padding: "0.85rem 1rem",
+                    background: "#c0392b", border: "none",
+                    borderRadius: "var(--radius-lg, 6px)", cursor: deleting ? "not-allowed" : "pointer",
+                    fontSize: "0.9rem", color: "#fff", fontFamily: "inherit", fontWeight: 700,
+                    opacity: deleting ? 0.7 : 1,
+                  }}
+                >
+                  {deleting ? "Deleting…" : "Yes, delete"}
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(false)}
+                  disabled={deleting}
+                  style={{
+                    width: "100%", padding: "0.75rem 1rem",
+                    background: "transparent", border: "none",
+                    borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                    fontSize: "0.85rem", color: "var(--mute)", fontFamily: "inherit", fontWeight: 600,
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Edit modal (Pro only) */}
+        {editOpen && (
+          <>
+            <div onClick={(e) => { e.stopPropagation(); if (!editing) setEditOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.55)" }} />
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+                width: "min(540px, 100%)", zIndex: 9001,
+                background: "var(--paper, #f3ece0)",
+                borderRadius: "20px 20px 0 0",
+                padding: "0.75rem 1.25rem 1.5rem",
+                boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
+                maxHeight: "80vh", display: "flex", flexDirection: "column",
+              }}
+            >
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem", flexShrink: 0 }} />
+              <p style={{ margin: "0 0 0.85rem", fontSize: "0.85rem", fontWeight: 700, color: "var(--ink)", flexShrink: 0 }}>Edit post</p>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={6}
+                style={{
+                  width: "100%", padding: "0.75rem", fontSize: "0.9rem", lineHeight: 1.55,
+                  border: "1px solid var(--rule, #e8e2d8)", borderRadius: "var(--radius-lg, 6px)",
+                  background: "#fff", color: "var(--ink)", fontFamily: "inherit",
+                  resize: "vertical", flex: "1 1 auto", minHeight: "100px", boxSizing: "border-box",
+                }}
+              />
+              {editError && <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "#c0392b" }}>{editError}</p>}
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem", flexShrink: 0 }}>
+                <button
+                  onClick={() => { if (!editing) setEditOpen(false); }}
+                  disabled={editing}
+                  style={{
+                    flex: 1, padding: "0.75rem", background: "transparent",
+                    border: "1px solid var(--rule, #e8e2d8)", borderRadius: "var(--radius-lg, 6px)",
+                    cursor: "pointer", fontSize: "0.85rem", color: "var(--mute)", fontFamily: "inherit", fontWeight: 600,
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEdit}
+                  disabled={editing || !editText.trim()}
+                  style={{
+                    flex: 2, padding: "0.75rem",
+                    background: "var(--ochre, #7a241c)", border: "none",
+                    borderRadius: "var(--radius-lg, 6px)", cursor: editing ? "not-allowed" : "pointer",
+                    fontSize: "0.85rem", color: "#fff", fontFamily: "inherit", fontWeight: 700,
+                    opacity: (editing || !editText.trim()) ? 0.7 : 1,
+                  }}
+                >
+                  {editing ? "Saving…" : "Save changes"}
                 </button>
               </div>
             </div>
