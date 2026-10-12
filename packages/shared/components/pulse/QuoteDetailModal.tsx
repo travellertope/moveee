@@ -1,9 +1,32 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import ReactionBar from "./ReactionBar";
 import type { FeedItem } from "@/lib/unified-feed";
+import type { WpComment } from "@/lib/pulse-wordpress";
+
+const CommentThread = dynamic(() => import("./CommentThread"), { ssr: false });
+
+function decodeHtml(str: string): string {
+  if (!str) return str;
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&hellip;/g, "…")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&rsquo;/g, "’")
+    .replace(/&lsquo;/g, "‘")
+    .replace(/&rdquo;/g, "”")
+    .replace(/&ldquo;/g, "“")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
 
 interface Props {
   item: FeedItem;
@@ -12,6 +35,8 @@ interface Props {
 
 export default function QuoteDetailModal({ item, onClose }: Props) {
   const close = useCallback(() => onClose(), [onClose]);
+  const [comments, setComments] = useState<WpComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
@@ -22,6 +47,16 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
       document.body.style.overflow = "";
     };
   }, [close]);
+
+  useEffect(() => {
+    if (!item.wpId) return;
+    setCommentsLoading(true);
+    fetch(`/api/pulse/comments?postId=${item.wpId}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setComments(Array.isArray(data) ? data : []))
+      .catch(() => setComments([]))
+      .finally(() => setCommentsLoading(false));
+  }, [item.wpId]);
 
   return (
     <div
@@ -109,7 +144,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
             color: "var(--ink)",
             marginBottom: "1.25rem",
           }}>
-            {item.title}
+            {decodeHtml(item.title)}
           </p>
 
           {/* Attribution */}
@@ -122,12 +157,12 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
                 color: "var(--ochre)", fontSize: "0.95rem", fontWeight: 600,
                 fontFamily: "var(--font-fraunces), serif",
               }}>
-                — {item.quoteAuthor}
+                — {decodeHtml(item.quoteAuthor)}
               </span>
             )}
             {item.quoteSource && (
               <span style={{ color: "var(--mute)", fontSize: "0.82rem", fontStyle: "italic" }}>
-                {item.quoteSource}
+                {decodeHtml(item.quoteSource)}
               </span>
             )}
           </div>
@@ -159,6 +194,17 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
                 initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
                 shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/quotes/${item.wpId}-${item.slug}`}
               />
+            </div>
+          )}
+
+          {/* Comments */}
+          {item.wpId && (
+            <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: "1px solid var(--rule)" }}>
+              {commentsLoading ? (
+                <p style={{ color: "var(--mute)", fontSize: "0.8rem" }}>Loading comments…</p>
+              ) : (
+                <CommentThread postId={parseInt(item.wpId, 10)} initialComments={comments} />
+              )}
             </div>
           )}
         </div>

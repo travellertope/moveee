@@ -144,7 +144,7 @@ export default function ConnectHeader() {
           ))}
         </nav>
 
-        <div className="ch-rail-section-label ch-rail-section-label--spaced">Spaces</div>
+        <div className="ch-rail-section-label ch-rail-section-label--spaced">Hubs</div>
         <div className="ch-rail-nav">
           {HUB_SPACES.map((hub) => (
             <Link key={hub.slug} href={`/hub/${hub.slug}`} className={`ch-rail-link ch-rail-hub-link${pathname.startsWith(`/hub/${hub.slug}`) ? " active" : ""}`}>
@@ -207,7 +207,7 @@ export default function ConnectHeader() {
         </div>
 
         <div className="ch-mobile-nav-section">
-          <div className="ch-mobile-section-label">Spaces</div>
+          <div className="ch-mobile-section-label">Hubs</div>
           {HUB_SPACES.map((hub) => (
             <Link key={hub.slug} href={`/hub/${hub.slug}`} className="ch-mobile-nav-link" onClick={() => setMobileOpen(false)}>
               <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: hub.color, marginRight: 10, flexShrink: 0 }} />
