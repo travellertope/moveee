@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
@@ -53,6 +53,7 @@ interface PulseFeedProps {
 
 export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
@@ -363,6 +364,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           <ComposerModal
             open={composerOpen}
             onClose={() => setComposerOpen(false)}
+            onSuccess={() => router.refresh()}
             initialTab={composerTab}
           />
 

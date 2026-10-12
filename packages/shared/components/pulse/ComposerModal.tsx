@@ -17,6 +17,32 @@ const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
 
 const CATEGORIES = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  Music:      ["music", "album", "song", "track", "beat", "artist", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape"],
+  Fashion:    ["fashion", "style", "outfit", "clothes", "clothing", "wear", "dress", "brand", "designer", "sneaker", "shoe", "vintage", "thrift", "streetwear", "wardrobe"],
+  Art:        ["art", "artwork", "gallery", "painting", "drawing", "illustration", "sketch", "mural", "exhibit", "canvas", "sculpture", "aesthetic"],
+  Film:       ["film", "movie", "cinema", "director", "actor", "actress", "scene", "documentary", "series", "episode", "netflix", "sequel", "trailer", "tv show"],
+  Food:       ["food", "eat", "restaurant", "meal", "dish", "recipe", "cook", "taste", "flavor", "drink", "cafe", "bar", "brunch", "dinner", "lunch", "breakfast", "jollof", "suya", "chef"],
+  Sport:      ["sport", "football", "soccer", "basketball", "tennis", "cricket", "running", "gym", "fitness", "match", "league", "tournament", "athlete"],
+  Travel:     ["travel", "trip", "city", "country", "visit", "destination", "hotel", "flight", "abroad", "explore", "vacation", "holiday", "road trip", "itinerary"],
+  Ideas:      ["idea", "thought", "opinion", "perspective", "debate", "discuss", "theory", "philosophy", "curious", "reflection", "wonder", "think about"],
+  Literature: ["book", "read", "novel", "author", "poetry", "poem", "prose", "fiction", "nonfiction", "writing", "chapter", "story", "narrative", "literature"],
+  Design:     ["design", "ux", "ui", "typography", "visual", "layout", "architecture", "interior", "logo", "graphic", "branding"],
+  Tech:       ["tech", "technology", "code", "app", "software", "ai", "data", "startup", "digital", "developer", "crypto", "algorithm", "programming"],
+};
+
+function inferCategory(text: string): string {
+  if (!text.trim()) return "";
+  const lower = text.toLowerCase();
+  let best = "";
+  let bestScore = 0;
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    const score = keywords.filter(kw => lower.includes(kw)).length;
+    if (score > bestScore) { bestScore = score; best = cat; }
+  }
+  return bestScore > 0 ? best : "";
+}
+
 const TABS: { key: ComposerTab; label: string; icon: string }[] = [
   { key: "update",    label: "Update",       icon: "✏️" },
   { key: "review",    label: "Review",       icon: "⭐" },
@@ -159,16 +185,34 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [evTicketUrl, setEvTicketUrl] = useState("");
 
   // Shared
-  const [category, setCategory]     = useState("");
-  const [imageUrl, setImageUrl]     = useState("");
-  const [uploading, setUploading]   = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]           = useState("");
+  const [category, setCategory]           = useState("");
+  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
+  const [imageUrl, setImageUrl]           = useState("");
+  const [uploading, setUploading]         = useState(false);
+  const [submitting, setSubmitting]       = useState(false);
+  const [error, setError]                 = useState("");
 
   // Sync initialTab when it changes (star button sets review)
   useEffect(() => {
     if (open) setActiveTab(initialTab);
   }, [open, initialTab]);
+
+  // Auto-infer hub/category from content unless user has manually picked one
+  useEffect(() => {
+    if (categoryManuallySet) return;
+    // Direct tab-to-category mappings
+    if (activeTab === "art")       { setCategory("Art");      return; }
+    if (activeTab === "itinerary") { setCategory("Travel");   return; }
+    if (activeTab === "review") {
+      const map: Record<ReviewSubtype, string> = { food: "Food", music: "Music", book: "Literature", film: "Film", place: "" };
+      const direct = map[revSubtype];
+      if (direct) { setCategory(direct); return; }
+    }
+    // Keyword inference from text
+    const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
+    const inferred = inferCategory(combined);
+    if (inferred) setCategory(inferred);
+  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
 
   const resetAll = useCallback(() => {
     setUpdTitle(""); setUpdContent("");
@@ -181,6 +225,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
     setEvDesc(""); setEvAdmission(""); setEvTicketUrl("");
     setImageUrl(""); setError("");
+    setCategory(""); setCategoryManuallySet(false);
   }, []);
 
   async function handleImageUpload(file: File) {
@@ -791,14 +836,14 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         {/* Footer */}
         <div className="cm-footer">
           <div className="cm-footer-left">
-            <span className="cm-footer-label">Space</span>
+            <span className="cm-footer-label">Hub</span>
             <select
               className="cm-category-select"
               value={category}
-              onChange={e => setCategory(e.target.value)}
-              aria-label="Category"
+              onChange={e => { setCategory(e.target.value); setCategoryManuallySet(true); }}
+              aria-label="Hub"
             >
-              <option value="">— Select Space —</option>
+              <option value="">— Select Hub —</option>
               {CATEGORIES.map(c => (
                 <option key={c} value={c}>#{c}</option>
               ))}

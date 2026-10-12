@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { checkPostSpam, checkBlocklist, getReviewDays } from "@/lib/spam-protection";
 
@@ -361,6 +362,11 @@ export async function POST(req: NextRequest) {
   // hook (class-culture-rest-api.php's handle_community_post_created) — it
   // runs for every REST-created culture_post regardless of route, so no
   // extra round-trip is needed here.
+
+  // Bust the ISR cache on published posts so the feed shows them immediately.
+  if (postStatus === "publish") {
+    revalidatePath("/feed");
+  }
 
   return NextResponse.json({
     success: true,
