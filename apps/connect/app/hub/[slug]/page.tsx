@@ -60,6 +60,44 @@ async function fetchHub(slug: string): Promise<Hub | null> {
   }
 }
 
+interface TopPost {
+  id: number;
+  title: string;
+  slug?: string;
+  score: number;
+  commentCount: number;
+}
+
+async function fetchTopPosts(hubId: number): Promise<TopPost[]> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/hub/${hubId}/feed?per_page=30`, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
+    const items: any[] = data?.items ?? [];
+    return items
+      .map((item) => {
+        const r = item.reactions ?? {};
+        const score =
+          (r.love || 0) +
+          (item.commentCount || item.comment_count || 0) * 2;
+        return {
+          id: item.id ?? item.postId,
+          title: item.title ?? "",
+          slug: item.slug,
+          commentCount: item.commentCount || item.comment_count || 0,
+          score,
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+
 async function fetchRelatedEvents(hubId: number): Promise<RelatedEvent[]> {
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/hub/${hubId}/related-events`, {
@@ -116,7 +154,10 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
     ? await fetchStatus(hub.id, Number(session.user.id))
     : { isMember: false, role: null, isFollowing: false, notifyPosts: false };
   const isModerator = status.role === "owner" || status.role === "mod";
-  const relatedEvents = await fetchRelatedEvents(hub.id);
+  const [relatedEvents, topPosts] = await Promise.all([
+    fetchRelatedEvents(hub.id),
+    fetchTopPosts(hub.id),
+  ]);
 
   return (
     <div>
@@ -227,12 +268,27 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                   marginBottom: "1.25rem",
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <h1 style={{
-                      fontSize: "1.65rem", fontWeight: 700, color: "#14110d",
-                      margin: "0 0 0.35rem", lineHeight: 1.2,
-                    }}>
-                      {hub.name}
-                    </h1>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap", marginBottom: "0.4rem" }}>
+                      <h1 style={{
+                        fontSize: "1.75rem", fontWeight: 800, color: "#14110d",
+                        margin: 0, lineHeight: 1.15, letterSpacing: "-0.02em",
+                      }}>
+                        {hub.name}
+                      </h1>
+                      {hub.status !== "archived" && (
+                        <span style={{
+                          fontSize: "0.68rem", fontWeight: 700,
+                          background: "rgba(122,36,28,0.08)", color: "var(--ochre, #7a241c)",
+                          border: "1px solid rgba(122,36,28,0.2)",
+                          borderRadius: "var(--radius-full, 9999px)",
+                          padding: "0.2rem 0.6rem",
+                          letterSpacing: "0.04em",
+                          flexShrink: 0,
+                        }}>
+                          Active Space
+                        </span>
+                      )}
+                    </div>
                     {hub.description && (
                       <p style={{ color: "#3a342b", fontSize: "0.875rem", lineHeight: 1.6, margin: 0 }}>
                         {hub.description}
@@ -354,8 +410,10 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
         {/* Right rail */}
         <aside className="pulse-sidebar-right">
           <div style={{ padding: "1.25rem 1rem" }}>
+
+            {/* About Moveee */}
             <div style={{
-              background: "var(--paper, #fff)",
+              background: "#fff",
               border: "1px solid var(--rule, #e8e2d8)",
               borderRadius: "var(--radius-xl, 12px)",
               padding: "1rem 1.25rem",
@@ -382,9 +440,75 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
               </Link>
             </div>
 
-            {/* apps/connect has no site-wide footer — every page with a
-                right rail carries this copyright block instead. */}
-            <p style={{ margin: "1rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
+            {/* Trending in this Hub */}
+            {topPosts.length > 0 && (
+              <div style={{
+                background: "#fff",
+                border: "1px solid var(--rule, #e8e2d8)",
+                borderRadius: "var(--radius-xl, 12px)",
+                overflow: "hidden",
+                marginBottom: "1rem",
+              }}>
+                <div style={{
+                  padding: "0.65rem 1.25rem",
+                  borderBottom: "1px solid var(--rule, #e8e2d8)",
+                  background: "#fafaf9",
+                }}>
+                  <p style={{
+                    color: "#3a342b", fontSize: "0.6rem", fontWeight: 700,
+                    letterSpacing: "0.15em", textTransform: "uppercase", margin: 0,
+                  }}>
+                    Trending in {hub.name}
+                  </p>
+                </div>
+                <div style={{ padding: "0.25rem 0" }}>
+                  {topPosts.map((post, i) => (
+                    <a
+                      key={post.id}
+                      href={`/community/${post.slug ?? post.id}`}
+                      style={{
+                        display: "flex", alignItems: "flex-start", gap: "0.6rem",
+                        padding: "0.65rem 1.25rem",
+                        textDecoration: "none", color: "inherit",
+                        borderBottom: i < topPosts.length - 1 ? "1px solid var(--rule, #e8e2d8)" : "none",
+                      }}
+                    >
+                      <span style={{
+                        fontSize: "0.68rem", fontWeight: 700, color: "#b0a898",
+                        fontFamily: "var(--font-mono, monospace)",
+                        minWidth: 16, flexShrink: 0, paddingTop: "0.1rem",
+                      }}>
+                        {i + 1}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{
+                          margin: "0 0 0.25rem", fontSize: "0.8rem", fontWeight: 600,
+                          color: "#14110d", lineHeight: 1.4,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical" as const,
+                          overflow: "hidden",
+                        }}>
+                          {post.title}
+                        </p>
+                        <p style={{ margin: 0, fontSize: "0.68rem", color: "#7a6f5c" }}>
+                          {post.score > 0 && (
+                            <>
+                              {post.score > (post.commentCount * 2)
+                                ? `${post.score - post.commentCount * 2} likes`
+                                : `${post.commentCount} comments`}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
               © {new Date().getFullYear()} The Moveee. All Rights Reserved.
               <br />
               <Link href="/terms" style={{ color: "#7a6f5c" }}>Terms</Link>

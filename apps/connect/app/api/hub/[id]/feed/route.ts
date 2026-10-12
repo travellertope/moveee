@@ -19,6 +19,12 @@ export async function GET(
 
   const qs = new URLSearchParams({ page, per_page: perPage });
   if (userId) qs.set("viewer_id", String(userId));
+  const sort    = searchParams.get("sort");
+  const orderby = searchParams.get("orderby");
+  const days    = searchParams.get("days");
+  if (sort)    qs.set("sort", sort);
+  if (orderby) qs.set("orderby", orderby);
+  if (days)    qs.set("days", days);
 
   const res = await fetch(
     `${WP_URL}/wp-json/culture/v1/hub/${id}/feed?${qs}`,
