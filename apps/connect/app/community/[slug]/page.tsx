@@ -19,6 +19,14 @@ export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
+function decodeEntities(s: string) {
+  return s
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
 export function generateStaticParams() {
   return [];
 }
@@ -32,7 +40,7 @@ export async function generateMetadata({
   const post = await getCommunityPostBySlug(slug);
   if (!post) return { title: "Post not found" };
 
-  const rawText = post.content.rendered.replace(/<[^>]+>/g, "").trim();
+  const rawText = decodeEntities(post.content.rendered.replace(/<[^>]+>/g, "").trim());
   const title   = rawText.slice(0, 80) + (rawText.length > 80 ? "…" : "");
   const description = rawText.slice(0, 155);
   const author  = post.meta.community_author_name ?? "Community Member";
@@ -77,7 +85,7 @@ export default async function CommunityPostPage({
   const comments = await getPostComments(post.id);
   const loggedIn = !!session?.user;
 
-  const rawText  = post.content.rendered.replace(/<[^>]+>/g, "").trim();
+  const rawText  = decodeEntities(post.content.rendered.replace(/<[^>]+>/g, "").trim());
   const author   = post.meta.community_author_name ?? "Community Member";
   const authorUsername = (post.meta.community_author_username as string | undefined) ?? "";
   const tag      = post.meta.community_tag ?? "";
@@ -163,20 +171,17 @@ export default async function CommunityPostPage({
               padding: "1.25rem 1.5rem",
               margin: "0.85rem 1rem 1rem",
             }}>
-              <div style={{ display: "flex", gap: "0.75rem" }}>
-              {/* Avatar */}
-              <div style={{
-                width: "40px", height: "40px", borderRadius: "50%",
-                background: "#edf7ed", border: "1px solid #c8e6c9",
-                color: "#2e7d32", fontSize: "0.68rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                {initials}
-              </div>
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.65rem", flexWrap: "wrap" }}>
+              {/* Author header — avatar left-aligned, content alongside */}
+              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <div style={{
+                  width: "40px", height: "40px", borderRadius: "50%",
+                  background: "#edf7ed", border: "1px solid #c8e6c9",
+                  color: "#2e7d32", fontSize: "0.68rem", fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  {initials}
+                </div>
+                <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                     <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 700 }}>{author}</span>
                     {authorUsername && (
@@ -201,60 +206,56 @@ export default async function CommunityPostPage({
                     </Link>
                   )}
                 </div>
-
-                {/* Gallery (template-specific) */}
-                {galleryImages && galleryImages.length >= 1 && (
-                  <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.65rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
-                    {galleryImages.map((img: string, i: number) => (
-                      <img key={i} src={img} alt="" style={{ height: "260px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
-                    ))}
-                  </div>
-                )}
-
-                {/* Single image (only when no gallery) */}
-                {image && !galleryImages?.length && (
-                  <div style={{ marginBottom: "0.65rem", overflow: "hidden" }}>
-                    <img
-                      src={image}
-                      alt={author}
-                      style={{ width: "100%", display: "block", maxHeight: "420px", objectFit: "cover" }}
-                    />
-                  </div>
-                )}
-
-                {/* Post text + reactions + comments (client) */}
-                <CommunityPostClient
-                  text={rawText}
-                  wpId={String(post.id)}
-                  postId={post.id}
-                  initialReactions={{
-                    love: Number(post.meta.reaction_love ?? 0),
-                    fire: Number(post.meta.reaction_fire ?? 0),
-                    clap: Number(post.meta.reaction_clap ?? 0),
-                  }}
-                  shareUrl={url}
-                  initialComments={comments}
-                  templateType={templateType}
-                  starRating={starRating}
-                  locationName={locationName}
-                  pollOptions={pollOptions}
-                  pollExpiresAt={pollExpiresAt}
-                  galleryImages={galleryImages}
-                  videoUrl={videoUrl}
-                  itineraryStops={itineraryStops}
-                  foodDishName={foodDishName}
-                  foodRatingTaste={foodRatingTaste}
-                  foodRatingValue={foodRatingValue}
-                  foodRatingVibe={foodRatingVibe}
-                  sourceUrl={sourceUrl}
-                  source={source}
-                  ogTitle={ogTitle}
-                  ogDescription={ogDescription}
-                  ogImage={ogImage}
-                />
-
               </div>
-              </div>
+
+              {/* Full-width content — aligned with left edge of avatar */}
+              {galleryImages && galleryImages.length >= 1 && (
+                <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
+                  {galleryImages.map((img: string, i: number) => (
+                    <img key={i} src={img} alt="" style={{ height: "260px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+                  ))}
+                </div>
+              )}
+
+              {image && !galleryImages?.length && (
+                <div style={{ marginBottom: "0.75rem", borderRadius: "8px", overflow: "hidden" }}>
+                  <img
+                    src={image}
+                    alt={author}
+                    style={{ width: "100%", display: "block", maxHeight: "420px", objectFit: "cover" }}
+                  />
+                </div>
+              )}
+
+              <CommunityPostClient
+                text={rawText}
+                wpId={String(post.id)}
+                postId={post.id}
+                initialReactions={{
+                  love: Number(post.meta.reaction_love ?? 0),
+                  fire: Number(post.meta.reaction_fire ?? 0),
+                  clap: Number(post.meta.reaction_clap ?? 0),
+                }}
+                shareUrl={url}
+                initialComments={comments}
+                templateType={templateType}
+                starRating={starRating}
+                locationName={locationName}
+                pollOptions={pollOptions}
+                pollExpiresAt={pollExpiresAt}
+                galleryImages={galleryImages}
+                videoUrl={videoUrl}
+                itineraryStops={itineraryStops}
+                foodDishName={foodDishName}
+                foodRatingTaste={foodRatingTaste}
+                foodRatingValue={foodRatingValue}
+                foodRatingVibe={foodRatingVibe}
+                sourceUrl={sourceUrl}
+                source={source}
+                ogTitle={ogTitle}
+                ogDescription={ogDescription}
+                ogImage={ogImage}
+              />
             </article>
           </div>
           </main>

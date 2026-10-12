@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Flag } from "lucide-react";
 import HashtagText from "@/components/pulse/HashtagText";
 import ReactionBar from "@/components/pulse/ReactionBar";
 import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
@@ -183,6 +184,21 @@ export default function CommunityPostClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
+
+  async function submitReport(reason: "spam" | "harassment" | "inappropriate") {
+    try {
+      const res = await fetch("/api/community/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: wpId, reason }),
+      });
+      setReportState(res.ok ? "sent" : "error");
+    } catch {
+      setReportState("error");
+    }
+  }
+
   const loggedIn = status === "authenticated";
   const user = session?.user as any;
 
@@ -226,6 +242,7 @@ export default function CommunityPostClient({
   const count = comments.length;
 
   return (
+    <>
     <div>
       {/* Template badge */}
       {templateType && templateType !== "post" && (
@@ -368,8 +385,29 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      <div style={{ borderTop: "1px solid rgba(20,17,13,0.08)", paddingTop: "0.75rem", marginTop: "0.75rem" }}>
-        <ReactionBar itemId={wpId} itemType="community" initialCounts={initialReactions} shareUrl={shareUrl} />
+      {/* Reactions — noBorder: ReactionBar draws its own top border; no double line */}
+      <div style={{ marginTop: "0.5rem" }}>
+        <ReactionBar
+          itemId={wpId}
+          itemType="community"
+          initialCounts={initialReactions}
+          shareUrl={shareUrl}
+          flagSlot={
+            reportState === "idle" ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); setReportState("confirm"); }}
+                title="Report this post"
+                style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: "4px 2px", cursor: "pointer", color: "var(--mute, #7a6f5c)", lineHeight: 1 }}
+              >
+                <Flag size={13} strokeWidth={1.8} />
+              </button>
+            ) : reportState === "sent" ? (
+              <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--mute, #7a6f5c)", whiteSpace: "nowrap" }}>Reported ✓</span>
+            ) : reportState === "error" ? (
+              <span style={{ fontSize: "0.62rem", color: "#c62828", whiteSpace: "nowrap" }}>Couldn't send.</span>
+            ) : null
+          }
+        />
       </div>
 
       {/* Comments */}
@@ -460,5 +498,57 @@ export default function CommunityPostClient({
         )}
       </div>
     </div>
+
+    {/* Report bottom sheet */}
+    {reportState === "confirm" && (
+      <>
+        <div
+          onClick={() => setReportState("idle")}
+          style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }}
+        />
+        <div style={{
+          position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+          width: "min(480px, 100%)", zIndex: 9001,
+          background: "var(--paper, #f3ece0)",
+          borderRadius: "20px 20px 0 0",
+          padding: "0.75rem 1.25rem 1.5rem",
+          boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
+        }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+          <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", fontWeight: 700, color: "var(--ink, #14110d)", textAlign: "center", letterSpacing: "0.02em" }}>Report this post</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => submitReport(r)}
+                style={{
+                  width: "100%", padding: "0.75rem 1rem",
+                  background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                  borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                  textAlign: "left", fontSize: "0.88rem", color: "var(--ink, #14110d)",
+                  fontFamily: "inherit", fontWeight: 500,
+                  textTransform: "capitalize",
+                }}
+              >
+                {r}
+              </button>
+            ))}
+            <button
+              onClick={() => setReportState("idle")}
+              style={{
+                width: "100%", marginTop: "0.25rem", padding: "0.75rem 1rem",
+                background: "transparent", border: "none",
+                borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                fontSize: "0.85rem", color: "var(--mute, #7a6f5c)",
+                fontFamily: "inherit", fontWeight: 600,
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+    </>
   );
 }

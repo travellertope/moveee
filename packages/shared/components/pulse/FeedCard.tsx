@@ -522,6 +522,15 @@ export default function FeedCard({
       }
     }
 
+    // Derive an effective YouTube embed URL from videoUrl, sourceUrl, or inline text.
+    const ytUrl: string | null = (() => {
+      if (item.videoUrl) return item.videoUrl;
+      const src = item.sourceUrl ?? "";
+      if (src.includes("youtu.be") || src.includes("youtube.com/watch")) return src;
+      const m = (item.title ?? "").match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch[^\s]*|youtu\.be\/)[^\s]*/);
+      return m ? m[0] : null;
+    })();
+
     return (
       <>
         <article
@@ -690,7 +699,11 @@ export default function FeedCard({
                 marginBottom: item.image ? "0.65rem" : "0.5rem",
               }}>
                 {(() => {
-                  const fullText = stripTrailingUrl(item.title, item.sourceUrl && !item.image ? item.sourceUrl : undefined);
+                  // Strip sourceUrl from text (existing logic); also strip an inline YouTube URL
+                  // that we'll embed separately so it doesn't appear as raw text.
+                  const inlineYt = ytUrl && !item.videoUrl && !(item.sourceUrl?.includes("youtu")) ? ytUrl : undefined;
+                  const stripBy = item.sourceUrl && !item.image ? item.sourceUrl : (inlineYt ?? undefined);
+                  const fullText = stripTrailingUrl(item.title, stripBy);
                   const nlIdx = fullText.indexOf("\n\n");
                   if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
                   const titlePart = fullText.slice(0, nlIdx).trim();
@@ -784,18 +797,18 @@ export default function FeedCard({
               <GalleryCarousel images={item.galleryImages} onTap={(index) => setLightbox({ images: item.galleryImages!, index })} />
             )}
 
-            {/* Video embed */}
-            {item.videoUrl && (
+            {/* Video embed — uses ytUrl which covers videoUrl, sourceUrl-is-YouTube, and inline YouTube */}
+            {ytUrl && (
               <div style={{ marginBottom: "0.6rem" }}>
-                {item.videoUrl.includes("youtube.com") || item.videoUrl.includes("youtu.be") ? (
+                {ytUrl.includes("youtube.com") || ytUrl.includes("youtu.be") ? (
                   <iframe
-                    src={`https://www.youtube.com/embed/${item.videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] ?? ""}`}
+                    src={`https://www.youtube.com/embed/${ytUrl.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]+)/)?.[1] ?? ""}`}
                     style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media"
                     allowFullScreen
                   />
                 ) : (
-                  <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", fontSize: "0.78rem" }}>
+                  <a href={ytUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", fontSize: "0.78rem" }}>
                     Watch video →
                   </a>
                 )}
@@ -880,8 +893,8 @@ export default function FeedCard({
               </div>
             )}
 
-            {/* Link preview card (only if no image) */}
-            {!item.image && item.sourceUrl && (
+            {/* Link preview card — skip if source URL is a YouTube link (video embeds instead) */}
+            {!item.image && item.sourceUrl && !ytUrl && (
               <div style={{ marginBottom: "0.5rem" }}>
                 <SourcePreviewCard
                   goUrl={`/go/link?url=${encodeURIComponent(item.sourceUrl)}`}
@@ -918,21 +931,8 @@ export default function FeedCard({
                       >
                         <Flag size={13} strokeWidth={1.8} />
                       </button>
-                    ) : reportState === "confirm" ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                        <span style={{ fontSize: "0.6rem", color: "var(--mute)", whiteSpace: "nowrap" }}>Report:</span>
-                        {(["spam", "harassment", "inappropriate"] as const).map((r) => (
-                          <button
-                            key={r}
-                            onClick={(e) => { e.stopPropagation(); submitReport(r); }}
-                            style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 5px", fontSize: "0.58rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
-                          >
-                            {r}
-                          </button>
-                        ))}
-                        <button onClick={(e) => { e.stopPropagation(); setReportState("idle"); }} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer", padding: "0 2px" }}>✕</button>
-                      </div>
-                    ) : reportState === "sent" ? (
+                    ) : reportState === "confirm" ? null
+                    : reportState === "sent" ? (
                       <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--mute)", whiteSpace: "nowrap" }}>Reported ✓</span>
                     ) : (
                       <span style={{ fontSize: "0.62rem", color: "var(--error)", whiteSpace: "nowrap" }}>Couldn't send.</span>
@@ -946,6 +946,50 @@ export default function FeedCard({
           <>
             <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
             <CommunityDetailModal item={item} onClose={closeModal} />
+          </>
+        )}
+        {reportState === "confirm" && (
+          <>
+            <div onClick={() => setReportState("idle")} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }} />
+            <div style={{
+              position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+              width: "min(480px, 100%)", zIndex: 9001,
+              background: "var(--paper, #f3ece0)",
+              borderRadius: "20px 20px 0 0",
+              padding: "0.75rem 1.25rem 1.5rem",
+              boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
+            }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+              <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", fontWeight: 700, color: "var(--ink)", textAlign: "center", letterSpacing: "0.02em" }}>Report this post</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={(e) => { e.stopPropagation(); submitReport(r); }}
+                    style={{
+                      width: "100%", padding: "0.75rem 1rem",
+                      background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                      borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                      textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
+                      fontFamily: "inherit", fontWeight: 500, textTransform: "capitalize",
+                    }}
+                  >
+                    {r}
+                  </button>
+                ))}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setReportState("idle"); }}
+                  style={{
+                    width: "100%", marginTop: "0.25rem", padding: "0.75rem 1rem",
+                    background: "transparent", border: "none",
+                    borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                    fontSize: "0.85rem", color: "var(--mute)", fontFamily: "inherit", fontWeight: 600,
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </>
         )}
       </>
