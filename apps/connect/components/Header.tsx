@@ -13,7 +13,9 @@ const SITE_URL = "https://themoveee.com";
 const NAV = [
   { href: "/feed",                 label: "Feed",            icon: "feed"      },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
-  { href: "/connect/stoop",         label: "Stoop IRL",       icon: "stoop"     },
+  { href: "/connect/stoop",        label: "Stoop IRL",       icon: "stoop"     },
+  { href: "/events",               label: "Events",          icon: "events"    },
+  { href: "/games/trivia",         label: "Trivia",          icon: "games"     },
 ] as const;
 
 const HUB_SPACES = [

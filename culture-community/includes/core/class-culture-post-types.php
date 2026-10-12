@@ -18,6 +18,7 @@ class Culture_Post_Types {
         add_action( 'wp_ajax_culture_generate_checkin_token', array( __CLASS__, 'ajax_generate_checkin_token' ) );
         add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ) );
         add_action( 'acf/save_post', array( __CLASS__, 'cache_event_showcase_urls' ), 20 );
+        add_filter( 'wp_insert_post_data', array( __CLASS__, 'force_community_post_comments_open' ), 10, 2 );
         add_action( 'graphql_register_types', array( __CLASS__, 'register_graphql_fields' ) );
         add_action( 'init', array( __CLASS__, 'register_as_told_to_meta' ) );
         add_action( 'rest_after_insert_post', array( __CLASS__, 'save_as_told_to_rest' ), 10, 2 );
@@ -1991,6 +1992,17 @@ class Culture_Post_Types {
             <tr><th>Stats</th><td>Likes: <?php echo absint( $likes ); ?> | Reports: <?php echo absint( $reports ); ?></td></tr>
         </table>
         <?php
+    }
+
+    /**
+     * Force comment_status = 'open' on all community_post saves so members
+     * can always reply regardless of the site-wide discussion defaults.
+     */
+    public static function force_community_post_comments_open( $data, $postarr ) {
+        if ( isset( $data['post_type'] ) && 'community_post' === $data['post_type'] ) {
+            $data['comment_status'] = 'open';
+        }
+        return $data;
     }
 
     public static function save_meta_boxes( $post_id ) {

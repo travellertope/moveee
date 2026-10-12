@@ -63,7 +63,6 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
           background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
-          overflowY: "auto",
           boxShadow: "-4px 0 24px rgba(0,0,0,0.15)",
         }}
       >
@@ -74,8 +73,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
           justifyContent: "space-between",
           padding: "1.25rem",
           borderBottom: "1px solid var(--rule)",
-          position: "sticky",
-          top: 0,
+          flexShrink: 0,
           background: "var(--paper-header)",
           zIndex: 1,
         }}>
@@ -135,7 +133,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
         </div>
 
         {/* Content */}
-        <div style={{ padding: "1.25rem", flex: 1 }}>
+        <div style={{ padding: "1.25rem", flex: "1 1 0", minHeight: 0, overflowY: "auto" }}>
           {/* Title */}
           <h2 style={{
             fontFamily: "var(--font-fraunces), serif",
