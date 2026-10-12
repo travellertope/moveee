@@ -356,6 +356,8 @@ export default function MemberProfileScreen() {
   const [postPage,  setPostPage]  = useState(1);
   const [activeTab, setActiveTab] = useState<"community" | "portfolio">("community");
   const [sheetItem, setSheetItem] = useState<FeedItem | null>(null);
+  const [postTypeFilter, setPostTypeFilter] = useState<string>("all");
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [notifyPosts, setNotifyPosts] = useState(false);
@@ -403,6 +405,16 @@ export default function MemberProfileScreen() {
 
   const isPro = profile?.tier === "patron";
   const isSelf = !!currentUser && !!profile && String(currentUser.id) === String(profile.id);
+
+  const availableFilterTypes = useMemo(() => {
+    const seen = new Set<string>();
+    posts.forEach((p) => { if (p.template_type) seen.add(p.template_type); });
+    return Array.from(seen);
+  }, [posts]);
+
+  const filteredPosts = useMemo(() => (
+    postTypeFilter === "all" ? posts : posts.filter((p) => p.template_type === postTypeFilter)
+  ), [posts, postTypeFilter]);
 
   const toggleFollow = async () => {
     if (!profile || followBusy) return;
@@ -568,18 +580,68 @@ export default function MemberProfileScreen() {
 
           <View style={styles.tabBar}>
             {(["community", "portfolio"] as const).map((t) => (
-              <TouchableOpacity key={t} style={[styles.tab, activeTab === t && styles.tabActive]} onPress={() => setActiveTab(t)}>
+              <TouchableOpacity key={t} style={[styles.tab, activeTab === t && styles.tabActive]} onPress={() => { setActiveTab(t); setPostTypeFilter("all"); }}>
                 <Text style={[styles.tabText, activeTab === t && styles.tabTextActive]}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                  {t === "community" ? "Community Activity" : "Portfolio"}
                 </Text>
               </TouchableOpacity>
             ))}
+            {activeTab === "community" && availableFilterTypes.length > 1 && (
+              <TouchableOpacity
+                style={styles.tabFilterBtn}
+                onPress={() => setFilterDropdownOpen(true)}
+              >
+                <Text style={styles.tabFilterBtnText} numberOfLines={1}>
+                  {postTypeFilter === "all" ? "All" : (TEMPLATE_META[postTypeFilter]?.label ?? postTypeFilter)}
+                </Text>
+                <Ionicons name="chevron-down" size={12} color={c.mute} />
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Post type filter dropdown */}
+          <Modal
+            visible={filterDropdownOpen}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setFilterDropdownOpen(false)}
+          >
+            <TouchableOpacity
+              style={styles.filterOverlay}
+              activeOpacity={1}
+              onPress={() => setFilterDropdownOpen(false)}
+            >
+              <View style={styles.filterSheet}>
+                <Text style={styles.filterSheetTitle}>Filter by type</Text>
+                <TouchableOpacity
+                  style={[styles.filterOption, postTypeFilter === "all" && styles.filterOptionActive]}
+                  onPress={() => { setPostTypeFilter("all"); setFilterDropdownOpen(false); }}
+                >
+                  <Text style={[styles.filterOptionText, postTypeFilter === "all" && styles.filterOptionTextActive]}>
+                    All posts
+                  </Text>
+                  {postTypeFilter === "all" && <Ionicons name="checkmark" size={16} color={c.ochre} />}
+                </TouchableOpacity>
+                {availableFilterTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[styles.filterOption, postTypeFilter === type && styles.filterOptionActive]}
+                    onPress={() => { setPostTypeFilter(type); setFilterDropdownOpen(false); }}
+                  >
+                    <Text style={[styles.filterOptionText, postTypeFilter === type && styles.filterOptionTextActive]}>
+                      {TEMPLATE_META[type]?.emoji ? `${TEMPLATE_META[type].emoji} ` : ""}{TEMPLATE_META[type]?.label ?? type}
+                    </Text>
+                    {postTypeFilter === type && <Ionicons name="checkmark" size={16} color={c.ochre} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           <View style={styles.tabContent}>
             {activeTab === "community" ? (
               <>
-                {posts.map((p) => (
+                {filteredPosts.map((p) => (
                   <MiniPostCard
                     key={p.id}
                     post={p}
@@ -590,12 +652,16 @@ export default function MemberProfileScreen() {
                     onTogglePin={() => togglePin(p, !pinnedPosts.some((pp) => pp.id === p.id))}
                   />
                 ))}
-                {posts.length > 0 && (
+                {filteredPosts.length > 0 && (
                   <TouchableOpacity style={styles.loadMore} onPress={() => setPostPage((n) => n + 1)}>
                     <Text style={styles.loadMoreText}>Load more posts</Text>
                   </TouchableOpacity>
                 )}
-                {posts.length === 0 && <Text style={styles.emptyTabText}>No posts yet.</Text>}
+                {filteredPosts.length === 0 && (
+                  <Text style={styles.emptyTabText}>
+                    {postTypeFilter !== "all" ? "No posts of this type." : "No posts yet."}
+                  </Text>
+                )}
               </>
             ) : (
               <PortfolioGrid
@@ -754,15 +820,53 @@ function createStyles(c: ColorPalette) {
     },
 
     tabBar: {
-      flexDirection: "row", alignItems: "flex-end",
+      flexDirection: "row", alignItems: "center",
       height: 44, width: "100%",
       borderBottomWidth: 1, borderBottomColor: c.ghost,
-      marginTop: 16, paddingHorizontal: 16, gap: 24,
+      marginTop: 16, paddingHorizontal: 16, gap: 16,
     },
-    tab:           { paddingBottom: 6 },
+    tab:           { paddingBottom: 6, alignSelf: "flex-end" },
     tabActive:     { borderBottomWidth: 2, borderBottomColor: c.ochre, paddingBottom: 1 },
     tabText:       { fontFamily: fonts.sans, fontSize: 14, color: c.mute },
     tabTextActive: { fontFamily: fonts.sansBold, color: c.ink },
+
+    tabFilterBtn: {
+      marginLeft: "auto" as any,
+      flexDirection: "row", alignItems: "center", gap: 4,
+      paddingHorizontal: 10, paddingVertical: 5,
+      borderRadius: radius.full,
+      borderWidth: 1, borderColor: c.ghost,
+      backgroundColor: c.paperDeep,
+    },
+    tabFilterBtnText: {
+      fontFamily: fonts.sans, fontSize: 12, color: c.mute,
+      maxWidth: 80,
+    },
+
+    filterOverlay: {
+      flex: 1, backgroundColor: "rgba(20,17,13,0.4)",
+      justifyContent: "flex-end", padding: 16,
+    },
+    filterSheet: {
+      backgroundColor: c.paper, borderRadius: radius.xl,
+      paddingVertical: 8, paddingHorizontal: 4,
+      alignSelf: "flex-end", minWidth: 200,
+      ...shadows.card,
+    },
+    filterSheetTitle: {
+      fontFamily: fonts.sansBold, fontSize: 10, color: c.mute,
+      letterSpacing: 0.12, textTransform: "uppercase" as const,
+      paddingHorizontal: 14, paddingVertical: 8,
+    },
+    filterOption: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.lg,
+    },
+    filterOptionActive: { backgroundColor: c.paperDeep },
+    filterOptionText: {
+      fontFamily: fonts.sans, fontSize: 14, color: c.inkSoft,
+    },
+    filterOptionTextActive: { fontFamily: fonts.sansBold, color: c.ochre },
 
     tabContent: {
       width: "100%", backgroundColor: c.paper,
