@@ -79,7 +79,13 @@ export default function HubContent({
   };
 
   return (
-    <div>
+    <div style={{
+      margin: "0 1.25rem 1rem",
+      background: "#fff",
+      border: "1px solid var(--rule, #e8e2d8)",
+      borderRadius: "var(--radius-xl, 12px)",
+      overflow: "hidden",
+    }}>
       {/* ── Tab bar + sort row ── */}
       <div style={{
         display: "flex",
@@ -87,7 +93,6 @@ export default function HubContent({
         justifyContent: "space-between",
         borderBottom: "1px solid var(--rule, #e8e2d8)",
         padding: "0 1.25rem",
-        background: "#fff",
         gap: "0.75rem",
         flexWrap: "wrap",
       }}>

@@ -115,7 +115,7 @@ export default function CommunityTab({ username, displayName, avatarUrl, tier, t
         <p className="prf-empty">No posts yet.</p>
       ) : (
         <>
-          <div>
+          <div style={{ margin: "0 -16px" }}>
             {posts.map(post => (
               <FeedCard key={post.id} item={toFeedItem(post, username, displayName, avatarUrl, tier)} />
             ))}

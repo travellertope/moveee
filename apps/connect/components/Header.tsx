@@ -21,6 +21,10 @@ const HUB_SPACES = [
   { slug: "fashion",    label: "Fashion",    color: "#3b82f6" },
   { slug: "art",        label: "Art",        color: "#a855f7" },
   { slug: "literature", label: "Literature", color: "#f59e0b" },
+  { slug: "film",       label: "Film",       color: "#ef4444" },
+  { slug: "food",       label: "Food",       color: "#f97316" },
+  { slug: "travel",     label: "Travel",     color: "#06b6d4" },
+  { slug: "tech",       label: "Tech",       color: "#6366f1" },
 ] as const;
 
 function RailIcon({ name }: { name: string }) {

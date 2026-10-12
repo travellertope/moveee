@@ -7,6 +7,8 @@ import ProfileTabs from "./ProfileTabs";
 import ShareButton from "./ShareButton";
 import FollowButton from "./FollowButton";
 import BadgeShelf from "./BadgeShelf";
+import CoverPhotoClient from "./CoverPhotoClient";
+import AvatarClient from "./AvatarClient";
 import "./profile.css";
 import "@/app/pulse-layout.css";
 
@@ -98,7 +100,6 @@ export default async function PublicProfilePage(
   ]);
   if (!profile) notFound();
 
-  const isPatron = profile.tier === "patron";
   const repLabel = REP_TIER_LABELS[profile.reputation_tier] ?? "Member";
   const locationParts = [profile.city, profile.country].filter(Boolean);
   const initial = (profile.display_name || profile.username || "?")
@@ -108,7 +109,12 @@ export default async function PublicProfilePage(
   const isOwnProfile = sessionUsername &&
     sessionUsername.toLowerCase() === profile.username.toLowerCase();
 
-  const DEFAULT_COVER = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80";
+  // Use session tier as fallback when the WP meta hasn't been synced yet
+  // (session tier is set at sign-in from the authoritative source).
+  const sessionTier = (session?.user as any)?.tier ?? null;
+  const effectiveTier = profile.tier !== "citizen" ? profile.tier : (isOwnProfile ? sessionTier ?? profile.tier : profile.tier);
+  const isPatron = effectiveTier === "patron";
+  const isLit = effectiveTier === "lit";
 
   return (
     <div>
@@ -126,38 +132,11 @@ export default async function PublicProfilePage(
               boxShadow: "0 1px 4px rgba(20,17,13,0.06)",
               margin: "1rem 1.25rem 0",
             }}>
-              {/* Cover photo */}
-              <div style={{ position: "relative", height: "220px", background: "#1a1612", overflow: "hidden" }}>
-                <img
-                  src={profile.cover_photo_url || DEFAULT_COVER}
-                  alt=""
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(to top, rgba(20,17,13,0.45) 0%, transparent 55%)",
-                }} />
-                {isOwnProfile && (
-                  <Link href="/member/settings" style={{
-                    position: "absolute", top: "1rem", right: "1rem",
-                    background: "rgba(0,0,0,0.45)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    color: "#fff",
-                    fontSize: "12px",
-                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
-                    fontWeight: 600,
-                    padding: "7px 16px",
-                    borderRadius: "9999px",
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    display: "inline-flex", alignItems: "center", gap: "6px",
-                    textDecoration: "none",
-                    letterSpacing: "0.01em",
-                  }}>
-                    ✎ Edit Cover &amp; Bio
-                  </Link>
-                )}
-              </div>
+              {/* Cover photo — client component handles upload modal + error fallback */}
+              <CoverPhotoClient
+                initialCoverUrl={profile.cover_photo_url || null}
+                isOwnProfile={!!isOwnProfile}
+              />
 
               {/* Info section */}
               <div style={{ padding: "0 1.5rem 1.5rem" }}>
@@ -167,44 +146,13 @@ export default async function PublicProfilePage(
                   justifyContent: "space-between", flexWrap: "wrap",
                   marginTop: "-64px", marginBottom: "1.1rem", gap: "0.75rem",
                 }}>
-                  {/* Avatar with online dot */}
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    <div style={{
-                      width: "128px", height: "128px",
-                      borderRadius: "50%",
-                      border: "4px solid var(--paper, #f3ece0)",
-                      boxShadow: "0 2px 12px rgba(20,17,13,0.15)",
-                      overflow: "hidden",
-                      background: "var(--ink, #14110d)",
-                      flexShrink: 0,
-                    }}>
-                      {profile.avatar_url ? (
-                        <img
-                          src={profile.avatar_url}
-                          alt={profile.display_name}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: "100%", height: "100%",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontFamily: "var(--font-fraunces), serif", fontSize: "48px",
-                          fontWeight: 300, color: "var(--paper)",
-                        }}>
-                          {initial}
-                        </div>
-                      )}
-                    </div>
-                    {/* Online indicator */}
-                    <span style={{
-                      position: "absolute", bottom: "7px", right: "7px",
-                      width: "18px", height: "18px",
-                      background: "#22c55e",
-                      borderRadius: "50%",
-                      border: "3px solid var(--paper, #f3ece0)",
-                      display: "block",
-                    }} />
-                  </div>
+                  {/* Avatar — client component handles upload modal + onError fallback */}
+                  <AvatarClient
+                    initialAvatarUrl={profile.avatar_url || null}
+                    displayName={profile.display_name}
+                    initial={initial}
+                    isOwnProfile={!!isOwnProfile}
+                  />
 
                   {/* Action buttons */}
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", paddingBottom: "4px" }}>
@@ -254,6 +202,21 @@ export default async function PublicProfilePage(
                         verticalAlign: "middle",
                       }}>
                         👑 PRO
+                      </span>
+                    )}
+                    {isLit && (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: "4px",
+                        background: "#f3eeff", color: "#6b3fa0",
+                        border: "1px solid #d9c8f5",
+                        fontSize: "11px", fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: "9999px",
+                        letterSpacing: "0.04em",
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        verticalAlign: "middle",
+                      }}>
+                        📖 LIT
                       </span>
                     )}
                   </h1>

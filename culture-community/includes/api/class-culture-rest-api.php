@@ -3998,6 +3998,7 @@ class Culture_REST_API {
             'directory_linkedin'     => '_culture_directory_linkedin',
             'directory_website'      => '_culture_directory_website',
             'avatar_url'             => '_culture_avatar_url',
+            'cover_photo_url'        => '_culture_cover_photo_url',
         );
 
         foreach ( $meta_map as $param => $meta_key ) {
