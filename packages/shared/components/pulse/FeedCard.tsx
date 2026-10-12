@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -531,6 +531,20 @@ export default function FeedCard({
       return m ? m[0] : null;
     })();
 
+    // Pause YouTube iframe when it scrolls out of view
+    const ytIframeRef = useRef<HTMLIFrameElement>(null);
+    useEffect(() => {
+      const el = ytIframeRef.current;
+      if (!el) return;
+      const obs = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) {
+          el.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*");
+        }
+      }, { threshold: 0.1 });
+      obs.observe(el);
+      return () => obs.disconnect();
+    }, [ytUrl]);
+
     return (
       <>
         <article
@@ -802,7 +816,8 @@ export default function FeedCard({
               <div style={{ marginBottom: "0.6rem" }}>
                 {ytUrl.includes("youtube.com") || ytUrl.includes("youtu.be") ? (
                   <iframe
-                    src={`https://www.youtube.com/embed/${ytUrl.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]+)/)?.[1] ?? ""}`}
+                    ref={ytIframeRef}
+                    src={`https://www.youtube.com/embed/${ytUrl.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]+)/)?.[1] ?? ""}?enablejsapi=1`}
                     style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media"
                     allowFullScreen

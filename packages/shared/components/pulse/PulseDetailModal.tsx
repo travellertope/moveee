@@ -63,6 +63,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
           background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
           boxShadow: "-4px 0 24px rgba(0,0,0,0.15)",
         }}
       >
@@ -133,7 +134,7 @@ export default function PulseDetailModal({ item, onClose }: PulseDetailModalProp
         </div>
 
         {/* Content */}
-        <div style={{ padding: "1.25rem", flex: "1 1 0", minHeight: 0, overflowY: "auto" }}>
+        <div style={{ padding: "1.25rem", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
           {/* Title */}
           <h2 style={{
             fontFamily: "var(--font-fraunces), serif",

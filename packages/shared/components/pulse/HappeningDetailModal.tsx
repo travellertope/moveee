@@ -53,6 +53,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
           background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
           boxShadow: "-4px 0 24px rgba(0,0,0,0.15)",
         }}
       >
@@ -114,7 +115,7 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: "1.25rem", flex: "1 1 0", minHeight: 0, overflowY: "auto" }}>
+        <div style={{ padding: "1.25rem", flex: "1 1 auto", minHeight: 0, overflowY: "auto" }}>
           {/* Featured image — preserved aspect ratio */}
           {item.image && (
             <div style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid var(--rule)" }}>

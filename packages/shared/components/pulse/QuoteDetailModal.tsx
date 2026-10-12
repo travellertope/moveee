@@ -76,6 +76,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
           background: "var(--paper)",
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
           borderRadius: "20px",
           boxShadow: "0 24px 64px rgba(0,0,0,0.35), 0 4px 20px rgba(0,0,0,0.12)",
         }}
@@ -125,7 +126,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
 
         {/* Content */}
         <div style={{
-          padding: "2rem 1.5rem", flex: "1 1 0", minHeight: 0, overflowY: "auto",
+          padding: "2rem 1.5rem", flex: "1 1 auto", minHeight: 0, overflowY: "auto",
           display: "flex", flexDirection: "column", justifyContent: "center",
         }}>
           {/* Decorative quote mark */}
