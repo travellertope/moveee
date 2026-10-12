@@ -160,7 +160,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
     const templateMatch = !activeTemplate || (
-      item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never)
+      // "quotes" tab maps to the standalone quote item type, not a community template
+      (activeTemplate === "quotes" && item.type === "quote") ||
+      (item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never))
     );
     return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && !isEventItem(item);
   }), [items, activeType, activeRegion, activeTag, activeCategory, activeTemplate, activeTemplateTemplates, interestTagSet]);
