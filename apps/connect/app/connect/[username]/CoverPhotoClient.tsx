@@ -40,7 +40,7 @@ export default function CoverPhotoClient({ initialCoverUrl, isOwnProfile }: Prop
   return (
     <>
       {/* Cover area */}
-      <div style={{ position: "relative", height: "220px", overflow: "hidden" }}>
+      <div style={{ position: "relative", height: "220px", overflow: "hidden", background: DEFAULT_COVER_GRADIENT }}>
         {!coverFailed ? (
           <img
             src={coverUrl ?? DEFAULT_COVER_SRC}
