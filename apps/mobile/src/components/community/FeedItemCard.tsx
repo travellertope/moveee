@@ -10,6 +10,7 @@ import {
   Share,
   Animated,
   Dimensions,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -303,6 +304,14 @@ function createStyles(c: ColorPalette) {
       marginHorizontal: 14,
       gap: 10,
       alignItems: "center" as const,
+    },
+    linkThumbWrap: { position: "relative" as const, width: 60, height: 60 },
+    linkPlayOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      borderRadius: 6,
     },
     linkRight: { flex: 1 },
     linkSource: {
@@ -1041,14 +1050,24 @@ function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: {
 
 // ── LinkPreview ───────────────────────────────────────────────────────────────
 
-function LinkPreview({ source, title, domain, image }: {
-  source?: string | null; title: string; domain?: string | null; image?: string | null;
+const YT_PATTERN = /youtu\.be\/|youtube\.com\/(watch|embed|shorts)/;
+
+function LinkPreview({ source, title, domain, image, pressUrl }: {
+  source?: string | null; title: string; domain?: string | null; image?: string | null; pressUrl?: string | null;
 }) {
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
-  return (
+  const isYoutube = !!(pressUrl && YT_PATTERN.test(pressUrl));
+  const inner = (
     <View style={styles.linkContainer}>
-      <ImgPlaceholder height={60} src={image} borderRadius={6} width={60} />
+      <View style={styles.linkThumbWrap}>
+        <ImgPlaceholder height={60} src={image} borderRadius={6} width={60} />
+        {isYoutube && (
+          <View style={styles.linkPlayOverlay}>
+            <Ionicons name="play-circle" size={28} color="#fff" />
+          </View>
+        )}
+      </View>
       <View style={styles.linkRight}>
         {source ? <Text style={styles.linkSource} numberOfLines={1}>{source}</Text> : null}
         <Text style={styles.linkTitle} numberOfLines={2}>{title}</Text>
@@ -1056,6 +1075,14 @@ function LinkPreview({ source, title, domain, image }: {
       </View>
     </View>
   );
+  if (pressUrl) {
+    return (
+      <TouchableOpacity onPress={() => Linking.openURL(pressUrl)} activeOpacity={0.85}>
+        {inner}
+      </TouchableOpacity>
+    );
+  }
+  return inner;
 }
 
 // ── FeedReactionBar ───────────────────────────────────────────────────────────
@@ -1134,7 +1161,7 @@ function PulseCard({ item }: FeedCardProps) {
           <ImgPlaceholder height={172} src={item.image} onPress={() => setLightboxOpen(true)} />
         ) : item.ogImage ? (
           <View style={{ marginTop: 0 }}>
-            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
+            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} pressUrl={item.sourceUrl} />
           </View>
         ) : null}
         <FeedReactionBar item={item} />
@@ -1347,7 +1374,7 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
           </View>
         ) : hasLink ? (
           <View style={{ marginTop: 10 }}>
-            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} />
+            <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} pressUrl={item.sourceUrl} />
           </View>
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />
