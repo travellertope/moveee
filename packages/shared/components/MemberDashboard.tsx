@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { DollarSign, Star, Award, Users, Crown } from 'lucide-react';
 
 interface Props {
   initialPoints: number;
@@ -50,7 +51,6 @@ export default function MemberDashboard({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [openTooltip]);
 
-
   const tierLabel = TIER_LABELS[repTier] ?? 'Member';
   const capHit    = dailyCreditsRemaining === 0;
 
@@ -58,7 +58,9 @@ export default function MemberDashboard({
     <div className="acct-stats" ref={tooltipRef}>
       {/* Credits */}
       <div className="acct-stat-card">
-        <div className="acct-stat-icon">💰</div>
+        <div className="acct-stat-icon-wrap acct-stat-icon-wrap--amber">
+          <DollarSign size={18} strokeWidth={2.5} />
+        </div>
         <span className="acct-stat-value">{credits}</span>
         <div className="acct-stat-label">
           Credits
@@ -74,15 +76,17 @@ export default function MemberDashboard({
           </div>
         )}
         {capHit ? (
-          <div className="acct-stat-sub acct-stat-sub--warn">Daily limit reached</div>
+          <div className="acct-stat-sub acct-stat-sub--warn acct-stat-sub--pill">Daily limit reached</div>
         ) : (
-          <div className="acct-stat-sub">{dailyLeft} remaining today</div>
+          <div className="acct-stat-sub acct-stat-sub--pill">{dailyLeft} remaining today</div>
         )}
       </div>
 
       {/* Reputation */}
       <div className="acct-stat-card">
-        <div className="acct-stat-icon">⭐</div>
+        <div className="acct-stat-icon-wrap acct-stat-icon-wrap--amber">
+          <Star size={18} strokeWidth={2.5} />
+        </div>
         <span className="acct-stat-value">{reputation}</span>
         <div className="acct-stat-label">
           Points
@@ -97,28 +101,37 @@ export default function MemberDashboard({
             <strong>Points</strong> is your permanent standing in the community — it never decreases. It unlocks status tiers: Culture Contributor (100), Taste Maker (500), Culture Authority (1,500). Unlike credits, points cannot be spent.
           </div>
         )}
-        <div className="acct-stat-sub">{tierLabel}</div>
+        <div className="acct-stat-sub acct-stat-sub--pill">{tierLabel}</div>
       </div>
 
       {/* Badges */}
       <div className="acct-stat-card">
-        <div className="acct-stat-icon">🏅</div>
-        <span className="acct-stat-value">{badgeCount} / {TOTAL_BADGES}</span>
+        <div className="acct-stat-icon-wrap acct-stat-icon-wrap--purple">
+          <Award size={18} strokeWidth={2.5} />
+        </div>
+        <div className="acct-stat-value-row">
+          <span className="acct-stat-value">{badgeCount}</span>
+          <span className="acct-stat-value-denom">/ {TOTAL_BADGES}</span>
+        </div>
         <div className="acct-stat-label">Badges</div>
       </div>
 
       {/* Referrals */}
       <div className="acct-stat-card">
-        <div className="acct-stat-icon">🤝</div>
+        <div className="acct-stat-icon-wrap acct-stat-icon-wrap--blue">
+          <Users size={18} strokeWidth={2.5} />
+        </div>
         <span className="acct-stat-value">{referralCount}</span>
         <div className="acct-stat-label">Referrals</div>
       </div>
 
       {/* Membership */}
-      <div className="acct-stat-card">
-        <div className="acct-stat-icon">👤</div>
-        <span className="acct-stat-value acct-stat-value--sm">{membership}</span>
-        <div className="acct-stat-label">Membership</div>
+      <div className="acct-stat-card acct-stat-card--membership">
+        <div className="acct-stat-icon-wrap acct-stat-icon-wrap--white">
+          <Crown size={18} strokeWidth={2.5} />
+        </div>
+        <span className="acct-stat-value acct-stat-value--membership">{membership}</span>
+        <div className="acct-stat-label acct-stat-label--membership">Membership</div>
       </div>
     </div>
   );

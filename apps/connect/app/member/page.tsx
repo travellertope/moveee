@@ -75,10 +75,13 @@ export default async function MemberPage() {
       <div className="acct-wrap">
         {/* ── Profile strip ── */}
         <div className="acct-profile">
-          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-            ) : initial}
+          <div className="acct-avatar-wrap">
+            <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+              ) : initial}
+            </div>
+            <div className="acct-avatar-check" aria-hidden="true">✓</div>
           </div>
           <div className="acct-profile-body">
             <h1 className="acct-name">{displayName}</h1>
@@ -86,7 +89,7 @@ export default async function MemberPage() {
               <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
                 {isPatron ? "Moveee Pro" : "Moveee Citizen"}
               </span>
-              {user.city && <span className="acct-meta-text">{user.city}</span>}
+              {user.city && <span className="acct-meta-text">📍 {user.city}</span>}
             </div>
           </div>
         </div>

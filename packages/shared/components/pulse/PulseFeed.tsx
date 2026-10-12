@@ -160,9 +160,15 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (item.type === "directory"  && (item.entryType ?? "").toLowerCase() === catLower)
     );
     const templateMatch = !activeTemplate || (
-      item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never)
+      // "quotes" tab maps to the standalone quote item type, not a community template
+      (activeTemplate === "quotes" && item.type === "quote") ||
+      // "events" tab maps to happening items + community posts with templateType:"event"
+      (activeTemplate === "events" && isEventItem(item)) ||
+      (item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never))
     );
-    return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && !isEventItem(item);
+    // Events are excluded from the main feed (shown in Spotlight instead) unless
+    // the Events tab is explicitly selected
+    return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && (activeTemplate === "events" || !isEventItem(item));
   }), [items, activeType, activeRegion, activeTag, activeCategory, activeTemplate, activeTemplateTemplates, interestTagSet]);
 
   // Posts from people you follow — community posts only

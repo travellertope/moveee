@@ -18,12 +18,13 @@ function toFeedItem(raw: any): FeedItem {
 }
 
 export default function HubFeed({
-  hubId, hubSlug, isMember, isModerator,
+  hubId, hubSlug, isMember, isModerator, sort = "recent",
 }: {
   hubId: number;
   hubSlug: string;
   isMember: boolean;
   isModerator: boolean;
+  sort?: string;
 }) {
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -34,14 +35,17 @@ export default function HubFeed({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/hub/${hubId}/feed?per_page=20`, { cache: "no-store" });
+      const qs = new URLSearchParams({ per_page: "20" });
+      if (sort === "top") { qs.set("orderby", "reactions"); qs.set("days", "7"); }
+      else if (sort === "hot") { qs.set("orderby", "hot"); }
+      const res = await fetch(`/api/hub/${hubId}/feed?${qs}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       setItems((data?.items ?? []).map(toFeedItem));
     } catch {
       setItems([]);
     }
     setLoading(false);
-  }, [hubId]);
+  }, [hubId, sort]);
 
   useEffect(() => { load(); }, [load]);
 

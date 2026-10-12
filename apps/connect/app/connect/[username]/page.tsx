@@ -1,11 +1,12 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import ProfileTabs from "./ProfileTabs";
 import ShareButton from "./ShareButton";
 import FollowButton from "./FollowButton";
 import BadgeShelf from "./BadgeShelf";
-import ProBadge from "@/components/ProBadge";
 import "./profile.css";
 import "@/app/pulse-layout.css";
 
@@ -91,7 +92,10 @@ export default async function PublicProfilePage(
   { params }: { params: Promise<{ username: string }> }
 ) {
   const { username } = await params;
-  const profile = await getProfile(username);
+  const [profile, session] = await Promise.all([
+    getProfile(username),
+    getServerSession(authOptions as any) as any,
+  ]);
   if (!profile) notFound();
 
   const isPatron = profile.tier === "patron";
@@ -100,6 +104,11 @@ export default async function PublicProfilePage(
   const initial = (profile.display_name || profile.username || "?")
     .charAt(0).toUpperCase();
   const profileUrl = `${SITE_URL}/connect/${profile.username}`;
+  const sessionUsername = session?.user?.username ?? session?.user?.name ?? null;
+  const isOwnProfile = sessionUsername &&
+    sessionUsername.toLowerCase() === profile.username.toLowerCase();
+
+  const DEFAULT_COVER = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80";
 
   return (
     <div>
@@ -110,7 +119,7 @@ export default async function PublicProfilePage(
 
             {/* Hero card */}
             <article style={{
-              background: "#fff",
+              background: "var(--paper, #f3ece0)",
               borderRadius: "var(--radius-xl, 12px)",
               border: "1px solid var(--rule, #e8e2d8)",
               overflow: "hidden",
@@ -118,21 +127,37 @@ export default async function PublicProfilePage(
               margin: "1rem 1.25rem 0",
             }}>
               {/* Cover photo */}
-              {profile.cover_photo_url ? (
-                <div style={{ position: "relative", height: "200px", background: "#1a1612", overflow: "hidden" }}>
-                  <img
-                    src={profile.cover_photo_url}
-                    alt=""
-                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.9, display: "block" }}
-                  />
-                  <div style={{
-                    position: "absolute", inset: 0,
-                    background: "linear-gradient(to top, rgba(20,17,13,0.5) 0%, transparent 55%)",
-                  }} />
-                </div>
-              ) : (
-                <div style={{ height: "100px", background: "var(--ochre, #7a241c)", opacity: 0.85 }} />
-              )}
+              <div style={{ position: "relative", height: "220px", background: "#1a1612", overflow: "hidden" }}>
+                <img
+                  src={profile.cover_photo_url || DEFAULT_COVER}
+                  alt=""
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "linear-gradient(to top, rgba(20,17,13,0.45) 0%, transparent 55%)",
+                }} />
+                {isOwnProfile && (
+                  <Link href="/member/settings" style={{
+                    position: "absolute", top: "1rem", right: "1rem",
+                    background: "rgba(0,0,0,0.45)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    color: "#fff",
+                    fontSize: "12px",
+                    fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                    fontWeight: 600,
+                    padding: "7px 16px",
+                    borderRadius: "9999px",
+                    border: "1px solid rgba(255,255,255,0.18)",
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    textDecoration: "none",
+                    letterSpacing: "0.01em",
+                  }}>
+                    ✎ Edit Cover &amp; Bio
+                  </Link>
+                )}
+              </div>
 
               {/* Info section */}
               <div style={{ padding: "0 1.5rem 1.5rem" }}>
@@ -140,63 +165,126 @@ export default async function PublicProfilePage(
                 <div style={{
                   display: "flex", alignItems: "flex-end",
                   justifyContent: "space-between", flexWrap: "wrap",
-                  marginTop: "-44px", marginBottom: "1rem", gap: "0.75rem",
+                  marginTop: "-64px", marginBottom: "1.1rem", gap: "0.75rem",
                 }}>
-                  {/* Avatar */}
-                  <div className={`prf-avatar-new${isPatron ? " prf-avatar-new--patron" : ""}`}>
-                    {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt={profile.display_name} />
-                    ) : initial}
+                  {/* Avatar with online dot */}
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div style={{
+                      width: "128px", height: "128px",
+                      borderRadius: "50%",
+                      border: "4px solid var(--paper, #f3ece0)",
+                      boxShadow: "0 2px 12px rgba(20,17,13,0.15)",
+                      overflow: "hidden",
+                      background: "var(--ink, #14110d)",
+                      flexShrink: 0,
+                    }}>
+                      {profile.avatar_url ? (
+                        <img
+                          src={profile.avatar_url}
+                          alt={profile.display_name}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: "100%", height: "100%",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontFamily: "var(--font-fraunces), serif", fontSize: "48px",
+                          fontWeight: 300, color: "var(--paper)",
+                        }}>
+                          {initial}
+                        </div>
+                      )}
+                    </div>
+                    {/* Online indicator */}
+                    <span style={{
+                      position: "absolute", bottom: "7px", right: "7px",
+                      width: "18px", height: "18px",
+                      background: "#22c55e",
+                      borderRadius: "50%",
+                      border: "3px solid var(--paper, #f3ece0)",
+                      display: "block",
+                    }} />
                   </div>
 
                   {/* Action buttons */}
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", paddingBottom: "2px" }}>
-                    <FollowButton
-                      username={profile.username}
-                      initialFollowersCount={profile.followers_count}
-                    />
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", paddingBottom: "4px" }}>
+                    {isOwnProfile ? (
+                      <Link href="/member/settings" style={{
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        background: "var(--ochre, #7a241c)", color: "#fff",
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        fontSize: "13px", fontWeight: 600,
+                        padding: "9px 20px",
+                        borderRadius: "9999px",
+                        textDecoration: "none",
+                        letterSpacing: "0.01em",
+                      }}>
+                        Edit Profile
+                      </Link>
+                    ) : (
+                      <FollowButton
+                        username={profile.username}
+                        initialFollowersCount={profile.followers_count}
+                      />
+                    )}
                     <ShareButton url={profileUrl} name={profile.display_name} />
                   </div>
                 </div>
 
-                {/* Name + tier */}
+                {/* Name + PRO badge */}
                 <div style={{ marginBottom: "0.35rem" }}>
                   <h1 style={{
-                    display: "flex", alignItems: "center", gap: "0.4rem",
-                    fontSize: "clamp(1.25rem, 3vw, 1.75rem)",
+                    display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap",
+                    fontSize: "clamp(1.35rem, 3vw, 1.85rem)",
                     fontFamily: "var(--font-fraunces), serif",
-                    fontWeight: 300, letterSpacing: "-0.02em",
+                    fontWeight: 700, letterSpacing: "-0.02em",
                     color: "#14110d", margin: 0, lineHeight: 1.15,
                   }}>
                     {profile.display_name}
-                    {isPatron && <ProBadge size={18} />}
+                    {isPatron && (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: "4px",
+                        background: "#fae4e1", color: "#c6452c",
+                        border: "1px solid #f5bcb5",
+                        fontSize: "11px", fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: "9999px",
+                        letterSpacing: "0.04em",
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        verticalAlign: "middle",
+                      }}>
+                        👑 PRO
+                      </span>
+                    )}
                   </h1>
                 </div>
 
                 {/* Handle · location · occupation */}
                 <p style={{
-                  fontSize: "0.72rem", letterSpacing: "0.06em",
+                  fontSize: "0.82rem",
                   color: "var(--mute, #7a6f5c)", margin: "0 0 0.85rem",
-                  display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center",
+                  display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center",
+                  fontFamily: "var(--font-inter), 'Inter', sans-serif",
                 }}>
                   <span style={{ color: "var(--ochre, #7a241c)", fontWeight: 600 }}>@{profile.username}</span>
                   {locationParts.length > 0 && (
-                    <><span style={{ opacity: 0.4 }}>·</span><span>{locationParts.join(", ")}</span></>
+                    <><span style={{ opacity: 0.4 }}>•</span><span>{locationParts.join(", ")}</span></>
                   )}
                   {profile.occupation && (
-                    <><span style={{ opacity: 0.4 }}>·</span><span>{profile.occupation}</span></>
+                    <><span style={{ opacity: 0.4 }}>•</span><span>{profile.occupation}</span></>
                   )}
                 </p>
 
-                {/* Reputation tier pill */}
+                {/* Reputation tier pill (non-member only) */}
                 {profile.reputation_tier !== "member" && (
                   <div style={{ marginBottom: "0.75rem" }}>
                     <span style={{
                       display: "inline-block",
-                      background: "var(--ink, #14110d)", color: "var(--paper, #fff)",
+                      background: "var(--ink, #14110d)", color: "var(--paper, #f3ece0)",
                       fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em",
                       textTransform: "uppercase", padding: "0.2rem 0.6rem",
                       borderRadius: "var(--radius-full, 9999px)",
+                      fontFamily: "var(--font-inter), 'Inter', sans-serif",
                     }}>
                       {repLabel}
                     </span>
@@ -213,10 +301,10 @@ export default async function PublicProfilePage(
                     fontSize: "0.875rem", fontStyle: "italic",
                     color: "var(--ink-soft, #3a342b)", lineHeight: 1.6,
                     margin: "0 0 1rem",
-                    background: "rgba(42,36,28,0.03)",
+                    background: "rgba(42,36,28,0.04)",
                     border: "1px solid var(--rule, #e8e2d8)",
                     borderRadius: "var(--radius-lg, 6px)",
-                    padding: "0.65rem 0.85rem",
+                    padding: "0.75rem 1rem",
                   }}>
                     {profile.bio}
                   </p>
@@ -248,12 +336,14 @@ export default async function PublicProfilePage(
                         fontSize: "0.55rem", fontWeight: 700,
                         letterSpacing: "0.12em", textTransform: "uppercase",
                         color: "var(--mute, #7a6f5c)",
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
                       }}>
                         {stat.label}
                       </p>
                       <p style={{
                         margin: 0, fontSize: "1rem", fontWeight: 800,
                         color: "#14110d", lineHeight: 1.1,
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
                       }}>
                         {stat.value}
                       </p>

@@ -1,6 +1,33 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  MapPin, Calendar, Eye, Compass, Globe, MessageSquare,
+  Star, PenLine, BookOpen, Bookmark, TrendingUp, Lightbulb,
+  Archive, BookMarked, Search, MessageCircle, Share2, Lock,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+const BADGE_ICONS: Record<string, LucideIcon> = {
+  first_steps:             MapPin,
+  regular:                 Calendar,
+  culture_vulture:         Eye,
+  explorer:                Compass,
+  globetrotter:            Globe,
+  commentator:             MessageSquare,
+  century_club:            Star,
+  wordsmith:               PenLine,
+  librarian:               BookOpen,
+  philosopher:             Bookmark,
+  influencer:              TrendingUp,
+  thought_leader:          Lightbulb,
+  culture_archivist:       Archive,
+  knowledge_keeper:        BookMarked,
+  cultural_encyclopaedist: Search,
+  cultural_specialist:     MessageCircle,
+  deep_diver:              BookOpen,
+  culture_liaison:         Share2,
+};
 
 const ALL_BADGES = [
   { slug: 'first_steps', name: 'First Steps', desc: 'Attended your first event' },
@@ -51,12 +78,15 @@ export default function MemberBadges({ initialBadges }: Props) {
       <div className="acct-badges">
         {visibleBadges.map((badge) => {
           const earned = earnedBadges.includes(badge.slug);
+          const Icon = BADGE_ICONS[badge.slug] ?? Star;
           return (
             <div
               key={badge.slug}
               className={`acct-badge ${earned ? 'acct-badge--earned' : 'acct-badge--locked'}`}
             >
-              <div className="acct-badge-icon">{earned ? '★' : '○'}</div>
+              <div className="acct-badge-icon">
+                {earned ? <Icon size={20} strokeWidth={2} /> : <Lock size={16} strokeWidth={2} />}
+              </div>
               <div className="acct-badge-text">
                 <div className="acct-badge-name">{badge.name}</div>
                 <div className="acct-badge-desc">{badge.desc}</div>

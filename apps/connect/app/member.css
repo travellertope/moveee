@@ -1843,7 +1843,7 @@ select.mem-field-input { cursor: pointer; }
    ═══════════════════════════════════════════════════ */
 
 .acct-page {
-  background: var(--paper);
+  background: #f8fafc;
   min-height: 100vh;
 }
 
@@ -1861,9 +1861,33 @@ select.mem-field-input { cursor: pointer; }
   padding: 28px 0 20px;
 }
 
+.acct-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.acct-avatar-check {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  background: var(--ochre);
+  border: 2.5px solid #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
 .acct-avatar {
-  width: 64px;
-  height: 64px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--gold), var(--ochre));
   display: flex;
@@ -1871,20 +1895,22 @@ select.mem-field-input { cursor: pointer; }
   justify-content: center;
   color: #fff;
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 700;
   flex-shrink: 0;
-  border: 3px solid var(--gold);
+  border: 4px solid #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
 }
 
 .acct-profile-body { min-width: 0; }
 
 .acct-name {
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   color: var(--ink);
-  margin: 0 0 6px;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
 }
 
 .acct-meta {
@@ -1903,8 +1929,8 @@ select.mem-field-input { cursor: pointer; }
   padding: 4px 11px;
   border-radius: var(--radius-full);
 }
-.acct-tier-pill--patron { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
-.acct-tier-pill--citizen { background: var(--paper-deep); color: var(--mute); }
+.acct-tier-pill--patron { background: color-mix(in srgb, var(--ochre) 10%, transparent); color: var(--ochre); border: 1px solid color-mix(in srgb, var(--ochre) 20%, transparent); }
+.acct-tier-pill--citizen { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
 .acct-meta-text {
   font-family: 'Inter', sans-serif;
@@ -1935,9 +1961,10 @@ select.mem-field-input { cursor: pointer; }
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  border: 1.5px solid var(--rule);
-  background: var(--paper);
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
   color: var(--ink-soft);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   transition: border-color 0.12s, color 0.12s;
 }
 .acct-nav-btn:hover { border-color: var(--ochre); color: var(--ink); }
@@ -2055,30 +2082,78 @@ select.mem-field-input { cursor: pointer; }
 @media (max-width: 560px) { .acct-stats { grid-template-columns: repeat(2, 1fr); } }
 
 .acct-stat-card {
-  background: var(--paper);
-  border: 1px solid var(--rule-dark);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
-  padding: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  padding: 18px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s;
+}
+.acct-stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+.acct-stat-card--membership {
+  background: var(--ochre);
+  border-color: var(--ochre-deep);
+  box-shadow: 0 4px 12px rgba(122,36,28,0.25);
+  overflow: hidden;
+}
+.acct-stat-card--membership::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 80px;
+  height: 80px;
+  background: var(--ochre-deep);
+  border-radius: 50%;
+  opacity: 0.5;
 }
 
-.acct-stat-icon { font-size: 18px; margin-bottom: 10px; }
+.acct-stat-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+.acct-stat-icon-wrap--amber { background: #fef3c7; color: #d97706; }
+.acct-stat-icon-wrap--purple { background: #f3e8ff; color: #9333ea; }
+.acct-stat-icon-wrap--blue { background: #dbeafe; color: #2563eb; }
+.acct-stat-icon-wrap--white { background: rgba(255,255,255,0.2); color: #fff; backdrop-filter: blur(4px); }
 
 .acct-stat-value {
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 800;
   color: var(--ink);
   display: block;
+  letter-spacing: -0.02em;
 }
-.acct-stat-value--sm { font-size: 16px; }
+.acct-stat-value--membership { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+
+.acct-stat-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.acct-stat-value-denom {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mute);
+}
 
 .acct-stat-label {
   font-family: 'Inter', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: var(--mute);
   display: flex;
@@ -2086,6 +2161,7 @@ select.mem-field-input { cursor: pointer; }
   gap: 4px;
   margin-top: 4px;
 }
+.acct-stat-label--membership { color: rgba(255,255,255,0.7); margin-top: 6px; }
 
 .acct-stat-info {
   width: 14px;
@@ -2125,23 +2201,30 @@ select.mem-field-input { cursor: pointer; }
   color: var(--mute);
   margin-top: 6px;
 }
+.acct-stat-sub--pill {
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  padding: 3px 8px;
+  display: inline-block;
+  margin-top: 8px;
+}
 .acct-stat-sub--warn { color: var(--ochre); font-weight: 600; }
 
 /* ── Two-column body ── */
 .acct-body {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 320px;
   gap: 24px;
   align-items: start;
 }
 @media (max-width: 860px) { .acct-body { grid-template-columns: 1fr; } }
 
 .acct-card {
-  background: var(--paper);
-  border: 1px solid var(--rule-dark);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
-  padding: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  padding: 24px;
   margin-bottom: 20px;
 }
 
@@ -2149,7 +2232,11 @@ select.mem-field-input { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin: -24px -24px 20px;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }
 
 .acct-card-title {
@@ -2164,7 +2251,12 @@ select.mem-field-input { cursor: pointer; }
 .acct-card-count {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
+  font-weight: 700;
   color: var(--mute);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
 }
 
 .acct-card-desc {
@@ -2217,29 +2309,33 @@ select.mem-field-input { cursor: pointer; }
 .acct-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--rule);
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-xl);
+  border: 1px solid #e2e8f0;
+  transition: box-shadow 0.15s;
 }
+.acct-badge:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
 .acct-badge--earned {
-  background: color-mix(in srgb, var(--gold) 6%, transparent);
-  border-color: color-mix(in srgb, var(--gold) 30%, transparent);
+  background: rgba(254,243,199,0.5);
+  border-color: #fde68a;
 }
-.acct-badge--locked { opacity: .55; }
+.acct-badge--locked {
+  opacity: 0.65;
+  filter: grayscale(0.4);
+}
 
 .acct-badge-icon {
-  width: 30px;
-  height: 30px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
 }
-.acct-badge--earned .acct-badge-icon { background: var(--gold); color: #fff; }
-.acct-badge--locked .acct-badge-icon { background: var(--paper-deep); color: var(--mute); }
+.acct-badge--earned .acct-badge-icon { background: #f59e0b; color: #fff; box-shadow: 0 2px 6px rgba(245,158,11,0.3); }
+.acct-badge--locked .acct-badge-icon { background: #e2e8f0; color: #94a3b8; }
 
 .acct-badge-name {
   font-family: 'Inter', sans-serif;
@@ -2281,8 +2377,9 @@ select.mem-field-input { cursor: pointer; }
 .acct-earn-pt { color: var(--mute); font-weight: 700; }
 
 /* ── Upgrade card (dark, side column) ── */
-.acct-card--upgrade { background: var(--ink); color: var(--paper); }
+.acct-card--upgrade { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .acct-card--upgrade .acct-card-title { color: var(--gold); }
+.acct-card--upgrade .acct-card-header { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
 .acct-upgrade-title {
   font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 17px;

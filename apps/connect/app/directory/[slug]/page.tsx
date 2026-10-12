@@ -468,7 +468,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                     ? new Date(ev.end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
                     : null;
                   return (
-                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "#fff", border: "1px solid #e8e2d8", borderRadius: "8px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
+                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "var(--paper, #f3ece0)", border: "1px solid var(--rule, #e8e2d8)", borderRadius: "8px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
                       {ev.image && (
                         <DirectoryLightboxImage
                           src={ev.image}
