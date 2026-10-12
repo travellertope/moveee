@@ -116,14 +116,11 @@
   gap: 8px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(42,36,28,.18) transparent;
-  padding-bottom: 4px;
+  scrollbar-width: none;
+  padding-bottom: 0;
   margin-bottom: 14px;
 }
-.prf-badge-shelf::-webkit-scrollbar { height: 4px; }
-.prf-badge-shelf::-webkit-scrollbar-track { background: transparent; }
-.prf-badge-shelf::-webkit-scrollbar-thumb { background: rgba(42,36,28,.18); border-radius: 2px; }
+.prf-badge-shelf::-webkit-scrollbar { display: none; }
 
 .prf-badge-pill {
   position: relative;
