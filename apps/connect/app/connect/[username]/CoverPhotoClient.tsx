@@ -7,11 +7,13 @@ interface Props {
   isOwnProfile: boolean;
 }
 
-// Warm gradient used when no cover photo is set — on-brand with --ink / --ochre palette.
+const DEFAULT_COVER_SRC = "/default-cover.avif";
+// Fallback if the static asset also fails to load
 const DEFAULT_COVER_GRADIENT = "linear-gradient(135deg, #14110d 0%, #2a1a08 35%, #4a2610 65%, #1a1612 100%)";
 
 export default function CoverPhotoClient({ initialCoverUrl, isOwnProfile }: Props) {
-  const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl || null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl || DEFAULT_COVER_SRC);
+  const [coverFailed, setCoverFailed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -27,6 +29,7 @@ export default function CoverPhotoClient({ initialCoverUrl, isOwnProfile }: Prop
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
       setCoverUrl(data.url);
+      setCoverFailed(false);
       setShowModal(false);
     } catch (e: any) {
       setError(e.message || "Upload failed");
@@ -38,12 +41,12 @@ export default function CoverPhotoClient({ initialCoverUrl, isOwnProfile }: Prop
     <>
       {/* Cover area */}
       <div style={{ position: "relative", height: "220px", overflow: "hidden" }}>
-        {coverUrl ? (
+        {!coverFailed ? (
           <img
-            src={coverUrl}
+            src={coverUrl ?? DEFAULT_COVER_SRC}
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            onError={() => setCoverUrl(null)}
+            onError={() => setCoverFailed(true)}
           />
         ) : (
           <div style={{ width: "100%", height: "100%", background: DEFAULT_COVER_GRADIENT }} />
