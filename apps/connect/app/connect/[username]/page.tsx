@@ -100,7 +100,6 @@ export default async function PublicProfilePage(
   ]);
   if (!profile) notFound();
 
-  const isPatron = profile.tier === "patron";
   const repLabel = REP_TIER_LABELS[profile.reputation_tier] ?? "Member";
   const locationParts = [profile.city, profile.country].filter(Boolean);
   const initial = (profile.display_name || profile.username || "?")
@@ -109,6 +108,13 @@ export default async function PublicProfilePage(
   const sessionUsername = session?.user?.username ?? session?.user?.name ?? null;
   const isOwnProfile = sessionUsername &&
     sessionUsername.toLowerCase() === profile.username.toLowerCase();
+
+  // Use session tier as fallback when the WP meta hasn't been synced yet
+  // (session tier is set at sign-in from the authoritative source).
+  const sessionTier = (session?.user as any)?.tier ?? null;
+  const effectiveTier = profile.tier !== "citizen" ? profile.tier : (isOwnProfile ? sessionTier ?? profile.tier : profile.tier);
+  const isPatron = effectiveTier === "patron";
+  const isLit = effectiveTier === "lit";
 
   return (
     <div>
@@ -196,6 +202,21 @@ export default async function PublicProfilePage(
                         verticalAlign: "middle",
                       }}>
                         👑 PRO
+                      </span>
+                    )}
+                    {isLit && (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: "4px",
+                        background: "#f3eeff", color: "#6b3fa0",
+                        border: "1px solid #d9c8f5",
+                        fontSize: "11px", fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: "9999px",
+                        letterSpacing: "0.04em",
+                        fontFamily: "var(--font-inter), 'Inter', sans-serif",
+                        verticalAlign: "middle",
+                      }}>
+                        📖 LIT
                       </span>
                     )}
                   </h1>

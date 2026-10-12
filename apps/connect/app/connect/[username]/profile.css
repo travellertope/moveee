@@ -224,20 +224,25 @@
 }
 .prf-share-btn {
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 9px;
-  letter-spacing: .15em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink);
   background: transparent;
-  border: 1px solid rgba(42,36,28,.2);
-  padding: 8px 16px;
+  border: 1px solid rgba(42,36,28,.25);
+  border-radius: 9999px;
+  padding: 9px 20px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   transition: background .15s, border-color .15s;
 }
-.prf-share-btn:hover { background: rgba(42,36,28,.05); border-color: rgba(42,36,28,.35); }
+.prf-share-btn:hover { background: rgba(42,36,28,.05); border-color: rgba(42,36,28,.4); }
 .prf-share-btn--copied {
   color: var(--ochre);
-  border-color: rgba(179,130,56,.3);
+  border-color: rgba(122,36,28,.3);
 }
 .prf-follow-wrap {
   display: flex;
