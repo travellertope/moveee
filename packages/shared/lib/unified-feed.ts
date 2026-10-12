@@ -55,6 +55,7 @@ export interface FeedItem {
   communityAuthor?: string;
   communityAuthorUsername?: string;
   communityAuthorAvatar?: string;
+  communityAuthorId?: number;
   communityTag?: string;
   communityTier?: string;
   commentCount?: number;
@@ -214,6 +215,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       communityAuthor: authorName || (post.excerpt?.rendered ? stripHtml(post.excerpt.rendered) : ""),
       communityAuthorUsername: (m.community_author_username as string) || undefined,
       communityAuthorAvatar: (m.community_author_avatar as string) || undefined,
+      communityAuthorId: m.community_author_id ? Number(m.community_author_id) : undefined,
       communityTag: tag ?? "",
       communityTier: tier ?? undefined,
       region: (m.community_region as string) || undefined,

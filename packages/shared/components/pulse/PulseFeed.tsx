@@ -510,6 +510,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   item={item}
                   onTagClick={handleTagClick}
                   interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
+                  onDelete={(id) => setItems(prev => prev.filter(i => i.id !== id))}
                 />
               ))}
               {visible.length > 5 && <EventSpotlightCarousel events={spotlightEvents} />}
@@ -520,6 +521,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   item={item}
                   onTagClick={handleTagClick}
                   interestMatch={forYou && hasInterests && matchesInterests(item, interestTagSet)}
+                  onDelete={(id) => setItems(prev => prev.filter(i => i.id !== id))}
                 />
               ))}
             </>
