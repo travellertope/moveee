@@ -36,6 +36,7 @@ interface Props {
   displayName: string;
   avatarUrl: string;
   tier: string;
+  template: string;
 }
 
 function toFeedItem(post: Post, username: string, displayName: string, avatarUrl: string, tier: string): FeedItem {
@@ -65,10 +66,9 @@ function toFeedItem(post: Post, username: string, displayName: string, avatarUrl
   };
 }
 
-export default function CommunityTab({ username, displayName, avatarUrl, tier }: Props) {
+export default function CommunityTab({ username, displayName, avatarUrl, tier, template }: Props) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [template, setTemplate] = useState("");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
@@ -95,10 +95,6 @@ export default function CommunityTab({ username, displayName, avatarUrl, tier }:
     fetchPosts(template, 1);
   }, [template, fetchPosts]);
 
-  function handleTemplateChange(t: string) {
-    setTemplate(t);
-  }
-
   function loadMore() {
     const next = page + 1;
     setPage(next);
@@ -111,21 +107,6 @@ export default function CommunityTab({ username, displayName, avatarUrl, tier }:
 
   return (
     <div>
-      <div className="prf-filter-bar">
-        {TEMPLATE_FILTERS.map(f => (
-          <button
-            key={f.value}
-            className={`prf-filter-pill${template === f.value ? " prf-filter-pill--active" : ""}`}
-            onClick={() => handleTemplateChange(f.value)}
-          >
-            {f.label}
-            {f.value && counts[f.value] ? (
-              <span className="prf-filter-count">{counts[f.value]}</span>
-            ) : null}
-          </button>
-        ))}
-      </div>
-
       {loading && posts.length === 0 ? (
         <div className="prf-loading">
           {Array.from({ length: 5 }).map((_, i) => <div key={i} className="prf-skeleton" />)}
