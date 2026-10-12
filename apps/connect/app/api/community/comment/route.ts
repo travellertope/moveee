@@ -58,6 +58,36 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    // WordPress returns "closed" when comment_status is closed on the post.
+    // Auto-open comments on the post (it's a community post — they should always be open)
+    // then retry once.
+    if (err.code === "comment_closed" || (err.message ?? "").toLowerCase().includes("closed")) {
+      await fetch(`${BASE}/community-posts/${Number(postId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+        body: JSON.stringify({ comment_status: "open" }),
+        cache: "no-store",
+      }).catch(() => {});
+
+      const retry = await fetch(`${BASE}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+      if (retry.ok) {
+        const comment = await retry.json();
+        const API_KEY = process.env.CULTURE_API_SECRET ?? "";
+        if (userId && API_KEY) {
+          fetch(`${WP_URL}/wp-json/culture/v1/award-points`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
+            body: JSON.stringify({ user_id: userId, action: "community_comment", post_id: postId }),
+          }).catch(() => {});
+        }
+        return NextResponse.json({ id: comment.id, author_name: comment.author_name, date: comment.date });
+      }
+    }
     return NextResponse.json({ error: err.message ?? "Failed to post comment." }, { status: res.status });
   }
 
