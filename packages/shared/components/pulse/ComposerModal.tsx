@@ -291,10 +291,14 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           template_type = REVIEW_TEMPLATE[revSubtype];
           if (!revContent.trim()) throw new Error("Review content is required");
           if (revSubtype === "place") {
-            payload.location_name = revTitle.trim();
+            const placeName = revEntry?.title || revTitle.trim();
+            payload.location_name = placeName;
             payload.text = revContent.trim();
+            if (revEntry?.id) payload.linked_directory_id = revEntry.id;
           } else if (revSubtype === "food") {
-            payload.text = revTitle.trim() ? `${revTitle.trim()}\n\n${revContent.trim()}` : revContent.trim();
+            const foodName = revEntry?.title || revTitle.trim();
+            payload.text = foodName ? `${foodName}\n\n${revContent.trim()}` : revContent.trim();
+            if (revEntry?.id) payload.linked_directory_id = revEntry.id;
           } else {
             // book / music / film — use linked directory entry when available
             const entryTitle = revEntry?.title || revTitle.trim();
@@ -471,33 +475,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                {(revSubtype === "book" || revSubtype === "music" || revSubtype === "film") ? (
-                  <>
-                    <label className="cm-label">
-                      {{ book: "Book", music: "Album", film: "Film" }[revSubtype]}
-                    </label>
-                    <DirectorySearch
-                      value={revEntry}
-                      onChange={(entry) => { setRevEntry(entry); if (entry) setRevTitle(entry.title); }}
-                      typeFilter={{ book: "book", music: "album", film: "film" }[revSubtype]}
-                      aboutFieldLabel={{ book: "Author", music: "Artist", film: "Director" }[revSubtype]}
-                      externalSource={({ book: "google_books", music: "spotify", film: "tmdb" } as const)[revSubtype]}
-                      placeholder={{ book: "Search for a book…", music: "Search for an album…", film: "Search for a film…" }[revSubtype]}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <label className="cm-label">
-                      {{ place: "Place name", food: "Restaurant / dish" }[revSubtype] ?? "Title"}
-                    </label>
-                    <input
-                      className="cm-input"
-                      placeholder={{ place: "Name of the place…", food: "e.g. Suya Spot Lagos, jollof rice" }[revSubtype] ?? ""}
-                      value={revTitle}
-                      onChange={e => setRevTitle(e.target.value)}
-                    />
-                  </>
-                )}
+                <>
+                  <label className="cm-label">
+                    {{ place: "Place", food: "Restaurant / dish", book: "Book", music: "Album", film: "Film" }[revSubtype]}
+                  </label>
+                  <DirectorySearch
+                    value={revEntry}
+                    onChange={(entry) => { setRevEntry(entry); if (entry) setRevTitle(entry.title); }}
+                    typeFilter={{ place: "place", food: "place", book: "book", music: "album", film: "film" }[revSubtype]}
+                    aboutFieldLabel={{ book: "Author", music: "Artist", film: "Director" }[revSubtype as "book" | "music" | "film"] ?? undefined}
+                    externalSource={({ place: "google_places", food: "google_places", book: "google_books", music: "spotify", film: "tmdb" } as const)[revSubtype]}
+                    placeholder={{ place: "Search for a place on Google Maps…", food: "Search for a restaurant or café…", book: "Search for a book…", music: "Search for an album…", film: "Search for a film…" }[revSubtype]}
+                  />
+                </>
               </div>
               <div className="cm-field">
                 <label className="cm-label">Your rating</label>
