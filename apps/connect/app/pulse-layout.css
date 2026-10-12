@@ -112,72 +112,40 @@
   opacity: 0.55;
 }
 
-/* Post type bottom-sheet */
+/* Post type dropdown — anchored below the button */
+.feed-type-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
 .feed-type-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20,17,13,0.45);
+  background: transparent;
   z-index: 1200;
-  animation: stoop-fade-in 0.18s;
 }
 .feed-type-sheet {
-  position: fixed;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  width: fit-content;
-  min-width: 220px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max-content;
+  min-width: 200px;
   z-index: 1201;
   background: var(--paper);
+  border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-xl, 12px);
-  padding: 12px 0 16px;
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(20,17,13,0.16), 0 2px 8px rgba(20,17,13,0.08);
-  animation: stoop-sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  padding: 6px 0;
+  box-shadow: 0 8px 24px rgba(20,17,13,0.14), 0 2px 6px rgba(20,17,13,0.07);
+  animation: feed-dropdown-in 0.14s ease-out;
 }
-.feed-type-sheet-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: var(--radius-full, 9999px);
-  background: var(--rule);
-  margin: 0 auto 12px;
-}
-.feed-type-sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px 10px;
-  flex-shrink: 0;
-}
-.feed-type-sheet-title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--mute);
-}
-.feed-type-sheet-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--mute);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: var(--radius-full, 9999px);
-  transition: color 0.15s, background 0.15s;
-}
-.feed-type-sheet-close:hover {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+@keyframes feed-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .feed-type-sheet-list {
   overflow-y: auto;
-  flex: 1;
-  padding: 0 8px;
+  max-height: 340px;
+  padding: 0 6px;
   -webkit-overflow-scrolling: touch;
 }
 .feed-type-row {
@@ -185,12 +153,12 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 13px 12px;
+  padding: 9px 10px;
   background: none;
   border: none;
   cursor: pointer;
   font-family: var(--font-sans, 'Inter', sans-serif);
-  font-size: 15px;
+  font-size: 13px;
   text-align: left;
   border-radius: var(--radius-lg, 6px);
   color: var(--ink-soft);
