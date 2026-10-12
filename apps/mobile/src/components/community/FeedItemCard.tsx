@@ -1052,6 +1052,14 @@ function ImgPlaceholder({ height, src, borderRadius = 0, width, onPress }: {
 
 const YT_PATTERN = /youtu\.be\/|youtube\.com\/(watch|embed|shorts)/;
 
+const YT_EXTRACT = /https?:\/\/(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_\-]{11})[^\s]*/;
+
+function extractYoutubeFromText(text: string): { videoId: string; url: string; thumbUrl: string } | null {
+  const m = text.match(YT_EXTRACT);
+  if (!m) return null;
+  return { videoId: m[1], url: m[0], thumbUrl: `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` };
+}
+
 function LinkPreview({ source, title, domain, image, pressUrl }: {
   source?: string | null; title: string; domain?: string | null; image?: string | null; pressUrl?: string | null;
 }) {
@@ -1357,7 +1365,15 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
   const gallery = item.galleryImages ?? [];
   const hasLink = !!(item.ogTitle || item.ogImage || item.source);
   const rawBody = item.body ?? item.excerpt ?? item.title ?? "";
-  const displayBody = hasLink ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody) : rawBody;
+  // Fall back to detecting a YouTube URL directly in the body when the post
+  // has no saved OG data (e.g. submitted from mobile before the OG-save fix).
+  const bodyYt = !hasLink && !gallery.length && !item.image
+    ? extractYoutubeFromText(rawBody) : null;
+  const displayBody = hasLink
+    ? (stripLinkFromBody(rawBody, item.sourceUrl) ?? rawBody)
+    : bodyYt
+      ? rawBody.replace(bodyYt.url, "").trim()
+      : rawBody;
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
   return (
     <>
@@ -1375,6 +1391,10 @@ function BasicPostCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPre
         ) : hasLink ? (
           <View style={{ marginTop: 10 }}>
             <LinkPreview source={item.source} title={item.ogTitle ?? item.title} domain={item.sourceUrl ?? undefined} image={item.ogImage} pressUrl={item.sourceUrl} />
+          </View>
+        ) : bodyYt ? (
+          <View style={{ marginTop: 10 }}>
+            <LinkPreview source="YouTube" title="" domain="youtube.com" image={bodyYt.thumbUrl} pressUrl={bodyYt.url} />
           </View>
         ) : null}
         <FeedReactionBar item={item} marginTop={10} />

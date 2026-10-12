@@ -122,16 +122,19 @@
 }
 .feed-type-sheet {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: fit-content;
+  min-width: 220px;
   z-index: 1201;
   background: var(--paper);
-  border-radius: var(--radius-xl, 12px) var(--radius-xl, 12px) 0 0;
-  padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+  border-radius: var(--radius-xl, 12px);
+  padding: 12px 0 16px;
   max-height: 70vh;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 8px 32px rgba(20,17,13,0.16), 0 2px 8px rgba(20,17,13,0.08);
   animation: stoop-sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .feed-type-sheet-handle {

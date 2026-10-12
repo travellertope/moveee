@@ -395,6 +395,25 @@ export default function FeedCard({
   const typeMeta = TYPE_BADGE[item.type] ?? TYPE_BADGE.pulse;
 
   // ── Quote card ──
+  function decodeHtml(str: string): string {
+    if (!str) return str;
+    return str
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'")
+      .replace(/&hellip;/g, "…")
+      .replace(/&mdash;/g, "—")
+      .replace(/&ndash;/g, "–")
+      .replace(/&rsquo;/g, "’")
+      .replace(/&lsquo;/g, "‘")
+      .replace(/&rdquo;/g, "”")
+      .replace(/&ldquo;/g, "“")
+      .replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+  }
+
   if (item.type === "quote") {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [modalOpen, setModalOpen] = useState(false);
@@ -407,7 +426,7 @@ export default function FeedCard({
           onClick={() => setModalOpen(true)}
           style={{
             position: "relative",
-            background: "var(--paper-deep, #f2f2f2)",
+            background: "var(--paper)",
             border: "1px solid var(--rule)",
             borderRadius: "12px",
             boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
@@ -441,15 +460,15 @@ export default function FeedCard({
               lineHeight: 1.4,
               margin: "0 0 12px",
             }}>
-              {item.title}
+              {decodeHtml(item.title)}
             </p>
             <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "10px" }}>
               {item.quoteAuthor && (
                 <span style={{ color: "var(--ink)", fontSize: "0.83rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
-                  — {item.quoteAuthor}
+                  — {decodeHtml(item.quoteAuthor)}
                 </span>
               )}
-              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.83rem", fontWeight: 400, fontFamily: "var(--font-sans), sans-serif" }}>{item.quoteSource}</span>}
+              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.83rem", fontWeight: 400, fontFamily: "var(--font-sans), sans-serif" }}>{decodeHtml(item.quoteSource)}</span>}
               <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
             </div>
             <div onClick={(e) => e.stopPropagation()}>
