@@ -184,6 +184,15 @@ export default function CommunityPostClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Derive effective YouTube embed URL from videoUrl, sourceUrl, or inline text
+  const ytUrl: string | null = (() => {
+    if (videoUrl) return videoUrl;
+    const src = sourceUrl ?? "";
+    if (src.includes("youtu.be") || src.includes("youtube.com/watch")) return src;
+    const m = text.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch[^\s]*|youtu\.be\/)[^\s]*/);
+    return m ? m[0] : null;
+  })();
+
   const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
 
   async function submitReport(reason: "spam" | "harassment" | "inappropriate") {
@@ -322,25 +331,27 @@ export default function CommunityPostClient({
 
       {/* Gallery */}
       {galleryImages && galleryImages.length >= 1 && (
-        <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "1rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
-          {galleryImages.map((img, i) => (
-            <img key={i} src={img} alt="" style={{ height: "240px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
-          ))}
+        <div style={{ borderRadius: "var(--radius-xl, 12px)", overflow: "hidden", border: "1px solid #e8e2d8", marginBottom: "1rem" }}>
+          <div className="hide-scrollbar" style={{ display: "flex", gap: "2px", overflowX: "auto" }}>
+            {galleryImages.map((img, i) => (
+              <img key={i} src={img} alt="" style={{ height: "240px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+            ))}
+          </div>
         </div>
       )}
 
       {/* Video embed */}
-      {videoUrl && (
+      {ytUrl && (
         <div style={{ marginBottom: "1rem" }}>
-          {videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be") ? (
+          {ytUrl.includes("youtube.com") || ytUrl.includes("youtu.be") ? (
             <iframe
-              src={`https://www.youtube.com/embed/${videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] ?? ""}`}
-              style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
+              src={`https://www.youtube.com/embed/${ytUrl.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]+)/)?.[1] ?? ""}`}
+              style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "var(--radius-xl, 12px)" }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media"
               allowFullScreen
             />
           ) : (
-            <a href={videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.88rem" }}>Watch video →</a>
+            <a href={ytUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#b38238", fontSize: "0.88rem" }}>Watch video →</a>
           )}
         </div>
       )}
@@ -371,8 +382,8 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      {/* Link preview (community_link_url) */}
-      {sourceUrl && (
+      {/* Link preview (community_link_url) — skip when we already have a YouTube embed */}
+      {sourceUrl && !ytUrl && (
         <div style={{ marginBottom: "1rem" }}>
           <SourcePreviewCard
             goUrl={`/go/link?url=${encodeURIComponent(sourceUrl)}`}

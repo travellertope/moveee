@@ -247,6 +247,15 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
       .finally(() => setLoading(false));
   }, [item.wpId]);
 
+  // Derive effective YouTube embed URL from videoUrl, sourceUrl, or inline text
+  const ytUrl: string | null = (() => {
+    if (item.videoUrl) return item.videoUrl;
+    const src = item.sourceUrl ?? "";
+    if (src.includes("youtu.be") || src.includes("youtube.com/watch")) return src;
+    const m = (item.title ?? "").match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch[^\s]*|youtu\.be\/)[^\s]*/);
+    return m ? m[0] : null;
+  })();
+
   const initials = (item.communityAuthor ?? "?")
     .split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "?";
 
@@ -607,32 +616,34 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
 
           {/* Gallery */}
           {item.galleryImages && item.galleryImages.length >= 1 && (
-            <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid var(--rule)" }}>
-              {item.galleryImages.map((img: string, i: number) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt=""
-                  onClick={() => setLightbox({ images: item.galleryImages!, index: i })}
-                  style={{ height: "220px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
-                  loading="lazy"
-                />
-              ))}
+            <div style={{ borderRadius: "var(--radius-xl, 12px)", overflow: "hidden", border: "1px solid var(--rule)", marginBottom: "0.75rem" }}>
+              <div className="hide-scrollbar" style={{ display: "flex", gap: "2px", overflowX: "auto" }}>
+                {item.galleryImages.map((img: string, i: number) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt=""
+                    onClick={() => setLightbox({ images: item.galleryImages!, index: i })}
+                    style={{ height: "220px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                    loading="lazy"
+                  />
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Video embed */}
-          {item.videoUrl && (
+          {/* Video embed — uses ytUrl which covers videoUrl, sourceUrl-is-YouTube, and inline YouTube */}
+          {ytUrl && (
             <div style={{ marginBottom: "0.75rem" }}>
-              {item.videoUrl.includes("youtube.com") || item.videoUrl.includes("youtu.be") ? (
+              {ytUrl.includes("youtube.com") || ytUrl.includes("youtu.be") ? (
                 <iframe
-                  src={`https://www.youtube.com/embed/${item.videoUrl.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] ?? ""}`}
-                  style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "6px" }}
+                  src={`https://www.youtube.com/embed/${ytUrl.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]+)/)?.[1] ?? ""}`}
+                  style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "var(--radius-xl, 12px)" }}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media"
                   allowFullScreen
                 />
               ) : (
-                <a href={item.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", fontSize: "0.82rem" }}>Watch video →</a>
+                <a href={ytUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", fontSize: "0.82rem" }}>Watch video →</a>
               )}
             </div>
           )}
@@ -667,7 +678,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
           {item.image && !item.galleryImages?.length && (
             <div
               onClick={() => setLightbox({ images: [item.image!], index: 0 })}
-              style={{ marginBottom: "1rem", borderRadius: "6px", overflow: "hidden", border: "1px solid var(--rule)", cursor: "zoom-in" }}
+              style={{ marginBottom: "1rem", borderRadius: "var(--radius-xl, 12px)", overflow: "hidden", border: "1px solid var(--rule)", cursor: "zoom-in" }}
             >
               <img src={item.image} alt="" style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: "320px" }} loading="lazy" />
             </div>
@@ -681,8 +692,8 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
             />
           )}
 
-          {/* Link preview (only if no image) */}
-          {!item.image && item.sourceUrl && (
+          {/* Link preview — skip when YouTube (video embed handles it) */}
+          {!item.image && item.sourceUrl && !ytUrl && (
             <div style={{ marginBottom: "1rem" }}>
               <SourcePreviewCard
                 goUrl={`/go/link?url=${encodeURIComponent(item.sourceUrl!)}`}
@@ -713,21 +724,8 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                     >
                       <Flag size={13} strokeWidth={1.8} />
                     </button>
-                  ) : reportState === "confirm" ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                      <span style={{ fontSize: "0.6rem", color: "var(--mute)", whiteSpace: "nowrap" }}>Report:</span>
-                      {(["spam", "harassment", "inappropriate"] as const).map((r) => (
-                        <button
-                          key={r}
-                          onClick={(e) => { e.stopPropagation(); submitReport(r); }}
-                          style={{ background: "rgba(198,40,40,0.08)", border: "1px solid rgba(198,40,40,.2)", color: "var(--error)", borderRadius: 3, padding: "1px 5px", fontSize: "0.58rem", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                      <button onClick={(e) => { e.stopPropagation(); setReportState("idle"); }} style={{ background: "none", border: "none", color: "var(--mute)", fontSize: "0.68rem", cursor: "pointer", padding: "0 2px" }}>✕</button>
-                    </div>
-                  ) : reportState === "sent" ? (
+                  ) : reportState === "confirm" ? null
+                  : reportState === "sent" ? (
                     <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "var(--mute)", whiteSpace: "nowrap" }}>Reported ✓</span>
                   ) : (
                     <span style={{ fontSize: "0.62rem", color: "var(--error)", whiteSpace: "nowrap" }}>Couldn't send.</span>
@@ -735,6 +733,55 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick }: 
                 }
               />
             </div>
+          )}
+
+          {/* Report bottom sheet — rendered inside modal, above modal backdrop */}
+          {reportState === "confirm" && (
+            <>
+              <div
+                onClick={() => setReportState("idle")}
+                style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }}
+              />
+              <div style={{
+                position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+                width: "min(480px, 100%)", zIndex: 9001,
+                background: "var(--paper, #f3ece0)",
+                borderRadius: "20px 20px 0 0",
+                padding: "0.75rem 1.25rem 1.5rem",
+                boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
+              }}>
+                <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+                <p style={{ margin: "0 0 1rem", fontSize: "0.8rem", fontWeight: 700, color: "var(--ink)", textAlign: "center", letterSpacing: "0.02em" }}>Report this post</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {(["spam", "harassment", "inappropriate"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => submitReport(r)}
+                      style={{
+                        width: "100%", padding: "0.75rem 1rem",
+                        background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                        borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                        textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
+                        fontFamily: "inherit", fontWeight: 500, textTransform: "capitalize",
+                      }}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setReportState("idle")}
+                    style={{
+                      width: "100%", marginTop: "0.25rem", padding: "0.75rem 1rem",
+                      background: "transparent", border: "none",
+                      borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
+                      fontSize: "0.85rem", color: "var(--mute)", fontFamily: "inherit", fontWeight: 600,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
           {/* Comment thread */}

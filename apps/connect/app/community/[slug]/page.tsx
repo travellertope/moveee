@@ -208,17 +208,9 @@ export default async function CommunityPostPage({
                 </div>
               </div>
 
-              {/* Full-width content — aligned with left edge of avatar */}
-              {galleryImages && galleryImages.length >= 1 && (
-                <div className="hide-scrollbar" style={{ display: "flex", gap: "4px", overflowX: "auto", marginBottom: "0.75rem", borderRadius: "6px", border: "1px solid #e8e2d8" }}>
-                  {galleryImages.map((img: string, i: number) => (
-                    <img key={i} src={img} alt="" style={{ height: "260px", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
-                  ))}
-                </div>
-              )}
-
+              {/* Single featured image — only when there's no gallery (gallery is rendered by CommunityPostClient) */}
               {image && !galleryImages?.length && (
-                <div style={{ marginBottom: "0.75rem", borderRadius: "8px", overflow: "hidden" }}>
+                <div style={{ marginBottom: "0.75rem", borderRadius: "var(--radius-xl, 12px)", overflow: "hidden" }}>
                   <img
                     src={image}
                     alt={author}
