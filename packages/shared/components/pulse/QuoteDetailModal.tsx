@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import ReactionBar from "./ReactionBar";
 import type { FeedItem } from "@/lib/unified-feed";
+import { useQuoteShare } from "@/context/QuoteShareContext";
 import type { WpComment } from "@/lib/pulse-wordpress";
 
 const CommentThread = dynamic(() => import("./CommentThread"), { ssr: false });
@@ -37,6 +38,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
   const close = useCallback(() => onClose(), [onClose]);
   const [comments, setComments] = useState<WpComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const { shareQuote } = useQuoteShare();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
@@ -193,6 +195,10 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
                 itemType="quote"
                 initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
                 shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/quotes/${item.wpId}-${item.slug}`}
+                onShare={() => {
+                  const quoteUrl = `${typeof window !== "undefined" ? window.location.origin : "https://web.themoveee.com"}/quotes/${item.wpId}-${item.slug}`;
+                  return shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, quoteUrl);
+                }}
               />
             </div>
           )}
