@@ -607,9 +607,16 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0;
+  /* Leave room for the bottom nav bar on mobile */
+  padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
 }
-@media (min-width: 600px) {
+@media (min-width: 860px) {
+  .cm-backdrop { padding-bottom: 0; }
+}
+@media (min-width: 600px) and (max-width: 859px) {
+  .cm-backdrop { align-items: flex-end; }
+}
+@media (min-width: 860px) {
   .cm-backdrop { align-items: center; padding: 16px; }
 }
 
@@ -618,13 +625,17 @@
   border: 1px solid var(--rule, rgba(20,17,13,0.1));
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   width: 100%;
-  max-height: 92dvh;
+  /* Subtract bottom-nav height so the sheet doesn't exceed the visible area */
+  max-height: calc(92dvh - 58px - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 -4px 48px rgba(0,0,0,0.22);
 }
-@media (min-width: 600px) {
+@media (min-width: 860px) {
+  .cm-card { max-height: 92dvh; }
+}
+@media (min-width: 860px) {
   .cm-card {
     max-width: 640px;
     border-radius: var(--radius-2xl);
