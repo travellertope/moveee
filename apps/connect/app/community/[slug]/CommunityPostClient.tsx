@@ -62,6 +62,7 @@ interface Props {
   text: string;
   wpId: string;
   postId: number;
+  authorId?: number;
   initialReactions: { love: number; fire: number; clap: number };
   shareUrl: string;
   initialComments: WpComment[];
@@ -88,6 +89,12 @@ interface Props {
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]+>/g, "").trim();
+}
+
+function stripTrailingUrl(text: string, url?: string): string {
+  if (!url) return text;
+  const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(new RegExp(`\\s*${escaped}\\s*$`), "").trimEnd();
 }
 
 function formatDate(dateStr: string) {
@@ -175,6 +182,7 @@ export default function CommunityPostClient({
   galleryImages, videoUrl, itineraryStops, foodDishName,
   foodRatingTaste, foodRatingValue, foodRatingVibe,
   sourceUrl, source, ogTitle, ogDescription, ogImage,
+  authorId,
 }: Props) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -184,6 +192,15 @@ export default function CommunityPostClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Owner actions
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editText, setEditText] = useState(text);
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState("");
+
   // Derive effective YouTube embed URL from videoUrl, sourceUrl, or inline text
   const ytUrl: string | null = (() => {
     if (videoUrl) return videoUrl;
@@ -192,6 +209,10 @@ export default function CommunityPostClient({
     const m = text.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch[^\s]*|youtu\.be\/)[^\s]*/);
     return m ? m[0] : null;
   })();
+
+  // Strip inline YouTube URL from displayed text when it's been embedded
+  const ytFromInline = !videoUrl && !(sourceUrl?.includes("youtu.be") || sourceUrl?.includes("youtube.com/watch")) && ytUrl !== null;
+  const displayText = ytFromInline && ytUrl ? stripTrailingUrl(text, ytUrl) : text;
 
   const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
 
@@ -210,6 +231,55 @@ export default function CommunityPostClient({
 
   const loggedIn = status === "authenticated";
   const user = session?.user as any;
+  const sessionUserId = user?.id ? Number(user.id) : user?.databaseId ? Number(user.databaseId) : null;
+  const isOwn = !!(sessionUserId && authorId && sessionUserId === authorId);
+  const canEdit = isOwn && (user?.tier === "patron" || user?.tier === "lit" || user?.isAdmin === true);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/community/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: wpId }),
+      });
+      if (res.ok) {
+        router.push("/feed");
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error ?? "Could not delete post.");
+        setDeleting(false);
+        setDeleteConfirm(false);
+      }
+    } catch {
+      alert("Could not delete post.");
+      setDeleting(false);
+      setDeleteConfirm(false);
+    }
+  }
+
+  async function handleEdit() {
+    if (!editText.trim()) return;
+    setEditing(true);
+    setEditError("");
+    try {
+      const res = await fetch("/api/community/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: wpId, text: editText }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setEditError(d.error ?? "Edit failed.");
+      } else {
+        setEditOpen(false);
+        router.refresh();
+      }
+    } catch {
+      setEditError("Network error.");
+    }
+    setEditing(false);
+  }
 
   const handleMentionClick = (username: string) => {
     router.push(`/${username}`);
@@ -291,16 +361,29 @@ export default function CommunityPostClient({
         </div>
       )}
 
+      {/* Owner "···" button */}
+      {isOwn && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.25rem" }}>
+          <button
+            onClick={() => setOwnerMenuOpen(v => !v)}
+            title="Post options"
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#7a6f5c", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "1rem", lineHeight: 1 }}
+          >
+            ···
+          </button>
+        </div>
+      )}
+
       {/* Post text — first paragraph (before \n\n) is the title, rest is body */}
       {(() => {
-        const nlIdx = text.indexOf("\n\n");
+        const nlIdx = displayText.indexOf("\n\n");
         if (nlIdx === -1) return (
           <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
-            <HashtagText text={text} onMentionClick={handleMentionClick} />
+            <HashtagText text={displayText} onMentionClick={handleMentionClick} />
           </p>
         );
-        const titlePart = text.slice(0, nlIdx).trim();
-        const bodyPart = text.slice(nlIdx + 2).trim();
+        const titlePart = displayText.slice(0, nlIdx).trim();
+        const bodyPart = displayText.slice(nlIdx + 2).trim();
         return (
           <>
             <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1.1rem", fontWeight: 700, lineHeight: 1.45, margin: "0 0 0.6rem" }}>
@@ -555,6 +638,84 @@ export default function CommunityPostClient({
               }}
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* Owner menu */}
+    {ownerMenuOpen && (
+      <>
+        <div onClick={() => setOwnerMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }} />
+        <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(480px, 100%)", zIndex: 9001, background: "var(--paper, #f3ece0)", borderRadius: "20px 20px 0 0", padding: "0.75rem 1.25rem 1.5rem", boxShadow: "0 -8px 32px rgba(20,17,13,0.18)" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {canEdit && (
+              <button
+                onClick={() => { setOwnerMenuOpen(false); setEditText(text); setEditOpen(true); }}
+                style={{ width: "100%", padding: "0.8rem 1rem", background: "#fff", border: "1px solid #e0d8ce", borderRadius: "6px", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "#14110d", fontFamily: "inherit", fontWeight: 500 }}
+              >
+                Edit post
+              </button>
+            )}
+            <button
+              onClick={() => { setOwnerMenuOpen(false); setDeleteConfirm(true); }}
+              style={{ width: "100%", padding: "0.8rem 1rem", background: "#fff", border: "1px solid #e0d8ce", borderRadius: "6px", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "#c62828", fontFamily: "inherit", fontWeight: 500 }}
+            >
+              Delete post
+            </button>
+            <button
+              onClick={() => setOwnerMenuOpen(false)}
+              style={{ width: "100%", marginTop: "0.25rem", padding: "0.75rem 1rem", background: "transparent", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem", color: "#7a6f5c", fontFamily: "inherit", fontWeight: 600 }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* Delete confirm */}
+    {deleteConfirm && (
+      <>
+        <div onClick={() => !deleting && setDeleteConfirm(false)} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }} />
+        <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(480px, 100%)", zIndex: 9001, background: "var(--paper, #f3ece0)", borderRadius: "20px 20px 0 0", padding: "0.75rem 1.25rem 1.5rem", boxShadow: "0 -8px 32px rgba(20,17,13,0.18)" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem" }} />
+          <p style={{ margin: "0 0 0.35rem", fontSize: "0.85rem", fontWeight: 700, color: "#14110d", textAlign: "center" }}>Delete this post?</p>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.78rem", color: "#7a6f5c", textAlign: "center" }}>This cannot be undone.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <button onClick={handleDelete} disabled={deleting} style={{ width: "100%", padding: "0.8rem 1rem", background: "#c62828", border: "none", borderRadius: "6px", cursor: deleting ? "default" : "pointer", fontSize: "0.88rem", color: "#fff", fontFamily: "inherit", fontWeight: 600, opacity: deleting ? 0.7 : 1 }}>
+              {deleting ? "Deleting…" : "Yes, delete"}
+            </button>
+            <button onClick={() => setDeleteConfirm(false)} disabled={deleting} style={{ width: "100%", padding: "0.75rem 1rem", background: "transparent", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem", color: "#7a6f5c", fontFamily: "inherit", fontWeight: 600 }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* Edit post */}
+    {editOpen && (
+      <>
+        <div onClick={() => !editing && setEditOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.45)" }} />
+        <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "min(480px, 100%)", zIndex: 9001, background: "var(--paper, #f3ece0)", borderRadius: "20px 20px 0 0", padding: "0.75rem 1.25rem 1.5rem", boxShadow: "0 -8px 32px rgba(20,17,13,0.18)" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 0.75rem" }} />
+          <p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", fontWeight: 700, color: "#14110d", textAlign: "center" }}>Edit post</p>
+          <textarea
+            value={editText}
+            onChange={e => setEditText(e.target.value.slice(0, 2000))}
+            rows={6}
+            style={{ width: "100%", background: "#f8f6f2", border: "1px solid #e0d8ce", borderRadius: "4px", color: "#14110d", fontFamily: "inherit", fontSize: "0.9rem", lineHeight: 1.6, resize: "vertical", outline: "none", padding: "0.75rem 1rem", boxSizing: "border-box" }}
+          />
+          {editError && <p style={{ color: "#7a241c", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{editError}</p>}
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+            <button onClick={() => setEditOpen(false)} disabled={editing} style={{ flex: 1, padding: "0.75rem", background: "transparent", border: "1px solid #e0d8ce", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem", color: "#7a6f5c", fontFamily: "inherit", fontWeight: 600 }}>
+              Cancel
+            </button>
+            <button onClick={handleEdit} disabled={editing || !editText.trim()} style={{ flex: 2, padding: "0.75rem", background: "#7a241c", border: "none", borderRadius: "6px", cursor: editing || !editText.trim() ? "default" : "pointer", fontSize: "0.88rem", color: "#fff", fontFamily: "inherit", fontWeight: 600, opacity: editing || !editText.trim() ? 0.6 : 1 }}>
+              {editing ? "Saving…" : "Save changes"}
             </button>
           </div>
         </div>

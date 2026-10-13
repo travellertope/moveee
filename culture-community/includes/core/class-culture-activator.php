@@ -100,10 +100,14 @@ class Culture_Activator {
             redeemed_count int(11) NOT NULL DEFAULT 0,
             status varchar(10) NOT NULL DEFAULT 'active',
             min_rep_tier varchar(30) NOT NULL DEFAULT 'member',
+            perk_type varchar(20) NOT NULL DEFAULT 'partner',
+            airtime_country varchar(3) NOT NULL DEFAULT '',
+            airtime_amount_local int(11) NOT NULL DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY partner_dir (partner_directory_id),
-            KEY status_idx (status)
+            KEY status_idx (status),
+            KEY perk_type_idx (perk_type)
         ) {$charset_collate};" );
 
         // Redemptions table (perks + cashouts).
@@ -128,6 +132,8 @@ class Culture_Activator {
             cashout_account_name varchar(200) NOT NULL DEFAULT '',
             cashout_account_ref varchar(500) NOT NULL DEFAULT '',
             expiry_notified tinyint(1) NOT NULL DEFAULT 0,
+            fulfillment_status varchar(20) NOT NULL DEFAULT '',
+            fulfillment_ref varchar(200) NOT NULL DEFAULT '',
             PRIMARY KEY  (id),
             KEY user_idx (user_id),
             KEY perk_idx (perk_id),

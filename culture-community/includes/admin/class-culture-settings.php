@@ -58,6 +58,9 @@ class Culture_Settings {
         'culture_google_play_product_monthly'           => 'moveee_pro_monthly',
         'culture_google_play_product_annual'            => 'moveee_pro_annual',
 
+        // Flutterwave (airtime perk rewards).
+        'culture_flutterwave_secret_key'       => '',
+
         // Shop.
         'culture_shop_fx_ngn_per_gbp'          => 1900,
         'culture_shop_flat_shipping_gbp'       => 4.99,
@@ -276,6 +279,9 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_google_play_service_account_json', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
         register_setting( 'culture_settings_payment', 'culture_google_play_product_monthly', $text );
         register_setting( 'culture_settings_payment', 'culture_google_play_product_annual', $text );
+
+        // Flutterwave (airtime perk rewards).
+        register_setting( 'culture_settings_payment', 'culture_flutterwave_secret_key', $text );
 
         // Shop (multi-currency + flat-rate fallback shipping + Pro discount).
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
@@ -688,6 +694,30 @@ class Culture_Settings {
                     <input type="number" step="1" min="0" max="100" id="culture_shop_pro_discount_percent" name="culture_shop_pro_discount_percent"
                            value="<?php echo esc_attr( self::get( 'culture_shop_pro_discount_percent' ) ); ?>" class="small-text" />
                     <p class="description"><?php esc_html_e( 'Sitewide default percentage Moveee Pro members save off the shop price. Computed fresh from the current price, not a separately maintained number — a product can override this individually via its "Moveee Pro Discount (%)" field on the product edit screen.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Flutterwave (Airtime Perk Rewards)', 'culture-community' ); ?></h3>
+        <p class="description">
+            <?php esc_html_e( 'Used to send instant airtime to members when they redeem an airtime-type perk with their credits. Get your secret key from the Flutterwave dashboard under Settings → API Keys. If the environment variable FLUTTERWAVE_SECRET_KEY is set on the server, it takes precedence over this field.', 'culture-community' ); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_flutterwave_secret_key"><?php esc_html_e( 'Secret Key', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_flutterwave_secret_key" name="culture_flutterwave_secret_key"
+                           value="<?php echo esc_attr( self::get( 'culture_flutterwave_secret_key' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                    <p class="description">
+                        <?php esc_html_e( 'Your Flutterwave secret key (starts with FLWSECK_ for live or FLWSECK_TEST- for test mode). Keep this private.', 'culture-community' ); ?>
+                        <?php if ( class_exists( 'Culture_Flutterwave' ) && Culture_Flutterwave::is_configured() ) : ?>
+                            <br /><span style="color:#46b450;">&#10003; <?php esc_html_e( 'Flutterwave is configured and ready.', 'culture-community' ); ?></span>
+                        <?php else : ?>
+                            <br /><span style="color:#dc3232;">&#10007; <?php esc_html_e( 'Flutterwave is not yet configured — airtime perks will not work until a key is saved.', 'culture-community' ); ?></span>
+                        <?php endif; ?>
+                    </p>
                 </td>
             </tr>
         </table>
