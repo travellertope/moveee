@@ -13,6 +13,7 @@ const SITE_URL = "https://themoveee.com";
 const NAV = [
   { href: "/feed",                 label: "Feed",            icon: "feed"      },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
+  { href: "/member/reading",       label: "Logbook",         icon: "logbook"   },
   { href: "/connect/stoop",        label: "Stoop IRL",       icon: "stoop"     },
   { href: "/events",               label: "Events",          icon: "events"    },
   { href: "/games/trivia",         label: "Trivia",          icon: "games"     },
@@ -59,6 +60,8 @@ function RailIcon({ name }: { name: string }) {
       return <svg {...common} viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
     case "bookmark":
       return <svg {...common} viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>;
+    case "logbook":
+      return <svg {...common} viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><line x1="9" y1="7" x2="15" y2="7" /><line x1="9" y1="11" x2="15" y2="11" /></svg>;
     default:
       return null;
   }
