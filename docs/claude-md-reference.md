@@ -5123,9 +5123,12 @@ cron-job.org after repeated failures.
 **WP-Cron (`Culture_Cron`, `culture-community/includes/core/class-culture-cron.php`)
 is the canonical owner for jobs that have WP-side logic**, triggered by a real
 Lightsail server crontab every 30 min (`DISABLE_WP_CRON=true`):
-grace period check (daily), directory seed (weekly), pulse refresh (daily),
-events seed (daily), quotes seed (weekly). **Do not also schedule these five
-on cron-job.org** — disable any matching entries there.
+grace period check (daily), directory seed (weekly), pulse refresh (daily).
+**Retired:** events seed (October 2026 — community-posted events only going forward;
+`HOOK_SEED_EVENTS`, `seed_events()`, and `packages/shared/lib/events-seeder.ts` all deleted),
+quotes seed (September 2026). **Do not also schedule remaining jobs on cron-job.org** — disable
+any matching entries there. Also cancel/delete the "moveee - events" job on cron-job.org
+(the external GET trigger for `/api/events/auto-seed` — that route no longer exists).
 
 **cron-job.org is the sole scheduler for jobs with no WP-side logic at all**
 (there is nothing to make canonical in PHP for these): `trivia daily`
