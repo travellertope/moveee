@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const userId = Number(user?.id ?? user?.databaseId ?? 0);
 
   // Fetch the post to verify ownership before deleting
-  const check = await fetch(`${BASE}/community-posts/${postId}?_fields=id,author,status`, {
+  const check = await fetch(`${BASE}/community-posts/${postId}?_fields=id,author,status,meta`, {
     headers: { Authorization: `Basic ${AUTH}` },
     cache: "no-store",
   });
@@ -35,8 +35,11 @@ export async function POST(req: NextRequest) {
 
   const post = await check.json();
 
-  // Allow: the post's WP author, or an admin (role check via culture API)
-  const isAuthor = post.author === userId;
+  // Allow: the post's WP author, the community_author_id meta (community posts are
+  // created by a service account, so post.author is the API user, not the member),
+  // or an admin.
+  const communityAuthorId = Number(post.meta?.community_author_id ?? 0);
+  const isAuthor = post.author === userId || (communityAuthorId > 0 && communityAuthorId === userId);
   const isAdmin = user?.isAdmin === true || user?.role === "administrator";
 
   if (!isAuthor && !isAdmin) {

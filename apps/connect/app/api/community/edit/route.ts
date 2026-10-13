@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   const userId = Number(user?.id ?? user?.databaseId ?? 0);
 
   // Verify ownership
-  const check = await fetch(`${BASE}/community-posts/${postId}?_fields=id,author`, {
+  const check = await fetch(`${BASE}/community-posts/${postId}?_fields=id,author,meta`, {
     headers: { Authorization: `Basic ${AUTH}` },
     cache: "no-store",
   });
@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
   }
 
   const post = await check.json();
-  const isAuthor = post.author === userId;
+  const communityAuthorId = Number(post.meta?.community_author_id ?? 0);
+  const isAuthor = post.author === userId || (communityAuthorId > 0 && communityAuthorId === userId);
   const isAdmin = user?.isAdmin === true || user?.role === "administrator";
 
   if (!isAuthor && !isAdmin) {
