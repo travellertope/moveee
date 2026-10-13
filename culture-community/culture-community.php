@@ -59,6 +59,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-google-play-billi
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-r2.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-country-cleanup.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-reloadly.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-flutterwave.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-system-author.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-guest-byline.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/core/class-culture-preview.php';

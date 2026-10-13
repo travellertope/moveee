@@ -30,6 +30,9 @@ interface Perk {
   redeemed_count: number;
   status: string;
   partner_directory_id: number;
+  perk_type?: string;
+  airtime_country?: string;
+  airtime_amount_local?: number;
 }
 
 async function fetchPerks(): Promise<Perk[]> {
@@ -55,16 +58,34 @@ async function fetchBalance(userId: number): Promise<{ credits: number; credit_v
   }
 }
 
+async function fetchUserPhone(userId: number): Promise<string> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/profile?user_id=${userId}`, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return "";
+    const data = await res.json();
+    return (data.phone as string) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export default async function PerksPage() {
   const session = await getServerSession(authOptions as any) as any;
   const user = session?.user;
   const userId = user?.id ? Number(user.id) : 0;
   const isPatron = user?.tier === "patron";
 
+  const hasAirtimePerks = (ps: Perk[]) => ps.some(p => p.perk_type === "airtime");
+
   const [perks, balance] = await Promise.all([
     fetchPerks(),
     userId ? fetchBalance(userId) : Promise.resolve(null),
   ]);
+
+  const savedPhone = userId && hasAirtimePerks(perks) ? await fetchUserPhone(userId) : "";
 
   return (
     <div className="perks-page">
@@ -102,7 +123,7 @@ export default async function PerksPage() {
         </div>
       </section>
 
-      <PerksClient perks={perks} credits={balance?.credits ?? 0} isLoggedIn={!!user} />
+      <PerksClient perks={perks} credits={balance?.credits ?? 0} isLoggedIn={!!user} savedPhone={savedPhone} />
     </div>
   );
 }

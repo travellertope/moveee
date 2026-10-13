@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "You must be signed in to redeem perks." }, { status: 401 });
   }
 
-  let body: { perk_id?: number };
+  let body: { perk_id?: number; step_up_token?: string; phone?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const { perk_id } = body;
+  const { perk_id, step_up_token, phone } = body;
   if (!perk_id || typeof perk_id !== "number") {
     return NextResponse.json({ error: "perk_id is required." }, { status: 400 });
   }
@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         perk_id,
         user_id: session.user.id,
+        ...(step_up_token ? { step_up_token } : {}),
+        ...(phone ? { phone } : {}),
       }),
     });
 

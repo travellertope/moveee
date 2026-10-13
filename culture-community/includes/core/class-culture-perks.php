@@ -142,7 +142,7 @@ class Culture_Perks {
      * @param int $perk_id
      * @return array|WP_Error  array with keys: success, redemption_id, qr_token, expires_at
      */
-    public static function redeem_perk( $user_id, $perk_id ) {
+    public static function redeem_perk( $user_id, $perk_id, $phone = '' ) {
         global $wpdb;
 
         $perk = self::get_perk( $perk_id );
@@ -278,6 +278,99 @@ class Culture_Perks {
             $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
         }
 
+        // ── Airtime perk: auto-fulfill via Flutterwave ────────────────────────
+        $perk_type = $perk['perk_type'] ?? 'partner';
+        if ( 'airtime' === $perk_type ) {
+            // Resolve phone: parameter > stored user meta.
+            $resolved_phone = sanitize_text_field( $phone );
+            if ( empty( $resolved_phone ) ) {
+                $resolved_phone = (string) get_user_meta( $user_id, '_culture_phone', true );
+            }
+            if ( empty( $resolved_phone ) ) {
+                // Roll back credits and redemption row.
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return new WP_Error(
+                    'phone_required',
+                    'Please add a phone number to your profile before redeeming airtime.',
+                    array( 'status' => 400 )
+                );
+            }
+
+            if ( ! class_exists( 'Culture_Flutterwave' ) || ! Culture_Flutterwave::is_configured() ) {
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return new WP_Error(
+                    'airtime_unavailable',
+                    'Airtime delivery is temporarily unavailable. Please try again later.',
+                    array( 'status' => 503 )
+                );
+            }
+
+            $flw_ref    = 'moveee_at_' . $redemption_id . '_' . time();
+            $flw_result = Culture_Flutterwave::send_airtime(
+                $resolved_phone,
+                (float) $perk['airtime_amount_local'],
+                $perk['airtime_country'] ?: 'NG',
+                $flw_ref
+            );
+
+            if ( is_wp_error( $flw_result ) ) {
+                // Roll back.
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return $flw_result;
+            }
+
+            $flw_tx_ref = $flw_result['flw_ref'] ?? $flw_ref;
+            $wpdb->update(
+                $redemptions_table,
+                array(
+                    'fulfillment_status' => 'sent',
+                    'fulfillment_ref'    => substr( $flw_tx_ref, 0, 200 ),
+                    'qr_scanned'         => 1,
+                ),
+                array( 'id' => $redemption_id ),
+                array( '%s', '%s', '%d' ),
+                array( '%d' )
+            );
+
+            if ( class_exists( 'Culture_Notifications' ) ) {
+                Culture_Notifications::add(
+                    $user_id,
+                    'airtime_redeemed',
+                    'Airtime Sent!',
+                    sprintf( '%s airtime has been sent to %s.', $perk['title'], $resolved_phone ),
+                    '/member/wallet',
+                    array( 'redemption_id' => $redemption_id, 'perk_id' => $perk_id )
+                );
+            }
+
+            return array(
+                'success'            => true,
+                'perk_type'          => 'airtime',
+                'redemption_id'      => $redemption_id,
+                'phone'              => $resolved_phone,
+                'airtime_amount'     => (int) $perk['airtime_amount_local'],
+                'airtime_country'    => $perk['airtime_country'] ?: 'NG',
+                'fulfillment_status' => 'sent',
+                'new_balance'        => (int) $new_balance,
+            );
+        }
+
+        // ── Partner perk: QR code flow ────────────────────────────────────────
         if ( class_exists( 'Culture_Notifications' ) ) {
             Culture_Notifications::add(
                 $user_id,
