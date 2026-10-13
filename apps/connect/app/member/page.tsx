@@ -19,7 +19,6 @@ const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 const EXPLORE_LINKS = [
   { label: "Newsletters", href: "https://themoveee.com/newsletter" },
-  { label: "Upcoming Events", href: "/events" },
   { label: "Magazine", href: "https://themoveee.com/magazine" },
   { label: "Discover", href: "/discover" },
 ];
@@ -36,20 +35,6 @@ async function fetchLiveStats(userId: string) {
   } catch { return null; }
 }
 
-async function fetchMyCluster(userId: string) {
-  const secret = process.env.CULTURE_API_SECRET ?? "";
-  try {
-    const res = await fetch(`${WP_URL}/wp-json/culture/v1/cluster/my-clusters?user_id=${userId}`, {
-      headers: { Authorization: `Bearer ${secret}` },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const clusters: Array<{ id: number; status: string }> = data?.clusters ?? [];
-    return clusters.find((c) => c.status !== "archived") ?? null;
-  } catch { return null; }
-}
-
 export default async function MemberPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login?callbackUrl=/member");
@@ -58,7 +43,6 @@ export default async function MemberPage() {
   const isPatron = user.tier === "patron";
 
   const live = await fetchLiveStats(String(user.id));
-  const myCluster = await fetchMyCluster(String(user.id));
   const liveCredits             = live?.credits               ?? user.credits              ?? 0;
   const liveReputation          = live?.reputation            ?? user.reputation            ?? user.points ?? 0;
   const liveReputationTier      = live?.reputation_tier       ?? user.reputationTier        ?? "member";
@@ -166,22 +150,6 @@ export default async function MemberPage() {
                 </Link>
               </section>
             )}
-
-            {/* Stoop */}
-            <section className="acct-card">
-              <span className="acct-card-title">Stoop</span>
-              <p className="acct-card-desc">
-                {myCluster
-                  ? "You're part of a local Stoop — meet up, check in, earn rewards."
-                  : "Join a local Stoop to meet other members near you."}
-              </p>
-              <Link
-                href={myCluster ? `/cluster/${myCluster.id}` : "/connect/stoop"}
-                className="acct-card-link"
-              >
-                {myCluster ? "View my Stoop →" : "Find your Stoop →"}
-              </Link>
-            </section>
 
             {/* Referral */}
             {referralUrl && (
