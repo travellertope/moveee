@@ -18,7 +18,7 @@ const NAV_MAIN = [
 ] as const;
 
 const NAV_PERSONAL = [
-  { href: "/member/bookmarks", label: "Bookmarks",    icon: "bookmark"  },
+  { href: "/member/bookmarks", label: "My Bookmarks", icon: "bookmark"  },
   { href: "/member/reading",   label: "My Logbook",   icon: "logbook"   },
   { href: "/member/portfolio", label: "My Portfolio", icon: "portfolio" },
 ] as const;
