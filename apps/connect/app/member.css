@@ -4325,3 +4325,32 @@ select.mem-field-input { cursor: pointer; }
   .rl-gc-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+
+/* ── Wallet/Coupons/Perks subtabs ── */
+.acct-subtabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 1.5rem;
+  padding: 0 2px;
+}
+.acct-subtab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--mute);
+  padding: 0.55rem 1rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: color 0.12s, border-color 0.12s;
+}
+.acct-subtab:hover { color: var(--ink); }
+.acct-subtab--active {
+  color: var(--ochre);
+  font-weight: 600;
+  border-bottom-color: var(--ochre);
+}

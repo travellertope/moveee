@@ -1,13 +1,14 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import WalletClient from "./WalletClient";
+import WalletTabsClient from "./WalletTabsClient";
 import "../../member.css";
+import "../../connect/perks/perks.css";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: { absolute: "My Wallet | Moveee" },
+  title: { absolute: "Wallet & Perks | Moveee" },
 };
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
@@ -21,9 +22,7 @@ async function fetchBalance(userId: number) {
     });
     if (!res.ok) return null;
     return await res.json();
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 async function fetchHistory(userId: number) {
@@ -34,9 +33,27 @@ async function fetchHistory(userId: number) {
     });
     if (!res.ok) return { entries: [], total: 0 };
     return await res.json();
-  } catch {
-    return { entries: [], total: 0 };
-  }
+  } catch { return { entries: [], total: 0 }; }
+}
+
+async function fetchPerks() {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/perks`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}
+
+async function fetchUserPhone(userId: number): Promise<string> {
+  try {
+    const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/profile?user_id=${userId}`, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return "";
+    const data = await res.json();
+    return (data.phone as string) ?? "";
+  } catch { return ""; }
 }
 
 export default async function WalletPage() {
@@ -49,10 +66,14 @@ export default async function WalletPage() {
   const initial = displayName.charAt(0).toUpperCase();
   const isPatron = user.tier === "patron";
 
-  const [balance, history] = await Promise.all([
+  const [balance, history, perks] = await Promise.all([
     fetchBalance(userId),
     fetchHistory(userId),
+    fetchPerks(),
   ]);
+
+  const hasAirtimePerks = (perks as any[]).some((p: any) => p.perk_type === "airtime");
+  const savedPhone = hasAirtimePerks ? await fetchUserPhone(userId) : "";
 
   return (
     <div className="acct-page">
@@ -74,19 +95,21 @@ export default async function WalletPage() {
           </div>
         </div>
 
-
         <div className="acct-page-head">
           <p className="acct-page-eyebrow">Culture Credits</p>
-          <h2 className="acct-page-title">Wallet</h2>
-          <p className="acct-page-sub">Track what you&apos;ve earned, spend it on partner perks, or cash it out.</p>
+          <h2 className="acct-page-title">Wallet &amp; Perks</h2>
+          <p className="acct-page-sub">Earn credits by contributing, spend them on partner perks, or cash out.</p>
         </div>
 
-        <WalletClient
+        <WalletTabsClient
           credits={balance?.credits ?? 0}
           creditsPerGbp={balance?.credits_per_gbp ?? 10}
           entries={history.entries ?? []}
           isPro={isPatron}
           userEmail={user.email ?? ""}
+          perks={perks}
+          isLoggedIn={true}
+          savedPhone={savedPhone}
         />
       </div>
     </div>

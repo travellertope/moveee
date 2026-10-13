@@ -137,8 +137,8 @@ export default function ConnectHeader() {
       <div className="ch-user-divider" />
       <Link href="/member" className="ch-user-item" role="menuitem" onClick={closeMenu}>My Dashboard</Link>
       <Link href="/member/wallet" className="ch-user-item" role="menuitem" onClick={closeMenu}>Wallet</Link>
-      <Link href="/member/coupons" className="ch-user-item" role="menuitem" onClick={closeMenu}>Coupons</Link>
-      <Link href="/connect/perks" className="ch-user-item" role="menuitem" onClick={closeMenu}>Perks</Link>
+      <Link href="/member/wallet#coupons" className="ch-user-item" role="menuitem" onClick={closeMenu}>Coupons</Link>
+      <Link href="/member/wallet#perks" className="ch-user-item" role="menuitem" onClick={closeMenu}>Perks</Link>
       <Link href="/member/analytics" className="ch-user-item" role="menuitem" onClick={closeMenu}>Analytics</Link>
       {user?.tier === "patron" && (
         <Link href="/member/events" className="ch-user-item" role="menuitem" onClick={closeMenu}>My Events</Link>
