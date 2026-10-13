@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ReferralsClient from "./ReferralsClient";
-import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +54,6 @@ export default async function ReferralsPage() {
           </div>
         </div>
 
-        <AccountNav isPatron={isPatron} />
 
         <ReferralsClient initialData={data} />
       </div>

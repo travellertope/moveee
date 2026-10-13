@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import PerksClient from "./PerksClient";
-import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 import "./perks.css";
 
@@ -91,7 +90,6 @@ export default async function PerksPage() {
     <div className="perks-page">
       {user && (
         <div className="acct-wrap" style={{ paddingBottom: 0 }}>
-          <AccountNav isPatron={isPatron} />
         </div>
       )}
 

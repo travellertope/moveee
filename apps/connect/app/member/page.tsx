@@ -6,7 +6,6 @@ import MemberReferralCopy from "@/components/MemberReferralCopy";
 import MemberDashboard from "@/components/MemberDashboard";
 import MemberBadges from "@/components/MemberBadges";
 import PasskeyBanner from "@/components/PasskeyBanner";
-import AccountNav from "@/components/AccountNav";
 import "../member.css";
 
 export const dynamic = "force-dynamic";
@@ -79,7 +78,6 @@ export default async function MemberPage() {
         </div>
 
         {/* ── Account nav — carries across Wallet/Perks/Notifications/etc. ── */}
-        <AccountNav isPatron={isPatron} />
 
         {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
 
