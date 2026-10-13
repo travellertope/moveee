@@ -9,9 +9,9 @@ type Tab = "wallet" | "coupons" | "perks";
 
 interface LedgerEntry {
   id: number;
-  type: string;
   amount: number;
-  description: string;
+  source: string;
+  source_id: number;
   created_at: string;
 }
 
