@@ -127,6 +127,11 @@ export default function TopBar() {
                     <div className="tb-user-divider" />
                     <Link href="/member" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>My Dashboard</Link>
                     <Link href="/member/wallet" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Wallet</Link>
+                    <Link href="/member/analytics" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Analytics</Link>
+                    <Link href="/member/analytics#referrals" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Referrals</Link>
+                    {user?.tier === "patron" && (
+                      <Link href="/member/events" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>My Events</Link>
+                    )}
                     <Link href="/member/settings" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Settings</Link>
                     {user?.isVendor && (
                       <Link href="/vendor/dashboard" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Vendor Dashboard</Link>

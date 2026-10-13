@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SettingsTabs from "./SettingsTabs";
-import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const metadata = {
@@ -39,7 +38,6 @@ export default async function SettingsLayout({ children }: { children: React.Rea
           </div>
         </div>
 
-        <AccountNav isPatron={isPatron} />
 
         <SettingsTabs />
 

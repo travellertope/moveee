@@ -3,7 +3,6 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import PortfolioManager from "./PortfolioManager";
-import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +46,6 @@ export default async function PortfolioPage() {
           </div>
         </div>
 
-        <AccountNav isPatron={isPatron} />
 
         <PortfolioManager reputation={reputation} username={username} />
       </div>

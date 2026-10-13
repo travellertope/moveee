@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import AccountNav from "@/components/AccountNav";
 import EventsClient from "./EventsClient";
 import "../../member.css";
 
@@ -61,7 +60,6 @@ export default async function MemberEventsPage() {
       <div className="acct-page">
         <div className="acct-wrap">
           {profileStrip}
-          <AccountNav isPatron={isPatron} />
           <div className="evt-upsell">
             <span className="evt-upsell-badge">Moveee Pro</span>
             <h3 className="evt-upsell-title">RSVP management is a Moveee Pro feature</h3>
@@ -82,7 +80,6 @@ export default async function MemberEventsPage() {
     <div className="acct-page">
       <div className="acct-wrap">
         {profileStrip}
-        <AccountNav isPatron={isPatron} />
 
         <EventsClient events={events} />
 

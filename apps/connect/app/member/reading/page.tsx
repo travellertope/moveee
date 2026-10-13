@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ReadingTrackerClient from "./ReadingTrackerClient";
-import AccountNav from "@/components/AccountNav";
 import "../../member.css";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +38,6 @@ export default async function ReadingTrackerPage() {
           </div>
         </div>
 
-        <AccountNav isPatron={isPatron} />
 
         <div className="acct-page-head">
           <p className="acct-page-eyebrow">Books</p>

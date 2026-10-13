@@ -1981,14 +1981,16 @@ class Culture_Post_Types {
 
     public static function render_quote_meta_box( $post ) {
         wp_nonce_field( 'culture_quote_meta', 'culture_quote_meta_nonce' );
-        $source  = get_post_meta( $post->ID, '_quote_source', true );
-        $user_id = get_post_meta( $post->ID, '_quote_user_id', true );
-        $likes   = get_post_meta( $post->ID, '_quote_likes', true ) ?: 0;
-        $reports = get_post_meta( $post->ID, '_quote_reports', true ) ?: 0;
+        $source         = get_post_meta( $post->ID, '_quote_source', true );
+        $user_id        = get_post_meta( $post->ID, '_quote_user_id', true );
+        $sharing_reason = get_post_meta( $post->ID, '_quote_sharing_reason', true );
+        $likes          = get_post_meta( $post->ID, '_quote_likes', true ) ?: 0;
+        $reports        = get_post_meta( $post->ID, '_quote_reports', true ) ?: 0;
         ?>
         <table class="form-table">
             <tr><th><label for="quote_source">Source</label></th><td><input type="text" id="quote_source" name="quote_source" value="<?php echo esc_attr( $source ); ?>" class="regular-text" /></td></tr>
             <tr><th><label for="quote_user_id">Submitted By (User ID)</label></th><td><input type="number" id="quote_user_id" name="quote_user_id" value="<?php echo esc_attr( $user_id ); ?>" /></td></tr>
+            <tr><th><label for="quote_sharing_reason">Sharing Reason</label></th><td><textarea id="quote_sharing_reason" name="quote_sharing_reason" rows="3" class="large-text"><?php echo esc_textarea( $sharing_reason ); ?></textarea><p class="description">Why does this quote resonate? Shown on the quote card and modal.</p></td></tr>
             <tr><th>Stats</th><td>Likes: <?php echo absint( $likes ); ?> | Reports: <?php echo absint( $reports ); ?></td></tr>
         </table>
         <?php
@@ -2048,6 +2050,7 @@ class Culture_Post_Types {
         if ( isset( $_POST['culture_quote_meta_nonce'] ) && wp_verify_nonce( $_POST['culture_quote_meta_nonce'], 'culture_quote_meta' ) ) {
             if ( isset( $_POST['quote_source'] ) ) update_post_meta( $post_id, '_quote_source', sanitize_text_field( $_POST['quote_source'] ) );
             if ( isset( $_POST['quote_user_id'] ) ) update_post_meta( $post_id, '_quote_user_id', absint( $_POST['quote_user_id'] ) );
+            update_post_meta( $post_id, '_quote_sharing_reason', sanitize_textarea_field( $_POST['quote_sharing_reason'] ?? '' ) );
         }
         if ( isset( $_POST['culture_as_told_to_nonce'] ) && wp_verify_nonce( $_POST['culture_as_told_to_nonce'], 'culture_as_told_to' ) ) {
             update_post_meta( $post_id, 'as_told_to', sanitize_text_field( $_POST['as_told_to'] ?? '' ) );

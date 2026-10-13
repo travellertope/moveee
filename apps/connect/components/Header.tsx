@@ -137,6 +137,11 @@ export default function ConnectHeader() {
       <div className="ch-user-divider" />
       <Link href="/member" className="ch-user-item" role="menuitem" onClick={closeMenu}>My Dashboard</Link>
       <Link href="/member/wallet" className="ch-user-item" role="menuitem" onClick={closeMenu}>Wallet</Link>
+      <Link href="/member/analytics" className="ch-user-item" role="menuitem" onClick={closeMenu}>Analytics</Link>
+      <Link href="/member/analytics#referrals" className="ch-user-item" role="menuitem" onClick={closeMenu}>Referrals</Link>
+      {user?.tier === "patron" && (
+        <Link href="/member/events" className="ch-user-item" role="menuitem" onClick={closeMenu}>My Events</Link>
+      )}
       <Link href="/member/settings" className="ch-user-item" role="menuitem" onClick={closeMenu}>Settings</Link>
       {user?.isVendor && (
         <Link href="/vendor/dashboard" className="ch-user-item" role="menuitem" onClick={closeMenu}>Vendor Dashboard</Link>
@@ -236,28 +241,28 @@ export default function ConnectHeader() {
           </Link>
         </div>
 
-        <div className="ch-mobile-nav-section">
-          <div className="ch-mobile-section-label">Hubs</div>
-          {HUB_SPACES.map((hub) => (
-            <Link key={hub.slug} href={`/hub/${hub.slug}`} className="ch-mobile-nav-link" onClick={() => setMobileOpen(false)}>
-              <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: hub.color, marginRight: 10, flexShrink: 0 }} />
-              # {hub.label}
-            </Link>
-          ))}
+        <div className="ch-mobile-nav-scrollable">
+          <div className="ch-mobile-nav-section">
+            <div className="ch-mobile-section-label">Hubs</div>
+            {HUB_SPACES.map((hub) => (
+              <Link key={hub.slug} href={`/hub/${hub.slug}`} className="ch-mobile-nav-link" onClick={() => setMobileOpen(false)}>
+                <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: hub.color, marginRight: 10, flexShrink: 0 }} />
+                # {hub.label}
+              </Link>
+            ))}
+          </div>
         </div>
-
-        <div className="ch-mobile-nav-spacer" />
 
         <div className="ch-mobile-nav-bottom">
           {status === "authenticated" && user && (
-            <div className="ch-mobile-nav-section ch-mobile-nav-section--personal">
+            <>
               <div className="ch-mobile-section-label">My Space</div>
               {NAV_PERSONAL.map((item) => (
                 <Link key={item.href} href={item.href} className={`ch-mobile-nav-link ch-mobile-nav-link--icon${isActive(item.href) ? " active" : ""}`} onClick={() => setMobileOpen(false)}>
                   <RailIcon name={item.icon} /> {item.label}
                 </Link>
               ))}
-            </div>
+            </>
           )}
           <button type="button" onClick={toggleTheme} className="ch-mobile-nav-link ch-mobile-nav-link--icon" style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
             {theme === "dark" ? (
