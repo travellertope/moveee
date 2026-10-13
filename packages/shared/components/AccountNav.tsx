@@ -23,11 +23,9 @@ const NAV: NavEntry[] = [
   { key: "wallet", label: "Wallet", emoji: "💳", href: "/member/wallet" },
   { key: "coupons", label: "Coupons", emoji: "🎟", href: "/member/coupons" },
   { key: "perks", label: "Perks", emoji: "🎁", href: "/connect/perks" },
-  { key: "notifications", label: "Notifications", emoji: "🔔", href: "/member/notifications" },
   { key: "analytics", label: "Analytics", emoji: "📊", href: "/member/analytics" },
   { key: "events", label: "My Events", emoji: "📅", href: "/member/events" },
   { key: "referrals", label: "Referrals", emoji: "🤝", href: "/member/referrals" },
-  { key: "collection", label: "Collection", emoji: "🔖", href: "/member/collection" },
   { key: "settings", label: "Settings", emoji: "⚙️", href: "/member/settings" },
 ];
 
