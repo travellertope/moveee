@@ -230,11 +230,6 @@ export default function ConnectHeader() {
             )}
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
-          {status === "authenticated" && user && (
-            <Link href="/member/notifications" className="ch-mobile-nav-link ch-mobile-nav-link--icon" onClick={() => setMobileOpen(false)}>
-              <RailIcon name="bell" /> Notifications
-            </Link>
-          )}
           {status === "authenticated" && user ? (
             <Link href="/member" className="ch-mobile-user" onClick={() => setMobileOpen(false)}>
               <span className="ch-rail-user-avatar">
