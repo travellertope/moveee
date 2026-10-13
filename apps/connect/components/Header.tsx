@@ -10,14 +10,17 @@ import "./header.css";
 
 const SITE_URL = "https://themoveee.com";
 
-const NAV = [
-  { href: "/feed",                 label: "Feed",            icon: "feed"      },
-  { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
-  { href: "/member/reading",       label: "My Logbook",      icon: "logbook"   },
-  { href: "/member/portfolio",     label: "My Portfolio",    icon: "portfolio" },
-  { href: "/connect/stoop",        label: "Stoop IRL",       icon: "stoop"     },
-  { href: "/events",               label: "Events",          icon: "events"    },
-  { href: "/games/trivia",         label: "Trivia",          icon: "games"     },
+const NAV_MAIN = [
+  { href: "/feed",           label: "Feed",      icon: "feed"   },
+  { href: "/connect/stoop",  label: "Stoop IRL", icon: "stoop"  },
+  { href: "/events",         label: "Events",    icon: "events" },
+  { href: "/games/trivia",   label: "Trivia",    icon: "games"  },
+] as const;
+
+const NAV_PERSONAL = [
+  { href: "/member/bookmarks", label: "Bookmarks",    icon: "bookmark"  },
+  { href: "/member/reading",   label: "My Logbook",   icon: "logbook"   },
+  { href: "/member/portfolio", label: "My Portfolio", icon: "portfolio" },
 ] as const;
 
 const HUB_SPACES = [
@@ -149,7 +152,7 @@ export default function ConnectHeader() {
       <aside className="ch-rail" aria-label="Main navigation">
         <div className="ch-rail-section-label">Menu</div>
         <nav className="ch-rail-nav">
-          {NAV.map((item) => (
+          {NAV_MAIN.map((item) => (
             <Link key={item.href} href={item.href} className={`ch-rail-link${isActive(item.href) ? " active" : ""}`}>
               <RailIcon name={item.icon} /> {item.label}
             </Link>
@@ -169,6 +172,27 @@ export default function ConnectHeader() {
         <div className="ch-rail-spacer" />
 
         <div className="ch-rail-bottom">
+          {status === "authenticated" && user && (
+            <>
+              <div className="ch-rail-section-label ch-rail-section-label--spaced">My Space</div>
+              <nav className="ch-rail-nav">
+                {NAV_PERSONAL.map((item) => (
+                  <Link key={item.href} href={item.href} className={`ch-rail-link${isActive(item.href) ? " active" : ""}`}>
+                    <RailIcon name={item.icon} /> {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </>
+          )}
+
+          <button type="button" onClick={toggleTheme} className="ch-rail-link ch-rail-theme-toggle">
+            {theme === "dark" ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+            )}
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
 
           {status === "authenticated" && user ? (
             <div className="ch-rail-user-wrap" ref={railUserMenuRef}>
@@ -202,7 +226,7 @@ export default function ConnectHeader() {
       <nav id="ch-mobile-nav" className={`ch-mobile-nav${mobileOpen ? " open" : ""}`} aria-label="Mobile navigation">
         <div className="ch-mobile-nav-section">
           <div className="ch-mobile-section-label">Menu</div>
-          {NAV.map((item) => (
+          {NAV_MAIN.map((item) => (
             <Link key={item.href} href={item.href} className={`ch-mobile-nav-link ch-mobile-nav-link--icon${isActive(item.href) ? " active" : ""}`} onClick={() => setMobileOpen(false)}>
               <RailIcon name={item.icon} /> {item.label}
             </Link>
@@ -225,6 +249,16 @@ export default function ConnectHeader() {
         <div className="ch-mobile-nav-spacer" />
 
         <div className="ch-mobile-nav-bottom">
+          {status === "authenticated" && user && (
+            <div className="ch-mobile-nav-section ch-mobile-nav-section--personal">
+              <div className="ch-mobile-section-label">My Space</div>
+              {NAV_PERSONAL.map((item) => (
+                <Link key={item.href} href={item.href} className={`ch-mobile-nav-link ch-mobile-nav-link--icon${isActive(item.href) ? " active" : ""}`} onClick={() => setMobileOpen(false)}>
+                  <RailIcon name={item.icon} /> {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
           <button type="button" onClick={toggleTheme} className="ch-mobile-nav-link ch-mobile-nav-link--icon" style={{ background: "none", border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}>
             {theme === "dark" ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
