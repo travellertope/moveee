@@ -13,8 +13,8 @@ const SITE_URL = "https://themoveee.com";
 const NAV = [
   { href: "/feed",                 label: "Feed",            icon: "feed"      },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
-  { href: "/member/reading",       label: "Logbook",         icon: "logbook"   },
-  { href: "/member/portfolio",     label: "Portfolio",       icon: "portfolio" },
+  { href: "/member/reading",       label: "My Logbook",      icon: "logbook"   },
+  { href: "/member/portfolio",     label: "My Portfolio",    icon: "portfolio" },
   { href: "/connect/stoop",        label: "Stoop IRL",       icon: "stoop"     },
   { href: "/events",               label: "Events",          icon: "events"    },
   { href: "/games/trivia",         label: "Trivia",          icon: "games"     },
