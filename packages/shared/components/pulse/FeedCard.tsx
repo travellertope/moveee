@@ -10,6 +10,7 @@ import type { FeedItem } from "@/lib/unified-feed";
 import ReactionBar from "./ReactionBar";
 import HashtagText from "./HashtagText";
 import { decodeHtml } from "@/lib/decode-html";
+import { useQuoteShare } from "@/context/QuoteShareContext";
 import { sanitizeHtml } from "@/lib/sanitize";
 import SourcePreviewCard from "./SourcePreviewCard";
 import ProBadge from "@/components/ProBadge";
@@ -424,6 +425,8 @@ export default function FeedCard({
     const [modalOpen, setModalOpen] = useState(false);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const closeModal = useCallback(() => setModalOpen(false), []);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { shareQuote } = useQuoteShare();
 
     return (
       <>
@@ -483,6 +486,7 @@ export default function FeedCard({
                 initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
                 shareUrl={item.href}
                 noBorder
+                onShare={() => shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, item.href)}
               />
             </div>
           </div>

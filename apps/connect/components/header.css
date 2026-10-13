@@ -144,6 +144,13 @@
   font-weight: 600;
 }
 .ch-rail-link--ext { color: var(--mute); font-size: 13px; }
+.ch-rail-theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
 
 /* Hub spaces (Spaces section — colored dot + # label) */
 .ch-rail-hub-dot {

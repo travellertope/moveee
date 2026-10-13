@@ -22,7 +22,22 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyExistingQuote } from "@/lib/gemini";
-import { searchSerper } from "@/lib/quotes-seeder";
+
+async function searchSerper(query: string): Promise<Array<{ title: string; link: string; snippet: string }>> {
+  const apiKey = process.env.SERPER_API_KEY;
+  if (!apiKey) return [];
+  try {
+    const res = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-KEY": apiKey },
+      body: JSON.stringify({ q: query, num: 10 }),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.organic ?? []).map((r: any) => ({ title: String(r.title ?? ""), link: String(r.link ?? ""), snippet: String(r.snippet ?? "") }));
+  } catch { return []; }
+}
 
 export const runtime  = "nodejs";
 export const maxDuration = 300;

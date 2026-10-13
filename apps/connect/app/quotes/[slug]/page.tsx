@@ -5,9 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getWPQuoteById } from '@/lib/wp';
 import { getPostComments } from '@/lib/community-wordpress';
-import ReactionBar from '@/components/pulse/ReactionBar';
 import QuoteComments from './QuoteComments';
-import QuoteShareButton from './QuoteShareButton';
+import QuoteActions from './QuoteActions';
 import '@/app/pulse-layout.css';
 
 // This is a bare permalink page, not a browsable product — there is no
@@ -161,21 +160,13 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
               </div>
 
               <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--rule)' }}>
-                <ReactionBar
-                  noBorder
-                  itemId={String(quote.databaseId)}
-                  itemType="quote"
-                  initialCounts={{ love: 0, fire: 0, clap: 0 }}
-                  shareUrl={`https://web.themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
+                <QuoteActions
+                  quoteId={String(quote.databaseId)}
+                  quoteText={plainText}
+                  quoteAuthor={author}
+                  quoteSource={quote.quoteSource || null}
+                  quoteUrl={`https://web.themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
                 />
-                <div style={{ marginTop: '0.85rem' }}>
-                  <QuoteShareButton
-                    quoteText={plainText}
-                    quoteAuthor={author}
-                    quoteSource={quote.quoteSource || null}
-                    quoteUrl={`https://web.themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
-                  />
-                </div>
               </div>
             </article>
 

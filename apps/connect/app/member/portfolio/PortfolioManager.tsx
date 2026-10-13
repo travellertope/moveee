@@ -154,22 +154,52 @@ export default function PortfolioManager({ reputation, username }: Props) {
   if (!unlocked) {
     return (
       <section className="acct-card">
-        <div className="acct-card-header"><span className="acct-card-title">Creative Portfolio</span></div>
+        <div className="acct-card-header">
+          <span className="acct-card-title">Creative Portfolio</span>
+          <button onClick={() => setShowForm(true)} className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }}>+ Add item</button>
+        </div>
         <p className="pf-locked-note">
           The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 points).
           You currently have <strong>{reputation}</strong> points.
           Keep contributing to the community to unlock it.
         </p>
-        <p className="pf-locked-note" style={{ marginTop: 8 }}>
+        <p className="pf-locked-note" style={{ marginTop: 8, marginBottom: 16 }}>
           You can still add portfolio items here — they will be published once you reach Taste Maker status.
         </p>
+        {success && <p className="pf-status--success">{success}</p>}
+        {error && <p className="pf-status--error">{error}</p>}
+        {items.map((item, i) => (
+          <div key={item.id} className="pf-item-row">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className="pf-item-title">{item.title}</p>
+              <p className="pf-item-type">{item.type}</p>
+            </div>
+            <div className="pf-item-actions">
+              <button onClick={() => moveUp(i)} disabled={i === 0} className="pf-btn pf-btn--icon">↑</button>
+              <button onClick={() => moveDown(i)} disabled={i === items.length - 1} className="pf-btn pf-btn--icon">↓</button>
+              <button onClick={() => setEditItem(item)} className="pf-btn">Edit</button>
+              <button onClick={() => handleDelete(item.id)} className="pf-btn pf-btn--danger">Remove</button>
+            </div>
+          </div>
+        ))}
+        {editItem && (
+          <ItemForm initial={editItem} onSave={handleUpdate} onCancel={() => setEditItem(null)} saving={saving} />
+        )}
+        {!editItem && showForm && (
+          <ItemForm initial={null} onSave={handleAdd} onCancel={() => setShowForm(false)} saving={saving} />
+        )}
       </section>
     );
   }
 
   return (
     <section className="acct-card">
-      <div className="acct-card-header"><span className="acct-card-title">Creative Portfolio</span></div>
+      <div className="acct-card-header">
+        <span className="acct-card-title">Creative Portfolio</span>
+        {!showForm && !editItem && (
+          <button onClick={() => setShowForm(true)} className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }}>+ Add item</button>
+        )}
+      </div>
 
       {username && (
         <p className="pf-locked-note" style={{ marginBottom: 16 }}>
@@ -258,12 +288,6 @@ export default function PortfolioManager({ reputation, username }: Props) {
               onCancel={() => setEditItem(null)}
               saving={saving}
             />
-          )}
-
-          {!editItem && !showForm && (
-            <button onClick={() => setShowForm(true)} className="pf-btn" style={{ marginTop: 16 }}>
-              + Add portfolio item
-            </button>
           )}
 
           {showForm && !editItem && (

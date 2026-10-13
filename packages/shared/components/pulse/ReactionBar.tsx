@@ -30,6 +30,7 @@ interface ReactionBarProps {
   onComment?:    () => void;
   commentCount?: number;
   flagSlot?:     React.ReactNode;
+  onShare?:      () => void | Promise<void>;
 }
 
 export default function ReactionBar({
@@ -41,6 +42,7 @@ export default function ReactionBar({
   onComment,
   commentCount,
   flagSlot,
+  onShare,
 }: ReactionBarProps) {
   const { status } = useSession();
   const loggedIn = status === "authenticated";
@@ -165,6 +167,10 @@ export default function ReactionBar({
   }
 
   async function handleShare() {
+    if (onShare) {
+      await onShare();
+      return;
+    }
     const url = shareUrl ?? window.location.href;
     if (navigator.share) {
       try { await navigator.share({ url }); } catch {}

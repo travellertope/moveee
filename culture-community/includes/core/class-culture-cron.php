@@ -13,7 +13,7 @@
  *  - Grace period check (daily) — downgrades lapsed Patron accounts.
  *  - Directory seed (weekly)    — triggers Next.js /api/directory/auto-populate.
  *  - Pulse refresh (daily)      — triggers Next.js /api/pulse/refresh.
- *  - Events seed (daily)        — triggers Next.js /api/events/auto-seed.
+ *  - Events seed (daily)        — RETIRED (October 2026). See "retire the seeder" decision.
  *  - Stoop cluster forming-expiry sweep (daily) — pure WP-side
  *    logic, archives 'forming' clusters past their window (no Next.js call).
  *  - Stoop host service award (monthly) — Phase 4 — awards
@@ -45,7 +45,7 @@ class Culture_Cron {
     const HOOK_GRACE_CHECK      = 'culture_check_grace_periods';
     const HOOK_SEED_DIRECTORY   = 'culture_seed_directory';
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
-    const HOOK_SEED_EVENTS      = 'culture_seed_events';
+    // HOOK_SEED_EVENTS retired October 2026 — community-posted events only going forward.
     const HOOK_CLUSTER_SWEEP           = 'culture_check_cluster_forming_expiry';
     const HOOK_CLUSTER_ELECTION_TALLY  = 'culture_check_cluster_elections';
     const HOOK_CLUSTER_GRACE_SWEEP     = 'culture_check_cluster_host_vacancy_grace';
@@ -63,7 +63,6 @@ class Culture_Cron {
         add_action( self::HOOK_GRACE_CHECK,    array( __CLASS__, 'process_grace_periods' ) );
         add_action( self::HOOK_SEED_DIRECTORY, array( __CLASS__, 'seed_directory' ) );
         add_action( self::HOOK_REFRESH_PULSE,  array( __CLASS__, 'refresh_pulse' ) );
-        add_action( self::HOOK_SEED_EVENTS,    array( __CLASS__, 'seed_events' ) );
         add_action( self::HOOK_CLUSTER_SWEEP,  array( __CLASS__, 'sweep_forming_clusters' ) );
         add_action( self::HOOK_CLUSTER_ELECTION_TALLY, array( __CLASS__, 'tally_cluster_elections' ) );
         add_action( self::HOOK_CLUSTER_GRACE_SWEEP,    array( __CLASS__, 'sweep_cluster_host_vacancy' ) );
@@ -134,7 +133,6 @@ class Culture_Cron {
             self::HOOK_GRACE_CHECK      => 'daily',
             self::HOOK_SEED_DIRECTORY   => 'weekly',
             self::HOOK_REFRESH_PULSE    => 'daily',
-            self::HOOK_SEED_EVENTS      => 'daily',
             'culture_check_perk_expiry'        => 'hourly',
             self::HOOK_CLUSTER_SWEEP           => 'daily',
             self::HOOK_CLUSTER_ELECTION_TALLY  => 'daily',
@@ -159,7 +157,6 @@ class Culture_Cron {
             self::HOOK_GRACE_CHECK,
             self::HOOK_SEED_DIRECTORY,
             self::HOOK_REFRESH_PULSE,
-            self::HOOK_SEED_EVENTS,
             'culture_check_perk_expiry',
             self::HOOK_CLUSTER_SWEEP,
             self::HOOK_CLUSTER_ELECTION_TALLY,
@@ -188,11 +185,13 @@ class Culture_Cron {
      * maybe_backfill_ / maybe_clear_ method in this plugin.
      */
     private static function maybe_clear_retired_jobs() {
-        if ( '1' === get_option( 'culture_cron_retired_jobs_cleared', '' ) ) {
+        if ( '2' === get_option( 'culture_cron_retired_jobs_cleared', '' ) ) {
             return;
         }
 
-        $retired_hooks = array( 'culture_seed_quotes' );
+        // v1: culture_seed_quotes (retired September 2026)
+        // v2: culture_seed_events (retired October 2026 — community-posted events only)
+        $retired_hooks = array( 'culture_seed_quotes', 'culture_seed_events' );
         foreach ( $retired_hooks as $hook ) {
             $timestamp = wp_next_scheduled( $hook );
             if ( $timestamp ) {
@@ -200,7 +199,7 @@ class Culture_Cron {
             }
         }
 
-        update_option( 'culture_cron_retired_jobs_cleared', '1' );
+        update_option( 'culture_cron_retired_jobs_cleared', '2' );
     }
 
     // ── Job handlers ──────────────────────────────────────────────────────
@@ -301,14 +300,6 @@ class Culture_Cron {
      */
     public static function refresh_pulse() {
         self::call_nextjs( '/api/pulse/refresh' );
-    }
-
-    /**
-     * Trigger the Events seeder on Next.js.
-     * Runs daily.
-     */
-    public static function seed_events() {
-        self::call_nextjs( '/api/events/auto-seed', array( 'citiesPerRun' => 3 ) );
     }
 
     /**

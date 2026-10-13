@@ -13,6 +13,7 @@ import GlobalAuthModal from "@/components/GlobalAuthModal";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import PullToRefresh from "@/components/PullToRefresh";
 import NavigationLoader from "@/components/NavigationLoader";
+import QuoteShareProvider from "@/components/QuoteShareProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -89,6 +90,7 @@ export default function RootLayout({
           <CurrencyProvider initialPricing={null}>
             <LanguageProvider>
               <ThemeProvider>
+                <QuoteShareProvider>
                 <TopBar />
                 <div className="cw-shell">
                   <ConnectHeader />
@@ -101,6 +103,7 @@ export default function RootLayout({
                 <PWAInstallPrompt />
                 <PullToRefresh />
                 <NavigationLoader />
+                </QuoteShareProvider>
               </ThemeProvider>
             </LanguageProvider>
           </CurrencyProvider>

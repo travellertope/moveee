@@ -406,8 +406,8 @@ class Culture_Perks_Admin {
                 var radios = document.querySelectorAll('input[name="perk_type"]');
                 function toggle() {
                     var isAirtime = document.querySelector('input[name="perk_type"]:checked').value === 'airtime';
-                    document.getElementById('airtime-fields').style.display  = isAirtime ? '' : 'none';
-                    document.getElementById('partner-fields').style.display  = isAirtime ? 'none' : '';
+                    document.getElementById('airtime-fields').style.display  = isAirtime ? 'table-row-group' : 'none';
+                    document.getElementById('partner-fields').style.display  = isAirtime ? 'none' : 'table-row-group';
                     document.getElementById('airtime-heading').style.display = isAirtime ? '' : 'none';
                     document.getElementById('partner-heading').style.display = isAirtime ? 'none' : '';
                 }
