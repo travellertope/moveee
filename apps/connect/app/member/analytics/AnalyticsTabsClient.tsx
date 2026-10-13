@@ -6,10 +6,21 @@ import ReferralsClient from "../referrals/ReferralsClient";
 
 type Tab = "analytics" | "referrals";
 
+interface ReferredUser {
+  username: string;
+  displayName: string;
+  joinedAt: number;
+}
+
 interface ReferralData {
-  referral_code: string;
-  referral_count: number;
-  referrals: { name: string; joined: string; credited: boolean }[];
+  referralCode: string;
+  referralUrl: string;
+  referralCount: number;
+  repPerReferral: number;
+  creditsPerReferral: number;
+  referredUsers: ReferredUser[];
+  connectorThreshold: number;
+  superConnectorThreshold: number;
 }
 
 interface Props {
