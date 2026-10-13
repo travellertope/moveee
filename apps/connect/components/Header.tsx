@@ -14,6 +14,7 @@ const NAV = [
   { href: "/feed",                 label: "Feed",            icon: "feed"      },
   { href: "/member/bookmarks",     label: "Bookmarks",       icon: "bookmark"  },
   { href: "/member/reading",       label: "Logbook",         icon: "logbook"   },
+  { href: "/member/portfolio",     label: "Portfolio",       icon: "portfolio" },
   { href: "/connect/stoop",        label: "Stoop IRL",       icon: "stoop"     },
   { href: "/events",               label: "Events",          icon: "events"    },
   { href: "/games/trivia",         label: "Trivia",          icon: "games"     },
@@ -62,6 +63,8 @@ function RailIcon({ name }: { name: string }) {
       return <svg {...common} viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>;
     case "logbook":
       return <svg {...common} viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><line x1="9" y1="7" x2="15" y2="7" /><line x1="9" y1="11" x2="15" y2="11" /></svg>;
+    case "portfolio":
+      return <svg {...common} viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" /></svg>;
     default:
       return null;
   }
