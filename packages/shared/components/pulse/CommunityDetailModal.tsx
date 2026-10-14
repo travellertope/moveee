@@ -706,6 +706,18 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
             <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
           )}
 
+          {/* Directory entry link */}
+          {item.linkedDirectorySlug && (
+            <div style={{ marginBottom: "0.75rem" }}>
+              <Link
+                href={`/directory/${item.linkedDirectorySlug}`}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "var(--gold)", fontWeight: 600, textDecoration: "none", border: "1px solid var(--gold)", borderRadius: "var(--radius-full)", padding: "4px 12px" }}
+              >
+                View in Directory →
+              </Link>
+            </div>
+          )}
+
           {/* Gallery */}
           {item.galleryImages && item.galleryImages.length >= 1 && (
             <div style={{ borderRadius: "var(--radius-xl, 12px)", overflow: "hidden", border: "1px solid var(--rule)", marginBottom: "0.75rem" }}>

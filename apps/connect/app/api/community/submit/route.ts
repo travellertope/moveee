@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const {
     text, imageUrl, tag, region, authorAvatar, linkUrl, ogTitle, ogDescription, ogImage,
-    template_type, linked_directory_id, star_rating, location_name, location_lat, location_lng,
+    template_type, linked_directory_id, linked_directory_slug, star_rating, location_name, location_lat, location_lng,
     poll_options, poll_expires_at, itinerary_stops, gallery_images, video_url,
     food_dish_name, food_rating_taste, food_rating_value, food_rating_vibe,
     book_title, book_author, book_status, book_overall_rating,
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
     ogImage?: string;
     template_type?: string;
     linked_directory_id?: number;
+    linked_directory_slug?: string;
     star_rating?: number;
     location_name?: string;
     location_lat?: number;
@@ -284,6 +285,7 @@ export async function POST(req: NextRequest) {
         ...(hubIdNum && { _hub_id: hubIdNum }),
         _location_name:         location_name?.trim() || "",
         ...(linked_directory_id != null               && { _linked_directory_id: linked_directory_id }),
+        ...(linked_directory_slug?.trim()             && { _linked_directory_slug: linked_directory_slug.trim() }),
         _poll_options:          poll_options ? JSON.stringify(poll_options.map(o => ({ text: o.text, votes: 0 }))) : "",
         _poll_expires_at:       poll_expires_at || "",
         _poll_voters:           poll_options ? "[]" : "",

@@ -754,6 +754,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
       // Template-specific fields
       if (directoryEntry) {
         payload.linked_directory_id = directoryEntry.id;
+        if (directoryEntry.slug) payload.linked_directory_slug = directoryEntry.slug;
         payload.location_name = directoryEntry.title || "";
       }
       if (template === "hidden-gem") {
@@ -761,6 +762,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
       }
       if (template === "food-review") {
         payload.linked_directory_id = foodEntry?.id;
+        if (foodEntry?.slug) payload.linked_directory_slug = foodEntry.slug;
         payload.food_dish_name = foodEntry?.title;
         payload.star_rating = Math.round((foodTaste + foodValue + foodVibe) / 3);
         payload.food_rating_taste = foodTaste;
@@ -769,6 +771,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
       }
       if (template === "book-review") {
         payload.linked_directory_id = bookEntry?.id;
+        if (bookEntry?.slug) payload.linked_directory_slug = bookEntry.slug;
         payload.book_title = bookEntry?.title;
         payload.book_author = bookEntry?.about;
         payload.book_status = bookStatus;
@@ -784,6 +787,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
       }
       if (template === "music-review") {
         payload.linked_directory_id = musicEntry?.id;
+        if (musicEntry?.slug) payload.linked_directory_slug = musicEntry.slug;
         payload.music_title = musicEntry?.title;
         payload.music_artist = musicEntry?.about;
         payload.music_overall_rating = musicOverallRating;
@@ -799,6 +803,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
       }
       if (template === "film-review") {
         payload.linked_directory_id = filmEntry?.id;
+        if (filmEntry?.slug) payload.linked_directory_slug = filmEntry.slug;
         payload.film_title = filmEntry?.title;
         payload.film_director = filmEntry?.about;
         payload.film_overall_rating = filmOverallRating;

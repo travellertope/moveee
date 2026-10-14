@@ -3,7 +3,6 @@ import {
   getEventsForFeed,
   getWPQuotes,
   GET_STORIES,
-  GET_DIRECTORY_ENTRIES,
 } from "./wp";
 import { getPulseStories } from "./pulse-wordpress";
 import { decodeHtml } from "@/lib/decode-html";
@@ -72,6 +71,7 @@ export interface FeedItem {
   // template fields (community posts)
   templateType?: string;
   linkedDirectoryId?: number;
+  linkedDirectorySlug?: string;
   starRating?: number;
   locationName?: string;
   pollOptions?: { text: string; votes: number }[];
@@ -187,7 +187,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
   let res: Response;
   try {
     res = await fetch(
-      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta,community_hub_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_author_avatar,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_preview_url,_film_title,_film_director,_film_overall_rating,_film_rating_story,_film_rating_acting,_film_rating_visuals,_film_rating_pacing,_film_fav_line,_film_recommend,_film_genres,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category,_hub_id,_stoop_cluster_id`,
+      `${WP_BASE}/community-posts?per_page=24&orderby=date&order=desc&_fields=id,slug,date,title,content,meta,comment_count,community_event_meta,community_hub_meta&meta_fields=community_author_name,community_author_id,community_author_username,community_author_avatar,community_tag,community_region,community_author_tier,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_linked_directory_slug,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_preview_url,_film_title,_film_director,_film_overall_rating,_film_rating_story,_film_rating_acting,_film_rating_visuals,_film_rating_pacing,_film_fav_line,_film_recommend,_film_genres,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category,_hub_id,_stoop_cluster_id`,
       { next: { revalidate: 300 }, signal: ctrl.signal }
     );
   } catch { clearTimeout(timer); return []; }
@@ -243,6 +243,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       // Template fields
       templateType: m._template_type || "post",
       linkedDirectoryId: m._linked_directory_id ? Number(m._linked_directory_id) : undefined,
+      linkedDirectorySlug: (m._linked_directory_slug as string) || undefined,
       starRating: m._star_rating ? Number(m._star_rating) : undefined,
       locationName: m._location_name || undefined,
       pollOptions: m._poll_options ? (typeof m._poll_options === "string" ? (() => { try { return JSON.parse(m._poll_options); } catch { return undefined; } })() : m._poll_options) : undefined,
@@ -318,14 +319,12 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
     pulseResult,
     storiesResult,
     eventsResult,
-    directoryResult,
     quotesResult,
     communityResult,
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 40 }),
     getWPData(GET_STORIES, { first: 30 }, { revalidate: 300 }),
     getEventsForFeed(30, { revalidate: 300 }),
-    getWPData(GET_DIRECTORY_ENTRIES, { first: 30 }, { revalidate: 300 }),
     getWPQuotes({ first: 50 }),
     getCommunityPosts(),
   ]);
@@ -415,23 +414,6 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         isFeatured: Boolean(event.isFeatured),
         isLiterati: Boolean(event.isLiterati),
         rsvpCount: Number(event.rsvpCount) || 0,
-      });
-    }
-  }
-
-  // Culture Directory
-  if (directoryResult.status === "fulfilled" && directoryResult.value?.cultureDirectories?.nodes) {
-    for (const entry of directoryResult.value.cultureDirectories.nodes) {
-      items.push({
-        id: `directory-${entry.slug}`,
-        type: "directory",
-        title: decodeHtml(entry.title ?? ""),
-        slug: entry.slug,
-        date: entry.date,
-        excerpt: stripHtml(entry.excerpt ?? ""),
-        image: entry.featuredImage?.node?.sourceUrl,
-        href: `/directory/${entry.slug}`,
-        entryType: entry.cultureDirectoryTypes?.nodes?.[0]?.name ?? "",
       });
     }
   }

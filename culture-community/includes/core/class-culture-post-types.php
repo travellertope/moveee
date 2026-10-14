@@ -132,8 +132,9 @@ class Culture_Post_Types {
 
         // community post meta (Phase 3 + Phase 4)
         $community_post_meta = array(
-            '_template_type'       => 'string',
-            '_linked_directory_id' => 'integer',
+            '_template_type'         => 'string',
+            '_linked_directory_id'   => 'integer',
+            '_linked_directory_slug' => 'string',
             '_star_rating'         => 'integer',
             '_location_name'       => 'string',
             '_location_lat'        => 'number',

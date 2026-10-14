@@ -400,16 +400,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             payload.location_name = placeName;
             payload.text = revContent.trim();
             if (revEntry?.id) payload.linked_directory_id = revEntry.id;
+            if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
           } else if (revSubtype === "food") {
             const foodName = revEntry?.title || revTitle.trim();
             payload.text = foodName ? `${foodName}\n\n${revContent.trim()}` : revContent.trim();
             if (revEntry?.id) payload.linked_directory_id = revEntry.id;
+            if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
           } else {
             // book / music / film — use linked directory entry when available
             const entryTitle = revEntry?.title || revTitle.trim();
             payload.text = entryTitle ? `${entryTitle}\n\n${revContent.trim()}` : revContent.trim();
             if (revEntry?.id) {
               payload.linked_directory_id = revEntry.id;
+              if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
               if (revSubtype === "book") {
                 payload.book_title = revEntry.title;
                 payload.book_author = revEntry.about;
