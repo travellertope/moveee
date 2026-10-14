@@ -107,6 +107,9 @@ export interface FeedItem {
   musicRecommend?: boolean;
   musicGenres?: string[];
   musicPreviewUrl?: string;
+  musicCoverUrl?: string;
+  bookCoverUrl?: string;
+  filmCoverUrl?: string;
   // film review template (community posts)
   filmTitle?: string;
   filmDirector?: string;
@@ -275,6 +278,8 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       musicRecommend: m._music_recommend === "1" ? true : m._music_recommend === "0" ? false : undefined,
       musicGenres: m._music_genres ? (typeof m._music_genres === "string" ? (() => { try { return JSON.parse(m._music_genres); } catch { return undefined; } })() : m._music_genres) : undefined,
       musicPreviewUrl: m._music_preview_url || undefined,
+      musicCoverUrl: m._music_cover_url || undefined,
+      bookCoverUrl: m._book_cover_url || undefined,
       // Film review template
       filmTitle: m._film_title || undefined,
       filmDirector: m._film_director || undefined,
@@ -286,6 +291,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       filmFavLine: m._film_fav_line || undefined,
       filmRecommend: m._film_recommend === "1" ? true : m._film_recommend === "0" ? false : undefined,
       filmGenres: m._film_genres ? (typeof m._film_genres === "string" ? (() => { try { return JSON.parse(m._film_genres); } catch { return undefined; } })() : m._film_genres) : undefined,
+      filmCoverUrl: m._film_cover_url || undefined,
       // Event template (community-organiser events)
       eventDate: m._event_date || undefined,
       endDate: m._event_end_date || undefined,

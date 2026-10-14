@@ -780,6 +780,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         payload.book_fav_quote = bookFavQuote.trim() || undefined;
         payload.book_recommend = bookRecommend;
         payload.book_genres = bookGenres.length > 0 ? bookGenres : undefined;
+        payload.book_cover_url = bookEntry?.thumbnail || undefined;
       }
       if (template === "music-review") {
         payload.linked_directory_id = musicEntry?.id;
@@ -794,6 +795,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         payload.music_recommend = musicRecommend;
         payload.music_genres = musicGenres.length > 0 ? musicGenres : undefined;
         payload.music_preview_url = musicEntry?.previewUrl || undefined;
+        payload.music_cover_url = musicEntry?.thumbnail || undefined;
       }
       if (template === "film-review") {
         payload.linked_directory_id = filmEntry?.id;
@@ -807,6 +809,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         payload.film_fav_line = filmFavLine.trim() || undefined;
         payload.film_recommend = filmRecommend;
         payload.film_genres = filmGenres.length > 0 ? filmGenres : undefined;
+        payload.film_cover_url = filmEntry?.thumbnail || undefined;
       }
       if (template === "poll") {
         payload.poll_options = pollOptions.filter(o => o.trim()).map(text => ({ text }));

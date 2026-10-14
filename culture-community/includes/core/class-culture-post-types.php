@@ -176,6 +176,9 @@ class Culture_Post_Types {
             '_music_recommend'         => 'string',
             '_music_genres'            => 'string', // JSON: string[]
             '_music_preview_url'       => 'string', // denormalized from the linked directory entry at submit time
+            '_music_cover_url'         => 'string', // album art thumbnail URL
+            '_book_cover_url'          => 'string', // book cover thumbnail URL
+            '_film_cover_url'          => 'string', // film poster thumbnail URL
             // Film Review template
             '_film_title'              => 'string',
             '_film_director'           => 'string',

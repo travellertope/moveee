@@ -718,6 +718,7 @@ const uploadImages = async (): Promise<string[]> => {
           book_fav_quote: bookFavQuote || undefined,
           book_recommend: bookRecommend,
           book_genres: bookGenres.length > 0 ? bookGenres : undefined,
+          book_cover_url: bookEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
         if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
@@ -741,6 +742,7 @@ const uploadImages = async (): Promise<string[]> => {
           music_recommend: musicRecommend,
           music_genres: musicGenres.length > 0 ? musicGenres : undefined,
           music_preview_url: musicEntry!.previewUrl || undefined,
+          music_cover_url: musicEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
         if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }
@@ -763,6 +765,7 @@ const uploadImages = async (): Promise<string[]> => {
           film_fav_line: filmFavLine || undefined,
           film_recommend: filmRecommend,
           film_genres: filmGenres.length > 0 ? filmGenres : undefined,
+          film_cover_url: filmEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
         if (hubId && hubSlug) { nav.navigate("HubDetail", { slug: hubSlug }); return; }

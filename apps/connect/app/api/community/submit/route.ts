@@ -35,10 +35,11 @@ export async function POST(req: NextRequest) {
     book_fav_quote, book_recommend, book_genres,
     music_title, music_artist, music_overall_rating,
     music_rating_production, music_rating_lyrics, music_rating_replay, music_rating_vibe,
-    music_fav_lyric, music_recommend, music_genres, music_preview_url,
+    music_fav_lyric, music_recommend, music_genres, music_preview_url, music_cover_url,
+    book_cover_url,
     film_title, film_director, film_overall_rating,
     film_rating_story, film_rating_acting, film_rating_visuals, film_rating_pacing,
-    film_fav_line, film_recommend, film_genres,
+    film_fav_line, film_recommend, film_genres, film_cover_url,
     event_title, event_date, event_end_date, event_venue, event_city, event_address,
     event_admission, ticket_url, event_category, organiser_directory_id,
     rsvp_enabled, rsvp_capacity, hub_id,
@@ -89,6 +90,8 @@ export async function POST(req: NextRequest) {
     music_recommend?: boolean;
     music_genres?: string[];
     music_preview_url?: string;
+    music_cover_url?: string;
+    book_cover_url?: string;
     film_title?: string;
     film_director?: string;
     film_overall_rating?: number;
@@ -99,6 +102,7 @@ export async function POST(req: NextRequest) {
     film_fav_line?: string;
     film_recommend?: boolean;
     film_genres?: string[];
+    film_cover_url?: string;
     event_title?: string;
     event_date?: string;
     event_end_date?: string;
@@ -305,6 +309,7 @@ export async function POST(req: NextRequest) {
           _book_fav_quote:           book_fav_quote?.trim() || "",
           ...(book_recommend != null && { _book_recommend: book_recommend ? "1" : "0" }),
           ...(Array.isArray(book_genres) && book_genres.length > 0 && { _book_genres: JSON.stringify(book_genres) }),
+          ...(book_cover_url && { _book_cover_url: book_cover_url }),
         }),
         ...(templateType === "music-review" && {
           _music_title:               music_title?.trim() || "",
@@ -318,6 +323,7 @@ export async function POST(req: NextRequest) {
           ...(music_recommend != null && { _music_recommend: music_recommend ? "1" : "0" }),
           ...(Array.isArray(music_genres) && music_genres.length > 0 && { _music_genres: JSON.stringify(music_genres) }),
           ...(music_preview_url && { _music_preview_url: music_preview_url }),
+          ...(music_cover_url && { _music_cover_url: music_cover_url }),
         }),
         ...(templateType === "film-review" && {
           _film_title:               film_title?.trim() || "",
@@ -330,6 +336,7 @@ export async function POST(req: NextRequest) {
           _film_fav_line:            film_fav_line?.trim() || "",
           ...(film_recommend != null && { _film_recommend: film_recommend ? "1" : "0" }),
           ...(Array.isArray(film_genres) && film_genres.length > 0 && { _film_genres: JSON.stringify(film_genres) }),
+          ...(film_cover_url && { _film_cover_url: film_cover_url }),
         }),
         ...(templateType === "event" && {
           _event_date:                event_date || "",

@@ -833,27 +833,42 @@ export default function FeedCard({
 
             {/* Book review rating/status/recommend */}
             {item.templateType === "book-review" && item.bookOverallRating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
-                {item.bookStatus && <span>{item.bookStatus}</span>}
-                {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
+                {item.bookCoverUrl && (
+                  <img src={item.bookCoverUrl} alt="" style={{ width: 36, height: 52, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                  <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
+                  {item.bookStatus && <span>{item.bookStatus}</span>}
+                  {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                </div>
               </div>
             )}
 
             {/* Music review rating/recommend/preview */}
             {item.templateType === "music-review" && item.musicOverallRating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
-                {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
-                {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
+                {item.musicCoverUrl && (
+                  <img src={item.musicCoverUrl} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                  <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
+                  {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                  {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+                </div>
               </div>
             )}
 
             {/* Film review rating/recommend */}
             {item.templateType === "film-review" && item.filmOverallRating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
-                {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
+                {item.filmCoverUrl && (
+                  <img src={item.filmCoverUrl} alt="" style={{ width: 36, height: 52, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                  <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                  {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                </div>
               </div>
             )}
 
