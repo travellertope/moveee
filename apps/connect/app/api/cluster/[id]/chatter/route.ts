@@ -12,8 +12,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
+  const since = req.nextUrl.searchParams.get("since") ?? "0";
   const res = await fetch(
-    `${WP_URL}/wp-json/culture/v1/cluster/${id}/chatter`,
+    `${WP_URL}/wp-json/culture/v1/cluster/${id}/chatter?since=${since}&user_id=${session.user.wpUserId ?? ""}`,
     { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
   );
 

@@ -240,6 +240,10 @@ class Culture_Activator {
         Culture_Clusters::create_gatherings_table();
         Culture_Clusters::create_rsvps_table();
 
+        // Stoop cluster direct chatter (October 2026) — replaces the
+        // companion-Hub approach now that Hubs are retired from Stoops.
+        Culture_Clusters::create_chatter_table();
+
         // Hub membership + follow tables (docs/hubs-plan.md, Phase 1).
         Culture_Hubs::create_members_table();
         Culture_Hubs::create_follows_table();

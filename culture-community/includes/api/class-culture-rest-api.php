@@ -1901,6 +1901,35 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Cluster chatter (direct, replaces companion-Hub approach).
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/chatter', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_cluster_chatter_get' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'since'   => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/chatter', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_chatter_post' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
+        // Cluster photo upload (cover + avatar/display photo, host only).
+        register_rest_route( 'culture/v1', '/cluster/(?P<id>\d+)/photo', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_cluster_photo_upload' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+            ),
+        ) );
+
         // Hubs (web — API key, explicit user_id param).
         // Mirrors /mobile/hub/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/hub/create', array(
@@ -2854,6 +2883,80 @@ class Culture_REST_API {
         // Return the refreshed agenda so the client can re-render.
         $items = Culture_Clusters::get_agenda( $cluster_id, $user_id );
         return rest_ensure_response( array( 'ok' => true, 'gathering_id' => $result, 'gatherings' => $items ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Cluster chatter (direct, no Hub)
+     * —————————————————————————————————————— */
+
+    public static function handle_cluster_chatter_get( $request ) {
+        $cluster_id = (int) $request->get_param( 'id' );
+        $since_id   = (int) $request->get_param( 'since' );
+        $messages   = Culture_Clusters::get_chatter( $cluster_id, $since_id );
+        return rest_ensure_response( array( 'messages' => $messages ) );
+    }
+
+    public static function handle_cluster_chatter_post( $request ) {
+        $cluster_id = (int) $request->get_param( 'id' );
+        $user_id    = (int) $request->get_param( 'user_id' );
+
+        $body    = $request->get_json_params();
+        $message = isset( $body['message'] ) ? sanitize_textarea_field( $body['message'] ) : '';
+        $images  = isset( $body['images'] ) && is_array( $body['images'] ) ? $body['images'] : array();
+
+        if ( '' === $message && empty( $images ) ) {
+            return new WP_Error( 'empty_message', 'Message cannot be empty.', array( 'status' => 400 ) );
+        }
+
+        $result = Culture_Clusters::post_chatter( $cluster_id, $user_id, $message, $images );
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        $messages = Culture_Clusters::get_chatter( $cluster_id, $result - 1 );
+        return rest_ensure_response( array( 'ok' => true, 'messages' => $messages ) );
+    }
+
+    /* ——————————————————————————————————————
+     *  Cluster photo upload (cover / avatar)
+     * —————————————————————————————————————— */
+
+    public static function handle_cluster_photo_upload( $request ) {
+        $cluster_id = (int) $request->get_param( 'id' );
+        $user_id    = (int) $request->get_param( 'user_id' );
+        $type       = sanitize_key( $request->get_param( 'type' ) ?? 'cover' );
+
+        // Only the host may update photos.
+        $status = Culture_Clusters::get_member_status( $cluster_id, $user_id );
+        if ( ( $status['role'] ?? '' ) !== 'host' ) {
+            return new WP_Error( 'forbidden', 'Only the stoop host can update photos.', array( 'status' => 403 ) );
+        }
+
+        if ( ! function_exists( 'wp_handle_upload' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+        if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+            require_once ABSPATH . 'wp-admin/includes/media.php';
+        }
+
+        $files = $request->get_file_params();
+        if ( empty( $files['file'] ) ) {
+            return new WP_Error( 'no_file', 'No file uploaded.', array( 'status' => 400 ) );
+        }
+
+        $upload = wp_handle_upload( $files['file'], array( 'test_form' => false ) );
+        if ( isset( $upload['error'] ) ) {
+            return new WP_Error( 'upload_failed', $upload['error'], array( 'status' => 500 ) );
+        }
+
+        $url = $upload['url'];
+
+        // cluster_id IS the WP post id (culture_cluster post type).
+        $meta_key = ( 'avatar' === $type ) ? '_cluster_avatar_url' : '_cluster_cover_url';
+        update_post_meta( $cluster_id, $meta_key, $url );
+
+        return rest_ensure_response( array( 'ok' => true, 'url' => $url ) );
     }
 
     /* ——————————————————————————————————————
