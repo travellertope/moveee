@@ -427,23 +427,37 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           }
           // Extended per-subtype fields
           if (revSubtype === "book") {
+            payload.book_overall_rating = revRating;
             if (bookStatus) payload.book_status = bookStatus;
-            if (Object.values(bookRatings).some(v => v > 0)) payload.book_ratings = bookRatings;
+            if (bookRatings.writing)    payload.book_rating_writing    = bookRatings.writing;
+            if (bookRatings.story)      payload.book_rating_story      = bookRatings.story;
+            if (bookRatings.characters) payload.book_rating_characters = bookRatings.characters;
+            if (bookRatings.pacing)     payload.book_rating_pacing     = bookRatings.pacing;
             if (bookFavQuote.trim()) payload.book_fav_quote = bookFavQuote.trim();
             if (bookRecommend !== null) payload.book_recommend = bookRecommend;
             if (bookGenres.length) payload.book_genres = bookGenres;
           } else if (revSubtype === "music") {
-            if (Object.values(musicRatings).some(v => v > 0)) payload.music_ratings = musicRatings;
+            payload.music_overall_rating = revRating;
+            if (musicRatings.production) payload.music_rating_production = musicRatings.production;
+            if (musicRatings.lyrics)     payload.music_rating_lyrics    = musicRatings.lyrics;
+            if (musicRatings.replay)     payload.music_rating_replay    = musicRatings.replay;
+            if (musicRatings.vibe)       payload.music_rating_vibe      = musicRatings.vibe;
             if (musicFavLyric.trim()) payload.music_fav_lyric = musicFavLyric.trim();
             if (musicRecommend !== null) payload.music_recommend = musicRecommend;
             if (musicGenres.length) payload.music_genres = musicGenres;
           } else if (revSubtype === "film") {
-            if (Object.values(filmRatings).some(v => v > 0)) payload.film_ratings = filmRatings;
+            payload.film_overall_rating = revRating;
+            if (filmRatings.story)   payload.film_rating_story   = filmRatings.story;
+            if (filmRatings.acting)  payload.film_rating_acting  = filmRatings.acting;
+            if (filmRatings.visuals) payload.film_rating_visuals = filmRatings.visuals;
+            if (filmRatings.pacing)  payload.film_rating_pacing  = filmRatings.pacing;
             if (filmFavLine.trim()) payload.film_fav_line = filmFavLine.trim();
             if (filmRecommend !== null) payload.film_recommend = filmRecommend;
             if (filmGenres.length) payload.film_genres = filmGenres;
           } else if (revSubtype === "food") {
-            if (Object.values(foodRatings).some(v => v > 0)) payload.food_ratings = foodRatings;
+            if (foodRatings.taste) payload.food_rating_taste = foodRatings.taste;
+            if (foodRatings.value) payload.food_rating_value = foodRatings.value;
+            if (foodRatings.vibe)  payload.food_rating_vibe  = foodRatings.vibe;
             if (cuisineTag) payload.cuisine_tag = cuisineTag;
             if (foodPriceRange) payload.price_range = foodPriceRange;
           } else if (revSubtype === "place") {
