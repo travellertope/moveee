@@ -25,7 +25,6 @@ import { decodeHtml } from "../../utils/decodeHtml";
 import BookMoodPace from "../../components/community/BookMoodPace";
 import EntryLogControl from "../../components/community/EntryLogControl";
 import SocialProofLine from "../../components/community/SocialProofLine";
-import SavedLines from "../../components/community/SavedLines";
 import StoopProximityBanner from "../../components/community/StoopProximityBanner";
 import DirectoryFollowButton from "../../components/community/DirectoryFollowButton";
 import type { AlsoLoggedEntry } from "../../features/community/readingTracker";
@@ -685,11 +684,6 @@ export default function DirectoryDetailScreen() {
             <BookMoodPace directoryId={entry.id} />
           </View>
         )}
-
-        {/* ── Lines saved from this ("Log-First" pass) ── */}
-        <View style={[styles.aboutCard, { paddingBottom: 12 }]}>
-          <SavedLines directoryId={entry.id} />
-        </View>
 
         {/* ── Selected Works ── */}
         {showSelectedWorks && (
