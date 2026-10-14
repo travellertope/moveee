@@ -158,7 +158,17 @@ export const authOptions: NextAuthOptions = {
               }),
               cache: "no-store",
             });
-            if (!res.ok) return null;
+            if (!res.ok) {
+              // Surface specific WP error codes so the component can show
+              // a more helpful message (e.g. "expired" vs "wrong code").
+              let wpCode = "invalid_code";
+              try {
+                const errBody = await res.json();
+                if (errBody?.code) wpCode = errBody.code;
+              } catch {}
+              // Re-throw so next-auth passes it back in result.error.
+              throw new Error(wpCode);
+            }
             const data = await res.json();
             return {
               id: String(data.id),
