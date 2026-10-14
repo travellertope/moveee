@@ -128,10 +128,16 @@ export default function MagicCodeSignIn({
 
     setLoading(false);
     if (result?.error) {
-      // authorize() returns null for every failure mode WordPress reports
-      // (wrong code, expired, too many attempts), so there is no more
-      // specific message to surface here than this.
-      setError("That code didn't work. Check it, or send a new one.");
+      const errCode = result.error;
+      if (errCode === "code_expired") {
+        setError("That code has expired. Hit 'Send a new code' to get a fresh one.");
+      } else if (errCode === "too_many_attempts") {
+        setError("Too many incorrect attempts. Request a new code to try again.");
+      } else if (errCode === "too_many_requests") {
+        setError("Too many code requests. Wait a few minutes before requesting another.");
+      } else {
+        setError("That code didn't work. Check it, or send a new one.");
+      }
       return;
     }
     finish();

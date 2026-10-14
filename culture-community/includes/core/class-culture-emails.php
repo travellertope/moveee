@@ -205,7 +205,7 @@ class Culture_Emails {
         $subject = 'Your Moveee sign-in code: ' . $code;
 
         $body  = self::get_header( 'Your sign-in code' );
-        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Enter this code to sign in and confirm your subscription:</p>';
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Enter this code to continue on Moveee:</p>';
         $body .= '<p style="text-align:center;margin:0 0 20px;"><span style="display:inline-block;padding:14px 28px;background:#f4f4f4;border-radius:6px;font-size:28px;font-weight:700;letter-spacing:6px;color:#161412;">' . esc_html( $code ) . '</span></p>';
         $body .= '<p style="font-size:13px;color:#7a6f5c;margin:0;">This code expires in 10 minutes. If you didn\'t request this, you can safely ignore this email.</p>';
         $body .= self::get_footer();

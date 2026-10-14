@@ -147,6 +147,8 @@ class Culture_Clusters {
             'hubId'             => $hub_id ?: null,
             'hubSlug'           => $hub_id ? ( get_post_meta( $hub_id, '_hub_slug', true ) ?: null ) : null,
             'category'          => get_post_meta( $cluster_id, '_cluster_category', true ) ?: 'general',
+            'coverImageUrl'     => get_post_meta( $cluster_id, '_cluster_cover_url', true ) ?: null,
+            'avatarUrl'         => get_post_meta( $cluster_id, '_cluster_avatar_url', true ) ?: null,
         );
     }
 
@@ -383,20 +385,15 @@ class Culture_Clusters {
             'status'     => 'active',
         ), array( '%d', '%d', '%s', '%s', '%s' ) );
 
-        self::maybe_create_companion_hub( $post_id, $name, $user_id );
+        // Companion Hub creation retired — Stoop chatter now uses the dedicated
+        // wp_culture_cluster_chatter table (October 2026). Hubs are disabled for Stoops.
 
         return $post_id;
     }
 
     /**
-     * Every Stoop cluster gets a companion Hub for its members' async chatter
-     * between gatherings — reuses the exact same "topic community" mechanism
-     * as any other Hub (same join/post/feed plumbing) rather than a bespoke
-     * cluster-chat feature. Mirrors the Section/Hub bridge in class-culture-
-     * hubs.php (every Section auto-gets an official Hub); this is the same
-     * idea one level down, per-cluster instead of per-Section. Linked in both
-     * directions: _cluster_hub_id on the cluster, _hub_cluster_id on the Hub.
-     * Best-effort — a failure here must never fail cluster creation itself.
+     * @deprecated October 2026 — Hubs retired for Stoops; kept to avoid fatal
+     * errors on existing call-sites until backfill is cleaned up.
      */
     private static function maybe_create_companion_hub( int $cluster_id, string $cluster_name, int $founder_id ) {
         if ( ! class_exists( 'Culture_Hubs' ) ) {
@@ -1107,6 +1104,96 @@ class Culture_Clusters {
             UNIQUE KEY cluster_user_date (cluster_id, user_id, gathering_date),
             KEY cluster_date (cluster_id, gathering_date)
         ) {$charset_collate};" );
+    }
+
+    public static function chatter_table() : string {
+        global $wpdb;
+        return $wpdb->prefix . 'culture_cluster_chatter';
+    }
+
+    public static function create_chatter_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $t = self::chatter_table();
+        dbDelta( "CREATE TABLE {$t} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            cluster_id bigint(20) NOT NULL,
+            user_id bigint(20) NOT NULL,
+            message text NOT NULL,
+            images text DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY cluster_created (cluster_id, created_at)
+        ) {$charset_collate};" );
+    }
+
+    /** Post a message to a cluster's chatter. Returns inserted row ID or WP_Error. */
+    public static function post_chatter( int $cluster_id, int $user_id, string $message, array $images = [] ) {
+        global $wpdb;
+        $message = wp_strip_all_tags( $message );
+        if ( '' === trim( $message ) ) {
+            return new WP_Error( 'empty_message', 'Message cannot be empty.' );
+        }
+        // Verify membership.
+        $is_member = $wpdb->get_var( $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}culture_clusters WHERE cluster_id = %d AND user_id = %d AND status = 'active' LIMIT 1",
+            $cluster_id, $user_id
+        ) );
+        if ( ! $is_member ) {
+            return new WP_Error( 'not_member', 'You must be a member to post.' );
+        }
+        $wpdb->insert( self::chatter_table(), array(
+            'cluster_id' => $cluster_id,
+            'user_id'    => $user_id,
+            'message'    => wp_kses_post( $message ),
+            'images'     => ! empty( $images ) ? wp_json_encode( $images ) : null,
+            'created_at' => current_time( 'mysql', true ),
+        ), array( '%d', '%d', '%s', '%s', '%s' ) );
+        return $wpdb->insert_id;
+    }
+
+    /** Fetch chatter for a cluster. $since_id = 0 returns last 50. */
+    public static function get_chatter( int $cluster_id, int $since_id = 0 ) : array {
+        global $wpdb;
+        $t = self::chatter_table();
+        if ( $since_id > 0 ) {
+            $rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT c.id, c.user_id, c.message, c.images, c.created_at,
+                        u.display_name, um.meta_value AS avatar_url
+                 FROM {$t} c
+                 JOIN {$wpdb->users} u ON u.ID = c.user_id
+                 LEFT JOIN {$wpdb->usermeta} um ON um.user_id = c.user_id AND um.meta_key = '_culture_avatar_url'
+                 WHERE c.cluster_id = %d AND c.id > %d
+                 ORDER BY c.id ASC
+                 LIMIT 100",
+                $cluster_id, $since_id
+            ), ARRAY_A );
+        } else {
+            $rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT c.id, c.user_id, c.message, c.images, c.created_at,
+                        u.display_name, um.meta_value AS avatar_url
+                 FROM {$t} c
+                 JOIN {$wpdb->users} u ON u.ID = c.user_id
+                 LEFT JOIN {$wpdb->usermeta} um ON um.user_id = c.user_id AND um.meta_key = '_culture_avatar_url'
+                 WHERE c.cluster_id = %d
+                 ORDER BY c.id DESC
+                 LIMIT 50",
+                $cluster_id
+            ), ARRAY_A );
+            $rows = array_reverse( $rows );
+        }
+        return array_map( function( $r ) {
+            return array(
+                'id'          => (int) $r['id'],
+                'author_id'   => (int) $r['user_id'],
+                'author_name' => $r['display_name'],
+                'author_avatar' => $r['avatar_url'] ?: null,
+                'text'        => $r['message'],
+                'images'      => ! empty( $r['images'] ) ? json_decode( $r['images'], true ) : [],
+                'created_at'  => $r['created_at'],
+            );
+        }, $rows ?: [] );
     }
 
     /**
