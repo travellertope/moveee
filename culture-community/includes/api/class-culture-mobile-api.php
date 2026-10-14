@@ -1988,6 +1988,9 @@ class Culture_Mobile_API {
             if ( is_array( $book_genres ) ) {
                 update_post_meta( $post_id, '_book_genres', wp_json_encode( array_map( 'sanitize_text_field', $book_genres ) ) );
             }
+            if ( $request->get_param( 'book_cover_url' ) ) {
+                update_post_meta( $post_id, '_book_cover_url', esc_url_raw( $request->get_param( 'book_cover_url' ) ) );
+            }
         }
 
         // ── Music Review ───────────────────────────────────────────────────────
@@ -2015,6 +2018,9 @@ class Culture_Mobile_API {
             if ( $request->get_param( 'music_preview_url' ) ) {
                 update_post_meta( $post_id, '_music_preview_url', esc_url_raw( $request->get_param( 'music_preview_url' ) ) );
             }
+            if ( $request->get_param( 'music_cover_url' ) ) {
+                update_post_meta( $post_id, '_music_cover_url', esc_url_raw( $request->get_param( 'music_cover_url' ) ) );
+            }
         }
 
         // ── Film Review ────────────────────────────────────────────────────────
@@ -2038,6 +2044,9 @@ class Culture_Mobile_API {
             $film_genres = $request->get_param( 'film_genres' );
             if ( is_array( $film_genres ) ) {
                 update_post_meta( $post_id, '_film_genres', wp_json_encode( array_map( 'sanitize_text_field', $film_genres ) ) );
+            }
+            if ( $request->get_param( 'film_cover_url' ) ) {
+                update_post_meta( $post_id, '_film_cover_url', esc_url_raw( $request->get_param( 'film_cover_url' ) ) );
             }
         }
 
@@ -4239,6 +4248,8 @@ class Culture_Mobile_API {
                 'musicRecommend'          => get_post_meta( $post->ID, '_music_recommend', true ) === '1',
                 'musicGenres'             => json_decode( get_post_meta( $post->ID, '_music_genres', true ) ?: '[]', true ),
                 'musicPreviewUrl'         => get_post_meta( $post->ID, '_music_preview_url', true ) ?: '',
+                'musicCoverUrl'           => get_post_meta( $post->ID, '_music_cover_url', true ) ?: '',
+                'bookCoverUrl'            => get_post_meta( $post->ID, '_book_cover_url', true ) ?: '',
                 'filmTitle'               => get_post_meta( $post->ID, '_film_title', true ) ?: '',
                 'filmDirector'            => get_post_meta( $post->ID, '_film_director', true ) ?: '',
                 'filmOverallRating'       => (int) get_post_meta( $post->ID, '_film_overall_rating', true ),
@@ -4249,6 +4260,7 @@ class Culture_Mobile_API {
                 'filmFavLine'             => get_post_meta( $post->ID, '_film_fav_line', true ) ?: '',
                 'filmRecommend'           => get_post_meta( $post->ID, '_film_recommend', true ) === '1',
                 'filmGenres'              => json_decode( get_post_meta( $post->ID, '_film_genres', true ) ?: '[]', true ),
+                'filmCoverUrl'            => get_post_meta( $post->ID, '_film_cover_url', true ) ?: '',
                 // Quote template fields
                 'quoteAuthor'             => get_post_meta( $post->ID, '_quote_author', true ) ?: '',
                 'quoteSource'             => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
@@ -4687,6 +4699,8 @@ class Culture_Mobile_API {
             'music_recommend'           => get_post_meta( $post->ID, '_music_recommend', true ) === '1',
             'music_genres'              => json_decode( get_post_meta( $post->ID, '_music_genres', true ) ?: '[]', true ),
             'music_preview_url'         => get_post_meta( $post->ID, '_music_preview_url', true ) ?: '',
+            'music_cover_url'           => get_post_meta( $post->ID, '_music_cover_url', true ) ?: '',
+            'book_cover_url'            => get_post_meta( $post->ID, '_book_cover_url', true ) ?: '',
             'film_title'                => get_post_meta( $post->ID, '_film_title', true ) ?: '',
             'film_director'             => get_post_meta( $post->ID, '_film_director', true ) ?: '',
             'film_overall_rating'       => (int) get_post_meta( $post->ID, '_film_overall_rating', true ),
@@ -4697,6 +4711,7 @@ class Culture_Mobile_API {
             'film_fav_line'             => get_post_meta( $post->ID, '_film_fav_line', true ) ?: '',
             'film_recommend'            => get_post_meta( $post->ID, '_film_recommend', true ) === '1',
             'film_genres'               => json_decode( get_post_meta( $post->ID, '_film_genres', true ) ?: '[]', true ),
+            'film_cover_url'            => get_post_meta( $post->ID, '_film_cover_url', true ) ?: '',
         );
     }
 

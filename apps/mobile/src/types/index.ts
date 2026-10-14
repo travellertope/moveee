@@ -300,6 +300,9 @@ export interface FeedItem {
   musicRecommend?: boolean;
   musicGenres?: string[];
   musicPreviewUrl?: string;
+  musicCoverUrl?: string;
+  bookCoverUrl?: string;
+  filmCoverUrl?: string;
   // Film Review
   filmTitle?: string;
   filmDirector?: string;

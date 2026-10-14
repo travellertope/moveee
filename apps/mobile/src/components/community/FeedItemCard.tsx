@@ -1660,7 +1660,7 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const coverUri = item.image ?? null;
+  const coverUri = item.bookCoverUrl ?? item.image ?? null;
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const statusColor: Record<string, string> = {
@@ -1777,7 +1777,7 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const coverUri = item.image ?? null;
+  const coverUri = item.musicCoverUrl ?? item.image ?? null;
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const ratings: { label: string; value?: number }[] = [
@@ -1873,7 +1873,7 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
-  const coverUri = item.image ?? null;
+  const coverUri = item.filmCoverUrl ?? item.image ?? null;
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const ratings: { label: string; value?: number }[] = [

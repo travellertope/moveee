@@ -816,8 +816,8 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
         onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
         style={styles.bookCard}
       >
-        {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.bookCover} resizeMode="cover" />
+        {(item.bookCoverUrl ?? item.image) ? (
+          <Image source={{ uri: item.bookCoverUrl ?? item.image! }} style={styles.bookCover} resizeMode="cover" />
         ) : (
           <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
             <Text style={{ fontSize: 24 }}>📚</Text>
@@ -924,8 +924,8 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
         onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
         style={styles.bookCard}
       >
-        {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.bookCover} resizeMode="cover" />
+        {(item.musicCoverUrl ?? item.image) ? (
+          <Image source={{ uri: item.musicCoverUrl ?? item.image! }} style={styles.bookCover} resizeMode="cover" />
         ) : (
           <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
             <Text style={{ fontSize: 24 }}>🎵</Text>
@@ -1027,8 +1027,8 @@ function TemplateFilmReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
         onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
         style={styles.bookCard}
       >
-        {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.bookCover} resizeMode="cover" />
+        {(item.filmCoverUrl ?? item.image) ? (
+          <Image source={{ uri: item.filmCoverUrl ?? item.image! }} style={styles.bookCover} resizeMode="cover" />
         ) : (
           <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
             <Text style={{ fontSize: 24 }}>🎬</Text>

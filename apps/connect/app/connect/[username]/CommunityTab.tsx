@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import FeedCard from "@/components/pulse/FeedCard";
 import type { FeedItem } from "@/lib/unified-feed";
+import { decodeHtml } from "@/lib/decode-html";
 
 interface Post {
   id: number;
@@ -44,10 +45,10 @@ function toFeedItem(post: Post, username: string, displayName: string, avatarUrl
     id: String(post.id),
     wpId: String(post.id),
     type: "community",
-    title: post.text?.slice(0, 120) ?? "",
+    title: decodeHtml(post.text?.slice(0, 120) ?? ""),
     slug: post.slug,
     date: post.date,
-    excerpt: post.text,
+    excerpt: decodeHtml(post.text ?? ""),
     image: post.gallery_images?.[0] ?? post.image_url,
     href: `/community/${post.slug}`,
     communityAuthor: displayName,

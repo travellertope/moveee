@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import DirectorySearch from "@/components/composer/DirectorySearch";
+import MultiRating from "../composer/MultiRating";
 
 export type ComposerTab = "update" | "review" | "art" | "poll" | "quote" | "itinerary" | "event";
 type ReviewSubtype = "place" | "food" | "music" | "book" | "film";
@@ -16,6 +17,25 @@ const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
 };
 
 const CATEGORIES = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
+
+const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
+const QUOTE_SOURCE_TYPES: Record<string, { type: string; label: string; about: string; external?: "google_books" | "spotify" | "tmdb" }> = {
+  Book: { type: "book", label: "Which book?", about: "Author", external: "google_books" },
+  Film: { type: "film", label: "Which film?", about: "Director", external: "tmdb" },
+  Song: { type: "album", label: "Which song or album?", about: "Artist", external: "spotify" },
+};
+
+const EVENT_CATEGORIES = ["Art", "Music", "Fashion", "Food", "Film", "Literature", "Sport", "Design", "Tech", "Talk", "Workshop", "Community"];
+const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing", "Mixed Media"];
+const ITINERARY_BUDGETS = ["£", "££", "£££", "££££"];
+const ITINERARY_DURATIONS = ["Day trip", "Weekend", "3–4 days", "1 week", "2 weeks", "1 month+"];
+const BOOK_GENRES = ["Fiction", "Non-Fiction", "Poetry", "Essays", "Sci-Fi", "Romance", "Mystery", "Biography", "History", "Self-Help", "Business", "Fantasy"];
+const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
+const FILM_GENRES = ["Drama", "Comedy", "Action", "Horror", "Thriller", "Romance", "Documentary", "Sci-Fi", "Animation", "Fantasy"];
+const CUISINE_TAGS = ["Nigerian", "West African", "Caribbean", "British", "American", "Italian", "Japanese", "Korean", "Indian", "Middle Eastern", "Chinese", "Mexican", "Fusion"];
+const PRICE_RANGES = ["£", "££", "£££", "££££"];
+const BOOK_STATUSES = ["Want to Read", "Reading", "Finished"];
+const POLL_DURATIONS = [{ label: "1 day", value: "1" }, { label: "3 days", value: "3" }, { label: "7 days", value: "7" }];
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   Music:      ["music", "album", "song", "track", "beat", "artist", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape"],
@@ -68,6 +88,12 @@ interface Props {
   onSuccess?: () => void;
   initialTab?: ComposerTab;
   hubId?: number;
+}
+
+function averageRating(vals: Record<string, number>): number {
+  const nums = Object.values(vals).filter(v => v > 0);
+  if (!nums.length) return 0;
+  return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
 }
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -163,7 +189,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   // Quote
   const [qText, setQText]           = useState("");
   const [qAuthor, setQAuthor]       = useState("");
+  const [qAuthorEntry, setQAuthorEntry] = useState<any>(null);
   const [qSource, setQSource]       = useState("");
+  const [qSourceEntry, setQSourceEntry] = useState<any>(null);
+  const [qType, setQType]           = useState("");
   const [qReflection, setQReflection] = useState("");
 
   // Itinerary
@@ -183,6 +212,52 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [evDesc, setEvDesc]         = useState("");
   const [evAdmission, setEvAdmission] = useState("");
   const [evTicketUrl, setEvTicketUrl] = useState("");
+  const [evAddress, setEvAddress] = useState("");
+  const [evCategory, setEvCategory] = useState("");
+  const [evOrganiser, setEvOrganiser] = useState<any>(null);
+  const [evRsvpEnabled, setEvRsvpEnabled] = useState(false);
+  const [evCapacity, setEvCapacity] = useState("");
+
+  // Poll additions
+  const [pollDuration, setPollDuration] = useState("3");
+  const [pollDescription, setPollDescription] = useState("");
+
+  // Itinerary additions
+  const [iCity, setICity] = useState("");
+  const [iDurationPick, setIDurationPick] = useState("");
+  const [iBudget, setIBudget] = useState("");
+  const [iBestTime, setIBestTime] = useState("");
+
+  // Art additions
+  const [showcaseMedium, setShowcaseMedium] = useState("");
+
+  // Book review additions
+  const [bookStatus, setBookStatus] = useState("");
+  const [bookRatings, setBookRatings] = useState<Record<string, number>>({ writing: 0, story: 0, characters: 0, pacing: 0 });
+  const [bookFavQuote, setBookFavQuote] = useState("");
+  const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
+  const [bookGenres, setBookGenres] = useState<string[]>([]);
+
+  // Music review additions
+  const [musicRatings, setMusicRatings] = useState<Record<string, number>>({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
+  const [musicFavLyric, setMusicFavLyric] = useState("");
+  const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
+  const [musicGenres, setMusicGenres] = useState<string[]>([]);
+
+  // Film review additions
+  const [filmRatings, setFilmRatings] = useState<Record<string, number>>({ story: 0, acting: 0, visuals: 0, pacing: 0 });
+  const [filmFavLine, setFilmFavLine] = useState("");
+  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
+  const [filmGenres, setFilmGenres] = useState<string[]>([]);
+
+  // Food review additions
+  const [foodRatings, setFoodRatings] = useState<Record<string, number>>({ taste: 0, value: 0, vibe: 0 });
+  const [cuisineTag, setCuisineTag] = useState("");
+  const [foodPriceRange, setFoodPriceRange] = useState("");
+
+  // Place review additions
+  const [placePriceRange, setPlacePriceRange] = useState("");
+  const [openingHours, setOpeningHours] = useState("");
 
   // Shared
   const [category, setCategory]           = useState("");
@@ -214,16 +289,42 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     if (inferred) setCategory(inferred);
   }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
 
+  // Auto-compute overall star rating from breakdown when set
+  useEffect(() => {
+    if (revSubtype === "book") {
+      const avg = averageRating(bookRatings);
+      if (avg > 0) setRevRating(avg);
+    } else if (revSubtype === "music") {
+      const avg = averageRating(musicRatings);
+      if (avg > 0) setRevRating(avg);
+    } else if (revSubtype === "film") {
+      const avg = averageRating(filmRatings);
+      if (avg > 0) setRevRating(avg);
+    } else if (revSubtype === "food") {
+      const avg = averageRating(foodRatings);
+      if (avg > 0) setRevRating(avg);
+    }
+  }, [bookRatings, musicRatings, filmRatings, foodRatings, revSubtype]);
+
   const resetAll = useCallback(() => {
     setUpdTitle(""); setUpdContent("");
     setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place"); setRevEntry(null);
     setArtTitle(""); setArtContent("");
     setPollQ(""); setPollOpts(["", ""]);
-    setQText(""); setQAuthor(""); setQSource(""); setQReflection("");
+    setQText(""); setQAuthor(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
     setITitle(""); setIOverview("");
     setStops([{ id: "a", name: "", location: "", note: "", image_url: "" }, { id: "b", name: "", location: "", note: "", image_url: "" }]);
     setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
     setEvDesc(""); setEvAdmission(""); setEvTicketUrl("");
+    setEvAddress(""); setEvCategory(""); setEvOrganiser(null); setEvRsvpEnabled(false); setEvCapacity("");
+    setPollDuration("3"); setPollDescription("");
+    setICity(""); setIDurationPick(""); setIBudget(""); setIBestTime("");
+    setShowcaseMedium("");
+    setBookStatus(""); setBookRatings({ writing: 0, story: 0, characters: 0, pacing: 0 }); setBookFavQuote(""); setBookRecommend(null); setBookGenres([]);
+    setMusicRatings({ production: 0, lyrics: 0, replay: 0, vibe: 0 }); setMusicFavLyric(""); setMusicRecommend(null); setMusicGenres([]);
+    setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine(""); setFilmRecommend(null); setFilmGenres([]);
+    setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setCuisineTag(""); setFoodPriceRange("");
+    setPlacePriceRange(""); setOpeningHours("");
     setImageUrl(""); setError("");
     setCategory(""); setCategoryManuallySet(false);
   }, []);
@@ -265,15 +366,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setSubmitting(true);
     try {
       if (activeTab === "quote") {
-        if (!qText.trim() || !qAuthor.trim()) throw new Error("Quote text and author are required");
+        if (!qText.trim()) throw new Error("Quote text is required");
+        if (!qAuthorEntry && !qAuthor.trim()) throw new Error("Who said it? Pick someone from the directory or type a name.");
         const res = await fetch("/api/quotes/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: qText.trim(),
-            author: qAuthor.trim(),
-            source: qSource.trim() || undefined,
+            author: (qAuthorEntry?.title || qAuthor).trim(),
+            source: (qSourceEntry?.title || qSource).trim() || undefined,
+            quote_author_directory_id: qAuthorEntry?.id || undefined,
+            linked_directory_id: qSourceEntry?.id || undefined,
             sharing_reason: qReflection.trim() || undefined,
+            quote_type: qType || undefined,
           }),
         });
         const data = await res.json();
@@ -295,16 +400,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             payload.location_name = placeName;
             payload.text = revContent.trim();
             if (revEntry?.id) payload.linked_directory_id = revEntry.id;
+            if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
           } else if (revSubtype === "food") {
             const foodName = revEntry?.title || revTitle.trim();
             payload.text = foodName ? `${foodName}\n\n${revContent.trim()}` : revContent.trim();
             if (revEntry?.id) payload.linked_directory_id = revEntry.id;
+            if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
           } else {
             // book / music / film — use linked directory entry when available
             const entryTitle = revEntry?.title || revTitle.trim();
             payload.text = entryTitle ? `${entryTitle}\n\n${revContent.trim()}` : revContent.trim();
             if (revEntry?.id) {
               payload.linked_directory_id = revEntry.id;
+              if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
               if (revSubtype === "book") {
                 payload.book_title = revEntry.title;
                 payload.book_author = revEntry.about;
@@ -317,12 +425,52 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               }
             }
           }
+          // Extended per-subtype fields
+          if (revSubtype === "book") {
+            payload.book_overall_rating = revRating;
+            if (bookStatus) payload.book_status = bookStatus;
+            if (bookRatings.writing)    payload.book_rating_writing    = bookRatings.writing;
+            if (bookRatings.story)      payload.book_rating_story      = bookRatings.story;
+            if (bookRatings.characters) payload.book_rating_characters = bookRatings.characters;
+            if (bookRatings.pacing)     payload.book_rating_pacing     = bookRatings.pacing;
+            if (bookFavQuote.trim()) payload.book_fav_quote = bookFavQuote.trim();
+            if (bookRecommend !== null) payload.book_recommend = bookRecommend;
+            if (bookGenres.length) payload.book_genres = bookGenres;
+          } else if (revSubtype === "music") {
+            payload.music_overall_rating = revRating;
+            if (musicRatings.production) payload.music_rating_production = musicRatings.production;
+            if (musicRatings.lyrics)     payload.music_rating_lyrics    = musicRatings.lyrics;
+            if (musicRatings.replay)     payload.music_rating_replay    = musicRatings.replay;
+            if (musicRatings.vibe)       payload.music_rating_vibe      = musicRatings.vibe;
+            if (musicFavLyric.trim()) payload.music_fav_lyric = musicFavLyric.trim();
+            if (musicRecommend !== null) payload.music_recommend = musicRecommend;
+            if (musicGenres.length) payload.music_genres = musicGenres;
+          } else if (revSubtype === "film") {
+            payload.film_overall_rating = revRating;
+            if (filmRatings.story)   payload.film_rating_story   = filmRatings.story;
+            if (filmRatings.acting)  payload.film_rating_acting  = filmRatings.acting;
+            if (filmRatings.visuals) payload.film_rating_visuals = filmRatings.visuals;
+            if (filmRatings.pacing)  payload.film_rating_pacing  = filmRatings.pacing;
+            if (filmFavLine.trim()) payload.film_fav_line = filmFavLine.trim();
+            if (filmRecommend !== null) payload.film_recommend = filmRecommend;
+            if (filmGenres.length) payload.film_genres = filmGenres;
+          } else if (revSubtype === "food") {
+            if (foodRatings.taste) payload.food_rating_taste = foodRatings.taste;
+            if (foodRatings.value) payload.food_rating_value = foodRatings.value;
+            if (foodRatings.vibe)  payload.food_rating_vibe  = foodRatings.vibe;
+            if (cuisineTag) payload.cuisine_tag = cuisineTag;
+            if (foodPriceRange) payload.price_range = foodPriceRange;
+          } else if (revSubtype === "place") {
+            if (placePriceRange) payload.price_range = placePriceRange;
+            if (openingHours.trim()) payload.opening_hours = openingHours.trim();
+          }
           payload.star_rating = revRating;
           if (imageUrl) payload.imageUrl = imageUrl;
         } else if (activeTab === "art") {
           template_type = "creative-showcase";
           if (!artContent.trim()) throw new Error("Description is required");
           payload.text = artTitle.trim() ? `${artTitle.trim()}\n\n${artContent.trim()}` : artContent.trim();
+          if (showcaseMedium) payload.showcase_medium = showcaseMedium;
           if (imageUrl) payload.imageUrl = imageUrl;
         } else if (activeTab === "poll") {
           template_type = "poll";
@@ -331,6 +479,11 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           if (opts.length < 2) throw new Error("Add at least 2 poll options");
           payload.text = pollQ.trim();
           payload.poll_options = opts.map(o => ({ text: o.trim() }));
+          if (pollDescription.trim()) payload.poll_description = pollDescription.trim();
+          const days = parseInt(pollDuration);
+          const exp = new Date();
+          exp.setDate(exp.getDate() + days);
+          payload.poll_expires_at = exp.toISOString();
         } else if (activeTab === "itinerary") {
           template_type = "itinerary";
           if (!iOverview.trim()) throw new Error("Overview is required");
@@ -344,8 +497,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             note: [s.location.trim(), s.note.trim()].filter(Boolean).join(" — "),
             image_url: s.image_url || "",
           }));
+          if (iCity.trim()) payload.itinerary_city = iCity.trim();
+          if (iDurationPick) payload.itinerary_duration = iDurationPick;
+          if (iBudget) payload.itinerary_budget = iBudget;
+          if (iBestTime.trim()) payload.itinerary_best_time = iBestTime.trim();
         } else if (activeTab === "event") {
-          template_type = "happening";
+          template_type = "event";
           if (!evTitle.trim()) throw new Error("Event title is required");
           if (!evDate) throw new Error("Event date is required");
           payload.text = evDesc.trim() || evTitle.trim();
@@ -354,10 +511,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           if (evEndDate) payload.event_end_date = evEndDate;
           payload.event_venue = evVenue.trim();
           payload.event_city = evCity.trim();
-          payload.event_address = evVenue.trim();
+          payload.event_address = evAddress.trim() || evVenue.trim();
           payload.event_admission = evAdmission.trim() || "Free";
           if (evTicketUrl.trim()) payload.ticket_url = evTicketUrl.trim();
-          payload.rsvp_enabled = false;
+          if (evCategory) payload.event_category = evCategory;
+          if (evOrganiser?.id) payload.organiser_directory_id = evOrganiser.id;
+          payload.rsvp_enabled = evRsvpEnabled;
+          if (evRsvpEnabled && evCapacity.trim()) payload.rsvp_capacity = parseInt(evCapacity);
           if (imageUrl) payload.imageUrl = imageUrl;
         }
 
@@ -489,10 +649,150 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   />
                 </>
               </div>
-              <div className="cm-field">
-                <label className="cm-label">Your rating</label>
-                <StarRating value={revRating} onChange={setRevRating} />
-              </div>
+              {/* Book status */}
+              {revSubtype === "book" && (
+                <div className="cm-field">
+                  <label className="cm-label">Reading status</label>
+                  <div className="cm-review-pills">
+                    {BOOK_STATUSES.map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`cm-pill${bookStatus === s ? " cm-pill--active" : ""}`}
+                        onClick={() => setBookStatus(bookStatus === s ? "" : s)}
+                      >{s}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Breakdown ratings */}
+              {revSubtype === "book" && (
+                <div className="cm-field">
+                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                  <MultiRating
+                    ratings={[
+                      { label: "Writing", key: "writing", value: bookRatings.writing },
+                      { label: "Story", key: "story", value: bookRatings.story },
+                      { label: "Characters", key: "characters", value: bookRatings.characters },
+                      { label: "Pacing", key: "pacing", value: bookRatings.pacing },
+                    ]}
+                    onChange={(key, v) => setBookRatings(r => ({ ...r, [key]: v }))}
+                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                  />
+                </div>
+              )}
+              {revSubtype === "music" && (
+                <div className="cm-field">
+                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                  <MultiRating
+                    ratings={[
+                      { label: "Production", key: "production", value: musicRatings.production },
+                      { label: "Lyrics", key: "lyrics", value: musicRatings.lyrics },
+                      { label: "Replay", key: "replay", value: musicRatings.replay },
+                      { label: "Vibe", key: "vibe", value: musicRatings.vibe },
+                    ]}
+                    onChange={(key, v) => setMusicRatings(r => ({ ...r, [key]: v }))}
+                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                  />
+                </div>
+              )}
+              {revSubtype === "film" && (
+                <div className="cm-field">
+                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                  <MultiRating
+                    ratings={[
+                      { label: "Story", key: "story", value: filmRatings.story },
+                      { label: "Acting", key: "acting", value: filmRatings.acting },
+                      { label: "Visuals", key: "visuals", value: filmRatings.visuals },
+                      { label: "Pacing", key: "pacing", value: filmRatings.pacing },
+                    ]}
+                    onChange={(key, v) => setFilmRatings(r => ({ ...r, [key]: v }))}
+                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                  />
+                </div>
+              )}
+              {revSubtype === "food" && (
+                <div className="cm-field">
+                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                  <MultiRating
+                    ratings={[
+                      { label: "Taste", key: "taste", value: foodRatings.taste },
+                      { label: "Value", key: "value", value: foodRatings.value },
+                      { label: "Vibe", key: "vibe", value: foodRatings.vibe },
+                    ]}
+                    onChange={(key, v) => setFoodRatings(r => ({ ...r, [key]: v }))}
+                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                  />
+                </div>
+              )}
+
+              {/* Place / food extras */}
+              {revSubtype === "food" && (
+                <>
+                  <div className="cm-field">
+                    <label className="cm-label">Cuisine <span className="cm-label-opt">(optional)</span></label>
+                    <div className="cm-review-pills cm-pills-wrap">
+                      {CUISINE_TAGS.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          className={`cm-pill${cuisineTag === c ? " cm-pill--active" : ""}`}
+                          onClick={() => setCuisineTag(cuisineTag === c ? "" : c)}
+                        >{c}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="cm-field">
+                    <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
+                    <div className="cm-review-pills">
+                      {PRICE_RANGES.map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          className={`cm-pill${foodPriceRange === p ? " cm-pill--active" : ""}`}
+                          onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
+                        >{p}</button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              {revSubtype === "place" && (
+                <>
+                  <div className="cm-field">
+                    <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
+                    <div className="cm-review-pills">
+                      {PRICE_RANGES.map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          className={`cm-pill${placePriceRange === p ? " cm-pill--active" : ""}`}
+                          onClick={() => setPlacePriceRange(placePriceRange === p ? "" : p)}
+                        >{p}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="cm-field">
+                    <label className="cm-label">Opening hours <span className="cm-label-opt">(optional)</span></label>
+                    <input
+                      className="cm-input"
+                      placeholder="e.g. Mon–Fri 9am–6pm…"
+                      value={openingHours}
+                      onChange={e => setOpeningHours(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Overall star rating — shown for place/food since no breakdown auto-sets it */}
+              {(revSubtype === "place" || revSubtype === "food") && (
+                <div className="cm-field">
+                  <label className="cm-label">Overall rating</label>
+                  <StarRating value={revRating} onChange={setRevRating} />
+                </div>
+              )}
+
               <div className="cm-field">
                 <label className="cm-label">Your review</label>
                 <textarea
@@ -505,6 +805,119 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   rows={5}
                 />
               </div>
+
+              {/* Favourite quote / lyric / line */}
+              {revSubtype === "book" && (
+                <div className="cm-field">
+                  <label className="cm-label">Favourite quote <span className="cm-label-opt">(optional)</span></label>
+                  <textarea
+                    className="cm-textarea cm-textarea--serif"
+                    placeholder="A line that stayed with you…"
+                    value={bookFavQuote}
+                    onChange={e => setBookFavQuote(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              )}
+              {revSubtype === "music" && (
+                <div className="cm-field">
+                  <label className="cm-label">Favourite lyric <span className="cm-label-opt">(optional)</span></label>
+                  <textarea
+                    className="cm-textarea cm-textarea--serif"
+                    placeholder="A lyric that hit different…"
+                    value={musicFavLyric}
+                    onChange={e => setMusicFavLyric(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              )}
+              {revSubtype === "film" && (
+                <div className="cm-field">
+                  <label className="cm-label">Favourite line <span className="cm-label-opt">(optional)</span></label>
+                  <textarea
+                    className="cm-textarea cm-textarea--serif"
+                    placeholder="A line from the film…"
+                    value={filmFavLine}
+                    onChange={e => setFilmFavLine(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              )}
+
+              {/* Genres */}
+              {revSubtype === "book" && (
+                <div className="cm-field">
+                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
+                  <div className="cm-review-pills cm-pills-wrap">
+                    {BOOK_GENRES.map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        className={`cm-pill${bookGenres.includes(g) ? " cm-pill--active" : ""}`}
+                        onClick={() => setBookGenres(bookGenres.includes(g) ? bookGenres.filter(x => x !== g) : [...bookGenres, g])}
+                      >{g}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {revSubtype === "music" && (
+                <div className="cm-field">
+                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
+                  <div className="cm-review-pills cm-pills-wrap">
+                    {MUSIC_GENRES.map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        className={`cm-pill${musicGenres.includes(g) ? " cm-pill--active" : ""}`}
+                        onClick={() => setMusicGenres(musicGenres.includes(g) ? musicGenres.filter(x => x !== g) : [...musicGenres, g])}
+                      >{g}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {revSubtype === "film" && (
+                <div className="cm-field">
+                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
+                  <div className="cm-review-pills cm-pills-wrap">
+                    {FILM_GENRES.map(g => (
+                      <button
+                        key={g}
+                        type="button"
+                        className={`cm-pill${filmGenres.includes(g) ? " cm-pill--active" : ""}`}
+                        onClick={() => setFilmGenres(filmGenres.includes(g) ? filmGenres.filter(x => x !== g) : [...filmGenres, g])}
+                      >{g}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommend */}
+              {(revSubtype === "book" || revSubtype === "music" || revSubtype === "film") && (
+                <div className="cm-field">
+                  <label className="cm-label">Would you recommend it? <span className="cm-label-opt">(optional)</span></label>
+                  <div className="cm-review-pills">
+                    <button
+                      type="button"
+                      className={`cm-pill${revSubtype === "book" ? (bookRecommend === true ? " cm-pill--active" : "") : revSubtype === "music" ? (musicRecommend === true ? " cm-pill--active" : "") : (filmRecommend === true ? " cm-pill--active" : "")}`}
+                      onClick={() => {
+                        if (revSubtype === "book") setBookRecommend(bookRecommend === true ? null : true);
+                        else if (revSubtype === "music") setMusicRecommend(musicRecommend === true ? null : true);
+                        else setFilmRecommend(filmRecommend === true ? null : true);
+                      }}
+                    >👍 Yes</button>
+                    <button
+                      type="button"
+                      className={`cm-pill${revSubtype === "book" ? (bookRecommend === false ? " cm-pill--active" : "") : revSubtype === "music" ? (musicRecommend === false ? " cm-pill--active" : "") : (filmRecommend === false ? " cm-pill--active" : "")}`}
+                      onClick={() => {
+                        if (revSubtype === "book") setBookRecommend(bookRecommend === false ? null : false);
+                        else if (revSubtype === "music") setMusicRecommend(musicRecommend === false ? null : false);
+                        else setFilmRecommend(filmRecommend === false ? null : false);
+                      }}
+                    >👎 No</button>
+                  </div>
+                </div>
+              )}
+
               <div className="cm-field">
                 <label className="cm-label">Cover photo <span className="cm-label-opt">(optional)</span></label>
                 <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
@@ -523,6 +936,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   value={artTitle}
                   onChange={e => setArtTitle(e.target.value)}
                 />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Medium <span className="cm-label-opt">(optional)</span></label>
+                <div className="cm-review-pills">
+                  {SHOWCASE_MEDIUMS.map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={`cm-pill${showcaseMedium === m ? " cm-pill--active" : ""}`}
+                      onClick={() => setShowcaseMedium(showcaseMedium === m ? "" : m)}
+                    >{m}</button>
+                  ))}
+                </div>
               </div>
               <div className="cm-field">
                 <label className="cm-label">Curator&rsquo;s note</label>
@@ -551,6 +977,16 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   placeholder="Ask the community something…"
                   value={pollQ}
                   onChange={e => setPollQ(e.target.value)}
+                />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Context <span className="cm-label-opt">(optional)</span></label>
+                <textarea
+                  className="cm-textarea"
+                  placeholder="Add some background or context for your question…"
+                  value={pollDescription}
+                  onChange={e => setPollDescription(e.target.value)}
+                  rows={2}
                 />
               </div>
               <div className="cm-field">
@@ -589,12 +1025,43 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   )}
                 </div>
               </div>
+              <div className="cm-field">
+                <label className="cm-label">Poll duration</label>
+                <div className="cm-review-pills">
+                  {POLL_DURATIONS.map(d => (
+                    <button
+                      key={d.value}
+                      type="button"
+                      className={`cm-pill${pollDuration === d.value ? " cm-pill--active" : ""}`}
+                      onClick={() => setPollDuration(d.value)}
+                    >{d.label}</button>
+                  ))}
+                </div>
+              </div>
             </>
           )}
 
           {/* ── QUOTE ── */}
           {activeTab === "quote" && (
             <>
+              {/* Quote type — at the top so the source picker below adapts immediately */}
+              <div className="cm-field">
+                <label className="cm-label">Quote type <span className="cm-label-opt">(optional)</span></label>
+                <div className="cm-review-pills">
+                  {QUOTE_TYPES.map(qt => (
+                    <button
+                      key={qt}
+                      type="button"
+                      className={`cm-pill${qType === qt ? " cm-pill--active" : ""}`}
+                      onClick={() => { setQType(qType === qt ? "" : qt); setQSourceEntry(null); }}
+                    >
+                      {{ Person: "👤 Person", Book: "📚 Book", Film: "🎬 Film", Speech: "🎤 Speech", Song: "🎵 Song" }[qt]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* The quote */}
               <div className="cm-field">
                 <label className="cm-label">The quote</label>
                 <textarea
@@ -605,26 +1072,53 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   rows={4}
                 />
               </div>
-              <div className="cm-grid-2">
+
+              {/* Author — directory-backed picker, freeform fallback */}
+              <div className="cm-field">
+                <DirectorySearch
+                  value={qAuthorEntry}
+                  onChange={entry => setQAuthorEntry(entry)}
+                  typeFilter="person"
+                  placeholder="Who said it? *"
+                  aboutFieldLabel="Known for"
+                />
+              </div>
+              {!qAuthorEntry && (
                 <div className="cm-field">
-                  <label className="cm-label">Who said it?</label>
                   <input
                     className="cm-input"
-                    placeholder="e.g. Toni Morrison"
+                    placeholder="…or just type a name (proverb, overheard, unattributed)"
                     value={qAuthor}
                     onChange={e => setQAuthor(e.target.value)}
                   />
                 </div>
+              )}
+
+              {/* Source — directory search with external catalog when type has one; freeform for Speech/untyped; hidden for Person */}
+              {QUOTE_SOURCE_TYPES[qType] ? (
+                <div className="cm-field">
+                  <DirectorySearch
+                    value={qSourceEntry}
+                    onChange={entry => setQSourceEntry(entry)}
+                    typeFilter={QUOTE_SOURCE_TYPES[qType].type}
+                    placeholder={QUOTE_SOURCE_TYPES[qType].label}
+                    aboutFieldLabel={QUOTE_SOURCE_TYPES[qType].about}
+                    externalSource={QUOTE_SOURCE_TYPES[qType].external}
+                  />
+                </div>
+              ) : qType !== "Person" ? (
                 <div className="cm-field">
                   <label className="cm-label">Source <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
-                    placeholder="e.g. Beloved, 1987"
+                    placeholder="e.g. speech, article, interview…"
                     value={qSource}
                     onChange={e => setQSource(e.target.value)}
                   />
                 </div>
-              </div>
+              ) : null}
+
+              {/* Why does this resonate? */}
               <div className="cm-field">
                 <label className="cm-label">Why does this resonate? <span className="cm-label-opt">(optional)</span></label>
                 <textarea
@@ -651,6 +1145,41 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
+                <label className="cm-label">City / destination <span className="cm-label-opt">(optional)</span></label>
+                <input
+                  className="cm-input"
+                  placeholder="e.g. Lagos, Paris, New York…"
+                  value={iCity}
+                  onChange={e => setICity(e.target.value)}
+                />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Duration <span className="cm-label-opt">(optional)</span></label>
+                <div className="cm-review-pills cm-pills-wrap">
+                  {ITINERARY_DURATIONS.map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      className={`cm-pill${iDurationPick === d ? " cm-pill--active" : ""}`}
+                      onClick={() => setIDurationPick(iDurationPick === d ? "" : d)}
+                    >{d}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Budget <span className="cm-label-opt">(optional)</span></label>
+                <div className="cm-review-pills">
+                  {ITINERARY_BUDGETS.map(b => (
+                    <button
+                      key={b}
+                      type="button"
+                      className={`cm-pill${iBudget === b ? " cm-pill--active" : ""}`}
+                      onClick={() => setIBudget(iBudget === b ? "" : b)}
+                    >{b}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="cm-field">
                 <label className="cm-label">Overview / tagline</label>
                 <textarea
                   className="cm-textarea"
@@ -658,6 +1187,15 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   value={iOverview}
                   onChange={e => setIOverview(e.target.value)}
                   rows={3}
+                />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Best time to visit <span className="cm-label-opt">(optional)</span></label>
+                <input
+                  className="cm-input"
+                  placeholder="e.g. Spring, December, dry season…"
+                  value={iBestTime}
+                  onChange={e => setIBestTime(e.target.value)}
                 />
               </div>
               <div className="cm-field">
@@ -744,6 +1282,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   onChange={e => setEvTitle(e.target.value)}
                 />
               </div>
+              <div className="cm-field">
+                <label className="cm-label">Category <span className="cm-label-opt">(optional)</span></label>
+                <div className="cm-review-pills cm-pills-wrap">
+                  {EVENT_CATEGORIES.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`cm-pill${evCategory === c ? " cm-pill--active" : ""}`}
+                      onClick={() => setEvCategory(evCategory === c ? "" : c)}
+                    >{c}</button>
+                  ))}
+                </div>
+              </div>
               <div className="cm-grid-2">
                 <div className="cm-field">
                   <label className="cm-label">Start date &amp; time</label>
@@ -766,10 +1317,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-grid-2">
                 <div className="cm-field">
-                  <label className="cm-label">Venue / location</label>
+                  <label className="cm-label">Venue name</label>
                   <input
                     className="cm-input"
-                    placeholder="Venue name or address…"
+                    placeholder="Venue or space name…"
                     value={evVenue}
                     onChange={e => setEvVenue(e.target.value)}
                   />
@@ -783,6 +1334,25 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     onChange={e => setEvCity(e.target.value)}
                   />
                 </div>
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Address <span className="cm-label-opt">(optional)</span></label>
+                <input
+                  className="cm-input"
+                  placeholder="Full street address…"
+                  value={evAddress}
+                  onChange={e => setEvAddress(e.target.value)}
+                />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Organiser <span className="cm-label-opt">(optional)</span></label>
+                <DirectorySearch
+                  value={evOrganiser}
+                  onChange={entry => setEvOrganiser(entry)}
+                  typeFilter="person"
+                  placeholder="Search for an organiser in the directory…"
+                  aboutFieldLabel="Known for"
+                />
               </div>
               <div className="cm-field">
                 <label className="cm-label">Description</label>
@@ -815,6 +1385,34 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   />
                 </div>
               </div>
+              <div className="cm-field">
+                <label className="cm-label">Enable RSVP</label>
+                <div className="cm-review-pills">
+                  <button
+                    type="button"
+                    className={`cm-pill${evRsvpEnabled ? " cm-pill--active" : ""}`}
+                    onClick={() => setEvRsvpEnabled(true)}
+                  >Yes</button>
+                  <button
+                    type="button"
+                    className={`cm-pill${!evRsvpEnabled ? " cm-pill--active" : ""}`}
+                    onClick={() => { setEvRsvpEnabled(false); setEvCapacity(""); }}
+                  >No</button>
+                </div>
+              </div>
+              {evRsvpEnabled && (
+                <div className="cm-field">
+                  <label className="cm-label">Capacity <span className="cm-label-opt">(optional)</span></label>
+                  <input
+                    className="cm-input"
+                    type="number"
+                    min="1"
+                    placeholder="Max attendees…"
+                    value={evCapacity}
+                    onChange={e => setEvCapacity(e.target.value)}
+                  />
+                </div>
+              )}
               <div className="cm-field">
                 <label className="cm-label">Cover banner <span className="cm-label-opt">(optional)</span></label>
                 <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />

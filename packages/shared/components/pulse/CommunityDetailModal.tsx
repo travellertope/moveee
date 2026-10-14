@@ -569,11 +569,16 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           {/* Book review rating/status/recommend/genres/favourite quote */}
           {item.templateType === "book-review" && item.bookOverallRating && (
             <div style={{ marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
-                {item.bookAuthor && <span>by {item.bookAuthor}</span>}
-                {item.bookStatus && <span>{item.bookStatus}</span>}
-                {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                {item.bookCoverUrl && (
+                  <img src={item.bookCoverUrl} alt="" style={{ width: 56, height: 80, objectFit: "cover", borderRadius: "var(--radius-lg)", flexShrink: 0 }} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                  <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
+                  {item.bookAuthor && <span>by {item.bookAuthor}</span>}
+                  {item.bookStatus && <span>{item.bookStatus}</span>}
+                  {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                </div>
               </div>
               {item.bookFavQuote && (
                 <blockquote style={{
@@ -597,11 +602,16 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           {/* Music review rating/artist/recommend/genres/favourite lyric/preview */}
           {item.templateType === "music-review" && item.musicOverallRating && (
             <div style={{ marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
-                {item.musicArtist && <span>by {item.musicArtist}</span>}
-                {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
-                {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+              <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                {item.musicCoverUrl && (
+                  <img src={item.musicCoverUrl} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: "var(--radius-lg)", flexShrink: 0 }} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                  <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
+                  {item.musicArtist && <span>by {item.musicArtist}</span>}
+                  {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                  {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+                </div>
               </div>
               {item.musicFavLyric && (
                 <blockquote style={{
@@ -625,10 +635,15 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           {/* Film review rating/director/recommend/genres/favourite line */}
           {item.templateType === "film-review" && item.filmOverallRating && (
             <div style={{ marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
-                {item.filmDirector && <span>dir. {item.filmDirector}</span>}
-                {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+              <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                {item.filmCoverUrl && (
+                  <img src={item.filmCoverUrl} alt="" style={{ width: 54, height: 80, objectFit: "cover", borderRadius: "var(--radius-lg)", flexShrink: 0 }} />
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
+                  <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                  {item.filmDirector && <span>dir. {item.filmDirector}</span>}
+                  {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                </div>
               </div>
               {item.filmFavLine && (
                 <blockquote style={{
@@ -689,6 +704,18 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           )}
           {item.templateType === "event" && item.rsvpEnabled && (
             <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
+          )}
+
+          {/* Directory entry link */}
+          {item.linkedDirectorySlug && (
+            <div style={{ marginBottom: "0.75rem" }}>
+              <Link
+                href={`/directory/${item.linkedDirectorySlug}`}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "var(--gold)", fontWeight: 600, textDecoration: "none", border: "1px solid var(--gold)", borderRadius: "var(--radius-full)", padding: "4px 12px" }}
+              >
+                View in Directory →
+              </Link>
+            </div>
           )}
 
           {/* Gallery */}
