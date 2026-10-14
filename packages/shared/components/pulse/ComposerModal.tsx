@@ -17,6 +17,13 @@ const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
 
 const CATEGORIES = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
+const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
+const QUOTE_SOURCE_TYPES: Record<string, { type: string; label: string; about: string; external?: "google_books" | "spotify" | "tmdb" }> = {
+  Book: { type: "book", label: "Which book?", about: "Author", external: "google_books" },
+  Film: { type: "film", label: "Which film?", about: "Director", external: "tmdb" },
+  Song: { type: "album", label: "Which song or album?", about: "Artist", external: "spotify" },
+};
+
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   Music:      ["music", "album", "song", "track", "beat", "artist", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape"],
   Fashion:    ["fashion", "style", "outfit", "clothes", "clothing", "wear", "dress", "brand", "designer", "sneaker", "shoe", "vintage", "thrift", "streetwear", "wardrobe"],
@@ -163,7 +170,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   // Quote
   const [qText, setQText]           = useState("");
   const [qAuthor, setQAuthor]       = useState("");
+  const [qAuthorEntry, setQAuthorEntry] = useState<any>(null);
   const [qSource, setQSource]       = useState("");
+  const [qSourceEntry, setQSourceEntry] = useState<any>(null);
+  const [qType, setQType]           = useState("");
   const [qReflection, setQReflection] = useState("");
 
   // Itinerary
@@ -219,7 +229,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place"); setRevEntry(null);
     setArtTitle(""); setArtContent("");
     setPollQ(""); setPollOpts(["", ""]);
-    setQText(""); setQAuthor(""); setQSource(""); setQReflection("");
+    setQText(""); setQAuthor(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
     setITitle(""); setIOverview("");
     setStops([{ id: "a", name: "", location: "", note: "", image_url: "" }, { id: "b", name: "", location: "", note: "", image_url: "" }]);
     setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
@@ -265,15 +275,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setSubmitting(true);
     try {
       if (activeTab === "quote") {
-        if (!qText.trim() || !qAuthor.trim()) throw new Error("Quote text and author are required");
+        if (!qText.trim()) throw new Error("Quote text is required");
+        if (!qAuthorEntry && !qAuthor.trim()) throw new Error("Who said it? Pick someone from the directory or type a name.");
         const res = await fetch("/api/quotes/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: qText.trim(),
-            author: qAuthor.trim(),
-            source: qSource.trim() || undefined,
+            author: (qAuthorEntry?.title || qAuthor).trim(),
+            source: (qSourceEntry?.title || qSource).trim() || undefined,
+            quote_author_directory_id: qAuthorEntry?.id || undefined,
+            linked_directory_id: qSourceEntry?.id || undefined,
             sharing_reason: qReflection.trim() || undefined,
+            quote_type: qType || undefined,
           }),
         });
         const data = await res.json();
@@ -595,6 +609,24 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {/* ── QUOTE ── */}
           {activeTab === "quote" && (
             <>
+              {/* Quote type — at the top so the source picker below adapts immediately */}
+              <div className="cm-field">
+                <label className="cm-label">Quote type <span className="cm-label-opt">(optional)</span></label>
+                <div className="cm-review-pills">
+                  {QUOTE_TYPES.map(qt => (
+                    <button
+                      key={qt}
+                      type="button"
+                      className={`cm-pill${qType === qt ? " cm-pill--active" : ""}`}
+                      onClick={() => { setQType(qType === qt ? "" : qt); setQSourceEntry(null); }}
+                    >
+                      {{ Person: "👤 Person", Book: "📚 Book", Film: "🎬 Film", Speech: "🎤 Speech", Song: "🎵 Song" }[qt]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* The quote */}
               <div className="cm-field">
                 <label className="cm-label">The quote</label>
                 <textarea
@@ -605,26 +637,53 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   rows={4}
                 />
               </div>
-              <div className="cm-grid-2">
+
+              {/* Author — directory-backed picker, freeform fallback */}
+              <div className="cm-field">
+                <DirectorySearch
+                  value={qAuthorEntry}
+                  onChange={entry => setQAuthorEntry(entry)}
+                  typeFilter="person"
+                  placeholder="Who said it? *"
+                  aboutFieldLabel="Known for"
+                />
+              </div>
+              {!qAuthorEntry && (
                 <div className="cm-field">
-                  <label className="cm-label">Who said it?</label>
                   <input
                     className="cm-input"
-                    placeholder="e.g. Toni Morrison"
+                    placeholder="…or just type a name (proverb, overheard, unattributed)"
                     value={qAuthor}
                     onChange={e => setQAuthor(e.target.value)}
                   />
                 </div>
+              )}
+
+              {/* Source — directory search with external catalog when type has one; freeform for Speech/untyped; hidden for Person */}
+              {QUOTE_SOURCE_TYPES[qType] ? (
+                <div className="cm-field">
+                  <DirectorySearch
+                    value={qSourceEntry}
+                    onChange={entry => setQSourceEntry(entry)}
+                    typeFilter={QUOTE_SOURCE_TYPES[qType].type}
+                    placeholder={QUOTE_SOURCE_TYPES[qType].label}
+                    aboutFieldLabel={QUOTE_SOURCE_TYPES[qType].about}
+                    externalSource={QUOTE_SOURCE_TYPES[qType].external}
+                  />
+                </div>
+              ) : qType !== "Person" ? (
                 <div className="cm-field">
                   <label className="cm-label">Source <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
-                    placeholder="e.g. Beloved, 1987"
+                    placeholder="e.g. speech, article, interview…"
                     value={qSource}
                     onChange={e => setQSource(e.target.value)}
                   />
                 </div>
-              </div>
+              ) : null}
+
+              {/* Why does this resonate? */}
               <div className="cm-field">
                 <label className="cm-label">Why does this resonate? <span className="cm-label-opt">(optional)</span></label>
                 <textarea
