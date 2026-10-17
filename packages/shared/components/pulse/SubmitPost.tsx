@@ -199,7 +199,7 @@ function averageRating(ratings: Record<string, number>): number {
 
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
-const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
 const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 

@@ -154,7 +154,7 @@ const PRICE_RANGES_NGN = ["₦", "₦₦", "₦₦₦", "₦₦₦₦"];
 const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
 const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
-const MUSIC_GENRES = ["Afrobeats", "Amapiano", "Hip-Hop", "R&B", "Jazz", "Highlife", "Gospel", "Pop"];
+const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
 const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", string> = {
   production: "Production",
   lyrics: "Lyrics",
@@ -648,7 +648,6 @@ const uploadImages = async (): Promise<string[]> => {
       if (!musicEntry) { Alert.alert("Album required", "Search and select an album."); return; }
       if (musicOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
-      if (musicRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this album?"); return; }
     } else if (template === "film-review") {
       if (!filmEntry) { Alert.alert("Film required", "Search and select a film."); return; }
       if (filmOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
@@ -868,13 +867,13 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "event") return !eventTitle.trim() || !eventDate;
     if (template === "project") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
-    if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50 || musicRecommend === null;
+    if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50;
     if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50 || filmRecommend === null;
     if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
   }, [submitting, template, text, eventTitle, eventDate, showcaseTitle, images.length,
-    bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating, musicRecommend,
+    bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating,
     filmEntry, filmOverallRating, filmRecommend,
     itineraryTitle, stops, linkedEntry, tmpl.minText]);
 
@@ -1595,7 +1594,7 @@ const uploadImages = async (): Promise<string[]> => {
 
           {/* Recommend */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
+            <Text style={styles.fieldLabel}>Would you recommend it? (optional)</Text>
             <View style={styles.recommendRow}>
               <TouchableOpacity
                 style={[styles.recommendYes, musicRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
