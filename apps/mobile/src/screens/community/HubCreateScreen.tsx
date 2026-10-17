@@ -20,7 +20,7 @@ const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: boole
   { slug: "hidden-gem", label: "Place", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
-  { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },
+  { slug: "project",           label: "Project",  emoji: "🎨" },
   { slug: "event", label: "Event", emoji: "📅", gated: true },
   { slug: "poll", label: "Poll", emoji: "📊", gated: true },
   { slug: "itinerary", label: "Itinerary", emoji: "🗺️", gated: true },

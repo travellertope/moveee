@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     hub_id?: number;
   };
 
-  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "food-review", "book-review", "music-review", "film-review", "creative-showcase", "poll", "itinerary", "event"];
+  const ALLOWED_TEMPLATES = ["post", "hidden-gem", "food-review", "book-review", "music-review", "film-review", "project", "poll", "itinerary", "event"];
   const templateType = ALLOWED_TEMPLATES.includes(template_type ?? "") ? template_type! : "post";
 
   const user = session.user as any;
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
     "book-review": 800,
     "music-review": 800,
     "film-review": 800,
-    "creative-showcase": 500,
+    "project": 500,
     poll: 280,
     itinerary: 300,
     event: 1000,

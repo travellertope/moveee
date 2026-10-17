@@ -32,7 +32,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const PINNED_BADGE: Record<string, { label: string; emoji: string; cls: string }> = {
-  "creative-showcase": { label: "Showcase", emoji: "🎨", cls: "prf-pinned-badge--showcase" },
+  "project":           { label: "Project",  emoji: "🎨", cls: "prf-pinned-badge--showcase" },
   "cultural-take": { label: "Cultural Take", emoji: "🔥", cls: "prf-pinned-badge--take" },
   "hidden-gem": { label: "Place", emoji: "💎", cls: "prf-pinned-badge--gem" },
   "food-review": { label: "Food Review", emoji: "🍽️", cls: "prf-pinned-badge--food" },

@@ -130,7 +130,7 @@ const TEMPLATE_BADGE: Record<string, { label: string; color: string }> = {
   "food-review":      { label: "🍽️ FOOD REVIEW",      color: "#7a241c" },
   "hidden-gem":       { label: "💎 PLACE",              color: "#2D9CDB" },
   "book-review":      { label: "📖 BOOK REVIEW",       color: "#3A342B" },
-  "creative-showcase":{ label: "🎨 CREATIVE SHOWCASE", color: "#1976D2" },
+  "project":          { label: "🎨 PROJECT",           color: "#1976D2" },
   itinerary:          { label: "🗺️ ITINERARY",         color: "#B38238" },
   event:              { label: "📅 EVENT",             color: "#00695C" },
 };

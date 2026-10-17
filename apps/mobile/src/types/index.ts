@@ -347,7 +347,7 @@ export interface FeedItem {
 // ── Community post templates ─────────────────────────────────────────────────
 export type TemplateType =
   | 'post' | 'hidden-gem' | 'cultural-take' | 'food-review' | 'book-review' | 'music-review' | 'film-review'
-  | 'creative-showcase' | 'poll' | 'itinerary' | 'event' | 'quote';
+  | 'project' | 'poll' | 'itinerary' | 'event' | 'quote';
 
 export interface PollOption {
   text: string;

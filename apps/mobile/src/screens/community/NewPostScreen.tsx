@@ -75,7 +75,7 @@ const TEMPLATES: TemplateMeta[] = [
     showPhoto: false, showAt: false, showLocation: false, multiPhoto: false,
   },
   {
-    id: "creative-showcase", minText: 0, maxText: 500,
+    id: "project", minText: 0, maxText: 500,
     placeholder: "Tell us about the work, your process, or inspiration…",
     showPhoto: true, showAt: false, showLocation: false, multiPhoto: true,
   },
@@ -186,7 +186,7 @@ const QUOTE_SOURCE_TYPES: Record<
 
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long screen — short
-// templates (post, quote, poll, creative-showcase) stay single-step/unlisted
+// templates (post, quote, poll, project) stay single-step/unlisted
 // here. Mirrors packages/shared/components/pulse/SubmitPost.tsx's
 // WIZARD_STEPS/WIZARD_SECTION_STEP — keep both in sync.
 const WIZARD_STEPS: Partial<Record<TemplateId, number>> = {
@@ -634,7 +634,7 @@ const uploadImages = async (): Promise<string[]> => {
   };
 
   const validateAndSubmit = async () => {
-    if (template === "creative-showcase") {
+    if (template === "project") {
       if (!showcaseTitle.trim()) { Alert.alert("Title required", "Add a title for your work."); return; }
       if (text.trim().length < 10) { Alert.alert("Description too short", "Tell us about the work."); return; }
       if (images.length === 0) { Alert.alert("Media required", "Add at least one image of your work."); return; }
@@ -813,7 +813,7 @@ const uploadImages = async (): Promise<string[]> => {
         body.cuisine_tag         = cuisineTag || undefined;
         body.price_range         = foodPriceRange || undefined;
       }
-      if (template === "creative-showcase") {
+      if (template === "project") {
         body.showcase_title      = showcaseTitle.trim();
         body.showcase_medium     = showcaseMedium || undefined;
         body.collaborator            = showcaseCollaborator?.displayName || undefined;
@@ -866,7 +866,7 @@ const uploadImages = async (): Promise<string[]> => {
   const isSubmitDisabled = useMemo(() => {
     if (submitting) return true;
     if (template === "event") return !eventTitle.trim() || !eventDate;
-    if (template === "creative-showcase") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
+    if (template === "project") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
     if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50 || musicRecommend === null;
     if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50 || filmRecommend === null;
@@ -904,7 +904,7 @@ const uploadImages = async (): Promise<string[]> => {
         if (step === 0) return !!filmEntry;
         if (step === 1) return filmOverallRating > 0 && text.trim().length >= 50;
         return true;
-      case "creative-showcase":
+      case "project":
         if (step === 0) return showcaseTitle.trim().length > 0 && text.trim().length >= 10;
         return true;
       case "itinerary":
@@ -2240,7 +2240,7 @@ const uploadImages = async (): Promise<string[]> => {
       case "post":             return renderStandardPost();
       case "hidden-gem":       return renderHiddenGem();
       case "food-review":      return renderFoodReview();
-      case "creative-showcase":return renderCreativeShowcase();
+      case "project":return renderCreativeShowcase();
       case "book-review":      return renderBookReview();
       case "music-review":     return renderMusicReview();
       case "film-review":      return renderFilmReview();

@@ -142,7 +142,7 @@ const TEMPLATE_BADGES: Record<string, { label: string; emoji: string; bg: string
   "hidden-gem":        { label: "PLACE",             emoji: "💎", bg: "rgba(98,0,238,0.08)",   color: "#6200EE" },
   "cultural-take":     { label: "CULTURAL TAKE",    emoji: "🎯", bg: "rgba(183,28,28,0.08)",  color: "#B71C1C" },
   "food-review":       { label: "FOOD REVIEW",      emoji: "🍽️", bg: "rgba(197,73,31,0.08)",  color: "#7a241c" },
-  "creative-showcase": { label: "CREATIVE SHOWCASE",emoji: "🎨", bg: "rgba(25,118,210,0.08)", color: "#1976D2" },
+  "project":           { label: "PROJECT",           emoji: "🎨", bg: "rgba(25,118,210,0.08)", color: "#1976D2" },
   "poll":              { label: "POLL",              emoji: "📊", bg: "rgba(255,143,0,0.08)",  color: "#E65100" },
   "itinerary":         { label: "ITINERARY",        emoji: "🗺️", bg: "rgba(46,125,50,0.08)",  color: "#2E7D32" },
   "event":             { label: "EVENT",             emoji: "📅", bg: "rgba(0,137,123,0.08)",  color: "#00695C" },
@@ -1149,7 +1149,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
       case "hidden-gem":        return <TemplateHiddenGem item={item} c={c} styles={styles} />;
       case "cultural-take":     return <TemplateCulturalTake item={item} c={c} styles={styles} onAgree={focusComments} />;
       case "food-review":       return <TemplateFoodReview item={item} c={c} styles={styles} />;
-      case "creative-showcase": return <TemplateCreativeShowcase item={item} c={c} styles={styles} />;
+      case "project":           return <TemplateCreativeShowcase item={item} c={c} styles={styles} />;
       case "poll":              return <TemplatePoll item={item} c={c} styles={styles} />;
       case "itinerary":         return <TemplateItinerary item={item} c={c} styles={styles} />;
       case "event":             return <TemplateEvent item={item} c={c} styles={styles} />;

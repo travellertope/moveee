@@ -74,7 +74,7 @@ const POST_TYPES = [
   { id: "hidden-gem",         emoji: "💎", label: "Place" },
   { id: "cultural-take",      emoji: "💬", label: "Cultural Take" },
   { id: "food-review",        emoji: "🍽️", label: "Food Review" },
-  { id: "creative-showcase",  emoji: "🎨", label: "Creative Showcase" },
+  { id: "project",            emoji: "🎨", label: "Project" },
   { id: "poll",               emoji: "📊", label: "Poll" },
   { id: "itinerary",          emoji: "🗺️", label: "Itinerary" },
   { id: "event",              emoji: "📅", label: "Event" },

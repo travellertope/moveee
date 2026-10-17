@@ -709,7 +709,7 @@ class Culture_Gamification {
             'hidden-gem'        => array( 'credits' => 20, 'reputation' => 10 ),
             'cultural-take'     => array( 'credits' => 12, 'reputation' => 8 ),
             'food-review'       => array( 'credits' => 15, 'reputation' => 10 ),
-            'creative-showcase' => array( 'credits' => 12, 'reputation' => 8 ),
+            'project'           => array( 'credits' => 12, 'reputation' => 8 ),
             'poll'              => array( 'credits' => 8,  'reputation' => 5 ),
             'itinerary'         => array( 'credits' => 20, 'reputation' => 15 ),
         );

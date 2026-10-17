@@ -503,9 +503,9 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                   🎬 Film Review{item.filmTitle ? ` · ${item.filmTitle}` : ""}
                 </span>
               )}
-              {item.templateType === "creative-showcase" && (
+              {item.templateType === "project" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 8px", borderRadius: "999px" }}>
-                  Creative Showcase
+                  Project
                 </span>
               )}
               {item.templateType === "itinerary" && (

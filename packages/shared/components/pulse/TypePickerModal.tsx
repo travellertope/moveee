@@ -15,7 +15,7 @@ const MODAL_META: Record<TemplateType, { label: string; desc: string }> = {
   "book-review":       { label: "Book Review",        desc: "Rate a book you've read" },
   "music-review":      { label: "Music Review",       desc: "Rate an album you've heard" },
   "film-review":       { label: "Film Review",        desc: "Rate a film you've seen" },
-  "creative-showcase": { label: "Creative Showcase",  desc: "Share your creative work" },
+  "project":           { label: "Project",             desc: "Share your creative work" },
   quote:               { label: "Quote",              desc: "Share a quote that moved you" },
   poll:                { label: "Poll",               desc: "Ask the community something" },
   itinerary:           { label: "Itinerary",          desc: "Share a travel itinerary or weekend route" },

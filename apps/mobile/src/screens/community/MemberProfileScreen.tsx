@@ -165,7 +165,7 @@ const TEMPLATE_META: Record<string, { emoji: string; label: string }> = {
   "hidden-gem":        { emoji: "💎", label: "Place" },
   "cultural-take":     { emoji: "💬", label: "Cultural Take" },
   "food-review":       { emoji: "🍽", label: "Food Review" },
-  "creative-showcase": { emoji: "🎨", label: "Creative Showcase" },
+  "project":           { emoji: "🎨", label: "Project" },
   poll:                { emoji: "📊", label: "Poll" },
   itinerary:           { emoji: "🗺", label: "Itinerary" },
   event:               { emoji: "📅", label: "Event" },

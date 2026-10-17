@@ -26,6 +26,7 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   let seriesPortraits: any[] = [];
   let seriesTheLane: any[] = [];
   let seriesThinkCreative: any[] = [];
+  let kafartStories: any[] = [];
 
   const OPT = { revalidate: 600 };
 
@@ -131,6 +132,12 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
     interviewStories = (data?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
   } catch (err) { console.error("Interviews fetch error:", err); }
 
+  // ── 5b. KAFART2026 partner stories ────────────────────────────────────────
+  try {
+    const kafartData = await getWPData(GET_STORIES, { first: 10, tag: "kafart2026" }, OPT);
+    kafartStories = (kafartData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
+  } catch (err) { console.error("KAFART2026 fetch error:", err); }
+
   // ── 6. Series (single batched query) ─────────────────────────────────────
   try {
     const seriesData = await getWPData(GET_SERIES_STORIES_BATCH, {}, OPT);
@@ -173,5 +180,6 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
     coverStory, featuredPool, stories, products,
     latestIssue, latestIssueStories, interviewStories,
     seriesTheRadar, seriesPortraits, seriesTheLane, seriesThinkCreative,
+    kafartStories,
   };
 }

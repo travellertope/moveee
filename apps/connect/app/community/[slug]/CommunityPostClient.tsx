@@ -341,9 +341,9 @@ export default function CommunityPostClient({
               Food Review{foodDishName ? ` · ${foodDishName}` : ""}
             </span>
           )}
-          {templateType === "creative-showcase" && (
+          {templateType === "project" && (
             <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
-              Creative Showcase
+              Project
             </span>
           )}
           {templateType === "itinerary" && (
