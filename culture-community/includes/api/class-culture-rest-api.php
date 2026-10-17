@@ -81,6 +81,76 @@ class Culture_REST_API {
         if ( $hub_id && class_exists( 'Culture_Hubs' ) ) {
             Culture_Hubs::notify_followers_of_hub_post( $hub_id, $post->ID, $author_id );
         }
+
+        self::sync_post_side_effects( $post->ID, $author_id );
+    }
+
+    /**
+     * Fires after any culture_post is created — via the web REST API
+     * (handle_community_post_created above) or the mobile submit-post
+     * endpoint (Culture_Mobile_API::handle_submit_post) — to sync the
+     * author's logbook shelf and portfolio from the post's template data.
+     *
+     * Shelf upsert: review posts set the linked directory item to "read" +
+     * capture the rating. Plain update posts advance to "currently_reading"
+     * (never downgrade from "read"). No shelf write happens when there is no
+     * _linked_directory_id, so unlinked posts are untouched.
+     *
+     * Portfolio auto-pin: "project" posts (formerly creative-showcase) are
+     * appended to _portfolio_pinned_posts so the Portfolio page reflects
+     * every Project post without manual curation.
+     */
+    public static function sync_post_side_effects( int $post_id, int $author_id ): void {
+        $template     = get_post_meta( $post_id, '_template_type', true ) ?: 'post';
+        $directory_id = (int) get_post_meta( $post_id, '_linked_directory_id', true );
+
+        // ── Logbook: shelf upsert ─────────────────────────────────────────
+        if ( $directory_id > 0 && class_exists( 'Culture_Reading_Tracker' ) ) {
+            $review_templates = array( 'book-review', 'film-review', 'music-review', 'food-review', 'hidden-gem' );
+            // food-review has three breakdown ratings, not one overall score —
+            // we skip a rating write for it rather than averaging client-side.
+            $rating_meta = array(
+                'book-review'  => '_book_overall_rating',
+                'film-review'  => '_film_overall_rating',
+                'music-review' => '_music_overall_rating',
+                'hidden-gem'   => '_star_rating',
+            );
+
+            if ( in_array( $template, $review_templates, true ) ) {
+                $rating = null;
+                if ( isset( $rating_meta[ $template ] ) ) {
+                    $r = (int) get_post_meta( $post_id, $rating_meta[ $template ], true );
+                    if ( $r >= 1 && $r <= 5 ) {
+                        $rating = $r;
+                    }
+                }
+                Culture_Reading_Tracker::set_shelf_status( $author_id, $directory_id, 'read', $rating );
+
+            } elseif ( 'post' === $template ) {
+                // Plain update linked to an item — advance to currently_reading,
+                // but never downgrade a row already at "read".
+                global $wpdb;
+                $existing_status = $wpdb->get_var( $wpdb->prepare(
+                    "SELECT status FROM {$wpdb->prefix}culture_reading_shelf
+                     WHERE user_id = %d AND directory_id = %d",
+                    $author_id, $directory_id
+                ) );
+                if ( 'read' !== $existing_status ) {
+                    Culture_Reading_Tracker::set_shelf_status( $author_id, $directory_id, 'currently_reading' );
+                }
+            }
+        }
+
+        // ── Portfolio: auto-pin project posts ─────────────────────────────
+        if ( 'project' === $template ) {
+            $raw = get_user_meta( $author_id, '_portfolio_pinned_posts', true );
+            $ids = json_decode( $raw ?: '[]', true ) ?: array();
+            $ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+            if ( ! in_array( $post_id, $ids, true ) ) {
+                $ids[] = $post_id;
+                update_user_meta( $author_id, '_portfolio_pinned_posts', wp_json_encode( $ids ) );
+            }
+        }
     }
 
     /**

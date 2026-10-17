@@ -27,7 +27,7 @@ const ALL_TEMPLATES: { slug: string; label: string; emoji: string }[] = [
   { slug: "hidden-gem", label: "Place", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
-  { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },
+  { slug: "project",           label: "Project",  emoji: "🎨" },
   { slug: "event", label: "Event", emoji: "📅" },
   { slug: "poll", label: "Poll", emoji: "📊" },
   { slug: "itinerary", label: "Itinerary", emoji: "🗺️" },

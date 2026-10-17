@@ -727,7 +727,7 @@ export default function FeedCard({
                     "music-review":      { label: "🎵 Music",        color: "#059669", bg: "rgba(5,150,105,0.10)" },
                     "film-review":       { label: "🎬 Film",         color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
                     "poll":              { label: "📊 Poll",         color: "#059669", bg: "rgba(5,150,105,0.10)" },
-                    "creative-showcase": { label: "🎨 Showcase",     color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
+                    "project":           { label: "🎨 Project",      color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
                     "cultural-take":     { label: "💭 Take",         color: "#7c3aed", bg: "rgba(124,58,237,0.10)" },
                     "happening":         { label: "📅 Event",        color: "#e11d48", bg: "rgba(225,29,72,0.10)" },
                     "event":             { label: "📅 Event",        color: "#e11d48", bg: "rgba(225,29,72,0.10)" },

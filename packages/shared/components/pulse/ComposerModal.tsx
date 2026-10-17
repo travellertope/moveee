@@ -467,7 +467,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           payload.star_rating = revRating;
           if (imageUrl) payload.imageUrl = imageUrl;
         } else if (activeTab === "art") {
-          template_type = "creative-showcase";
+          template_type = "project";
           if (!artContent.trim()) throw new Error("Description is required");
           payload.text = artTitle.trim() ? `${artTitle.trim()}\n\n${artContent.trim()}` : artContent.trim();
           if (showcaseMedium) payload.showcase_medium = showcaseMedium;

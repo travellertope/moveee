@@ -1904,7 +1904,7 @@ class Culture_Mobile_API {
 
         // Phase 4: Save template-specific meta.
         $template = sanitize_key( $request->get_param( 'template_type' ) ?: 'post' );
-        $allowed_templates = array( 'post', 'hidden-gem', 'food-review', 'book-review', 'music-review', 'film-review', 'creative-showcase', 'poll', 'itinerary', 'event', 'quote' );
+        $allowed_templates = array( 'post', 'hidden-gem', 'food-review', 'book-review', 'music-review', 'film-review', 'project', 'poll', 'itinerary', 'event', 'quote' );
         if ( in_array( $template, $allowed_templates, true ) ) {
             update_post_meta( $post_id, '_template_type', $template );
         }
@@ -2050,8 +2050,8 @@ class Culture_Mobile_API {
             }
         }
 
-        // ── Creative Showcase ──────────────────────────────────────────────────
-        if ( $template === 'creative-showcase' ) {
+        // ── Project ────────────────────────────────────────────────────────────
+        if ( $template === 'project' ) {
             if ( $request->get_param( 'showcase_title' ) ) {
                 update_post_meta( $post_id, '_showcase_title', sanitize_text_field( $request->get_param( 'showcase_title' ) ) );
             }
@@ -2222,6 +2222,10 @@ class Culture_Mobile_API {
         // Notify Hub followers who opted in to be told about new Hub posts.
         if ( $hub_id && class_exists( 'Culture_Hubs' ) ) {
             Culture_Hubs::notify_followers_of_hub_post( $hub_id, $post_id, $user_id );
+        }
+
+        if ( class_exists( 'Culture_REST_API' ) ) {
+            Culture_REST_API::sync_post_side_effects( $post_id, $user_id );
         }
 
         $post = get_post( $post_id );

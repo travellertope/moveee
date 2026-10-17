@@ -43,7 +43,7 @@ function detectRegion(countryOfResidence?: string): string | null {
 const TAGS = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"] as const;
 type Tag = (typeof TAGS)[number];
 
-export type TemplateType = "post" | "quote" | "hidden-gem" | "food-review" | "book-review" | "music-review" | "film-review" | "creative-showcase" | "poll" | "itinerary" | "event";
+export type TemplateType = "post" | "quote" | "hidden-gem" | "food-review" | "book-review" | "music-review" | "film-review" | "project" | "poll" | "itinerary" | "event";
 
 // Never-gated templates first, then the ones TEMPLATE_REP_GATE (below) can
 // lock — Quote was never gated but sat after Poll/Itinerary/Event, so it read
@@ -55,7 +55,7 @@ export const TEMPLATES: { slug: TemplateType; label: string; emoji: string }[] =
   { slug: "book-review",       label: "Book",      emoji: "📚" },
   { slug: "music-review",      label: "Music",     emoji: "🎵" },
   { slug: "film-review",       label: "Film",      emoji: "🎬" },
-  { slug: "creative-showcase", label: "Showcase",  emoji: "🎨" },
+  { slug: "project",           label: "Project",   emoji: "🎨" },
   { slug: "quote",             label: "Quote",     emoji: "✦" },
   { slug: "poll",              label: "Poll",      emoji: "📊" },
   { slug: "itinerary",         label: "Itinerary", emoji: "🗺️" },
@@ -113,7 +113,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
   "book-review":       { desc: "Review a book you've read — rate it and share your thoughts." },
   "music-review":      { desc: "Review an album — rate it and share your thoughts." },
   "film-review":       { desc: "Review a film — rate it and share your thoughts." },
-  "creative-showcase": { desc: "Share your creative work — art, photography, design, or music." },
+  "project":           { desc: "Share your creative work — art, photography, design, or music." },
   poll:                { desc: "Ask the community something. Great for settling debates or gathering opinions." },
   itinerary:           { desc: "Share a travel itinerary or a local route worth following." },
   event:               { desc: "Submit a cultural event happening in your city. It will appear on the events calendar." },
@@ -122,7 +122,7 @@ const TEMPLATE_GUIDES: Record<TemplateType, { desc: string }> = {
 
 // Templates with forms long enough to overwhelm in one scroll get broken
 // into up to 3 logical steps (Next/Back) instead of one long page — short
-// templates (post, quote, poll, creative-showcase) stay single-step/unlisted
+// templates (post, quote, poll, project) stay single-step/unlisted
 // here.
 const WIZARD_STEPS: Partial<Record<TemplateType, number>> = {
   "hidden-gem": 3,
@@ -154,7 +154,7 @@ const TEMPLATE_TAGS: Partial<Record<TemplateType, Tag>> = {
   "music-review":      "Music",
   "film-review":       "Film",
   "itinerary":         "Travel",
-  "creative-showcase": "Art",
+  "project":           "Art",
 };
 
 // Keyword lists for content-based tag detection
@@ -226,7 +226,7 @@ const MAX_CHARS: Record<string, number> = {
   "book-review": 800,
   "music-review": 800,
   "film-review": 800,
-  "creative-showcase": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
+  "project": 500, poll: 280, itinerary: 300, event: 1000, quote: 600,
 };
 
 
@@ -613,7 +613,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         return !!musicEntry && musicOverallRating > 0 && text.trim().length >= 50 && musicRecommend !== null;
       case "film-review":
         return !!filmEntry && filmOverallRating > 0 && text.trim().length >= 50 && filmRecommend !== null;
-      case "creative-showcase":
+      case "project":
         return galleryFiles.length > 0 || videoUrl.trim().length > 0;
       case "poll":
         return text.trim().length >= 10 && pollOptions.filter(o => o.trim()).length >= 2;
@@ -738,7 +738,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         authorTier: user?.tier ?? undefined,
         authorAvatar: user?.avatarUrl || undefined,
         template_type: template,
-        // Always include all gallery images (not just for creative-showcase)
+        // Always include all gallery images (not just for project)
         gallery_images: galleryUrls.length > 0 ? galleryUrls : undefined,
         hub_id: hubId || undefined,
       };
@@ -825,7 +825,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
       if (template === "itinerary") {
         payload.itinerary_stops = itineraryStops.filter(s => s.name.trim());
       }
-      if (template === "creative-showcase" && videoUrl.trim()) {
+      if (template === "project" && videoUrl.trim()) {
         payload.video_url = videoUrl.trim();
       }
       if (template === "event") {
@@ -938,7 +938,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
     "book-review": "What did you think? Who would love it?",
     "music-review": "What did you think? Standout tracks?",
     "film-review": "What did you think? Any standout scenes?",
-    "creative-showcase": "Caption (optional)",
+    "project": "Caption (optional)",
     poll: "Ask a question…",
     itinerary: "Describe your route…",
     event: "Describe the event — what to expect, why it matters… (optional)",
@@ -1397,7 +1397,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
                       value={text}
                       onChange={handleTextChange}
                       placeholder={placeholders[template]}
-                      rows={template === "creative-showcase" ? 2 : 4}
+                      rows={template === "project" ? 2 : 4}
                       className="composer-textarea"
                     />
                     <span className={`composer-char-count${charRemaining < 0 ? " composer-char-count--error" : charRemaining < 30 ? " composer-char-count--warn" : ""}`}>
@@ -1859,7 +1859,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
               )
             )}
 
-            {/* Photo grid — single image (event) or gallery (post/hidden-gem/food-review/creative-showcase/itinerary) */}
+            {/* Photo grid — single image (event) or gallery (post/hidden-gem/food-review/project/itinerary) */}
             {template === "event" ? (
               showSection("rsvpphoto") && imagePreview && (
                 <div className="composer-photo-row">
@@ -1890,8 +1890,8 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
               </div>
             )}
 
-            {/* Video URL — creative-showcase (same step as its photo grid) */}
-            {template === "creative-showcase" && showSection("photos") && (
+            {/* Video URL — project (same step as its photo grid) */}
+            {template === "project" && showSection("photos") && (
               <input
                 type="url" value={videoUrl} onChange={e => setVideoUrl(e.target.value)}
                 placeholder="Video URL (YouTube, Vimeo)" className="composer-input"

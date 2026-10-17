@@ -2266,7 +2266,7 @@ export default function FeedItemCard(props: FeedCardProps) {
       case "hidden-gem":      return <HiddenGemCard {...props} />;
       case "cultural-take":  return <CulturalTakeCard {...props} />;
       case "food-review":    return <FoodReviewCard {...props} />;
-      case "creative-showcase": return <CreativeShowcaseCard {...props} />;
+      case "project":           return <CreativeShowcaseCard {...props} />;
       case "poll":           return <PollCard {...props} />;
       case "itinerary":      return <ItineraryCard {...props} />;
       case "book-review":    return <BookReviewCard {...props} />;

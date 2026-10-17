@@ -23,7 +23,7 @@ class Culture_Hubs {
      * than not offering it. Revisit only if culture_quote ever gets its own
      * Hub-linkage plumbing.
      */
-    const ALLOWED_TEMPLATES = array( 'post', 'hidden-gem', 'food-review', 'book-review', 'creative-showcase', 'poll', 'itinerary', 'event' );
+    const ALLOWED_TEMPLATES = array( 'post', 'hidden-gem', 'food-review', 'book-review', 'project', 'poll', 'itinerary', 'event' );
 
     /** Templates a brand-new Hub allows by default — the one template with
      * no reputation/tier gate (docs/hubs-plan.md §3.3, revised to drop quote

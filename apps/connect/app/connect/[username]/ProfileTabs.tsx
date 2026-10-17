@@ -23,7 +23,7 @@ const TEMPLATE_FILTERS = [
   { value: "hidden-gem",        label: "Places" },
   { value: "cultural-take",     label: "Takes" },
   { value: "food-review",       label: "Food" },
-  { value: "creative-showcase", label: "Showcases" },
+  { value: "project",           label: "Projects" },
   { value: "poll",              label: "Polls" },
 ];
 

@@ -10,7 +10,7 @@ const ALL_TEMPLATES: { slug: string; label: string; emoji: string; gated?: strin
   { slug: "hidden-gem", label: "Place", emoji: "💎" },
   { slug: "food-review", label: "Food", emoji: "🍽️" },
   { slug: "book-review", label: "Book", emoji: "📚" },
-  { slug: "creative-showcase", label: "Showcase", emoji: "🎨" },
+  { slug: "project",           label: "Project",  emoji: "🎨" },
   { slug: "event", label: "Event", emoji: "📅", gated: "Culture Contributor rep (or Pro)" },
   { slug: "poll", label: "Poll", emoji: "📊", gated: "Taste Maker rep (or Pro)" },
   { slug: "itinerary", label: "Itinerary", emoji: "🗺️", gated: "Taste Maker rep (or Pro)" },

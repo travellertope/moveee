@@ -32,7 +32,7 @@ const DIR_TYPE_EMOJI: Record<string, string> = {
 const TEMPLATE_TABS = [
   { key: "reviews",  label: "Reviews & Gems",  emoji: "⭐", templates: ["hidden-gem", "food-review", "book-review", "music-review", "film-review"] },
   { key: "travel",   label: "Travel Routes",    emoji: "🗺️",  templates: ["itinerary"] },
-  { key: "showcase", label: "Art & Showcase",   emoji: "🎨", templates: ["creative-showcase"] },
+  { key: "showcase", label: "Projects",          emoji: "🎨", templates: ["project"] },
   { key: "polls",    label: "Polls",            emoji: "📊", templates: ["poll"] },
   { key: "updates",  label: "Updates",          emoji: "✍️",  templates: ["post"] },
   { key: "quotes",   label: "Quotes",           emoji: "💬", templates: ["quote"] },
