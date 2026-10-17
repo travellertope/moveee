@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import DirectorySearch from "@/components/composer/DirectorySearch";
 import type { ShelfEntry, ReadingGoal, FollowingActivityItem } from "@/lib/reading-tracker";
 import type { FeedItem } from "@/lib/unified-feed";
 import NotificationBell from "@/components/NotificationBell";
-
-const QUICK_LOG_TYPES = [
-  { key: "book",  label: "Book",  emoji: "📖", typeFilter: "book",  placeholder: "Search for a book…",    aboutFieldLabel: "Author",   externalSource: "google_books" as const },
-  { key: "film",  label: "Film",  emoji: "🎬", typeFilter: "film",  placeholder: "Search for a film…",    aboutFieldLabel: "Director", externalSource: "tmdb" as const },
-  { key: "music", label: "Music", emoji: "🎵", typeFilter: "album", placeholder: "Search for an album…",  aboutFieldLabel: "Artist",   externalSource: "spotify" as const },
-  { key: "food",  label: "Food",  emoji: "🍽️", typeFilter: "food",  placeholder: "Search for a dish…" },
-  { key: "place", label: "Place", emoji: "📍", typeFilter: "place", placeholder: "Search for a place…" },
-];
 
 const TYPE_BADGE: Record<string, { label: string; color: string }> = {
   book:  { label: "BOOK",  color: "#3A342B" },
@@ -23,16 +14,6 @@ const TYPE_BADGE: Record<string, { label: string; color: string }> = {
   food:  { label: "FOOD",  color: "#2D7A4F" },
   place: { label: "PLACE", color: "#5B5EA6" },
 };
-
-interface DirectoryResult {
-  id: number;
-  title: string;
-  slug: string;
-  type: string;
-  thumbnail: string | null;
-  city?: string;
-  about?: string;
-}
 
 interface Props {
   displayName: string;
@@ -56,9 +37,6 @@ export default function LogHomeClient({ displayName, initial, avatarUrl, feedPre
   const [goal, setGoal] = useState<ReadingGoal | null>(null);
   const [activity, setActivity] = useState<FollowingActivityItem[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [logModalType, setLogModalType] = useState<(typeof QUICK_LOG_TYPES)[number] | null>(null);
-  const [searchValue, setSearchValue] = useState<DirectoryResult | null>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,15 +63,6 @@ export default function LogHomeClient({ displayName, initial, avatarUrl, feedPre
     load();
   }, [load]);
 
-  useEffect(() => {
-    if (!logModalType) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setLogModalType(null);
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [logModalType]);
-
   async function finishFromProgress(entry: ShelfEntry, ev: { preventDefault(): void; stopPropagation(): void }) {
     ev.preventDefault();
     ev.stopPropagation();
@@ -106,19 +75,6 @@ export default function LogHomeClient({ displayName, initial, avatarUrl, feedPre
       });
     } catch {}
     load();
-  }
-
-  async function handlePick(entry: DirectoryResult) {
-    setLogModalType(null);
-    setSearchValue(null);
-    try {
-      await fetch("/api/reading/shelf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ directory_id: entry.id, status: "want_to_read" }),
-      });
-      load();
-    } catch {}
   }
 
   const goalTarget = goal?.target ?? goal?.targetBooks ?? null;
@@ -145,24 +101,6 @@ export default function LogHomeClient({ displayName, initial, avatarUrl, feedPre
           <NotificationBell />
         </div>
       </header>
-
-      {/* ── Log something ── */}
-      <section className="rl-section">
-        <p className="rl-section-label">Log something</p>
-        <div className="rl-chips">
-          {QUICK_LOG_TYPES.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className="rl-chip"
-              onClick={() => { setSearchValue(null); setLogModalType(item); }}
-            >
-              <span aria-hidden="true">{item.emoji}</span>
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </section>
 
       {/* ── In progress ── */}
       {(loading || inProgress.length > 0) && (
@@ -315,46 +253,6 @@ export default function LogHomeClient({ displayName, initial, avatarUrl, feedPre
         )}
         <Link href="/feed" className="rl-see-all-btn">See all in Feed →</Link>
       </section>
-
-      {/* ── Quick-log modal ── */}
-      {logModalType && (
-        <div
-          className="rl-modal-overlay"
-          onClick={() => setLogModalType(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Add a ${logModalType.label.toLowerCase()} to your log`}
-        >
-          <div
-            ref={modalRef}
-            className="rl-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="rl-modal-title">
-              Add a {logModalType.label.toLowerCase()} to your log
-            </h2>
-            <DirectorySearch
-              key={logModalType.key}
-              value={searchValue}
-              onChange={(entry) => {
-                if (entry) handlePick(entry);
-                else setSearchValue(null);
-              }}
-              typeFilter={logModalType.typeFilter}
-              placeholder={logModalType.placeholder}
-              aboutFieldLabel={logModalType.aboutFieldLabel}
-              externalSource={logModalType.externalSource}
-            />
-            <button
-              type="button"
-              className="rl-modal-close"
-              onClick={() => setLogModalType(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

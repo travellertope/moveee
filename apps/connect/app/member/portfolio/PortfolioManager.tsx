@@ -1,17 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-interface PortfolioItem {
-  id: string;
-  title: string;
-  type: string;
-  description: string;
-  media: { type: string; url: string }[];
-  external_url: string;
-  tags: string[];
-  created_at: string;
-}
+import Link from "next/link";
 
 interface CommunityPost {
   id: number;
@@ -24,53 +14,34 @@ interface CommunityPost {
 
 interface PinnedPost extends CommunityPost {}
 
-const ITEM_TYPES = [
-  { value: "lookbook", label: "Lookbook" },
-  { value: "writing",  label: "Writing / Article" },
-  { value: "video",    label: "Video" },
-  { value: "audio",    label: "Audio" },
-  { value: "design",   label: "Design Work" },
-  { value: "link",     label: "External Link" },
-];
-
 const TASTE_MAKER_THRESHOLD = 500;
-
-function uuid(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
 
 interface Props { reputation: number; username: string }
 
 export default function PortfolioManager({ reputation, username }: Props) {
-  const [items, setItems] = useState<PortfolioItem[]>([]);
   const [pinnedPosts, setPinnedPosts] = useState<PinnedPost[]>([]);
   const [myPosts, setMyPosts] = useState<CommunityPost[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [pinning, setPinning] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
 
   const unlocked = reputation >= TASTE_MAKER_THRESHOLD;
 
   useEffect(() => {
     fetch("/api/user/portfolio")
-      .then(r => r.ok ? r.json() : { items: [], pinned_posts_data: [] })
+      .then(r => r.ok ? r.json() : { pinned_posts_data: [] })
       .then(d => {
-        setItems(d.items ?? []);
         setPinnedPosts(d.pinned_posts_data ?? []);
       })
-      .catch(() => { setItems([]); setPinnedPosts([]); })
+      .catch(() => { setPinnedPosts([]); })
       .finally(() => setLoading(false));
   }, []);
 
   function openPicker() {
     setShowPicker(true);
     if (username) {
-      fetch(`/api/connect/${username}/posts?per_page=50`)
+      fetch(`/api/connect/${username}/posts?per_page=50&template=project`)
         .then(r => r.ok ? r.json() : { posts: [] })
         .then(d => setMyPosts(Array.isArray(d.posts) ? d.posts : []))
         .catch(() => setMyPosts([]));
@@ -87,8 +58,6 @@ export default function PortfolioManager({ reputation, username }: Props) {
         body: JSON.stringify({ post_id: postId, pinned }),
       });
       if (!res.ok) throw new Error("Could not update pin.");
-      const data = await res.json();
-      const ids: number[] = data.pinned_posts ?? [];
       if (pinned) {
         const post = myPosts.find(p => p.id === postId);
         if (post) setPinnedPosts(prev => [...prev, post]);
@@ -101,93 +70,20 @@ export default function PortfolioManager({ reputation, username }: Props) {
     setPinning(null);
   }
 
-  async function saveItems(newItems: PortfolioItem[]) {
-    setSaving(true);
-    setError("");
-    try {
-      const res = await fetch("/api/user/portfolio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: newItems }),
-      });
-      if (!res.ok) throw new Error("Save failed.");
-      setItems(newItems);
-      setSuccess("Portfolio saved.");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (e: any) {
-      setError(e.message ?? "Could not save.");
-    }
-    setSaving(false);
-  }
-
-  function handleAdd(item: PortfolioItem) {
-    const updated = [...items, item];
-    saveItems(updated);
-    setShowForm(false);
-  }
-
-  function handleUpdate(item: PortfolioItem) {
-    const updated = items.map(i => i.id === item.id ? item : i);
-    saveItems(updated);
-    setEditItem(null);
-  }
-
-  function handleDelete(id: string) {
-    if (!confirm("Remove this portfolio item?")) return;
-    saveItems(items.filter(i => i.id !== id));
-  }
-
-  function moveUp(i: number) {
-    if (i === 0) return;
-    const copy = [...items];
-    [copy[i - 1], copy[i]] = [copy[i], copy[i - 1]];
-    saveItems(copy);
-  }
-
-  function moveDown(i: number) {
-    if (i === items.length - 1) return;
-    const copy = [...items];
-    [copy[i], copy[i + 1]] = [copy[i + 1], copy[i]];
-    saveItems(copy);
-  }
-
   if (!unlocked) {
     return (
       <section className="acct-card">
         <div className="acct-card-header">
-          <span className="acct-card-title">Creative Portfolio</span>
-          <button onClick={() => setShowForm(true)} className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }}>+ Add item</button>
+          <span className="acct-card-title">Portfolio</span>
         </div>
         <p className="pf-locked-note">
           The public portfolio tab unlocks at <strong>Taste Maker</strong> status (500 points).
           You currently have <strong>{reputation}</strong> points.
           Keep contributing to the community to unlock it.
         </p>
-        <p className="pf-locked-note" style={{ marginTop: 8, marginBottom: 16 }}>
-          You can still add portfolio items here — they will be published once you reach Taste Maker status.
-        </p>
-        {success && <p className="pf-status--success">{success}</p>}
-        {error && <p className="pf-status--error">{error}</p>}
-        {items.map((item, i) => (
-          <div key={item.id} className="pf-item-row">
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p className="pf-item-title">{item.title}</p>
-              <p className="pf-item-type">{item.type}</p>
-            </div>
-            <div className="pf-item-actions">
-              <button onClick={() => moveUp(i)} disabled={i === 0} className="pf-btn pf-btn--icon">↑</button>
-              <button onClick={() => moveDown(i)} disabled={i === items.length - 1} className="pf-btn pf-btn--icon">↓</button>
-              <button onClick={() => setEditItem(item)} className="pf-btn">Edit</button>
-              <button onClick={() => handleDelete(item.id)} className="pf-btn pf-btn--danger">Remove</button>
-            </div>
-          </div>
-        ))}
-        {editItem && (
-          <ItemForm initial={editItem} onSave={handleUpdate} onCancel={() => setEditItem(null)} saving={saving} />
-        )}
-        {!editItem && showForm && (
-          <ItemForm initial={null} onSave={handleAdd} onCancel={() => setShowForm(false)} saving={saving} />
-        )}
+        <Link href="/post/new?template=project" className="pf-btn pf-add-btn" style={{ display: "inline-block", marginTop: 12 }}>
+          🎨 Post a Project
+        </Link>
       </section>
     );
   }
@@ -195,10 +91,10 @@ export default function PortfolioManager({ reputation, username }: Props) {
   return (
     <section className="acct-card">
       <div className="acct-card-header">
-        <span className="acct-card-title">Creative Portfolio</span>
-        {!showForm && !editItem && (
-          <button onClick={() => setShowForm(true)} className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }}>+ Add item</button>
-        )}
+        <span className="acct-card-title">Portfolio</span>
+        <Link href="/post/new?template=project" className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }}>
+          🎨 Post a Project
+        </Link>
       </div>
 
       {username && (
@@ -207,7 +103,6 @@ export default function PortfolioManager({ reputation, username }: Props) {
         </p>
       )}
 
-      {success && <p className="pf-status--success">{success}</p>}
       {error && <p className="pf-status--error">{error}</p>}
 
       {loading ? (
@@ -215,10 +110,10 @@ export default function PortfolioManager({ reputation, username }: Props) {
       ) : (
         <>
           <div style={{ marginBottom: 24 }}>
-            <p className="pf-section-label">Pinned Community Posts</p>
+            <p className="pf-section-label">Pinned Projects</p>
             {pinnedPosts.length === 0 ? (
               <p className="pf-locked-note">
-                No pinned posts yet. Pin a Creative Showcase or other community post to feature it here.
+                No pinned projects yet. Post a Project and it will appear here automatically.
               </p>
             ) : (
               pinnedPosts.map(post => (
@@ -233,14 +128,14 @@ export default function PortfolioManager({ reputation, username }: Props) {
                 </div>
               ))
             )}
-            <button onClick={openPicker} className="pf-btn pf-add-btn">+ Pin a community post</button>
+            <button onClick={openPicker} className="pf-btn" style={{ marginTop: 8 }}>+ Pin an older project</button>
           </div>
 
           {showPicker && (
             <div style={{ marginBottom: 24, borderTop: "1px solid var(--rule)", paddingTop: 16 }}>
-              <p className="pf-section-label">Choose a Post to Pin</p>
+              <p className="pf-section-label">Choose a Project to Pin</p>
               {myPosts.length === 0 ? (
-                <p className="pf-locked-note">No community posts found.</p>
+                <p className="pf-locked-note">No project posts found.</p>
               ) : (
                 myPosts
                   .filter(p => !pinnedPosts.some(pp => pp.id === p.id))
@@ -259,136 +154,8 @@ export default function PortfolioManager({ reputation, username }: Props) {
               <button onClick={() => setShowPicker(false)} className="pf-btn pf-add-btn">Close</button>
             </div>
           )}
-
-          {items.length === 0 && !showForm && (
-            <p className="pf-locked-note" style={{ marginBottom: 20 }}>
-              No portfolio items yet. Add your first piece of work below.
-            </p>
-          )}
-
-          {items.map((item, i) => (
-            <div key={item.id} className="pf-item-row">
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p className="pf-item-title">{item.title}</p>
-                <p className="pf-item-type">{item.type}</p>
-              </div>
-              <div className="pf-item-actions">
-                <button onClick={() => moveUp(i)} disabled={i === 0} className="pf-btn pf-btn--icon">↑</button>
-                <button onClick={() => moveDown(i)} disabled={i === items.length - 1} className="pf-btn pf-btn--icon">↓</button>
-                <button onClick={() => setEditItem(item)} className="pf-btn">Edit</button>
-                <button onClick={() => handleDelete(item.id)} className="pf-btn pf-btn--danger">Remove</button>
-              </div>
-            </div>
-          ))}
-
-          {editItem && (
-            <ItemForm
-              initial={editItem}
-              onSave={handleUpdate}
-              onCancel={() => setEditItem(null)}
-              saving={saving}
-            />
-          )}
-
-          {showForm && !editItem && (
-            <ItemForm
-              initial={null}
-              onSave={handleAdd}
-              onCancel={() => setShowForm(false)}
-              saving={saving}
-            />
-          )}
         </>
       )}
     </section>
-  );
-}
-
-interface ItemFormProps {
-  initial: PortfolioItem | null;
-  onSave: (item: PortfolioItem) => void;
-  onCancel: () => void;
-  saving: boolean;
-}
-
-function ItemForm({ initial, onSave, onCancel, saving }: ItemFormProps) {
-  const [title, setTitle] = useState(initial?.title ?? "");
-  const [type, setType] = useState(initial?.type ?? "lookbook");
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [externalUrl, setExternalUrl] = useState(initial?.external_url ?? "");
-  const [imageUrl, setImageUrl] = useState(initial?.media?.find(m => m.type === "image")?.url ?? "");
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) return;
-    const item: PortfolioItem = {
-      id: initial?.id ?? uuid(),
-      title: title.trim(),
-      type,
-      description: description.trim(),
-      external_url: externalUrl.trim(),
-      media: imageUrl.trim() ? [{ type: "image", url: imageUrl.trim() }] : [],
-      tags: [],
-      created_at: initial?.created_at ?? new Date().toISOString().slice(0, 10),
-    };
-    onSave(item);
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="pf-form">
-      <div className="pf-field">
-        <label className="pf-label">Title *</label>
-        <input
-          type="text"
-          value={title}
-          onChange={e => setTitle(e.target.value.slice(0, 120))}
-          required
-          placeholder="Project or piece title"
-          className="pf-input"
-        />
-      </div>
-      <div className="pf-field">
-        <label className="pf-label">Type</label>
-        <select value={type} onChange={e => setType(e.target.value)} className="pf-input">
-          {ITEM_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-        </select>
-      </div>
-      <div className="pf-field">
-        <label className="pf-label">Description</label>
-        <textarea
-          value={description}
-          onChange={e => setDescription(e.target.value.slice(0, 600))}
-          rows={3}
-          placeholder="Brief description of the work"
-          className="pf-input"
-        />
-      </div>
-      <div className="pf-field">
-        <label className="pf-label">Cover image URL</label>
-        <input
-          type="url"
-          value={imageUrl}
-          onChange={e => setImageUrl(e.target.value)}
-          placeholder="https://..."
-          className="pf-input"
-        />
-      </div>
-      <div className="pf-field">
-        <label className="pf-label">External link</label>
-        <input
-          type="url"
-          value={externalUrl}
-          onChange={e => setExternalUrl(e.target.value)}
-          placeholder="https://..."
-          className="pf-input"
-        />
-      </div>
-      <div className="pf-form-actions">
-        <button type="submit" disabled={saving || !title.trim()} className="pf-submit-btn">
-          {saving ? "Saving…" : initial ? "Update" : "Add"}
-        </button>
-        <button type="button" onClick={onCancel} className="pf-cancel-btn">Cancel</button>
-      </div>
-    </form>
   );
 }
