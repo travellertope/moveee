@@ -10,6 +10,7 @@ import MasonryRandomSection from "@/components/MasonryRandomSection";
 import CultureNewsSection from "@/components/CultureNewsSection";
 import ShopRail from "@/components/ShopRail";
 import JoinSection from "@/components/JoinSection";
+import KafartSection from "@/components/KafartSection";
 
 // Homepage rebuild (WePresent concept, see
 // mockups/web/moveee_homepage_wepresent_concept.html) — live at `/`,
@@ -62,6 +63,7 @@ interface HomeSections {
   digestStories: any[];
   opinionStories: any[];
   featureStory: any | null;
+  kafartStories: any[];
 }
 
 const EMPTY_SECTIONS: HomeSections = {
@@ -74,6 +76,7 @@ const EMPTY_SECTIONS: HomeSections = {
   digestStories: [],
   opinionStories: [],
   featureStory: null,
+  kafartStories: [],
 };
 
 // Every WP-backed fetch this page needs, wrapped so that a bad response
@@ -94,7 +97,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       getNewslettersWithFallback(10).catch(() => []),
     ]);
 
-    const { coverStory, featuredPool: heroPlusFeatured, stories, products } = homepageData;
+    const { coverStory, featuredPool: heroPlusFeatured, stories, products, kafartStories: rawKafart } = homepageData;
     const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
 
     const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
@@ -150,6 +153,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       digestStories: dedup(digestStories),
       opinionStories: dedup(opinionStories),
       featureStory,
+      kafartStories: rawKafart || [],
     };
   } catch (err: any) {
     console.error("[homepage] loadHomeSections failed, rendering empty page:", err?.message || err);
@@ -172,6 +176,7 @@ export default async function Home() {
     digestStories,
     opinionStories,
     featureStory,
+    kafartStories,
   } = await loadHomeSections(edition);
 
   return (
@@ -211,6 +216,8 @@ export default async function Home() {
           <ShopRail products={shopProducts} />
         </div>
       </section>
+
+      <KafartSection stories={kafartStories} />
 
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Lane</em></>}
