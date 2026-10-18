@@ -924,13 +924,7 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
         onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
         style={styles.bookCard}
       >
-        {(item.musicCoverUrl ?? item.image) ? (
-          <Image source={{ uri: item.musicCoverUrl ?? item.image! }} style={styles.bookCover} resizeMode="cover" />
-        ) : (
-          <View style={[styles.bookCover, { backgroundColor: c.gold + "30", alignItems: "center", justifyContent: "center" }]}>
-            <Text style={{ fontSize: 24 }}>🎵</Text>
-          </View>
-        )}
+        <AudioPreviewButton uri={item.musicPreviewUrl} coverUri={item.musicCoverUrl ?? item.image} width={48} height={64} />
         <View style={{ flex: 1 }}>
           <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle ?? item.title}</Text>
           {item.musicArtist ? (
@@ -940,11 +934,6 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
               <StarRow rating={overall} c={c} />
               <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
-            </View>
-          ) : null}
-          {item.musicPreviewUrl ? (
-            <View style={{ marginTop: 6 }}>
-              <AudioPreviewButton uri={item.musicPreviewUrl} />
             </View>
           ) : null}
         </View>

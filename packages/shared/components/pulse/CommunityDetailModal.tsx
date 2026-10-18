@@ -588,39 +588,43 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
 
           {/* Book review rating/status/recommend/genres/favourite quote */}
           {item.templateType === "book-review" && item.bookOverallRating && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 {item.bookCoverUrl && (
-                  <img src={item.bookCoverUrl} alt="" style={{ width: 56, height: 80, objectFit: "cover", borderRadius: "var(--radius-lg)", flexShrink: 0 }} />
+                  <img src={item.bookCoverUrl} alt="" style={{ width: 56, height: 80, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                  <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
-                  {item.bookAuthor && <span>by {item.bookAuthor}</span>}
-                  {item.bookStatus && <span>{item.bookStatus}</span>}
-                  {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
+                    <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
+                    {item.bookAuthor && <span>by {item.bookAuthor}</span>}
+                    {item.bookStatus && <span>{item.bookStatus}</span>}
+                    {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Does not recommend"}</span>}
+                  </div>
+                  {(item.bookRatingWriting || item.bookRatingStory || item.bookRatingCharacters || item.bookRatingPacing) && (
+                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--mute)" }}>
+                      {item.bookRatingWriting    && <span>Writing {"★".repeat(item.bookRatingWriting)}{"☆".repeat(5 - item.bookRatingWriting)}</span>}
+                      {item.bookRatingStory      && <span>Story {"★".repeat(item.bookRatingStory)}{"☆".repeat(5 - item.bookRatingStory)}</span>}
+                      {item.bookRatingCharacters && <span>Characters {"★".repeat(item.bookRatingCharacters)}{"☆".repeat(5 - item.bookRatingCharacters)}</span>}
+                      {item.bookRatingPacing     && <span>Pacing {"★".repeat(item.bookRatingPacing)}{"☆".repeat(5 - item.bookRatingPacing)}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
-              {(item.bookRatingWriting || item.bookRatingStory || item.bookRatingCharacters || item.bookRatingPacing) && (
-                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
-                  {item.bookRatingWriting    && <span>Writing {"★".repeat(item.bookRatingWriting)}{"☆".repeat(5 - item.bookRatingWriting)}</span>}
-                  {item.bookRatingStory      && <span>Story {"★".repeat(item.bookRatingStory)}{"☆".repeat(5 - item.bookRatingStory)}</span>}
-                  {item.bookRatingCharacters && <span>Characters {"★".repeat(item.bookRatingCharacters)}{"☆".repeat(5 - item.bookRatingCharacters)}</span>}
-                  {item.bookRatingPacing     && <span>Pacing {"★".repeat(item.bookRatingPacing)}{"☆".repeat(5 - item.bookRatingPacing)}</span>}
-                </div>
-              )}
               {item.bookFavQuote && (
                 <blockquote style={{
-                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  margin: "0.5rem 0 0", padding: "0.5rem 0.75rem",
                   borderLeft: "2px solid #6B48A8", fontStyle: "italic",
-                  fontSize: "0.85rem", color: "var(--ink-soft)",
+                  fontSize: "0.82rem", color: "var(--ink-soft)",
                 }}>
-                  "{item.bookFavQuote}"
+                  &ldquo;{item.bookFavQuote}&rdquo;
                 </blockquote>
               )}
               {item.bookGenres && item.bookGenres.length > 0 && (
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
                   {item.bookGenres.map((g) => (
-                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "rgba(20,17,13,0.06)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
                   ))}
                 </div>
               )}
@@ -629,39 +633,40 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
 
           {/* Music review rating/artist/recommend/genres/favourite lyric/preview */}
           {item.templateType === "music-review" && item.musicOverallRating && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                {item.musicCoverUrl && (
-                  <img src={item.musicCoverUrl} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: "var(--radius-lg)", flexShrink: 0 }} />
-                )}
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                  <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
-                  {item.musicArtist && <span>by {item.musicArtist}</span>}
-                  {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
-                  {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={64} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
+                    <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
+                    {item.musicArtist && <span>by {item.musicArtist}</span>}
+                    {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Does not recommend"}</span>}
+                  </div>
+                  {(item.musicRatingProduction || item.musicRatingLyrics || item.musicRatingReplay || item.musicRatingVibe) && (
+                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--mute)" }}>
+                      {item.musicRatingProduction && <span>Production {"★".repeat(item.musicRatingProduction)}{"☆".repeat(5 - item.musicRatingProduction)}</span>}
+                      {item.musicRatingLyrics     && <span>Lyrics {"★".repeat(item.musicRatingLyrics)}{"☆".repeat(5 - item.musicRatingLyrics)}</span>}
+                      {item.musicRatingReplay     && <span>Replay {"★".repeat(item.musicRatingReplay)}{"☆".repeat(5 - item.musicRatingReplay)}</span>}
+                      {item.musicRatingVibe       && <span>Vibe {"★".repeat(item.musicRatingVibe)}{"☆".repeat(5 - item.musicRatingVibe)}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
-              {(item.musicRatingProduction || item.musicRatingLyrics || item.musicRatingReplay || item.musicRatingVibe) && (
-                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
-                  {item.musicRatingProduction && <span>Production {"★".repeat(item.musicRatingProduction)}{"☆".repeat(5 - item.musicRatingProduction)}</span>}
-                  {item.musicRatingLyrics     && <span>Lyrics {"★".repeat(item.musicRatingLyrics)}{"☆".repeat(5 - item.musicRatingLyrics)}</span>}
-                  {item.musicRatingReplay     && <span>Replay {"★".repeat(item.musicRatingReplay)}{"☆".repeat(5 - item.musicRatingReplay)}</span>}
-                  {item.musicRatingVibe       && <span>Vibe {"★".repeat(item.musicRatingVibe)}{"☆".repeat(5 - item.musicRatingVibe)}</span>}
-                </div>
-              )}
               {item.musicFavLyric && (
                 <blockquote style={{
-                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  margin: "0.5rem 0 0", padding: "0.5rem 0.75rem",
                   borderLeft: "2px solid #0D7377", fontStyle: "italic",
-                  fontSize: "0.85rem", color: "var(--ink-soft)",
+                  fontSize: "0.82rem", color: "var(--ink-soft)",
                 }}>
-                  "{item.musicFavLyric}"
+                  &ldquo;{item.musicFavLyric}&rdquo;
                 </blockquote>
               )}
               {item.musicGenres && item.musicGenres.length > 0 && (
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
                   {item.musicGenres.map((g) => (
-                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "rgba(20,17,13,0.06)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
                   ))}
                 </div>
               )}
@@ -670,38 +675,42 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
 
           {/* Film review rating/director/recommend/genres/favourite line */}
           {item.templateType === "film-review" && item.filmOverallRating && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 {item.filmCoverUrl && (
-                  <img src={item.filmCoverUrl} alt="" style={{ width: 54, height: 80, objectFit: "cover", borderRadius: "var(--radius-lg)", flexShrink: 0 }} />
+                  <img src={item.filmCoverUrl} alt="" style={{ width: 54, height: 80, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "0.82rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                  <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
-                  {item.filmDirector && <span>dir. {item.filmDirector}</span>}
-                  {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
+                    <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
+                    {item.filmDirector && <span>dir. {item.filmDirector}</span>}
+                    {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Does not recommend"}</span>}
+                  </div>
+                  {(item.filmRatingStory || item.filmRatingActing || item.filmRatingVisuals || item.filmRatingPacing) && (
+                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--mute)" }}>
+                      {item.filmRatingStory   && <span>Story {"★".repeat(item.filmRatingStory)}{"☆".repeat(5 - item.filmRatingStory)}</span>}
+                      {item.filmRatingActing  && <span>Acting {"★".repeat(item.filmRatingActing)}{"☆".repeat(5 - item.filmRatingActing)}</span>}
+                      {item.filmRatingVisuals && <span>Visuals {"★".repeat(item.filmRatingVisuals)}{"☆".repeat(5 - item.filmRatingVisuals)}</span>}
+                      {item.filmRatingPacing  && <span>Pacing {"★".repeat(item.filmRatingPacing)}{"☆".repeat(5 - item.filmRatingPacing)}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
-              {(item.filmRatingStory || item.filmRatingActing || item.filmRatingVisuals || item.filmRatingPacing) && (
-                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
-                  {item.filmRatingStory   && <span>Story {"★".repeat(item.filmRatingStory)}{"☆".repeat(5 - item.filmRatingStory)}</span>}
-                  {item.filmRatingActing  && <span>Acting {"★".repeat(item.filmRatingActing)}{"☆".repeat(5 - item.filmRatingActing)}</span>}
-                  {item.filmRatingVisuals && <span>Visuals {"★".repeat(item.filmRatingVisuals)}{"☆".repeat(5 - item.filmRatingVisuals)}</span>}
-                  {item.filmRatingPacing  && <span>Pacing {"★".repeat(item.filmRatingPacing)}{"☆".repeat(5 - item.filmRatingPacing)}</span>}
-                </div>
-              )}
               {item.filmFavLine && (
                 <blockquote style={{
-                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  margin: "0.5rem 0 0", padding: "0.5rem 0.75rem",
                   borderLeft: "2px solid #2B4C7E", fontStyle: "italic",
-                  fontSize: "0.85rem", color: "var(--ink-soft)",
+                  fontSize: "0.82rem", color: "var(--ink-soft)",
                 }}>
-                  "{item.filmFavLine}"
+                  &ldquo;{item.filmFavLine}&rdquo;
                 </blockquote>
               )}
               {item.filmGenres && item.filmGenres.length > 0 && (
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
                   {item.filmGenres.map((g) => (
-                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "rgba(20,17,13,0.06)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
                   ))}
                 </div>
               )}
