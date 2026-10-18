@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 // TMDB has no keyless tier — a free API key is required. Degrades to empty
-// results (not an error) when absent, same as the Google Books/Spotify
+// results (not an error) when absent, same as the Google Books/iTunes
 // routes, so the manual "add anyway" fallback in DirectorySearch still works.
 const TMDB_API_KEY = process.env.TMDB_API_KEY ?? "";
 
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   // No director here — TMDB's search endpoint carries no crew data. Resolved
   // lazily via /credits, only for the film the user actually picks (mirrors
-  // Spotify's preview-clip lookup, avoids an N+1 fan-out across every result).
+  // iTunes preview-clip lookup, avoids an N+1 fan-out across every result).
   const results = items
     .filter((m) => m?.id && m?.title)
     .slice(0, 8)

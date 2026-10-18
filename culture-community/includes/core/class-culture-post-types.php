@@ -276,12 +276,12 @@ class Culture_Post_Types {
             '_entry_quote'            => 'string',   // featured quote for Concept/Book blockquote
             '_selected_works'         => 'string',   // JSON: [{imageUrl?, caption}]
             '_related_entries'        => 'string',   // JSON: [{id, title, type, slug}]
-            // External catalog dedup (Google Books/Spotify/TMDB quick-create) —
+            // External catalog dedup (Google Books/iTunes/TMDB quick-create) —
             // see Culture_Directory::find_by_external_id().
             '_external_source'        => 'string',   // 'google_books' | 'spotify' | 'tmdb'
-            '_external_id'            => 'string',   // ISBN / Spotify album ID / TMDB ID
+            '_external_id'            => 'string',   // ISBN / iTunes collectionId / TMDB ID
             '_external_cover_url'     => 'string',   // cover/poster art URL, not sideloaded into media library
-            '_external_preview_url'   => 'string',   // Spotify 30s track preview URL (Music Review only)
+            '_external_preview_url'   => 'string',   // iTunes 30s track preview URL (Music Review only)
         );
         foreach ( $directory_meta as $meta_key => $type ) {
             register_post_meta( 'culture_directory', $meta_key, array(

@@ -474,7 +474,7 @@ class Culture_Directory {
 
     /**
      * A directory entry already linked to this external catalog ID, if any —
-     * dedup check for API-assisted quick-create (Google Books/Spotify/TMDB),
+     * dedup check for API-assisted quick-create (Google Books/iTunes/TMDB),
      * so multiple reviewers picking "the same" work always share one entry
      * instead of each spawning a duplicate.
      */
@@ -529,7 +529,7 @@ class Culture_Directory {
             $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
             $type_slug  = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
             // Falls back to the external API's cover/poster URL (Google
-            // Books/Spotify/TMDB quick-create) when there's no real WP
+            // Books/iTunes/TMDB quick-create) when there's no real WP
             // featured image — see _external_cover_url in handle_quick_create().
             $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
                 ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: false );
@@ -762,13 +762,13 @@ class Culture_Directory {
             $about_label = 'Author';
             $about_value = $author;
         }
-        // External catalog dedup (Google Books/Spotify/TMDB quick-create).
+        // External catalog dedup (Google Books/iTunes/TMDB quick-create).
         $external_source = sanitize_key( $request->get_param( 'external_source' ) );
         $external_id     = sanitize_text_field( $request->get_param( 'external_id' ) );
         // Cover art from the external API — stored as a plain URL rather than
         // sideloaded into the media library (no local re-hosting for v1).
         $cover_image_url = esc_url_raw( $request->get_param( 'cover_image_url' ) );
-        // Spotify 30s track preview URL (Music Review only) — same "plain
+        // iTunes 30s track preview URL (Music Review only) — same "plain
         // URL, no re-hosting" treatment as the cover art.
         $preview_url = esc_url_raw( $request->get_param( 'preview_url' ) );
 
