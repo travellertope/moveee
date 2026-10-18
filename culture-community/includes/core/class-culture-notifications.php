@@ -242,7 +242,7 @@ class Culture_Notifications {
             'comment_received',
             "{$commenter_name} commented on your post",
             "\"{$excerpt}\"",
-            '/connect/pulse#post-' . $post->ID,
+            '/community/' . $post->post_name,
             array( 'comment_id' => $comment_id, 'post_id' => $post->ID )
         );
     }
