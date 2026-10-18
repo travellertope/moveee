@@ -66,7 +66,7 @@ function inferCategory(text: string): string {
 const TABS: { key: ComposerTab; label: string; icon: string }[] = [
   { key: "update",    label: "Update",       icon: "✏️" },
   { key: "review",    label: "Review",       icon: "⭐" },
-  { key: "art",       label: "Art / Showcase", icon: "🎨" },
+  { key: "art",       label: "Project",        icon: "🎨" },
   { key: "poll",      label: "Poll",         icon: "📊" },
   { key: "quote",     label: "Quote",        icon: "💬" },
   { key: "itinerary", label: "Itinerary",    icon: "🗺️" },

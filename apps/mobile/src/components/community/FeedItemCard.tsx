@@ -1521,7 +1521,7 @@ function CreativeShowcaseCard({ item, onPress, onAuthorPress, forYouBadge, onMen
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label="🎨 CREATIVE SHOWCASE" bg={c.templateShowcaseBg} color={c.templateShowcaseText} styles={styles} />
+          <BadgePill label="🎨 PROJECT" bg={c.templateShowcaseBg} color={c.templateShowcaseText} styles={styles} />
           {item.showcaseMedium ? (
             <View style={{ marginTop: 4 }}>
               <BadgePill label={item.showcaseMedium} bg={c.paperDeep} color={c.inkSoft} styles={styles} />
