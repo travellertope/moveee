@@ -1432,7 +1432,7 @@ class Culture_Hubs {
         $offset = ( max( 1, $page ) - 1 ) * $per_page;
 
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT m.user_id, m.role, m.joined_at, u.display_name
+            "SELECT m.user_id, m.role, m.joined_at, u.display_name, u.user_login
              FROM {$table} m
              INNER JOIN {$wpdb->users} u ON u.ID = m.user_id
              WHERE m.hub_id = %d AND m.status = 'active'
@@ -1450,7 +1450,8 @@ class Culture_Hubs {
         foreach ( $rows ?: array() as $row ) {
             $user_id   = (int) $row['user_id'];
             $members[] = array(
-                'id'        => $user_id,
+                'userId'    => $user_id,
+                'username'  => $row['user_login'],
                 'name'      => $row['display_name'],
                 'avatarUrl' => get_user_meta( $user_id, '_culture_avatar_url', true ) ?: '',
                 'role'      => $row['role'],

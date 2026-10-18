@@ -164,17 +164,17 @@ export default function ConnectHeader() {
           ))}
         </nav>
 
-        <div className="ch-rail-section-label ch-rail-section-label--spaced">Hubs</div>
-        <div className="ch-rail-nav">
-          {HUB_SPACES.map((hub) => (
-            <Link key={hub.slug} href={`/hub/${hub.slug}`} className={`ch-rail-link ch-rail-hub-link${pathname.startsWith(`/hub/${hub.slug}`) ? " active" : ""}`}>
-              <span className="ch-rail-hub-dot" style={{ background: hub.color }} />
-              # {hub.label}
-            </Link>
-          ))}
+        <div className="ch-rail-hubs-scroll">
+          <div className="ch-rail-section-label ch-rail-section-label--spaced">Hubs</div>
+          <div className="ch-rail-nav">
+            {HUB_SPACES.map((hub) => (
+              <Link key={hub.slug} href={`/hub/${hub.slug}`} className={`ch-rail-link ch-rail-hub-link${pathname.startsWith(`/hub/${hub.slug}`) ? " active" : ""}`}>
+                <span className="ch-rail-hub-dot" style={{ background: hub.color }} />
+                # {hub.label}
+              </Link>
+            ))}
+          </div>
         </div>
-
-        <div className="ch-rail-spacer" />
 
         <div className="ch-rail-bottom">
           {status === "authenticated" && user && (

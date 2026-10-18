@@ -60,6 +60,7 @@ export interface WpComment {
   status: string;
   parent: number;
   author_avatar_urls?: { [size: string]: string };
+  author_custom_avatar?: string;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────

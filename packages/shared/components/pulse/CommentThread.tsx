@@ -107,7 +107,9 @@ export default function CommentThread({ postId, initialComments }: CommentThread
       {comments.length > 0 && (
         <div style={{ marginBottom: "1.75rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
           {comments.map((c) => {
-            const avatarUrl = c.author_avatar_urls?.["48"] ?? c.author_avatar_urls?.["24"] ?? null;
+            const gravatarUrl = c.author_avatar_urls?.["48"] ?? c.author_avatar_urls?.["24"] ?? null;
+            const avatarUrl = c.author_custom_avatar
+              || (gravatarUrl && !gravatarUrl.includes("gravatar.com/avatar/00000000") ? gravatarUrl : null);
             const initials = c.author_name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
             return (
               <div key={c.id} style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
@@ -120,7 +122,7 @@ export default function CommentThread({ postId, initialComments }: CommentThread
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden", marginTop: "2px",
                 }}>
-                  {avatarUrl && !avatarUrl.includes("gravatar.com/avatar/00000000") ? (
+                  {avatarUrl ? (
                     <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     initials
@@ -182,8 +184,8 @@ export default function CommentThread({ postId, initialComments }: CommentThread
             display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden", marginTop: "2px",
           }}>
-            {session?.user?.image ? (
-              <img src={session.user.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {((session as any)?.avatarUrl || session?.user?.image) ? (
+              <img src={(session as any)?.avatarUrl || session?.user?.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               (session?.user?.name ?? session?.user?.email ?? "?").split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase() || "?"
             )}

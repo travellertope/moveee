@@ -105,10 +105,23 @@
   flex-direction: column;
   position: sticky;
   top: var(--topbar-height, 60px);             /* sit flush below the global TopBar */
+  height: calc(100vh - var(--topbar-height, 60px));
+  overflow: hidden;
   background: transparent;
   border-right: none;
   z-index: 100;
 }
+
+/* Hubs list — scrollable middle section between top nav and bottom strip */
+.ch-rail-hubs-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule, #e8e2d8) transparent;
+  min-height: 0;
+}
+.ch-rail-hubs-scroll::-webkit-scrollbar { width: 3px; }
+.ch-rail-hubs-scroll::-webkit-scrollbar-thumb { background: var(--rule, #e8e2d8); border-radius: 9999px; }
 
 /* Section headings ("Main" / "Explore") */
 .ch-rail-section-label {
@@ -163,7 +176,7 @@
 }
 .ch-rail-hub-link { font-size: 13px; gap: 10px; }
 
-.ch-rail-spacer { flex: 1; }
+/* .ch-rail-spacer retired — replaced by flex:1 on .ch-rail-hubs-scroll */
 
 /* Bottom strip — notifications + user card */
 .ch-rail-bottom {

@@ -208,55 +208,7 @@ export default async function ClusterPage({
 
   return (
     <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
-      <div className="pulse-layout">
-
-        {/* Left sidebar — host tools nav */}
-        <aside className="pulse-sidebar-left">
-          <Link
-            href={`/stoop/${id}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              color: "var(--mute)",
-              letterSpacing: "0.3px",
-              textTransform: "uppercase",
-              paddingBottom: "1rem",
-              borderBottom: "1px solid var(--rule, #e8e2d8)",
-              marginBottom: "1rem",
-            }}
-          >
-            ← Public View
-          </Link>
-          <p style={{ fontSize: "0.625rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--mute)", marginBottom: 8 }}>
-            Host Tools
-          </p>
-          {TABS.map((t) => (
-            <Link
-              key={t.key}
-              href={`/cluster/${id}?tab=${t.key}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 9,
-                padding: "8px 10px",
-                borderRadius: "var(--radius-lg, 6px)",
-                fontSize: "0.8rem",
-                fontWeight: activeTab === t.key ? 700 : 500,
-                color: activeTab === t.key ? "var(--ochre, #7a241c)" : "var(--ink-soft)",
-                background: activeTab === t.key ? "rgba(122,36,28,0.06)" : "transparent",
-                textDecoration: "none",
-              }}
-            >
-              <span style={{ fontSize: 13, width: 18, textAlign: "center" }}>
-                {t.key === "overview" ? "🏡" : t.key === "checkin" ? "✅" : t.key === "members" ? "👥" : "🗳️"}
-              </span>
-              {t.label}
-            </Link>
-          ))}
-        </aside>
+      <div className="pulse-layout pulse-layout--feed">
 
         {/* Center — management content */}
         <main className="pulse-timeline">

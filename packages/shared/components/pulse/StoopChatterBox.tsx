@@ -159,7 +159,7 @@ export default function StoopChatterBox({ clusterId, isMember }: Props) {
       const res = await fetch(`/api/cluster/${clusterId}/chatter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: trimmed, images: uploadedUrls }),
+        body: JSON.stringify({ message: trimmed, images: uploadedUrls }),
       });
       if (res.ok) {
         const data = await res.json();
