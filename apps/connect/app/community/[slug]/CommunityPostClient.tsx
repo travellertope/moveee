@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Flag } from "lucide-react";
+import Link from "next/link";
 import HashtagText from "@/components/pulse/HashtagText";
 import ReactionBar from "@/components/pulse/ReactionBar";
 import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
 import AudioPreviewButton from "@/components/pulse/AudioPreviewButton";
 import type { WpComment } from "@/lib/community-wordpress";
+
+function CardLink({ slug, children }: { slug?: string; children: ReactNode }) {
+  if (!slug) return <>{children}</>;
+  return (
+    <Link href={`/directory/${slug}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+      {children}
+    </Link>
+  );
+}
 
 function PollDisplay({ postId, options, expiresAt }: { postId: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -419,32 +429,16 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      {/* Actions row: directory link + owner options */}
-      {(linkedDirectorySlug || isOwn) && (
+      {/* Actions row: owner options */}
+      {isOwn && (
         <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.4rem", marginBottom: "0.25rem" }}>
-          {linkedDirectorySlug && (
-            <a
-              href={`/directory/${linkedDirectorySlug}`}
-              title="View in Directory"
-              aria-label="View in Directory"
-              style={{ display: "flex", alignItems: "center", color: "#7a6f5c", padding: "0.25rem", borderRadius: "6px", textDecoration: "none" }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="2" y="3" width="20" height="18" rx="2"/>
-                <circle cx="9" cy="9" r="2"/>
-                <path d="M15 7h4M15 11h4M5 17c0-2 1.3-3 4-3h2"/>
-              </svg>
-            </a>
-          )}
-          {isOwn && (
-            <button
-              onClick={() => setOwnerMenuOpen(v => !v)}
-              title="Post options"
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#7a6f5c", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "1rem", lineHeight: 1 }}
-            >
-              ···
-            </button>
-          )}
+          <button
+            onClick={() => setOwnerMenuOpen(v => !v)}
+            title="Post options"
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#7a6f5c", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "1rem", lineHeight: 1 }}
+          >
+            ···
+          </button>
         </div>
       )}
 
@@ -483,7 +477,8 @@ export default function CommunityPostClient({
 
       {/* Music review */}
       {templateType === "music-review" && musicTitle && (
-        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
+        <CardLink slug={linkedDirectorySlug}>
+        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
             <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={64} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -515,11 +510,13 @@ export default function CommunityPostClient({
             </div>
           )}
         </div>
+        </CardLink>
       )}
 
       {/* Book review */}
       {templateType === "book-review" && bookTitle && (
-        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
+        <CardLink slug={linkedDirectorySlug}>
+        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             {bookCoverUrl && (
               <img src={bookCoverUrl} alt={bookTitle} style={{ width: 56, height: 80, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
@@ -553,11 +550,13 @@ export default function CommunityPostClient({
             </div>
           )}
         </div>
+        </CardLink>
       )}
 
       {/* Film review */}
       {templateType === "film-review" && filmTitle && (
-        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
+        <CardLink slug={linkedDirectorySlug}>
+        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             {filmCoverUrl && (
               <img src={filmCoverUrl} alt={filmTitle} style={{ width: 54, height: 80, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
@@ -591,6 +590,7 @@ export default function CommunityPostClient({
             </div>
           )}
         </div>
+        </CardLink>
       )}
 
       {/* Poll */}

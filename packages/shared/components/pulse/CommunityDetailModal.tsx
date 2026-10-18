@@ -193,6 +193,15 @@ function RsvpDisplay({
 }
 
 
+function CardLink({ slug, children }: { slug?: string; children: React.ReactNode }) {
+  if (!slug) return <>{children}</>;
+  return (
+    <Link href={`/directory/${slug}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+      {children}
+    </Link>
+  );
+}
+
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
   if (!sourceUrl) return text;
   const escaped = sourceUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -379,26 +388,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 ···
               </button>
             )}
-            {item.linkedDirectorySlug && (
-              <Link
-                href={`/directory/${item.linkedDirectorySlug}`}
-                aria-label="View in Directory"
-                title="View in Directory"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "var(--mute)", padding: "0.25rem",
-                  borderRadius: "6px", transition: "color 0.15s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = "var(--ochre)")}
-                onMouseLeave={e => (e.currentTarget.style.color = "var(--mute)")}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="2" y="3" width="20" height="18" rx="2"/>
-                  <circle cx="9" cy="9" r="2"/>
-                  <path d="M15 7h4M15 11h4M5 17c0-2 1.3-3 4-3h2"/>
-                </svg>
-              </Link>
-            )}
             {item.slug && (
               <Link
                 href={`/community/${item.slug}`}
@@ -569,7 +558,8 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
 
           {/* Book review rating/status/recommend/genres/favourite quote */}
           {item.templateType === "book-review" && item.bookOverallRating && (
-            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
+            <CardLink slug={item.linkedDirectorySlug}>
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 {item.bookCoverUrl && (
                   <img src={item.bookCoverUrl} alt="" style={{ width: 56, height: 80, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
@@ -610,11 +600,13 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               )}
             </div>
+            </CardLink>
           )}
 
           {/* Music review rating/artist/recommend/genres/favourite lyric/preview */}
           {item.templateType === "music-review" && item.musicOverallRating && (
-            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
+            <CardLink slug={item.linkedDirectorySlug}>
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={64} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -652,11 +644,13 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               )}
             </div>
+            </CardLink>
           )}
 
           {/* Film review rating/director/recommend/genres/favourite line */}
           {item.templateType === "film-review" && item.filmOverallRating && (
-            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
+            <CardLink slug={item.linkedDirectorySlug}>
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 {item.filmCoverUrl && (
                   <img src={item.filmCoverUrl} alt="" style={{ width: 54, height: 80, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
@@ -696,6 +690,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               )}
             </div>
+            </CardLink>
           )}
 
           {/* Poll */}
