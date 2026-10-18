@@ -320,7 +320,7 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
     setActionLoading(true); setActionError("");
     try {
       const res = await fetch(`/api/cluster/${clusterId}/join`, { method: "POST" });
-      if (res.ok) { router.push(`/cluster/${clusterId}`); return; }
+      if (res.ok) { router.push(`/stoop/${clusterId}`); return; }
       const data = await res.json().catch(() => ({}));
       setActionError(data?.message || "Could not join right now.");
     } catch { setActionError("Could not join right now."); }

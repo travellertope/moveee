@@ -36,7 +36,7 @@ export default function StoopReminderCard() {
 
   return (
     <Link
-      href={`/cluster/${cluster.id}`}
+      href={`/stoop/${cluster.id}`}
       style={{
         display: "flex",
         alignItems: "center",

@@ -435,7 +435,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
     try {
       const res = await fetch(`/api/cluster/${clusterId}/join`, { method: "POST" });
       if (res.ok) {
-        router.push(`/cluster/${clusterId}`);
+        router.push(`/stoop/${clusterId}`);
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -617,7 +617,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
           </p>
           <div className="stoop-my-body">
             <div>
-              <Link href={`/cluster/${myCluster.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+              <Link href={`/stoop/${myCluster.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                 <h2 className="stoop-my-name">{myCluster.name}</h2>
                 <p className="stoop-my-meta">
                   📍 {[myCluster.street, myCluster.city].filter(Boolean).join(", ") || "Location TBC"}
@@ -644,8 +644,8 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
               )}
             </div>
             <div className="ys-actions">
-              <Link href={`/cluster/${myCluster.id}`} className="ys-btn-ghost">View Members</Link>
-              <Link href={`/cluster/${myCluster.id}#checkin`} className="ys-btn-primary">Open Check-in QR →</Link>
+              <Link href={`/stoop/${myCluster.id}`} className="ys-btn-ghost">View Stoop</Link>
+              <Link href={`/cluster/${myCluster.id}?tab=checkin`} className="ys-btn-primary">Open Check-in QR →</Link>
             </div>
           </div>
         </div>
@@ -816,7 +816,7 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
                       type="button"
                       className="stoop-wiz-copy-btn"
                       onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/cluster/${hostCreatedId}`).catch(() => {});
+                        navigator.clipboard.writeText(`${window.location.origin}/stoop/${hostCreatedId}`).catch(() => {});
                         setHostLinkCopied(true);
                         setTimeout(() => setHostLinkCopied(false), 2500);
                       }}
