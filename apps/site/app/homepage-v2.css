@@ -49,7 +49,7 @@
    HeroScrollButton (rendered after it, a true DOM sibling) keeps sitting
    in the same bottom flex slot it always has. */
 .hero-full-linklayer { display: contents; }
-.hero-full-body { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
+.hero-full-body { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
 .hero-full-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.78); margin-bottom: 22px; }
 /* Layered shadow (a tight near-black pass for edge definition + a softer,
    wider pass for general legibility) so the title stays readable over any
@@ -69,6 +69,7 @@
 .hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(255,255,255,.82); }
 .hero-full-scroll {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -340,157 +341,4 @@
   letter-spacing: .1em; text-transform: uppercase; color: var(--mute);
 }
 
-/* ========================================
-   KAFART2026 PARTNERSHIP SECTION
-   ======================================== */
-
-.kft-section {
-  background: var(--ink);
-  padding: 56px 0 48px;
-}
-
-.kft-header {
-  max-width: calc(1200px + 128px);
-  margin: 0 auto 32px;
-  padding: 0 64px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.kft-eyebrow {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .14em;
-  color: var(--ochre);
-  margin: 0 0 10px;
-}
-
-.kft-title {
-  font-family: 'Fraunces', serif;
-  font-size: clamp(32px, 5vw, 52px);
-  font-weight: 900;
-  color: var(--paper);
-  line-height: 1;
-  margin: 0 0 10px;
-  letter-spacing: -.01em;
-}
-
-.kft-year {
-  color: var(--ochre);
-}
-
-.kft-sub {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: rgba(243,236,224,.5);
-  margin: 0;
-  max-width: 360px;
-  line-height: 1.6;
-}
-
-.kft-viewall {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: var(--paper);
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: color .15s;
-}
-.kft-viewall:hover { color: var(--ochre); }
-
-.kft-scroll {
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  max-width: calc(1200px + 128px);
-  margin: 0 auto;
-  padding: 0 64px 8px;
-  box-sizing: border-box;
-}
-.kft-scroll::-webkit-scrollbar { display: none; }
-
-.kft-card {
-  width: 300px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-}
-
-.kft-card-img {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3/2;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  margin-bottom: 14px;
-  background: rgba(255,255,255,.07);
-}
-
-.kft-card-img img { transition: transform .5s; }
-.kft-card:hover .kft-card-img img { transform: scale(1.05); }
-
-.kft-card-img-placeholder {
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,.05);
-}
-
-.kft-card-cat {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--ochre);
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  margin: 0 0 7px;
-}
-
-.kft-card-title {
-  font-family: 'Fraunces', serif;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--paper);
-  line-height: 1.3;
-  margin: 0 0 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  transition: color .15s;
-}
-.kft-card:hover .kft-card-title { color: var(--ochre); }
-
-.kft-card-date {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: rgba(200,191,176,.45);
-  margin-top: auto;
-}
-
-@media (max-width: 1024px) {
-  .kft-header { padding: 0 32px; }
-  .kft-scroll { padding: 0 32px 8px; }
-}
-
-@media (max-width: 640px) {
-  .kft-header {
-    padding: 0 20px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .kft-scroll { padding: 0 20px 8px; }
-  .kft-card { width: 240px; }
-}
+/* kft-* styles live in components/KafartSection.css, imported by KafartSection.tsx */

@@ -355,7 +355,6 @@ export default function NewPostScreen() {
   const [linkedEntry, setLinkedEntry] = useState<DirectoryEntry | null>(null);
   const [poll, setPoll] = useState<PollDraft>({ options: ["", ""], durationDays: 3 });
   const [stops, setStops] = useState<StopDraft[]>([{ name: "", note: "" }, { name: "", note: "" }]);
-  const [quoteAuthor, setQuoteAuthor] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
   // Directory-backed quote links (September 2026) — see the web composer's
   // matching state for why a freeform author term was the wrong model.
@@ -669,8 +668,8 @@ const uploadImages = async (): Promise<string[]> => {
     if (template === "poll" && poll.options.filter((o) => o.trim()).length < 2) {
       Alert.alert("Poll options required", "Add at least 2 poll options."); return;
     }
-    if (template === "quote" && !quoteAuthorEntry && !quoteAuthor.trim()) {
-      Alert.alert("Author required", "Pick who said it, or type a name."); return;
+    if (template === "quote" && !quoteAuthorEntry) {
+      Alert.alert("Author required", "Search the directory to pick who said it."); return;
     }
 
     setSubmitting(true);
@@ -680,7 +679,7 @@ const uploadImages = async (): Promise<string[]> => {
           text,
           // The freeform strings still go up exactly as before — the taxonomy
           // term and _quote_source meta are unchanged; the ids are additive.
-          author: quoteAuthorEntry?.title || quoteAuthor,
+          author: quoteAuthorEntry?.title || "",
           source: quoteSourceEntry?.title || quoteSource || undefined,
           quote_author_directory_id: quoteAuthorEntry?.id || undefined,
           linked_directory_id: quoteSourceEntry?.id || undefined,
@@ -2036,17 +2035,6 @@ const uploadImages = async (): Promise<string[]> => {
           aboutFieldLabel="Known for"
         />
       </View>
-      {!quoteAuthorEntry && (
-        <View style={styles.fieldGroup}>
-          <TextInput
-            style={styles.input}
-            value={quoteAuthor}
-            onChangeText={setQuoteAuthor}
-            placeholder="…or just type a name"
-            placeholderTextColor={c.ghost}
-          />
-        </View>
-      )}
 
       {/* Source — a picker only where the quote type maps to something the
           Directory holds; otherwise freeform. */}

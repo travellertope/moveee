@@ -39,6 +39,44 @@ export interface WpCommunityPost {
     _food_rating_taste?:    number | string;
     _food_rating_value?:    number | string;
     _food_rating_vibe?:     number | string;
+    // book review
+    _book_title?:              string;
+    _book_author?:             string;
+    _book_status?:             string;
+    _book_overall_rating?:     number | string;
+    _book_rating_writing?:     number | string;
+    _book_rating_story?:       number | string;
+    _book_rating_characters?:  number | string;
+    _book_rating_pacing?:      number | string;
+    _book_fav_quote?:          string;
+    _book_recommend?:          string;
+    _book_genres?:             string | string[];
+    _book_cover_url?:          string;
+    // music review
+    _music_title?:             string;
+    _music_artist?:            string;
+    _music_overall_rating?:    number | string;
+    _music_rating_production?: number | string;
+    _music_rating_lyrics?:     number | string;
+    _music_rating_replay?:     number | string;
+    _music_rating_vibe?:       number | string;
+    _music_fav_lyric?:         string;
+    _music_recommend?:         string;
+    _music_genres?:            string | string[];
+    _music_cover_url?:         string;
+    _music_preview_url?:       string;
+    // film review
+    _film_title?:              string;
+    _film_director?:           string;
+    _film_overall_rating?:     number | string;
+    _film_rating_story?:       number | string;
+    _film_rating_acting?:      number | string;
+    _film_rating_visuals?:     number | string;
+    _film_rating_pacing?:      number | string;
+    _film_fav_line?:           string;
+    _film_recommend?:          string;
+    _film_genres?:             string | string[];
+    _film_cover_url?:          string;
   };
 }
 
@@ -57,7 +95,7 @@ export async function getAllCommunitySlugs(): Promise<string[]> {
 }
 
 const COMMUNITY_FIELDS = "_fields=id,slug,date,modified,title,content,meta,comment_count";
-const COMMUNITY_META_FIELDS = "meta_fields=community_author_name,community_author_id,community_author_username,community_author_tier,community_author_avatar,community_tag,community_region,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe";
+const COMMUNITY_META_FIELDS = "meta_fields=community_author_name,community_author_id,community_author_username,community_author_tier,community_author_avatar,community_tag,community_region,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_linked_directory_slug,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_book_cover_url,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_cover_url,_music_preview_url,_film_title,_film_director,_film_overall_rating,_film_rating_story,_film_rating_acting,_film_rating_visuals,_film_rating_pacing,_film_fav_line,_film_recommend,_film_genres,_film_cover_url,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category,_hub_id";
 
 // A bare fetch() can reject outright (timeout, DNS failure, connection
 // reset) rather than resolving with a non-ok response — that rejection was

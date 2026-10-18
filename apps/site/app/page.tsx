@@ -223,12 +223,12 @@ export default async function Home() {
         </div>
       </section>
 
-      <KafartSection stories={kafartStories} />
-
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Lane</em></>}
         stories={portraitStories}
       />
+
+      <KafartSection stories={kafartStories} />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Reviews</em></>}

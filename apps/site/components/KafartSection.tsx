@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { decodeHtml } from "@/lib/decode-html";
 import { sanitizeHtml } from "@/lib/sanitize";
+import "./KafartSection.css";
 
 interface Props {
   stories: any[];
