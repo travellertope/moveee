@@ -10,6 +10,7 @@ import ClusterShareButton from "./ClusterShareButton";
 import ClusterMembers from "./ClusterMembers";
 import "../../stoop.css";
 import "../../member.css";
+import "../../pulse-layout.css";
 
 export const dynamic = "force-dynamic";
 
@@ -127,9 +128,9 @@ const VENUE_LABEL: Record<string, string> = {
 };
 
 const HOST_MECHANISM_LABEL: Record<string, string> = {
-  appointed: "Appointed host",
-  self_nominated: "Self-nominated host",
-  elected: "Elected host",
+  appointed: "Appointed",
+  self_nominated: "Self-nominated",
+  elected: "Elected",
 };
 
 function capacityInfo(memberCount: number, capacity: number) {
@@ -137,24 +138,49 @@ function capacityInfo(memberCount: number, capacity: number) {
   return { pct: Math.min(100, (memberCount / capacity) * 100) };
 }
 
-const DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-function meetsToday(meetingDay: string): boolean {
-  if (!meetingDay) return false;
-  return DAY_NAMES[new Date().getDay()] === meetingDay.toLowerCase();
+const COVER_GRADS = [
+  "linear-gradient(135deg,#1a0a2e 0%,#3b1f5e 100%)",
+  "linear-gradient(135deg,#0d2b1a 0%,#1b5e38 100%)",
+  "linear-gradient(135deg,#2b0d0d 0%,#7a241c 100%)",
+  "linear-gradient(135deg,#0d1f2b 0%,#1c4a6e 100%)",
+  "linear-gradient(135deg,#2b1a00 0%,#7a5218 100%)",
+  "linear-gradient(135deg,#1a1a2b 0%,#3d3d6e 100%)",
+];
+
+const AVATAR_COLORS = ["#7a241c","#1c4a6e","#0d5e38","#5e3d1c","#3d1c5e","#1c5e5e"];
+
+function pickByName(arr: string[], name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+  return arr[Math.abs(hash) % arr.length];
 }
 
-export default async function ClusterPage({ params }: { params: Promise<{ id: string }> }) {
+const TABS = [
+  { key: "overview", label: "Overview" },
+  { key: "checkin", label: "Check-in" },
+  { key: "members", label: "Members" },
+  { key: "election", label: "Election" },
+];
+
+export default async function ClusterPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { id } = await params;
+  const { tab: tabParam } = await searchParams;
   const session = (await getServerSession(authOptions as any)) as any;
-  if (!session?.user) redirect(`/login?callbackUrl=/cluster/${id}`);
+  if (!session?.user) redirect(`/auth/sign-in?next=/cluster/${id}`);
 
   const cluster = await fetchCluster(id);
   if (!cluster) {
     return (
-      <div className="stoop-page-bg">
-        <div className="stoop-detail-wrap">
-          <p className="stoop-detail-note" style={{ marginTop: 32 }}>This Stoop doesn't exist or has been removed.</p>
-          <Link href="/connect/stoop" className="stoop-detail-back">← Back to Stoop</Link>
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", padding: 32 }}>
+          <p style={{ color: "var(--mute)", marginBottom: 16 }}>This Stoop doesn't exist or has been removed.</p>
+          <Link href="/stoop" className="stoop-dp-btn stoop-dp-btn--ghost">← Back to Stoops</Link>
         </div>
       </div>
     );
@@ -162,120 +188,323 @@ export default async function ClusterPage({ params }: { params: Promise<{ id: st
 
   const status = await fetchStatus(id, Number(session.user.id));
   const isHost = cluster.hostId === Number(session.user.id);
+
+  // Non-hosts go to the public Stoop view
+  if (!isHost) {
+    redirect(`/stoop/${id}`);
+  }
+
   const [election, members] = await Promise.all([
-    cluster.status === "active" && status.isMember ? fetchElection(id, Number(session.user.id)) : Promise.resolve(null),
-    status.isMember ? fetchMembers(id) : Promise.resolve([]),
+    cluster.status === "active" ? fetchElection(id, Number(session.user.id)) : Promise.resolve(null),
+    fetchMembers(id),
   ]);
 
+  const activeTab = TABS.find((t) => t.key === tabParam)?.key ?? "overview";
   const { pct } = capacityInfo(cluster.memberCount, cluster.capacity);
-  const visibleMembers = members.slice(0, 6);
+  const coverGrad = pickByName(COVER_GRADS, cluster.name);
+  const avatarColor = pickByName(AVATAR_COLORS, cluster.name);
+  const initials = cluster.name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
+  const spotsLeft = cluster.capacity > 0 ? Math.max(0, cluster.capacity - cluster.memberCount) : null;
 
   return (
-    <div className="stoop-page-bg">
-      <div className="stoop-detail-wrap">
-        <Link href="/connect/stoop" className="stoop-detail-back">← Back to Stoop</Link>
+    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+      <div className="pulse-layout">
 
-        {cluster.status === "active" && meetsToday(cluster.meetingDay) && (
-          <div className="stoop-detail-status-row">
-            <span className="stoop-detail-live"><span className="stoop-detail-live-dot" />Meets today</span>
-          </div>
-        )}
-
-        <h1 className="stoop-detail-name">{cluster.name}</h1>
-        <div className="stoop-detail-badges">
-          {cluster.hostMechanism && (
-            <span className="stoop-d-badge stoop-d-badge--host">
-              {HOST_MECHANISM_LABEL[cluster.hostMechanism] ?? cluster.hostMechanism.replace(/_/g, " ")}
-            </span>
-          )}
-          {cluster.venueType && (
-            <span className="stoop-d-badge stoop-d-badge--venue">{VENUE_LABEL[cluster.venueType] ?? cluster.venueType}</span>
-          )}
-          {cluster.accessible && (
-            <span className="stoop-d-badge stoop-d-badge--access">♿ Step-free access</span>
-          )}
-        </div>
-
-        <div className="stoop-detail-cap-card">
-          <div className="stoop-detail-cap-left">
-            <p className="stoop-detail-cap-when">
-              {cluster.meetingDay && cluster.meetingTime
-                ? `Every ${capitalize(cluster.meetingDay)}, ${cluster.meetingTime}`
-                : "Meeting time not set yet."}
-            </p>
-            <p className="stoop-detail-cap-where">
-              {status.isMember
-                ? [cluster.street, cluster.city].filter(Boolean).join(", ") || "Location not set yet."
-                : `${cluster.city || "Location"} — exact address shown after joining`}
-            </p>
-          </div>
-          <div className="stoop-detail-cap-count">
-            <span className="stoop-detail-cap-num">{cluster.memberCount}</span>
-            {cluster.capacity > 0 && <span style={{ color: "var(--mute)", fontSize: 13 }}> / {cluster.capacity}</span>}
-            <div className="stoop-detail-cap-label">members</div>
-            {cluster.capacity > 0 && (
-              <div className="stoop-detail-cap-track"><div className="stoop-detail-cap-fill" style={{ width: `${pct}%` }} /></div>
-            )}
-          </div>
-        </div>
-
-        {status.isMember && cluster.locationNote && (
-          <p className="stoop-detail-note"><strong>Location note:</strong> {cluster.locationNote}</p>
-        )}
-
-        {cluster.status !== "active" && isHost && (
-          <div style={{ marginBottom: 24 }}>
-            <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} variant="banner" />
-          </div>
-        )}
-
-        {!status.isMember && <ClusterActions clusterId={cluster.id} />}
-
-        {status.isMember && (
-          <div style={{ margin: "0 0 24px", textAlign: "right" }}>
-            <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} />
-          </div>
-        )}
-
-        {cluster.status === "active" && status.isMember && (
-          <div className="stoop-detail-section">
-            <p className="stoop-detail-sec-title">Check-in</p>
-            <p className="stoop-detail-sec-sub">Scan your host's code with the Moveee app when you arrive.</p>
-            <ClusterCheckin clusterId={cluster.id} isHost={isHost} />
-          </div>
-        )}
-
-        {status.isMember && cluster.hubId && cluster.hubSlug && (
-          <div className="stoop-detail-section">
-            <p className="stoop-detail-sec-title">Discussion Hub</p>
-            <p className="stoop-detail-sec-sub">Chat, share updates, and coordinate between meetups.</p>
-            <Link href={`/hub/${cluster.hubSlug}`} className="stoop-detail-back" style={{ display: "inline-block" }}>
-              Open the Hub →
+        {/* Left sidebar — host tools nav */}
+        <aside className="pulse-sidebar-left">
+          <Link
+            href={`/stoop/${id}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              color: "var(--mute)",
+              letterSpacing: "0.3px",
+              textTransform: "uppercase",
+              paddingBottom: "1rem",
+              borderBottom: "1px solid var(--rule, #e8e2d8)",
+              marginBottom: "1rem",
+            }}
+          >
+            ← Public View
+          </Link>
+          <p style={{ fontSize: "0.625rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--mute)", marginBottom: 8 }}>
+            Host Tools
+          </p>
+          {TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={`/cluster/${id}?tab=${t.key}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 9,
+                padding: "8px 10px",
+                borderRadius: "var(--radius-lg, 6px)",
+                fontSize: "0.8rem",
+                fontWeight: activeTab === t.key ? 700 : 500,
+                color: activeTab === t.key ? "var(--ochre, #7a241c)" : "var(--ink-soft)",
+                background: activeTab === t.key ? "rgba(122,36,28,0.06)" : "transparent",
+                textDecoration: "none",
+              }}
+            >
+              <span style={{ fontSize: 13, width: 18, textAlign: "center" }}>
+                {t.key === "overview" ? "🏡" : t.key === "checkin" ? "✅" : t.key === "members" ? "👥" : "🗳️"}
+              </span>
+              {t.label}
             </Link>
-          </div>
-        )}
+          ))}
+        </aside>
 
-        {status.isMember && (
-          <div className="stoop-detail-section">
-            <p className="stoop-detail-sec-title">
-              Members <span className="stoop-detail-sec-count">{members.length}</span>
+        {/* Center — management content */}
+        <main className="pulse-timeline">
+          <div className="pulse-timeline-inner">
+
+            {/* Cover */}
+            <div className="stoop-dp-cover" style={{ background: coverGrad }}>
+              <div className="stoop-dp-cover-badge">
+                {cluster.status === "active" ? "Active" : cluster.status === "forming" ? "Forming" : cluster.status}
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="stoop-dp-action-bar">
+              <div className="stoop-dp-stoop-avatar-wrap" style={{ marginTop: -28 }}>
+                <div
+                  className="stoop-dp-stoop-avatar-fallback"
+                  style={{ background: avatarColor, color: "#fff", fontSize: "1rem", fontWeight: 800, width: 56, height: 56, borderRadius: "var(--radius-xl, 12px)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  {initials}
+                </div>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h1 className="stoop-dp-title" style={{ fontSize: "1.15rem", margin: 0 }}>{cluster.name}</h1>
+                <div className="stoop-dp-cover-meta-row" style={{ marginTop: 2 }}>
+                  {cluster.city && <span>{cluster.city}</span>}
+                  {cluster.meetingDay && <span>Every {capitalize(cluster.meetingDay)}</span>}
+                  {cluster.venueType && <span>{VENUE_LABEL[cluster.venueType] ?? cluster.venueType}</span>}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    padding: "3px 8px",
+                    borderRadius: "var(--radius-full, 9999px)",
+                    background: "rgba(122,36,28,0.1)",
+                    color: "var(--ochre, #7a241c)",
+                  }}
+                >
+                  Host
+                </span>
+                <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} />
+              </div>
+            </div>
+
+            {/* Capacity bar */}
+            {cluster.capacity > 0 && (
+              <div className="stoop-dp-cap-row" style={{ padding: "0 0 16px" }}>
+                <span className="stoop-dp-cap-label">
+                  {cluster.memberCount} / {cluster.capacity} members
+                </span>
+                <div className="stoop-dp-cap-track">
+                  <div className="stoop-dp-cap-fill" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            )}
+
+            {/* Tab nav */}
+            <div className="stoop-dp-tabs">
+              {TABS.map((t) => (
+                <Link
+                  key={t.key}
+                  href={`/cluster/${id}?tab=${t.key}`}
+                  className={`stoop-dp-tab${activeTab === t.key ? " stoop-dp-tab--active" : ""}`}
+                  style={{ textDecoration: "none" }}
+                >
+                  {t.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="stoop-dp-section">
+
+              {activeTab === "overview" && (
+                <>
+                  <div style={{ marginBottom: 24 }}>
+                    <p className="stoop-dp-sec-title">Stoop Details</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div style={{ background: "var(--paper, #f3ece0)", borderRadius: "var(--radius-lg, 6px)", padding: "12px 14px" }}>
+                        <p style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--mute)", margin: "0 0 4px" }}>Meeting</p>
+                        <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+                          {cluster.meetingDay && cluster.meetingTime
+                            ? `${capitalize(cluster.meetingDay)}s, ${cluster.meetingTime}`
+                            : "Not set"}
+                        </p>
+                      </div>
+                      <div style={{ background: "var(--paper, #f3ece0)", borderRadius: "var(--radius-lg, 6px)", padding: "12px 14px" }}>
+                        <p style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--mute)", margin: "0 0 4px" }}>Location</p>
+                        <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+                          {[cluster.street, cluster.city].filter(Boolean).join(", ") || "Not set"}
+                        </p>
+                      </div>
+                      <div style={{ background: "var(--paper, #f3ece0)", borderRadius: "var(--radius-lg, 6px)", padding: "12px 14px" }}>
+                        <p style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--mute)", margin: "0 0 4px" }}>Host mechanism</p>
+                        <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+                          {HOST_MECHANISM_LABEL[cluster.hostMechanism] ?? cluster.hostMechanism ?? "—"}
+                        </p>
+                      </div>
+                      <div style={{ background: "var(--paper, #f3ece0)", borderRadius: "var(--radius-lg, 6px)", padding: "12px 14px" }}>
+                        <p style={{ fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--mute)", margin: "0 0 4px" }}>Accessibility</p>
+                        <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+                          {cluster.accessible ? "♿ Step-free access" : "Not specified"}
+                        </p>
+                      </div>
+                    </div>
+                    {cluster.locationNote && (
+                      <div style={{ marginTop: 12, background: "rgba(122,36,28,0.06)", borderRadius: "var(--radius-lg, 6px)", padding: "12px 14px", borderLeft: "3px solid var(--ochre, #7a241c)" }}>
+                        <p style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--ochre, #7a241c)", margin: "0 0 4px" }}>Location Note</p>
+                        <p style={{ fontSize: "0.85rem", color: "var(--ink)", margin: 0 }}>{cluster.locationNote}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {cluster.status !== "active" && (
+                    <div style={{ marginBottom: 24 }}>
+                      <p className="stoop-dp-sec-title">Grow your Stoop</p>
+                      <ClusterShareButton clusterId={cluster.id} clusterName={cluster.name} variant="banner" />
+                    </div>
+                  )}
+
+                  {!status.isMember && (
+                    <div style={{ marginBottom: 24 }}>
+                      <ClusterActions clusterId={cluster.id} />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeTab === "checkin" && (
+                <>
+                  <p className="stoop-dp-sec-title">Check-in</p>
+                  <p style={{ fontSize: "0.85rem", color: "var(--mute)", marginBottom: 16, marginTop: 0 }}>
+                    Share your QR code with members when they arrive at the Stoop.
+                  </p>
+                  {cluster.status === "active" ? (
+                    <ClusterCheckin clusterId={cluster.id} isHost={true} />
+                  ) : (
+                    <p style={{ fontSize: "0.85rem", color: "var(--mute)" }}>Check-in is only available for active Stoops.</p>
+                  )}
+                </>
+              )}
+
+              {activeTab === "members" && (
+                <>
+                  <p className="stoop-dp-sec-title">
+                    Members <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--mute)", marginLeft: 6 }}>{members.length}</span>
+                  </p>
+                  <ClusterMembers members={members} totalCount={members.length} clusterId={cluster.id} />
+                </>
+              )}
+
+              {activeTab === "election" && (
+                <>
+                  <p className="stoop-dp-sec-title">Host Election</p>
+                  {cluster.status === "active" ? (
+                    <ClusterElection
+                      clusterId={cluster.id}
+                      myUserId={Number(session.user.id)}
+                      initialElection={election}
+                      hostName={cluster.hostName}
+                    />
+                  ) : (
+                    <p style={{ fontSize: "0.85rem", color: "var(--mute)" }}>Elections are only available for active Stoops.</p>
+                  )}
+                </>
+              )}
+
+            </div>
+
+            {/* Leave button — shown in overview only */}
+            {activeTab === "overview" && (
+              <div style={{ padding: "24px 0", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: 8 }}>
+                <ClusterLeaveButton clusterId={cluster.id} />
+              </div>
+            )}
+
+          </div>
+        </main>
+
+        {/* Right sidebar — Stoop stats */}
+        <aside className="pulse-sidebar-right">
+          <div style={{ background: "#fff", borderRadius: "var(--radius-xl, 12px)", padding: "16px 18px", border: "1px solid var(--rule, #e8e2d8)", marginBottom: 16 }}>
+            <p style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--mute)", margin: "0 0 12px" }}>
+              Stoop Stats
             </p>
-            <ClusterMembers members={visibleMembers} totalCount={members.length} clusterId={cluster.id} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--ink-soft)" }}>Members</span>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink)" }}>{cluster.memberCount}</span>
+              </div>
+              {cluster.capacity > 0 && (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.8rem", color: "var(--ink-soft)" }}>Capacity</span>
+                    <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--ink)" }}>{cluster.capacity}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.8rem", color: "var(--ink-soft)" }}>Spots left</span>
+                    <span style={{ fontSize: "0.9rem", fontWeight: 700, color: spotsLeft === 0 ? "var(--ochre, #7a241c)" : "var(--ink)" }}>
+                      {spotsLeft === 0 ? "Full" : spotsLeft}
+                    </span>
+                  </div>
+                  <div className="stoop-dp-cap-track" style={{ marginTop: 4 }}>
+                    <div className="stoop-dp-cap-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        )}
 
-        {cluster.status === "active" && status.isMember && (
-          <div className="stoop-detail-section">
-            <p className="stoop-detail-sec-title">Host Election</p>
-            <ClusterElection clusterId={cluster.id} myUserId={Number(session.user.id)} initialElection={election} hostName={cluster.hostName} />
+          <div style={{ background: "#fff", borderRadius: "var(--radius-xl, 12px)", padding: "16px 18px", border: "1px solid var(--rule, #e8e2d8)" }}>
+            <p style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: "var(--mute)", margin: "0 0 12px" }}>
+              Quick Links
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Link
+                href={`/stoop/${id}`}
+                style={{ fontSize: "0.82rem", color: "var(--ink-soft)", display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+              >
+                <span>👁</span> Public view
+              </Link>
+              <Link
+                href={`/cluster/${id}?tab=checkin`}
+                style={{ fontSize: "0.82rem", color: "var(--ink-soft)", display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+              >
+                <span>✅</span> Check-in QR
+              </Link>
+              <Link
+                href={`/cluster/${id}?tab=members`}
+                style={{ fontSize: "0.82rem", color: "var(--ink-soft)", display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+              >
+                <span>👥</span> Manage members
+              </Link>
+            </div>
           </div>
-        )}
 
-        {status.isMember && (
-          <div className="stoop-detail-leave">
-            <ClusterLeaveButton clusterId={cluster.id} />
+          <div style={{ marginTop: "2rem", paddingTop: "1rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
+            <p style={{ margin: 0, fontSize: "0.68rem", color: "var(--mute)", lineHeight: 1.7 }}>
+              © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+            </p>
           </div>
-        )}
+        </aside>
+
       </div>
     </div>
   );
