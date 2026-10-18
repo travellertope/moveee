@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { checkPostSpam, checkBlocklist, getReviewDays } from "@/lib/spam-protection";
 
@@ -372,9 +372,11 @@ export async function POST(req: NextRequest) {
   // runs for every REST-created culture_post regardless of route, so no
   // extra round-trip is needed here.
 
-  // Bust the ISR cache on published posts so the feed shows them immediately.
+  // Bust both the Full Route Cache and the Data Cache so the feed shows new
+  // posts immediately after router.refresh() is called client-side.
   if (postStatus === "publish") {
     revalidatePath("/feed");
+    revalidateTag("community-posts");
   }
 
   return NextResponse.json({
