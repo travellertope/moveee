@@ -516,8 +516,8 @@ function createStyles(c: ColorPalette) {
       alignItems: "flex-start" as const,
     },
     bookCover: {
-      width: 48,
-      height: 64,
+      width: 78,
+      height: 110,
       borderRadius: 4,
       flexShrink: 0,
     },
@@ -1476,26 +1476,47 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label="🍽️ FOOD REVIEW" bg={c.templateFoodBg} color={c.templateFoodText} styles={styles} />
           {(item.placeLocation ?? item.locationName) ? (
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
+          ) : null}
+          {/* Food info card: image + ratings */}
+          {item.image ? (
+            <View style={[styles.bookCard, { alignItems: "center" }]}>
+              <Image source={{ uri: item.image }} style={{ width: 100, height: 100, borderRadius: radius.md, flexShrink: 0 }} resizeMode="cover" />
+              <View style={{ flex: 1 }}>
+                {item.foodDishName ? <Text style={styles.bookTitle} numberOfLines={2}>{item.foodDishName}</Text> : null}
+                <View style={{ gap: 3, marginTop: 4 }}>
+                  {item.foodRatingTaste != null ? (
+                    <Text style={styles.foodRatingLabel}>Taste <Text style={{ color: c.gold }}>{"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</Text></Text>
+                  ) : null}
+                  {item.foodRatingValue != null ? (
+                    <Text style={styles.foodRatingLabel}>Value <Text style={{ color: c.gold }}>{"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</Text></Text>
+                  ) : null}
+                  {item.foodRatingVibe != null ? (
+                    <Text style={styles.foodRatingLabel}>Vibe <Text style={{ color: c.gold }}>{"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</Text></Text>
+                  ) : null}
+                </View>
+              </View>
+            </View>
           ) : null}
           <Text style={[styles.cardBody, { marginTop: 8 }]} numberOfLines={3}>
             {item.title ?? ""}
           </Text>
-          <View style={styles.foodRatingsGrid}>
-            {[
-              { label: "Taste", value: item.foodRatingTaste },
-              { label: "Value", value: item.foodRatingValue },
-              { label: "Vibe",  value: item.foodRatingVibe },
-            ].map(({ label, value }) => (
-              <View key={label} style={styles.foodRatingRow}>
-                <Text style={styles.foodRatingLabel}>{label}</Text>
-                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
-                <Text style={styles.foodRatingNum}>{value ?? "—"}</Text>
-              </View>
-            ))}
-          </View>
+          {!item.image ? (
+            <View style={styles.foodRatingsGrid}>
+              {[
+                { label: "Taste", value: item.foodRatingTaste },
+                { label: "Value", value: item.foodRatingValue },
+                { label: "Vibe",  value: item.foodRatingVibe },
+              ].map(({ label, value }) => (
+                <View key={label} style={styles.foodRatingRow}>
+                  <Text style={styles.foodRatingLabel}>{label}</Text>
+                  <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
+                  <Text style={styles.foodRatingNum}>{value ?? "—"}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
         {gallery.length > 0 ? (
           <GalleryStrip images={gallery} height={140} width={200} onTap={(i) => setLightboxIdx(i)} />
@@ -1687,7 +1708,6 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="📚 BOOK REVIEW" bg={c.templateBookBg} color={c.templateBookText} styles={styles} />
 
         {/* Book card */}
         {item.bookTitle ? (
@@ -1696,12 +1716,17 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
               <Image source={{ uri: coverUri }} style={styles.bookCover} resizeMode="cover" />
             ) : (
               <View style={[styles.bookCover, styles.bookCoverFallback]}>
-                <Ionicons name="book-outline" size={22} color={c.mute} />
+                <Ionicons name="book-outline" size={28} color={c.mute} />
               </View>
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.bookTitle} numberOfLines={2}>{item.bookTitle}</Text>
               {item.bookAuthor ? <Text style={styles.bookMeta}>{item.bookAuthor}</Text> : null}
+              {item.bookOverallRating != null ? (
+                <Text style={[styles.bookMeta, { color: c.gold, letterSpacing: 1, marginTop: 4 }]}>
+                  {"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)} {item.bookOverallRating}/5
+                </Text>
+              ) : null}
               {status ? (
                 <View style={{ marginTop: 4, alignSelf: "flex-start" }}>
                   <BadgePill
@@ -1713,12 +1738,6 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
                 </View>
               ) : null}
             </View>
-            {item.bookOverallRating != null ? (
-              <View style={styles.bookOverallWrap}>
-                <Text style={styles.bookOverallScore}>{item.bookOverallRating}</Text>
-                <Text style={styles.bookOverallStar}>★</Text>
-              </View>
-            ) : null}
           </View>
         ) : null}
 
@@ -1731,19 +1750,6 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
         {item.bookFavQuote ? (
           <View style={styles.bookFavQuote}>
             <Text style={styles.bookFavQuoteText}>"{item.bookFavQuote}"</Text>
-          </View>
-        ) : null}
-
-        {/* Breakdown ratings */}
-        {hasRatings ? (
-          <View style={[styles.foodRatingsGrid, { marginTop: 10 }]}>
-            {ratings.filter((r) => r.value != null).map(({ label, value }) => (
-              <View key={label} style={styles.foodRatingRow}>
-                <Text style={styles.foodRatingLabel}>{label}</Text>
-                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
-                <Text style={styles.foodRatingNum}>{value}</Text>
-              </View>
-            ))}
           </View>
         ) : null}
 
@@ -1792,22 +1798,20 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="🎵 MUSIC REVIEW" bg={c.templateMusicBg} color={c.templateMusicText} styles={styles} />
 
         {/* Album card */}
         {item.musicTitle ? (
           <View style={styles.bookCard}>
-            <AudioPreviewButton uri={item.musicPreviewUrl} coverUri={coverUri} width={48} height={64} />
+            <AudioPreviewButton uri={item.musicPreviewUrl} coverUri={coverUri} width={100} height={100} />
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle}</Text>
               {item.musicArtist ? <Text style={styles.bookMeta}>{item.musicArtist}</Text> : null}
+              {item.musicOverallRating != null ? (
+                <Text style={[styles.bookMeta, { color: c.gold, letterSpacing: 1, marginTop: 4 }]}>
+                  {"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)} {item.musicOverallRating}/5
+                </Text>
+              ) : null}
             </View>
-            {item.musicOverallRating != null ? (
-              <View style={styles.bookOverallWrap}>
-                <Text style={styles.bookOverallScore}>{item.musicOverallRating}</Text>
-                <Text style={styles.bookOverallStar}>★</Text>
-              </View>
-            ) : null}
           </View>
         ) : null}
 
@@ -1820,19 +1824,6 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
         {item.musicFavLyric ? (
           <View style={styles.bookFavQuote}>
             <Text style={styles.bookFavQuoteText}>"{item.musicFavLyric}"</Text>
-          </View>
-        ) : null}
-
-        {/* Breakdown ratings */}
-        {hasRatings ? (
-          <View style={[styles.foodRatingsGrid, { marginTop: 10 }]}>
-            {ratings.filter((r) => r.value != null).map(({ label, value }) => (
-              <View key={label} style={styles.foodRatingRow}>
-                <Text style={styles.foodRatingLabel}>{label}</Text>
-                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
-                <Text style={styles.foodRatingNum}>{value}</Text>
-              </View>
-            ))}
           </View>
         ) : null}
 
@@ -1881,7 +1872,6 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="🎬 FILM REVIEW" bg={c.templateFilmBg} color={c.templateFilmText} styles={styles} />
 
         {/* Film card */}
         {item.filmTitle ? (
@@ -1890,19 +1880,18 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
               <Image source={{ uri: coverUri }} style={styles.bookCover} resizeMode="cover" />
             ) : (
               <View style={[styles.bookCover, styles.bookCoverFallback]}>
-                <Ionicons name="film-outline" size={22} color={c.mute} />
+                <Ionicons name="film-outline" size={28} color={c.mute} />
               </View>
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.bookTitle} numberOfLines={2}>{item.filmTitle}</Text>
               {item.filmDirector ? <Text style={styles.bookMeta}>{item.filmDirector}</Text> : null}
+              {item.filmOverallRating != null ? (
+                <Text style={[styles.bookMeta, { color: c.gold, letterSpacing: 1, marginTop: 4 }]}>
+                  {"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)} {item.filmOverallRating}/5
+                </Text>
+              ) : null}
             </View>
-            {item.filmOverallRating != null ? (
-              <View style={styles.bookOverallWrap}>
-                <Text style={styles.bookOverallScore}>{item.filmOverallRating}</Text>
-                <Text style={styles.bookOverallStar}>★</Text>
-              </View>
-            ) : null}
           </View>
         ) : null}
 
@@ -1915,19 +1904,6 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
         {item.filmFavLine ? (
           <View style={styles.bookFavQuote}>
             <Text style={styles.bookFavQuoteText}>"{item.filmFavLine}"</Text>
-          </View>
-        ) : null}
-
-        {/* Breakdown ratings */}
-        {hasRatings ? (
-          <View style={[styles.foodRatingsGrid, { marginTop: 10 }]}>
-            {ratings.filter((r) => r.value != null).map(({ label, value }) => (
-              <View key={label} style={styles.foodRatingRow}>
-                <Text style={styles.foodRatingLabel}>{label}</Text>
-                <Text style={styles.foodRatingStars}>{starsText(value)}</Text>
-                <Text style={styles.foodRatingNum}>{value}</Text>
-              </View>
-            ))}
           </View>
         ) : null}
 
