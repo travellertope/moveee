@@ -45,7 +45,10 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
     // isCommonsPost exclusion applied in getMagazineSections() and
     // MagazineArchiveWrapper.tsx. Filtered here so a Commons piece can never
     // become the homepage hero just because it's tagged "Featured".
-    featuredPool = (featuredData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
+    featuredPool = (featuredData?.posts?.nodes || []).filter((p: any) =>
+      !isCommonsPost(p) &&
+      !(p.tags?.nodes ?? []).some((t: any) => t.slug === "kafart2026")
+    );
   } catch (err) { console.error("Featured pool fetch error:", err); }
 
   // ── 1. Stories ────────────────────────────────────────────────────────────

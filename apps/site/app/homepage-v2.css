@@ -49,7 +49,7 @@
    HeroScrollButton (rendered after it, a true DOM sibling) keeps sitting
    in the same bottom flex slot it always has. */
 .hero-full-linklayer { display: contents; }
-.hero-full-body { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
+.hero-full-body { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px clamp(20px, 5vw, 64px) 0; }
 .hero-full-kicker { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.78); margin-bottom: 22px; }
 /* Layered shadow (a tight near-black pass for edge definition + a softer,
    wider pass for general legibility) so the title stays readable over any
@@ -69,6 +69,7 @@
 .hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(255,255,255,.82); }
 .hero-full-scroll {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
