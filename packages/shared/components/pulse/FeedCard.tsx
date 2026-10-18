@@ -794,6 +794,110 @@ export default function FeedCard({
                 </div>
               )}
 
+              {/* Info card — music review */}
+              {item.templateType === "music-review" && (item.musicTitle || item.musicCoverUrl) && (
+                <div style={{ display: "flex", gap: "12px", marginBottom: "0.75rem", backgroundColor: "var(--paper-deep)", borderRadius: "var(--radius-lg)", padding: "10px", alignItems: "flex-start" }}>
+                  <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {item.musicTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.musicTitle}</div>}
+                    {item.musicArtist && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "6px" }}>{item.musicArtist}</div>}
+                    {item.musicOverallRating != null && (
+                      <div style={{ fontSize: "0.88rem", color: "var(--gold)", letterSpacing: "1px" }}>
+                        {"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}
+                        <span style={{ fontSize: "0.72rem", color: "var(--mute)", marginLeft: "6px" }}>{item.musicOverallRating}/5</span>
+                      </div>
+                    )}
+                    {item.musicRecommend != null && (
+                      <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: "4px" }}>
+                        {item.musicRecommend ? "👍 Recommends" : "👎 Not for everyone"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Info card — book review */}
+              {item.templateType === "book-review" && (item.bookTitle || item.bookCoverUrl) && (
+                <div style={{ display: "flex", gap: "12px", marginBottom: "0.75rem", backgroundColor: "var(--paper-deep)", borderRadius: "var(--radius-lg)", padding: "10px", alignItems: "flex-start" }}>
+                  <div style={{ width: 78, height: 110, borderRadius: "var(--radius-md)", overflow: "hidden", flexShrink: 0, background: "rgba(20,17,13,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {item.bookCoverUrl
+                      ? <img src={item.bookCoverUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      : <span style={{ fontSize: "28px" }}>📚</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {item.bookTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.bookTitle}</div>}
+                    {item.bookAuthor && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "6px" }}>{item.bookAuthor}</div>}
+                    {item.bookOverallRating != null && (
+                      <div style={{ fontSize: "0.88rem", color: "var(--gold)", letterSpacing: "1px" }}>
+                        {"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}
+                        <span style={{ fontSize: "0.72rem", color: "var(--mute)", marginLeft: "6px" }}>{item.bookOverallRating}/5</span>
+                      </div>
+                    )}
+                    {item.bookStatus && <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: "4px" }}>{item.bookStatus}</div>}
+                    {item.bookRecommend != null && (
+                      <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: "2px" }}>
+                        {item.bookRecommend ? "👍 Recommends" : "👎 Not for everyone"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Info card — film review */}
+              {item.templateType === "film-review" && (item.filmTitle || item.filmCoverUrl) && (
+                <div style={{ display: "flex", gap: "12px", marginBottom: "0.75rem", backgroundColor: "var(--paper-deep)", borderRadius: "var(--radius-lg)", padding: "10px", alignItems: "flex-start" }}>
+                  <div style={{ width: 78, height: 110, borderRadius: "var(--radius-md)", overflow: "hidden", flexShrink: 0, background: "rgba(20,17,13,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {item.filmCoverUrl
+                      ? <img src={item.filmCoverUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      : <span style={{ fontSize: "28px" }}>🎬</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {item.filmTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.filmTitle}</div>}
+                    {item.filmDirector && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "6px" }}>{item.filmDirector}</div>}
+                    {item.filmOverallRating != null && (
+                      <div style={{ fontSize: "0.88rem", color: "var(--gold)", letterSpacing: "1px" }}>
+                        {"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}
+                        <span style={{ fontSize: "0.72rem", color: "var(--mute)", marginLeft: "6px" }}>{item.filmOverallRating}/5</span>
+                      </div>
+                    )}
+                    {item.filmRecommend != null && (
+                      <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginTop: "4px" }}>
+                        {item.filmRecommend ? "👍 Recommends" : "👎 Not for everyone"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Info card — food review (only when a photo is attached) */}
+              {item.templateType === "food-review" && item.image && (
+                <div style={{ display: "flex", gap: "12px", marginBottom: "0.75rem", backgroundColor: "var(--paper-deep)", borderRadius: "var(--radius-lg)", padding: "10px", alignItems: "flex-start" }}>
+                  <div style={{ width: 100, height: 100, borderRadius: "var(--radius-md)", overflow: "hidden", flexShrink: 0 }}>
+                    <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {item.foodDishName && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "6px" }}>{item.foodDishName}</div>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      {item.foodRatingTaste != null && (
+                        <div style={{ fontSize: "0.78rem", color: "var(--mute)" }}>
+                          Taste <span style={{ color: "var(--gold)" }}>{"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
+                        </div>
+                      )}
+                      {item.foodRatingValue != null && (
+                        <div style={{ fontSize: "0.78rem", color: "var(--mute)" }}>
+                          Value <span style={{ color: "var(--gold)" }}>{"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>
+                        </div>
+                      )}
+                      {item.foodRatingVibe != null && (
+                        <div style={{ fontSize: "0.78rem", color: "var(--mute)" }}>
+                          Vibe <span style={{ color: "var(--gold)" }}>{"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div style={{
                 color: "var(--ink)",
                 fontSize: "0.97rem",
@@ -806,6 +910,10 @@ export default function FeedCard({
                   const inlineYt = ytUrl && !item.videoUrl && !(item.sourceUrl?.includes("youtu")) ? ytUrl : undefined;
                   const stripBy = item.sourceUrl && !item.image ? item.sourceUrl : (inlineYt ?? undefined);
                   const fullText = stripTrailingUrl(item.title, stripBy);
+                  // For review types with an info card, skip the bold-heading split — the title
+                  // is already shown in the card above, so just render the body flat.
+                  const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
+                  if (isInfoCardType) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
                   const nlIdx = fullText.indexOf("\n\n");
                   if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
                   const titlePart = fullText.slice(0, nlIdx).trim();
@@ -821,53 +929,6 @@ export default function FeedCard({
                 })()}
               </div>
             </div>
-
-            {/* Food review ratings */}
-            {item.templateType === "food-review" && item.foodRatingTaste && (
-              <div style={{ display: "flex", gap: "16px", marginBottom: "0.5rem", fontSize: "0.72rem", color: "var(--mute)" }}>
-                <span>Taste {"★".repeat(item.foodRatingTaste)}{"☆".repeat(5 - item.foodRatingTaste)}</span>
-                {item.foodRatingValue && <span>Value {"★".repeat(item.foodRatingValue)}{"☆".repeat(5 - item.foodRatingValue)}</span>}
-                {item.foodRatingVibe && <span>Vibe {"★".repeat(item.foodRatingVibe)}{"☆".repeat(5 - item.foodRatingVibe)}</span>}
-              </div>
-            )}
-
-            {/* Book review rating/status/recommend */}
-            {item.templateType === "book-review" && item.bookOverallRating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
-                {item.bookCoverUrl && (
-                  <img src={item.bookCoverUrl} alt="" style={{ width: 36, height: 52, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
-                )}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                  <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
-                  {item.bookStatus && <span>{item.bookStatus}</span>}
-                  {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
-                </div>
-              </div>
-            )}
-
-            {/* Music review rating/recommend/preview */}
-            {item.templateType === "music-review" && item.musicOverallRating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
-                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={44} />
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                  <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
-                  {item.musicRecommend != null && <span>{item.musicRecommend ? "👍" : "👎"}</span>}
-                </div>
-              </div>
-            )}
-
-            {/* Film review rating/recommend */}
-            {item.templateType === "film-review" && item.filmOverallRating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
-                {item.filmCoverUrl && (
-                  <img src={item.filmCoverUrl} alt="" style={{ width: 36, height: 52, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
-                )}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
-                  <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
-                  {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
-                </div>
-              </div>
-            )}
 
             {/* Poll inline */}
             {item.templateType === "poll" && item.pollOptions && (
