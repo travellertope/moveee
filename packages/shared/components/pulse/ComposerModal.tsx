@@ -29,7 +29,6 @@ const EVENT_CATEGORIES = ["Art", "Music", "Fashion", "Food", "Film", "Literature
 const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing", "Mixed Media"];
 const ITINERARY_BUDGETS = ["£", "££", "£££", "££££"];
 const ITINERARY_DURATIONS = ["Day trip", "Weekend", "3–4 days", "1 week", "2 weeks", "1 month+"];
-const CUISINE_TAGS = ["Nigerian", "West African", "Caribbean", "British", "American", "Italian", "Japanese", "Korean", "Indian", "Middle Eastern", "Chinese", "Mexican", "Fusion"];
 const PRICE_RANGES = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Want to Read", "Reading", "Finished"];
 const POLL_DURATIONS = [{ label: "1 day", value: "1" }, { label: "3 days", value: "3" }, { label: "7 days", value: "7" }];
@@ -238,7 +237,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Food review additions
   const [foodRatings, setFoodRatings] = useState<Record<string, number>>({ taste: 0, value: 0, vibe: 0 });
-  const [cuisineTag, setCuisineTag] = useState("");
   const [foodPriceRange, setFoodPriceRange] = useState("");
 
   // Place review additions
@@ -314,7 +312,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setBookStatus(""); setBookRatings({ writing: 0, story: 0, characters: 0, pacing: 0 }); setBookFavQuote("");
     setMusicRatings({ production: 0, lyrics: 0, replay: 0, vibe: 0 }); setMusicFavLyric("");
     setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine("");
-    setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setCuisineTag(""); setFoodPriceRange("");
+    setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
     setGalleryUrls([]); setError("");
     setCategory(""); setCategoryManuallySet(false);
@@ -453,7 +451,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (foodRatings.taste) payload.food_rating_taste = foodRatings.taste;
             if (foodRatings.value) payload.food_rating_value = foodRatings.value;
             if (foodRatings.vibe)  payload.food_rating_vibe  = foodRatings.vibe;
-            if (cuisineTag) payload.cuisine_tag = cuisineTag;
             if (foodPriceRange) payload.price_range = foodPriceRange;
           } else if (revSubtype === "place") {
             if (placePriceRange) payload.price_range = placePriceRange;
@@ -722,36 +719,21 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               )}
 
-              {/* Place / food extras */}
+              {/* Food extras */}
               {revSubtype === "food" && (
-                <>
-                  <div className="cm-field">
-                    <label className="cm-label">Cuisine <span className="cm-label-opt">(optional)</span></label>
-                    <div className="cm-review-pills cm-pills-wrap">
-                      {CUISINE_TAGS.map(c => (
-                        <button
-                          key={c}
-                          type="button"
-                          className={`cm-pill${cuisineTag === c ? " cm-pill--active" : ""}`}
-                          onClick={() => setCuisineTag(cuisineTag === c ? "" : c)}
-                        >{c}</button>
-                      ))}
-                    </div>
+                <div className="cm-field">
+                  <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
+                  <div className="cm-review-pills">
+                    {PRICE_RANGES.map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`cm-pill${foodPriceRange === p ? " cm-pill--active" : ""}`}
+                        onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
+                      >{p}</button>
+                    ))}
                   </div>
-                  <div className="cm-field">
-                    <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
-                    <div className="cm-review-pills">
-                      {PRICE_RANGES.map(p => (
-                        <button
-                          key={p}
-                          type="button"
-                          className={`cm-pill${foodPriceRange === p ? " cm-pill--active" : ""}`}
-                          onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
-                        >{p}</button>
-                      ))}
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
               {revSubtype === "place" && (
                 <>
@@ -780,8 +762,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </>
               )}
 
-              {/* Overall star rating — shown for place/food since no breakdown auto-sets it */}
-              {(revSubtype === "place" || revSubtype === "food") && (
+              {/* Overall star rating — place only; food/music/book/film use breakdown auto-calc */}
+              {revSubtype === "place" && (
                 <div className="cm-field">
                   <label className="cm-label">Overall rating</label>
                   <StarRating value={revRating} onChange={setRevRating} />

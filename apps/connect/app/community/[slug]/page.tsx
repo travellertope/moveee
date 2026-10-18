@@ -145,6 +145,7 @@ export default async function CommunityPostPage({
   const filmGenres     = m._film_genres ? (typeof m._film_genres === "string" ? JSON.parse(m._film_genres) : m._film_genres) as string[] : undefined;
   const filmCoverUrl   = m._film_cover_url || undefined;
 
+  const linkedDirectorySlug = m._linked_directory_slug || undefined;
   const sourceUrl    = m.community_link_url || undefined;
   const source       = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })() : undefined;
   const ogTitle      = m.community_og_title || undefined;
@@ -312,6 +313,7 @@ export default async function CommunityPostPage({
                 filmFavLine={filmFavLine}
                 filmGenres={filmGenres}
                 filmCoverUrl={filmCoverUrl}
+                linkedDirectorySlug={linkedDirectorySlug}
                 sourceUrl={sourceUrl}
                 source={source}
                 ogTitle={ogTitle}

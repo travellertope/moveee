@@ -379,6 +379,26 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 ···
               </button>
             )}
+            {item.linkedDirectorySlug && (
+              <Link
+                href={`/directory/${item.linkedDirectorySlug}`}
+                aria-label="View in Directory"
+                title="View in Directory"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "var(--mute)", padding: "0.25rem",
+                  borderRadius: "6px", transition: "color 0.15s",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = "var(--ochre)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "var(--mute)")}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="2" y="3" width="20" height="18" rx="2"/>
+                  <circle cx="9" cy="9" r="2"/>
+                  <path d="M15 7h4M15 11h4M5 17c0-2 1.3-3 4-3h2"/>
+                </svg>
+              </Link>
+            )}
             {item.slug && (
               <Link
                 href={`/community/${item.slug}`}
@@ -580,13 +600,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                   {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
                 </div>
               </div>
+              {(item.bookRatingWriting || item.bookRatingStory || item.bookRatingCharacters || item.bookRatingPacing) && (
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
+                  {item.bookRatingWriting    && <span>Writing {"★".repeat(item.bookRatingWriting)}{"☆".repeat(5 - item.bookRatingWriting)}</span>}
+                  {item.bookRatingStory      && <span>Story {"★".repeat(item.bookRatingStory)}{"☆".repeat(5 - item.bookRatingStory)}</span>}
+                  {item.bookRatingCharacters && <span>Characters {"★".repeat(item.bookRatingCharacters)}{"☆".repeat(5 - item.bookRatingCharacters)}</span>}
+                  {item.bookRatingPacing     && <span>Pacing {"★".repeat(item.bookRatingPacing)}{"☆".repeat(5 - item.bookRatingPacing)}</span>}
+                </div>
+              )}
               {item.bookFavQuote && (
                 <blockquote style={{
                   marginTop: "0.5rem", padding: "0.5rem 0.75rem",
                   borderLeft: "2px solid #6B48A8", fontStyle: "italic",
                   fontSize: "0.85rem", color: "var(--ink-soft)",
                 }}>
-                  “{item.bookFavQuote}”
+                  "{item.bookFavQuote}"
                 </blockquote>
               )}
               {item.bookGenres && item.bookGenres.length > 0 && (
@@ -613,13 +641,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                   {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
                 </div>
               </div>
+              {(item.musicRatingProduction || item.musicRatingLyrics || item.musicRatingReplay || item.musicRatingVibe) && (
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
+                  {item.musicRatingProduction && <span>Production {"★".repeat(item.musicRatingProduction)}{"☆".repeat(5 - item.musicRatingProduction)}</span>}
+                  {item.musicRatingLyrics     && <span>Lyrics {"★".repeat(item.musicRatingLyrics)}{"☆".repeat(5 - item.musicRatingLyrics)}</span>}
+                  {item.musicRatingReplay     && <span>Replay {"★".repeat(item.musicRatingReplay)}{"☆".repeat(5 - item.musicRatingReplay)}</span>}
+                  {item.musicRatingVibe       && <span>Vibe {"★".repeat(item.musicRatingVibe)}{"☆".repeat(5 - item.musicRatingVibe)}</span>}
+                </div>
+              )}
               {item.musicFavLyric && (
                 <blockquote style={{
                   marginTop: "0.5rem", padding: "0.5rem 0.75rem",
                   borderLeft: "2px solid #0D7377", fontStyle: "italic",
                   fontSize: "0.85rem", color: "var(--ink-soft)",
                 }}>
-                  “{item.musicFavLyric}”
+                  "{item.musicFavLyric}"
                 </blockquote>
               )}
               {item.musicGenres && item.musicGenres.length > 0 && (
@@ -645,13 +681,21 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                   {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
                 </div>
               </div>
+              {(item.filmRatingStory || item.filmRatingActing || item.filmRatingVisuals || item.filmRatingPacing) && (
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
+                  {item.filmRatingStory   && <span>Story {"★".repeat(item.filmRatingStory)}{"☆".repeat(5 - item.filmRatingStory)}</span>}
+                  {item.filmRatingActing  && <span>Acting {"★".repeat(item.filmRatingActing)}{"☆".repeat(5 - item.filmRatingActing)}</span>}
+                  {item.filmRatingVisuals && <span>Visuals {"★".repeat(item.filmRatingVisuals)}{"☆".repeat(5 - item.filmRatingVisuals)}</span>}
+                  {item.filmRatingPacing  && <span>Pacing {"★".repeat(item.filmRatingPacing)}{"☆".repeat(5 - item.filmRatingPacing)}</span>}
+                </div>
+              )}
               {item.filmFavLine && (
                 <blockquote style={{
                   marginTop: "0.5rem", padding: "0.5rem 0.75rem",
                   borderLeft: "2px solid #2B4C7E", fontStyle: "italic",
                   fontSize: "0.85rem", color: "var(--ink-soft)",
                 }}>
-                  “{item.filmFavLine}”
+                  "{item.filmFavLine}"
                 </blockquote>
               )}
               {item.filmGenres && item.filmGenres.length > 0 && (
@@ -704,18 +748,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           )}
           {item.templateType === "event" && item.rsvpEnabled && (
             <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
-          )}
-
-          {/* Directory entry link */}
-          {item.linkedDirectorySlug && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <Link
-                href={`/directory/${item.linkedDirectorySlug}`}
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "var(--gold)", fontWeight: 600, textDecoration: "none", border: "1px solid var(--gold)", borderRadius: "var(--radius-full)", padding: "4px 12px" }}
-              >
-                View in Directory →
-              </Link>
-            </div>
           )}
 
           {/* Gallery */}

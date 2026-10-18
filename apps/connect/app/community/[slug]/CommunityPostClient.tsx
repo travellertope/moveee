@@ -115,6 +115,7 @@ interface Props {
   filmGenres?: string[];
   filmCoverUrl?: string;
   // link preview
+  linkedDirectorySlug?: string;
   sourceUrl?: string;
   source?: string;
   ogTitle?: string;
@@ -222,6 +223,7 @@ export default function CommunityPostClient({
   musicRatingReplay, musicRatingVibe, musicFavLyric, musicGenres, musicCoverUrl, musicPreviewUrl,
   filmTitle, filmDirector, filmOverallRating, filmRatingStory, filmRatingActing,
   filmRatingVisuals, filmRatingPacing, filmFavLine, filmGenres, filmCoverUrl,
+  linkedDirectorySlug,
   sourceUrl, source, ogTitle, ogDescription, ogImage,
   authorId,
 }: Props) {
@@ -417,16 +419,32 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      {/* Owner "···" button */}
-      {isOwn && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.25rem" }}>
-          <button
-            onClick={() => setOwnerMenuOpen(v => !v)}
-            title="Post options"
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#7a6f5c", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "1rem", lineHeight: 1 }}
-          >
-            ···
-          </button>
+      {/* Actions row: directory link + owner options */}
+      {(linkedDirectorySlug || isOwn) && (
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "0.4rem", marginBottom: "0.25rem" }}>
+          {linkedDirectorySlug && (
+            <a
+              href={`/directory/${linkedDirectorySlug}`}
+              title="View in Directory"
+              aria-label="View in Directory"
+              style={{ display: "flex", alignItems: "center", color: "#7a6f5c", padding: "0.25rem", borderRadius: "6px", textDecoration: "none" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="3" width="20" height="18" rx="2"/>
+                <circle cx="9" cy="9" r="2"/>
+                <path d="M15 7h4M15 11h4M5 17c0-2 1.3-3 4-3h2"/>
+              </svg>
+            </a>
+          )}
+          {isOwn && (
+            <button
+              onClick={() => setOwnerMenuOpen(v => !v)}
+              title="Post options"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#7a6f5c", padding: "0.2rem 0.5rem", borderRadius: "4px", fontSize: "1rem", lineHeight: 1 }}
+            >
+              ···
+            </button>
+          )}
         </div>
       )}
 
