@@ -153,8 +153,6 @@ const CUISINE_TAGS = ["Nigerian", "West African", "Continental", "Pan-Cultural",
 const PRICE_RANGES_NGN = ["₦", "₦₦", "₦₦₦", "₦₦₦₦"];
 const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
-const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
-const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
 const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", string> = {
   production: "Production",
   lyrics: "Lyrics",
@@ -392,17 +390,12 @@ export default function NewPostScreen() {
   const [bookOverallManual, setBookOverallManual] = useState(false);
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
-  const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
   // Music Review state
   const [musicEntry, setMusicEntry] = useState<DirectoryEntry | null>(null);
   const [musicOverallRating, setMusicOverallRating] = useState(0);
   const [musicOverallManual, setMusicOverallManual] = useState(false);
   const [musicRatings, setMusicRatings] = useState({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
-  const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
-  const [musicGenres, setMusicGenres] = useState<string[]>([]);
-  const [showMusicGenreInput, setShowMusicGenreInput] = useState(false);
-  const [musicGenreInput, setMusicGenreInput] = useState("");
 
   // Film Review state
   const [filmEntry, setFilmEntry] = useState<DirectoryEntry | null>(null);
@@ -410,7 +403,6 @@ export default function NewPostScreen() {
   const [filmOverallManual, setFilmOverallManual] = useState(false);
   const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
-  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
   // Link preview state (standard post template only)
   const [linkPreviewUrl, setLinkPreviewUrl] = useState("");
   const [linkPreview, setLinkPreview] = useState<{ title: string; description: string; image: string; isYoutube?: boolean; videoId?: string } | null>(null);
@@ -632,7 +624,6 @@ const uploadImages = async (): Promise<string[]> => {
       if (!bookStatus) { Alert.alert("Status required", "Select your reading status."); return; }
       if (bookOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
-      if (bookRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this book?"); return; }
     } else if (template === "music-review") {
       if (!musicEntry) { Alert.alert("Album required", "Search and select an album."); return; }
       if (musicOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
@@ -641,7 +632,6 @@ const uploadImages = async (): Promise<string[]> => {
       if (!filmEntry) { Alert.alert("Film required", "Search and select a film."); return; }
       if (filmOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
-      if (filmRecommend === null) { Alert.alert("Recommendation required", "Would you recommend this film?"); return; }
     } else if (template === "itinerary") {
       if (!itineraryTitle.trim()) { Alert.alert("Title required", "Add a trip title."); return; }
       if (stops.filter((s) => s.name.trim()).length < 2) {
@@ -704,7 +694,6 @@ const uploadImages = async (): Promise<string[]> => {
           book_rating_characters: bookRatings.characters,
           book_rating_pacing: bookRatings.pacing,
           book_fav_quote: bookFavQuote || undefined,
-          book_recommend: bookRecommend,
           book_cover_url: bookEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
@@ -726,8 +715,6 @@ const uploadImages = async (): Promise<string[]> => {
           music_rating_replay: musicRatings.replay,
           music_rating_vibe: musicRatings.vibe,
           music_fav_lyric: musicFavLyric || undefined,
-          music_recommend: musicRecommend,
-          music_genres: musicGenres.length > 0 ? musicGenres : undefined,
           music_preview_url: musicEntry!.previewUrl || undefined,
           music_cover_url: musicEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
@@ -750,7 +737,6 @@ const uploadImages = async (): Promise<string[]> => {
           film_rating_visuals: filmRatings.visuals,
           film_rating_pacing: filmRatings.pacing,
           film_fav_line: filmFavLine || undefined,
-          film_recommend: filmRecommend,
           film_cover_url: filmEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
@@ -852,15 +838,15 @@ const uploadImages = async (): Promise<string[]> => {
     if (submitting) return true;
     if (template === "event") return !eventTitle.trim() || !eventDate;
     if (template === "project") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
-    if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50 || bookRecommend === null;
+    if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50;
     if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50;
-    if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50 || filmRecommend === null;
+    if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50;
     if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
   }, [submitting, template, text, eventTitle, eventDate, showcaseTitle, images.length,
-    bookEntry, bookStatus, bookOverallRating, bookRecommend, musicEntry, musicOverallRating,
-    filmEntry, filmOverallRating, filmRecommend,
+    bookEntry, bookStatus, bookOverallRating, musicEntry, musicOverallRating,
+    filmEntry, filmOverallRating,
     itineraryTitle, stops, linkedEntry, tmpl.minText]);
 
   /** Gates the wizard's "Next" button — lighter, per-step version of the
@@ -1414,25 +1400,6 @@ const uploadImages = async (): Promise<string[]> => {
             </View>
           </View>
 
-          {/* Recommend */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
-            <View style={styles.recommendRow}>
-              <TouchableOpacity
-                style={[styles.recommendYes, bookRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
-                onPress={() => setBookRecommend(true)}
-              >
-                <Text style={[styles.recommendText, bookRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.recommendNo, bookRecommend === false && styles.recommendNoActive]}
-                onPress={() => setBookRecommend(false)}
-              >
-                <Text style={[styles.recommendNoText, bookRecommend === false && styles.recommendText]}>👎 No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
         </>
       )}
     </>
@@ -1513,76 +1480,6 @@ const uploadImages = async (): Promise<string[]> => {
             </View>
           </View>
 
-          {/* Recommend */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Would you recommend it? (optional)</Text>
-            <View style={styles.recommendRow}>
-              <TouchableOpacity
-                style={[styles.recommendYes, musicRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
-                onPress={() => setMusicRecommend(true)}
-              >
-                <Text style={[styles.recommendText, musicRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.recommendNo, musicRecommend === false && styles.recommendNoActive]}
-                onPress={() => setMusicRecommend(false)}
-              >
-                <Text style={[styles.recommendNoText, musicRecommend === false && styles.recommendText]}>👎 No</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Genres */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Genres (optional)</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {MUSIC_GENRES.map((g) => {
-                const active = musicGenres.includes(g);
-                return (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.sectionTag, active && styles.sectionTagActive]}
-                    onPress={() => setMusicGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
-                  >
-                    <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-              {musicGenres.filter((g) => !MUSIC_GENRES.includes(g)).map((g) => (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.sectionTag, styles.sectionTagActive]}
-                  onPress={() => setMusicGenres((prev) => prev.filter((x) => x !== g))}
-                >
-                  <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
-                </TouchableOpacity>
-              ))}
-              {showMusicGenreInput ? (
-                <TextInput
-                  style={styles.genreInput}
-                  value={musicGenreInput}
-                  onChangeText={setMusicGenreInput}
-                  placeholder="Custom genre"
-                  placeholderTextColor={c.ghost}
-                  autoFocus
-                  returnKeyType="done"
-                  onSubmitEditing={() => {
-                    const v = musicGenreInput.trim();
-                    if (v && !musicGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
-                      setMusicGenres((prev) => [...prev, v]);
-                    }
-                    setMusicGenreInput("");
-                    setShowMusicGenreInput(false);
-                  }}
-                  onBlur={() => { setMusicGenreInput(""); setShowMusicGenreInput(false); }}
-                />
-              ) : (
-                <TouchableOpacity style={styles.sectionTag} onPress={() => setShowMusicGenreInput(true)}>
-                  <Text style={styles.sectionTagText}>+ Other</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
         </>
       )}
     </>
@@ -1594,12 +1491,7 @@ const uploadImages = async (): Promise<string[]> => {
         <View style={styles.fieldGroup}>
           <DirectorySearch
             selected={filmEntry}
-            onSelect={(entry) => {
-              setFilmEntry(entry);
-              // Pre-select genre chips from TMDB's own genres for the picked
-              // film — a suggestion, not a locked value; still freely editable.
-              if (entry?.genres?.length) setFilmGenres(entry.genres);
-            }}
+            onSelect={setFilmEntry}
             label="Film *"
             typeFilter="film"
             aboutFieldLabel="Director"
@@ -1665,25 +1557,6 @@ const uploadImages = async (): Promise<string[]> => {
                 placeholderTextColor={c.ghost}
                 textAlignVertical="top"
               />
-            </View>
-          </View>
-
-          {/* Recommend */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Would you recommend it? *</Text>
-            <View style={styles.recommendRow}>
-              <TouchableOpacity
-                style={[styles.recommendYes, filmRecommend !== true && { backgroundColor: c.paper, borderWidth: 1, borderColor: c.rule }]}
-                onPress={() => setFilmRecommend(true)}
-              >
-                <Text style={[styles.recommendText, filmRecommend !== true && { color: c.inkSoft }]}>👍 Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.recommendNo, filmRecommend === false && styles.recommendNoActive]}
-                onPress={() => setFilmRecommend(false)}
-              >
-                <Text style={[styles.recommendNoText, filmRecommend === false && styles.recommendText]}>👎 No</Text>
-              </TouchableOpacity>
             </View>
           </View>
 

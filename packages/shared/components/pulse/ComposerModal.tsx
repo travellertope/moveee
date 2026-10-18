@@ -29,9 +29,6 @@ const EVENT_CATEGORIES = ["Art", "Music", "Fashion", "Food", "Film", "Literature
 const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing", "Mixed Media"];
 const ITINERARY_BUDGETS = ["£", "££", "£££", "££££"];
 const ITINERARY_DURATIONS = ["Day trip", "Weekend", "3–4 days", "1 week", "2 weeks", "1 month+"];
-const BOOK_GENRES = ["Fiction", "Non-Fiction", "Poetry", "Essays", "Sci-Fi", "Romance", "Mystery", "Biography", "History", "Self-Help", "Business", "Fantasy"];
-const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
-const FILM_GENRES = ["Drama", "Comedy", "Action", "Horror", "Thriller", "Romance", "Documentary", "Sci-Fi", "Animation", "Fantasy"];
 const CUISINE_TAGS = ["Nigerian", "West African", "Caribbean", "British", "American", "Italian", "Japanese", "Korean", "Indian", "Middle Eastern", "Chinese", "Mexican", "Fusion"];
 const PRICE_RANGES = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Want to Read", "Reading", "Finished"];
@@ -124,47 +121,36 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function ImageUpload({ url, onUpload, onRemove, uploading }: {
-  url: string; onUpload: (f: File) => void; onRemove: () => void; uploading: boolean;
+function MultiImageUpload({ urls, onUpload, onRemove, uploading, max = 4 }: {
+  urls: string[]; onUpload: (f: File) => void; onRemove: (idx: number) => void; uploading: boolean; max?: number;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  function handleFiles(files: FileList | null) {
-    if (files?.[0]) onUpload(files[0]);
-  }
   return (
-    <div
-      className={`cm-upload-zone${url ? " cm-upload-zone--has-image" : ""}`}
-      onDragOver={e => { e.preventDefault(); }}
-      onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
-      onClick={() => !url && inputRef.current?.click()}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={e => handleFiles(e.target.files)}
-      />
-      {url ? (
-        <div className="cm-upload-preview">
-          <img src={url} alt="Upload preview" />
-          <button
-            type="button"
-            className="cm-upload-preview-remove"
-            onClick={e => { e.stopPropagation(); onRemove(); }}
-            aria-label="Remove image"
-          >✕</button>
+    <div className="cm-gallery-grid">
+      {urls.map((url, i) => (
+        <div key={i} className="cm-gallery-thumb">
+          <img src={url} alt={`Photo ${i + 1}`} />
+          <button type="button" className="cm-gallery-remove" onClick={() => onRemove(i)} aria-label="Remove photo">✕</button>
         </div>
-      ) : (
-        <div className="cm-upload-hint">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="3" width="18" height="18" rx="3"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <path d="m21 15-5-5L5 21"/>
-          </svg>
-          <span className="cm-upload-hint-title">{uploading ? "Uploading…" : "Add a photo"}</span>
-          <span className="cm-upload-hint-sub">Click or drag &amp; drop</span>
-        </div>
+      ))}
+      {urls.length < max && (
+        <button
+          type="button"
+          className={`cm-gallery-add${uploading ? " cm-gallery-add--uploading" : ""}`}
+          onClick={() => !uploading && inputRef.current?.click()}
+          disabled={uploading}
+          aria-label="Add photo"
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={e => { if (e.target.files?.[0]) { onUpload(e.target.files[0]); e.target.value = ""; } }}
+          />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <span className="cm-gallery-add-label">{uploading ? "Uploading…" : urls.length === 0 ? "Add photos" : "Add more"}</span>
+        </button>
       )}
     </div>
   );
@@ -195,7 +181,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Quote
   const [qText, setQText]           = useState("");
-  const [qAuthor, setQAuthor]       = useState("");
   const [qAuthorEntry, setQAuthorEntry] = useState<any>(null);
   const [qSource, setQSource]       = useState("");
   const [qSourceEntry, setQSourceEntry] = useState<any>(null);
@@ -242,20 +227,14 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [bookStatus, setBookStatus] = useState("");
   const [bookRatings, setBookRatings] = useState<Record<string, number>>({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
-  const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
-  const [bookGenres, setBookGenres] = useState<string[]>([]);
 
   // Music review additions
   const [musicRatings, setMusicRatings] = useState<Record<string, number>>({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
-  const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
-  const [musicGenres, setMusicGenres] = useState<string[]>([]);
 
   // Film review additions
   const [filmRatings, setFilmRatings] = useState<Record<string, number>>({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
-  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
-  const [filmGenres, setFilmGenres] = useState<string[]>([]);
 
   // Food review additions
   const [foodRatings, setFoodRatings] = useState<Record<string, number>>({ taste: 0, value: 0, vibe: 0 });
@@ -269,8 +248,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   // Shared
   const [category, setCategory]           = useState("");
   const [categoryManuallySet, setCategoryManuallySet] = useState(false);
-  const [imageUrl, setImageUrl]           = useState("");
-  const [uploading, setUploading]         = useState(false);
+  const [galleryUrls, setGalleryUrls]     = useState<string[]>([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
   const [submitting, setSubmitting]       = useState(false);
   const [error, setError]                 = useState("");
 
@@ -296,10 +275,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
       if (direct) { setCategory(direct); return; }
     }
     // Keyword inference from text
-    const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
+    const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
     const inferred = inferCategory(combined);
     if (inferred) setCategory(inferred);
-  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
+  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
 
   // Auto-compute overall star rating from breakdown when set
   useEffect(() => {
@@ -323,7 +302,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place"); setRevEntry(null);
     setArtTitle(""); setArtContent("");
     setPollQ(""); setPollOpts(["", ""]);
-    setQText(""); setQAuthor(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
+    setQText(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
     setITitle(""); setIOverview("");
     setStops([{ id: "a", name: "", location: "", note: "", image_url: "" }, { id: "b", name: "", location: "", note: "", image_url: "" }]);
     setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
@@ -337,12 +316,14 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine(""); setFilmRecommend(null); setFilmGenres([]);
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setCuisineTag(""); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
-    setImageUrl(""); setError("");
+    setGalleryUrls([]); setError("");
     setCategory(""); setCategoryManuallySet(false);
   }, []);
 
-  async function handleImageUpload(file: File) {
-    setUploading(true);
+  const MAX_GALLERY = 4;
+
+  async function handleGalleryImageUpload(file: File) {
+    setGalleryUploading(true);
     setError("");
     try {
       const fd = new FormData();
@@ -350,12 +331,16 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
       const res = await fetch("/api/community/upload-image", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
-      setImageUrl(data.url);
+      setGalleryUrls(prev => [...prev, data.url].slice(0, MAX_GALLERY));
     } catch (e: any) {
       setError(e.message || "Image upload failed");
     } finally {
-      setUploading(false);
+      setGalleryUploading(false);
     }
+  }
+
+  function removeGalleryImage(idx: number) {
+    setGalleryUrls(prev => prev.filter((_, i) => i !== idx));
   }
 
   async function handleStopImageUpload(stopId: string, file: File) {
@@ -379,13 +364,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     try {
       if (activeTab === "quote") {
         if (!qText.trim()) throw new Error("Quote text is required");
-        if (!qAuthorEntry && !qAuthor.trim()) throw new Error("Who said it? Pick someone from the directory or type a name.");
+        if (!qAuthorEntry) throw new Error("Search the directory to pick who said this.");
         const res = await fetch("/api/quotes/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: qText.trim(),
-            author: (qAuthorEntry?.title || qAuthor).trim(),
+            author: qAuthorEntry.title,
             source: (qSourceEntry?.title || qSource).trim() || undefined,
             quote_author_directory_id: qAuthorEntry?.id || undefined,
             linked_directory_id: qSourceEntry?.id || undefined,
@@ -403,7 +388,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           template_type = "post";
           if (!updContent.trim()) throw new Error("Post content is required");
           payload.text = updTitle.trim() ? `${updTitle.trim()}\n\n${updContent.trim()}` : updContent.trim();
-          if (imageUrl) payload.imageUrl = imageUrl;
+          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         } else if (activeTab === "review") {
           template_type = REVIEW_TEMPLATE[revSubtype];
           if (!revContent.trim()) throw new Error("Review content is required");
@@ -428,12 +413,16 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               if (revSubtype === "book") {
                 payload.book_title = revEntry.title;
                 payload.book_author = revEntry.about;
+                if (revEntry.thumbnail) payload.book_cover_url = revEntry.thumbnail;
               } else if (revSubtype === "music") {
                 payload.music_title = revEntry.title;
                 payload.music_artist = revEntry.about;
+                if (revEntry.thumbnail) payload.music_cover_url = revEntry.thumbnail;
+                if (revEntry.previewUrl) payload.music_preview_url = revEntry.previewUrl;
               } else if (revSubtype === "film") {
                 payload.film_title = revEntry.title;
                 payload.film_director = revEntry.about;
+                if (revEntry.thumbnail) payload.film_cover_url = revEntry.thumbnail;
               }
             }
           }
@@ -446,8 +435,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (bookRatings.characters) payload.book_rating_characters = bookRatings.characters;
             if (bookRatings.pacing)     payload.book_rating_pacing     = bookRatings.pacing;
             if (bookFavQuote.trim()) payload.book_fav_quote = bookFavQuote.trim();
-            if (bookRecommend !== null) payload.book_recommend = bookRecommend;
-            if (bookGenres.length) payload.book_genres = bookGenres;
           } else if (revSubtype === "music") {
             payload.music_overall_rating = revRating;
             if (musicRatings.production) payload.music_rating_production = musicRatings.production;
@@ -455,8 +442,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (musicRatings.replay)     payload.music_rating_replay    = musicRatings.replay;
             if (musicRatings.vibe)       payload.music_rating_vibe      = musicRatings.vibe;
             if (musicFavLyric.trim()) payload.music_fav_lyric = musicFavLyric.trim();
-            if (musicRecommend !== null) payload.music_recommend = musicRecommend;
-            if (musicGenres.length) payload.music_genres = musicGenres;
           } else if (revSubtype === "film") {
             payload.film_overall_rating = revRating;
             if (filmRatings.story)   payload.film_rating_story   = filmRatings.story;
@@ -464,8 +449,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (filmRatings.visuals) payload.film_rating_visuals = filmRatings.visuals;
             if (filmRatings.pacing)  payload.film_rating_pacing  = filmRatings.pacing;
             if (filmFavLine.trim()) payload.film_fav_line = filmFavLine.trim();
-            if (filmRecommend !== null) payload.film_recommend = filmRecommend;
-            if (filmGenres.length) payload.film_genres = filmGenres;
           } else if (revSubtype === "food") {
             if (foodRatings.taste) payload.food_rating_taste = foodRatings.taste;
             if (foodRatings.value) payload.food_rating_value = foodRatings.value;
@@ -477,13 +460,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (openingHours.trim()) payload.opening_hours = openingHours.trim();
           }
           payload.star_rating = revRating;
-          if (imageUrl) payload.imageUrl = imageUrl;
+          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         } else if (activeTab === "art") {
           template_type = "project";
           if (!artContent.trim()) throw new Error("Description is required");
           payload.text = artTitle.trim() ? `${artTitle.trim()}\n\n${artContent.trim()}` : artContent.trim();
           if (showcaseMedium) payload.showcase_medium = showcaseMedium;
-          if (imageUrl) payload.imageUrl = imageUrl;
+          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         } else if (activeTab === "poll") {
           template_type = "poll";
           if (!pollQ.trim()) throw new Error("Poll question is required");
@@ -530,7 +513,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           if (evOrganiser?.id) payload.organiser_directory_id = evOrganiser.id;
           payload.rsvp_enabled = evRsvpEnabled;
           if (evRsvpEnabled && evCapacity.trim()) payload.rsvp_capacity = parseInt(evCapacity);
-          if (imageUrl) payload.imageUrl = imageUrl;
+          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         }
 
         payload.template_type = template_type;
@@ -586,7 +569,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               role="tab"
               aria-selected={activeTab === tab.key}
               className={`cm-tab${activeTab === tab.key ? " cm-tab--active" : ""}`}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => { setActiveTab(tab.key); setGalleryUrls([]); }}
             >
               <span aria-hidden="true">{tab.icon}</span>
               {tab.label}
@@ -622,8 +605,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">Visual <span className="cm-label-opt">(optional)</span></label>
-                <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
+                <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
+                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
               </div>
             </>
           )}
@@ -639,7 +622,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                       key={sub}
                       type="button"
                       className={`cm-pill${revSubtype === sub ? " cm-pill--active" : ""}`}
-                      onClick={() => { setRevSubtype(sub); setRevEntry(null); setRevTitle(""); }}
+                      onClick={() => { setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGalleryUrls([]); }}
                     >
                       {{ place: "📍 Place", food: "🍽 Food", music: "🎵 Music", book: "📚 Book", film: "🎬 Film" }[sub]}
                     </button>
@@ -856,83 +839,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               )}
 
-              {/* Genres */}
-              {revSubtype === "book" && (
-                <div className="cm-field">
-                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills cm-pills-wrap">
-                    {BOOK_GENRES.map(g => (
-                      <button
-                        key={g}
-                        type="button"
-                        className={`cm-pill${bookGenres.includes(g) ? " cm-pill--active" : ""}`}
-                        onClick={() => setBookGenres(bookGenres.includes(g) ? bookGenres.filter(x => x !== g) : [...bookGenres, g])}
-                      >{g}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {revSubtype === "music" && (
-                <div className="cm-field">
-                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills cm-pills-wrap">
-                    {MUSIC_GENRES.map(g => (
-                      <button
-                        key={g}
-                        type="button"
-                        className={`cm-pill${musicGenres.includes(g) ? " cm-pill--active" : ""}`}
-                        onClick={() => setMusicGenres(musicGenres.includes(g) ? musicGenres.filter(x => x !== g) : [...musicGenres, g])}
-                      >{g}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {revSubtype === "film" && (
-                <div className="cm-field">
-                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills cm-pills-wrap">
-                    {FILM_GENRES.map(g => (
-                      <button
-                        key={g}
-                        type="button"
-                        className={`cm-pill${filmGenres.includes(g) ? " cm-pill--active" : ""}`}
-                        onClick={() => setFilmGenres(filmGenres.includes(g) ? filmGenres.filter(x => x !== g) : [...filmGenres, g])}
-                      >{g}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recommend */}
-              {(revSubtype === "book" || revSubtype === "music" || revSubtype === "film") && (
-                <div className="cm-field">
-                  <label className="cm-label">Would you recommend it? <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills">
-                    <button
-                      type="button"
-                      className={`cm-pill${revSubtype === "book" ? (bookRecommend === true ? " cm-pill--active" : "") : revSubtype === "music" ? (musicRecommend === true ? " cm-pill--active" : "") : (filmRecommend === true ? " cm-pill--active" : "")}`}
-                      onClick={() => {
-                        if (revSubtype === "book") setBookRecommend(bookRecommend === true ? null : true);
-                        else if (revSubtype === "music") setMusicRecommend(musicRecommend === true ? null : true);
-                        else setFilmRecommend(filmRecommend === true ? null : true);
-                      }}
-                    >👍 Yes</button>
-                    <button
-                      type="button"
-                      className={`cm-pill${revSubtype === "book" ? (bookRecommend === false ? " cm-pill--active" : "") : revSubtype === "music" ? (musicRecommend === false ? " cm-pill--active" : "") : (filmRecommend === false ? " cm-pill--active" : "")}`}
-                      onClick={() => {
-                        if (revSubtype === "book") setBookRecommend(bookRecommend === false ? null : false);
-                        else if (revSubtype === "music") setMusicRecommend(musicRecommend === false ? null : false);
-                        else setFilmRecommend(filmRecommend === false ? null : false);
-                      }}
-                    >👎 No</button>
-                  </div>
-                </div>
-              )}
-
               <div className="cm-field">
-                <label className="cm-label">Photos <span className="cm-label-opt">(optional)</span></label>
-                <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
+                <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
+                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
               </div>
             </>
           )}
@@ -973,8 +882,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">Visual</label>
-                <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
+                <label className="cm-label">Visuals <span className="cm-label-opt">(up to 4)</span></label>
+                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
               </div>
             </>
           )}
@@ -1095,16 +1004,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   aboutFieldLabel="Known for"
                 />
               </div>
-              {!qAuthorEntry && (
-                <div className="cm-field">
-                  <input
-                    className="cm-input"
-                    placeholder="…or just type a name (proverb, overheard, unattributed)"
-                    value={qAuthor}
-                    onChange={e => setQAuthor(e.target.value)}
-                  />
-                </div>
-              )}
 
               {/* Source — directory search with external catalog when type has one; freeform for Speech/untyped; hidden for Person */}
               {QUOTE_SOURCE_TYPES[qType] ? (
@@ -1426,8 +1325,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               )}
               <div className="cm-field">
-                <label className="cm-label">Cover banner <span className="cm-label-opt">(optional)</span></label>
-                <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
+                <label className="cm-label">Cover banner <span className="cm-label-opt">(optional, up to 4)</span></label>
+                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
               </div>
             </>
           )}
@@ -1454,7 +1353,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             <button
               type="button"
               className="cm-submit"
-              disabled={submitting || uploading}
+              disabled={submitting || galleryUploading}
               onClick={handleSubmit}
             >
               {submitting ? "Posting…" : "Publish Post"}
