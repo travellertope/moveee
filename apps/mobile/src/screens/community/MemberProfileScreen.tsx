@@ -187,6 +187,12 @@ const TIER_ICONS: Record<string, string> = {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+function AvatarImage({ uri, fallback, styles }: { uri: string; fallback: string; styles: ReturnType<typeof createStyles> }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <Text style={styles.avatarInitials}>{fallback}</Text>;
+  return <Image source={{ uri }} style={styles.avatarImage} onError={() => setFailed(true)} />;
+}
+
 // Tier chip — shows earned tier only (no progress details for other members)
 function TierChip({
   reputation = 0, styles, c,
@@ -494,7 +500,7 @@ export default function MemberProfileScreen() {
             {isPro && <ProGlowRing color={c.gold} />}
             <View style={styles.avatarInner}>
               {profile.avatarUrl ? (
-                <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
+                <AvatarImage uri={profile.avatarUrl} fallback={initials(profile.displayName)} styles={styles} />
               ) : (
                 <Text style={styles.avatarInitials}>{initials(profile.displayName)}</Text>
               )}
