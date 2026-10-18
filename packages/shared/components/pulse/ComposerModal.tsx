@@ -278,7 +278,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
     const inferred = inferCategory(combined);
     if (inferred) setCategory(inferred);
-  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
+  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
 
   // Auto-compute overall star rating from breakdown when set
   useEffect(() => {
