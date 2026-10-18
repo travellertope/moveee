@@ -56,6 +56,11 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
+
+  useEffect(() => {
+    setItems(initialItems);
+  }, [initialItems]);
+
   const [activeType, setActiveType] = useState<FeedItemType | "all">("all");
   const [forYou, setForYou]           = useState(false);
   const [followingFilter, setFollowingFilter] = useState(false);
@@ -370,7 +375,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           <ComposerModal
             open={composerOpen}
             onClose={() => setComposerOpen(false)}
-            onSuccess={() => router.refresh()}
+            onSuccess={() => { setComposerOpen(false); router.refresh(); }}
             initialTab={composerTab}
           />
 
