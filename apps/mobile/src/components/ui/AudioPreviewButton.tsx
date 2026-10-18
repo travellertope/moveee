@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, Pressable, Text } from "react-native";
+import { View, Image, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { useColors } from "../../hooks/useColors";
 import { radius } from "../../theme";
@@ -113,16 +114,12 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
             justifyContent: "center",
           }}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontSize: iconSize,
-              lineHeight: iconSize + 2,
-              paddingLeft: playing ? 0 : 1,
-            }}
-          >
-            {playing ? "⏸" : "▶"}
-          </Text>
+            <Ionicons
+            name={playing ? "pause" : "play"}
+            size={iconSize}
+            color="#fff"
+            style={{ marginLeft: playing ? 0 : 2 }}
+          />
         </Pressable>
       ) : null}
     </View>

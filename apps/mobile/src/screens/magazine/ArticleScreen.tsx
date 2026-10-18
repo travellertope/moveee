@@ -536,6 +536,7 @@ interface WpComment {
   content: { rendered: string };
   author_name: string;
   author_avatar_urls?: Record<string, string>;
+  author_custom_avatar?: string;
   date: string;
 }
 
@@ -544,10 +545,12 @@ function stripHtml(html: string): string {
 }
 
 function toNormalized(cm: WpComment): NormalizedComment {
+  const gravatar = cm.author_avatar_urls?.["48"];
   return {
     id: String(cm.id),
     authorName: cm.author_name,
-    avatarUrl: cm.author_avatar_urls?.["48"],
+    avatarUrl: cm.author_custom_avatar
+      || (gravatar && !gravatar.includes("gravatar.com/avatar/00000000") ? gravatar : undefined),
     content: stripHtml(cm.content.rendered),
     date: cm.date,
   };
