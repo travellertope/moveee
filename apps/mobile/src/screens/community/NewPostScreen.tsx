@@ -161,7 +161,6 @@ const MUSIC_RATING_LABELS: Record<"production" | "lyrics" | "replay" | "vibe", s
   replay: "Replay Value",
   vibe: "Vibe",
 };
-const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 /**
@@ -380,7 +379,6 @@ export default function NewPostScreen() {
   const [hiddenGemOpeningHours, setHiddenGemOpeningHours] = useState("");
 
   // Food Review extras
-  const [cuisineTag, setCuisineTag] = useState("");
   const [foodPriceRange, setFoodPriceRange] = useState("");
 
   // Creative Showcase extras
@@ -396,10 +394,6 @@ export default function NewPostScreen() {
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
-  const [bookGenres, setBookGenres] = useState<string[]>([]);
-  const [showBookGenreInput, setShowBookGenreInput] = useState(false);
-  const [bookGenreInput, setBookGenreInput] = useState("");
-
   // Music Review state
   const [musicEntry, setMusicEntry] = useState<DirectoryEntry | null>(null);
   const [musicOverallRating, setMusicOverallRating] = useState(0);
@@ -418,10 +412,6 @@ export default function NewPostScreen() {
   const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
   const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
-  const [filmGenres, setFilmGenres] = useState<string[]>([]);
-  const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
-  const [filmGenreInput, setFilmGenreInput] = useState("");
-
   // Link preview state (standard post template only)
   const [linkPreviewUrl, setLinkPreviewUrl] = useState("");
   const [linkPreview, setLinkPreview] = useState<{ title: string; description: string; image: string; isYoutube?: boolean; videoId?: string } | null>(null);
@@ -716,7 +706,6 @@ const uploadImages = async (): Promise<string[]> => {
           book_rating_pacing: bookRatings.pacing,
           book_fav_quote: bookFavQuote || undefined,
           book_recommend: bookRecommend,
-          book_genres: bookGenres.length > 0 ? bookGenres : undefined,
           book_cover_url: bookEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
@@ -763,7 +752,6 @@ const uploadImages = async (): Promise<string[]> => {
           film_rating_pacing: filmRatings.pacing,
           film_fav_line: filmFavLine || undefined,
           film_recommend: filmRecommend,
-          film_genres: filmGenres.length > 0 ? filmGenres : undefined,
           film_cover_url: filmEntry!.thumbnail || undefined,
           hub_id: hubId || undefined,
         } as Record<string, unknown>);
@@ -809,7 +797,6 @@ const uploadImages = async (): Promise<string[]> => {
         body.food_rating_value   = foodRatings.value;
         body.food_rating_vibe    = foodRatings.vibe;
         body.linked_directory_id = foodEntry?.id;
-        body.cuisine_tag         = cuisineTag || undefined;
         body.price_range         = foodPriceRange || undefined;
       }
       if (template === "project") {
@@ -1235,20 +1222,6 @@ const uploadImages = async (): Promise<string[]> => {
             />
           </View>
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Cuisine (optional)</Text>
-            <View style={styles.chipRow}>
-              {CUISINE_TAGS.map((ct) => (
-                <TouchableOpacity
-                  key={ct}
-                  style={[styles.sectionTag, cuisineTag === ct && styles.sectionTagActive]}
-                  onPress={() => setCuisineTag(cuisineTag === ct ? "" : ct)}
-                >
-                  <Text style={[styles.sectionTagText, cuisineTag === ct && styles.sectionTagTextActive]}>{ct}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Price range (optional)</Text>
             {renderPriceChips(PRICE_RANGES_NGN, foodPriceRange, setFoodPriceRange)}
           </View>
@@ -1461,57 +1434,6 @@ const uploadImages = async (): Promise<string[]> => {
             </View>
           </View>
 
-          {/* Genres */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Genres (optional)</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {BOOK_GENRES.map((g) => {
-                const active = bookGenres.includes(g);
-                return (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.sectionTag, active && styles.sectionTagActive]}
-                    onPress={() => setBookGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
-                  >
-                    <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-              {bookGenres.filter((g) => !BOOK_GENRES.includes(g)).map((g) => (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.sectionTag, styles.sectionTagActive]}
-                  onPress={() => setBookGenres((prev) => prev.filter((x) => x !== g))}
-                >
-                  <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
-                </TouchableOpacity>
-              ))}
-              {showBookGenreInput ? (
-                <TextInput
-                  style={styles.genreInput}
-                  value={bookGenreInput}
-                  onChangeText={setBookGenreInput}
-                  placeholder="Custom genre"
-                  placeholderTextColor={c.ghost}
-                  autoFocus
-                  returnKeyType="done"
-                  onSubmitEditing={() => {
-                    const v = bookGenreInput.trim();
-                    if (v && !bookGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
-                      setBookGenres((prev) => [...prev, v]);
-                    }
-                    setBookGenreInput("");
-                    setShowBookGenreInput(false);
-                  }}
-                  onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
-                />
-              ) : (
-                <TouchableOpacity style={styles.sectionTag} onPress={() => setShowBookGenreInput(true)}>
-                  <Text style={styles.sectionTagText}>+ Other</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
         </>
       )}
     </>
@@ -1766,57 +1688,6 @@ const uploadImages = async (): Promise<string[]> => {
             </View>
           </View>
 
-          {/* Genres */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Genres (optional)</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {FILM_GENRES.map((g) => {
-                const active = filmGenres.includes(g);
-                return (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.sectionTag, active && styles.sectionTagActive]}
-                    onPress={() => setFilmGenres((prev) => active ? prev.filter((x) => x !== g) : [...prev, g])}
-                  >
-                    <Text style={[styles.sectionTagText, active && styles.sectionTagTextActive]}>{g}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-              {filmGenres.filter((g) => !FILM_GENRES.includes(g)).map((g) => (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.sectionTag, styles.sectionTagActive]}
-                  onPress={() => setFilmGenres((prev) => prev.filter((x) => x !== g))}
-                >
-                  <Text style={[styles.sectionTagText, styles.sectionTagTextActive]}>{g} ×</Text>
-                </TouchableOpacity>
-              ))}
-              {showFilmGenreInput ? (
-                <TextInput
-                  style={styles.genreInput}
-                  value={filmGenreInput}
-                  onChangeText={setFilmGenreInput}
-                  placeholder="Custom genre"
-                  placeholderTextColor={c.ghost}
-                  autoFocus
-                  returnKeyType="done"
-                  onSubmitEditing={() => {
-                    const v = filmGenreInput.trim();
-                    if (v && !filmGenres.some((g) => g.toLowerCase() === v.toLowerCase())) {
-                      setFilmGenres((prev) => [...prev, v]);
-                    }
-                    setFilmGenreInput("");
-                    setShowFilmGenreInput(false);
-                  }}
-                  onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
-                />
-              ) : (
-                <TouchableOpacity style={styles.sectionTag} onPress={() => setShowFilmGenreInput(true)}>
-                  <Text style={styles.sectionTagText}>+ Other</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
         </>
       )}
     </>

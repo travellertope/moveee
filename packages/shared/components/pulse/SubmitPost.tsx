@@ -198,9 +198,7 @@ function averageRating(ratings: Record<string, number>): number {
 }
 
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
-const BOOK_GENRES = ["Classic Literature", "World Lit", "Post-Colonial", "Fiction", "Historical", "Non-Fiction", "Thriller", "Romance"];
 const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
-const FILM_GENRES = ["Drama", "Comedy", "Thriller", "Documentary", "Animation", "Romance", "Action", "Sci-Fi"];
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];
 
 /**
@@ -332,9 +330,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
   const [bookRatings, setBookRatings] = useState({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
   const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
-  const [bookGenres, setBookGenres] = useState<string[]>([]);
-  const [showBookGenreInput, setShowBookGenreInput] = useState(false);
-  const [bookGenreInput, setBookGenreInput] = useState("");
 
   // Music review specific
   const [musicEntry, setMusicEntry] = useState<any>(null);
@@ -354,9 +349,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
   const [filmRatings, setFilmRatings] = useState({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
   const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
-  const [filmGenres, setFilmGenres] = useState<string[]>([]);
-  const [showFilmGenreInput, setShowFilmGenreInput] = useState(false);
-  const [filmGenreInput, setFilmGenreInput] = useState("");
 
   // Overall rating auto-calculates as the rounded average of the breakdown
   // ratings (Letterboxd/Goodreads-style) until the user taps a star on
@@ -782,7 +774,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         payload.book_rating_pacing = bookRatings.pacing;
         payload.book_fav_quote = bookFavQuote.trim() || undefined;
         payload.book_recommend = bookRecommend;
-        payload.book_genres = bookGenres.length > 0 ? bookGenres : undefined;
         payload.book_cover_url = bookEntry?.thumbnail || undefined;
       }
       if (template === "music-review") {
@@ -813,7 +804,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
         payload.film_rating_pacing = filmRatings.pacing;
         payload.film_fav_line = filmFavLine.trim() || undefined;
         payload.film_recommend = filmRecommend;
-        payload.film_genres = filmGenres.length > 0 ? filmGenres : undefined;
         payload.film_cover_url = filmEntry?.thumbnail || undefined;
       }
       if (template === "poll") {
@@ -1525,66 +1515,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
                     👎 No
                   </button>
                 </div>
-                <p className="composer-field-label">Genres (optional)</p>
-                <div className="composer-chip-wrap">
-                  {BOOK_GENRES.map(g => {
-                    const active = bookGenres.includes(g);
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => setBookGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
-                        className="composer-guide-chip"
-                        style={active ? { background: "#7a241c", color: "#fff", borderColor: "#7a241c" } : undefined}
-                      >
-                        {g}
-                      </button>
-                    );
-                  })}
-                  {bookGenres.filter(g => !BOOK_GENRES.includes(g)).map(g => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setBookGenres(prev => prev.filter(x => x !== g))}
-                      className="composer-guide-chip"
-                      style={{ background: "#7a241c", color: "#fff", borderColor: "#7a241c" }}
-                    >
-                      {g} ×
-                    </button>
-                  ))}
-                  {showBookGenreInput ? (
-                    <span style={{ display: "flex", gap: "4px" }}>
-                      <input
-                        type="text"
-                        value={bookGenreInput}
-                        onChange={e => setBookGenreInput(e.target.value)}
-                        placeholder="Custom genre"
-                        className="composer-input"
-                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
-                        autoFocus
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const v = bookGenreInput.trim();
-                            if (v && !bookGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
-                              setBookGenres(prev => [...prev, v]);
-                            }
-                            setBookGenreInput("");
-                            setShowBookGenreInput(false);
-                          } else if (e.key === "Escape") {
-                            setBookGenreInput("");
-                            setShowBookGenreInput(false);
-                          }
-                        }}
-                        onBlur={() => { setBookGenreInput(""); setShowBookGenreInput(false); }}
-                      />
-                    </span>
-                  ) : (
-                    <button type="button" onClick={() => setShowBookGenreInput(true)} className="composer-guide-chip">
-                      + Other
-                    </button>
-                  )}
-                </div>
               </>
             )}
 
@@ -1736,66 +1666,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
                   >
                     👎 No
                   </button>
-                </div>
-                <p className="composer-field-label">Genres (optional)</p>
-                <div className="composer-chip-wrap">
-                  {FILM_GENRES.map(g => {
-                    const active = filmGenres.includes(g);
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => setFilmGenres(prev => active ? prev.filter(x => x !== g) : [...prev, g])}
-                        className="composer-guide-chip"
-                        style={active ? { background: "#7a241c", color: "#fff", borderColor: "#7a241c" } : undefined}
-                      >
-                        {g}
-                      </button>
-                    );
-                  })}
-                  {filmGenres.filter(g => !FILM_GENRES.includes(g)).map(g => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setFilmGenres(prev => prev.filter(x => x !== g))}
-                      className="composer-guide-chip"
-                      style={{ background: "#7a241c", color: "#fff", borderColor: "#7a241c" }}
-                    >
-                      {g} ×
-                    </button>
-                  ))}
-                  {showFilmGenreInput ? (
-                    <span style={{ display: "flex", gap: "4px" }}>
-                      <input
-                        type="text"
-                        value={filmGenreInput}
-                        onChange={e => setFilmGenreInput(e.target.value)}
-                        placeholder="Custom genre"
-                        className="composer-input"
-                        style={{ width: "120px", fontSize: "0.72rem", padding: "3px 8px" }}
-                        autoFocus
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const v = filmGenreInput.trim();
-                            if (v && !filmGenres.some(g => g.toLowerCase() === v.toLowerCase())) {
-                              setFilmGenres(prev => [...prev, v]);
-                            }
-                            setFilmGenreInput("");
-                            setShowFilmGenreInput(false);
-                          } else if (e.key === "Escape") {
-                            setFilmGenreInput("");
-                            setShowFilmGenreInput(false);
-                          }
-                        }}
-                        onBlur={() => { setFilmGenreInput(""); setShowFilmGenreInput(false); }}
-                      />
-                    </span>
-                  ) : (
-                    <button type="button" onClick={() => setShowFilmGenreInput(true)} className="composer-guide-chip">
-                      + Other
-                    </button>
-                  )}
                 </div>
               </>
             )}

@@ -919,7 +919,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               )}
 
               <div className="cm-field">
-                <label className="cm-label">Cover photo <span className="cm-label-opt">(optional)</span></label>
+                <label className="cm-label">Photos <span className="cm-label-opt">(optional)</span></label>
                 <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
               </div>
             </>
