@@ -2,6 +2,8 @@
   background: var(--ink);
   color: var(--paper);
   padding: 56px 0 48px;
+  /* ochre at its dark-mode value so it reads on --ink */
+  --ochre: #c4645c;
 }
 
 .kft-header {
@@ -42,7 +44,7 @@
 .kft-sub {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: rgba(243,236,224,.5);
+  color: rgba(243,236,224,.7);
   margin: 0;
   max-width: 360px;
   line-height: 1.6;
@@ -131,7 +133,7 @@
 .kft-card-date {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: rgba(200,191,176,.45);
+  color: rgba(243,236,224,.4);
   margin-top: auto;
 }
 
