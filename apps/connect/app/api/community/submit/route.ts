@@ -376,7 +376,7 @@ export async function POST(req: NextRequest) {
   // posts immediately after router.refresh() is called client-side.
   if (postStatus === "publish") {
     revalidatePath("/feed");
-    revalidateTag("community-posts");
+    revalidateTag("community-posts", {});
   }
 
   return NextResponse.json({
