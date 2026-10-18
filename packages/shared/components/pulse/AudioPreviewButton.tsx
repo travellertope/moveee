@@ -31,7 +31,9 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
 
   if (!src && !coverUrl) return null;
 
+  const coverRadius = size >= 60 ? "var(--radius-xl)" : "var(--radius-md)";
   const btnSize = Math.round(size * 0.44);
+  const iconSize = Math.round(btnSize * 0.42);
 
   return (
     <div
@@ -40,7 +42,7 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
         flexShrink: 0,
         width: size,
         height: size,
-        borderRadius: "var(--radius-md)",
+        borderRadius: coverRadius,
         overflow: "hidden",
         background: coverUrl ? "transparent" : "rgba(20,17,13,0.08)",
       }}
@@ -64,24 +66,29 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
             width: btnSize,
             height: btnSize,
             borderRadius: "50%",
-            background: "rgba(0,0,0,0.52)",
-            border: "2px solid rgba(255,255,255,0.7)",
+            background: "rgba(255,255,255,0.92)",
+            border: "none",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
-            fontSize: Math.round(btnSize * 0.38) + "px",
-            backdropFilter: "blur(2px)",
-            transition: "background 0.15s, transform 0.1s",
-            lineHeight: 1,
-            paddingLeft: playing ? 0 : "2px",
+            transition: "background 0.15s",
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.72)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.52)")}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.75)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.92)")}
           aria-label={playing ? "Pause preview" : "Play preview"}
         >
-          {playing ? "⏸" : "▶"}
+          {playing ? (
+            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" aria-hidden="true">
+              <rect x="5" y="4" width="4" height="16" rx="1"/>
+              <rect x="15" y="4" width="4" height="16" rx="1"/>
+            </svg>
+          ) : (
+            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" style={{ marginLeft: "2px" }} aria-hidden="true">
+              <polygon points="6,4 20,12 6,20"/>
+            </svg>
+          )}
           <audio
             ref={audioRef}
             src={src}
