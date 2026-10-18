@@ -14,6 +14,25 @@ class Culture_REST_API {
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
         // Award reputation when a community post is created via the REST API.
         add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
+        // Inject platform avatar URL into WP comment REST responses.
+        add_filter( 'rest_prepare_comment', array( __CLASS__, 'inject_comment_author_avatar' ), 10, 3 );
+    }
+
+    /**
+     * Adds `author_custom_avatar` to comment REST responses so the frontend
+     * can display the commenter's platform profile photo instead of Gravatar.
+     */
+    public static function inject_comment_author_avatar( $response, $comment, $request ) {
+        $author_id = (int) $comment->user_id;
+        if ( $author_id > 0 ) {
+            $avatar = get_user_meta( $author_id, '_culture_avatar_url', true );
+            if ( $avatar ) {
+                $data = $response->get_data();
+                $data['author_custom_avatar'] = esc_url_raw( $avatar );
+                $response->set_data( $data );
+            }
+        }
+        return $response;
     }
 
     /**

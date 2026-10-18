@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
 interface Props {
@@ -11,9 +11,18 @@ interface Props {
 }
 
 export default function AvatarClient({ initialAvatarUrl, displayName, initial, isOwnProfile }: Props) {
-  const { update: updateSession } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl || null);
   const [showModal, setShowModal] = useState(false);
+
+  // For own profile: fall back to session avatar if the SSR prop was empty
+  // (e.g. avatar uploaded before the page was last cached).
+  useEffect(() => {
+    if (isOwnProfile && !avatarUrl) {
+      const sa = (session as any)?.avatarUrl as string | undefined;
+      if (sa) setAvatarUrl(sa);
+    }
+  }, [isOwnProfile, session, avatarUrl]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
