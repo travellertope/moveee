@@ -581,26 +581,26 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               </div>
               {(item.bookRatingWriting || item.bookRatingStory || item.bookRatingCharacters || item.bookRatingPacing) && (
-                <div style={{ display: “flex”, gap: “14px”, flexWrap: “wrap”, marginTop: “0.4rem”, fontSize: “0.78rem”, color: “var(--mute)” }}>
-                  {item.bookRatingWriting    && <span>Writing {“★”.repeat(item.bookRatingWriting)}{“☆”.repeat(5 - item.bookRatingWriting)}</span>}
-                  {item.bookRatingStory      && <span>Story {“★”.repeat(item.bookRatingStory)}{“☆”.repeat(5 - item.bookRatingStory)}</span>}
-                  {item.bookRatingCharacters && <span>Characters {“★”.repeat(item.bookRatingCharacters)}{“☆”.repeat(5 - item.bookRatingCharacters)}</span>}
-                  {item.bookRatingPacing     && <span>Pacing {“★”.repeat(item.bookRatingPacing)}{“☆”.repeat(5 - item.bookRatingPacing)}</span>}
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
+                  {item.bookRatingWriting    && <span>Writing {"★".repeat(item.bookRatingWriting)}{"☆".repeat(5 - item.bookRatingWriting)}</span>}
+                  {item.bookRatingStory      && <span>Story {"★".repeat(item.bookRatingStory)}{"☆".repeat(5 - item.bookRatingStory)}</span>}
+                  {item.bookRatingCharacters && <span>Characters {"★".repeat(item.bookRatingCharacters)}{"☆".repeat(5 - item.bookRatingCharacters)}</span>}
+                  {item.bookRatingPacing     && <span>Pacing {"★".repeat(item.bookRatingPacing)}{"☆".repeat(5 - item.bookRatingPacing)}</span>}
                 </div>
               )}
               {item.bookFavQuote && (
                 <blockquote style={{
-                  marginTop: “0.5rem”, padding: “0.5rem 0.75rem”,
-                  borderLeft: “2px solid #6B48A8”, fontStyle: “italic”,
-                  fontSize: “0.85rem”, color: “var(--ink-soft)”,
+                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  borderLeft: "2px solid #6B48A8", fontStyle: "italic",
+                  fontSize: "0.85rem", color: "var(--ink-soft)",
                 }}>
-                  “{item.bookFavQuote}”
+                  "{item.bookFavQuote}"
                 </blockquote>
               )}
               {item.bookGenres && item.bookGenres.length > 0 && (
-                <div style={{ display: “flex”, gap: “6px”, flexWrap: “wrap”, marginTop: “0.5rem” }}>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "0.5rem" }}>
                   {item.bookGenres.map((g) => (
-                    <span key={g} style={{ fontSize: “0.68rem”, color: “var(--mute)”, background: “var(--paper-deep)”, padding: “2px 8px”, borderRadius: “999px” }}>{g}</span>
+                    <span key={g} style={{ fontSize: "0.68rem", color: "var(--mute)", background: "var(--paper-deep)", padding: "2px 8px", borderRadius: "999px" }}>{g}</span>
                   ))}
                 </div>
               )}
@@ -622,20 +622,20 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               </div>
               {(item.musicRatingProduction || item.musicRatingLyrics || item.musicRatingReplay || item.musicRatingVibe) && (
-                <div style={{ display: “flex”, gap: “14px”, flexWrap: “wrap”, marginTop: “0.4rem”, fontSize: “0.78rem”, color: “var(--mute)” }}>
-                  {item.musicRatingProduction && <span>Production {“★”.repeat(item.musicRatingProduction)}{“☆”.repeat(5 - item.musicRatingProduction)}</span>}
-                  {item.musicRatingLyrics     && <span>Lyrics {“★”.repeat(item.musicRatingLyrics)}{“☆”.repeat(5 - item.musicRatingLyrics)}</span>}
-                  {item.musicRatingReplay     && <span>Replay {“★”.repeat(item.musicRatingReplay)}{“☆”.repeat(5 - item.musicRatingReplay)}</span>}
-                  {item.musicRatingVibe       && <span>Vibe {“★”.repeat(item.musicRatingVibe)}{“☆”.repeat(5 - item.musicRatingVibe)}</span>}
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
+                  {item.musicRatingProduction && <span>Production {"★".repeat(item.musicRatingProduction)}{"☆".repeat(5 - item.musicRatingProduction)}</span>}
+                  {item.musicRatingLyrics     && <span>Lyrics {"★".repeat(item.musicRatingLyrics)}{"☆".repeat(5 - item.musicRatingLyrics)}</span>}
+                  {item.musicRatingReplay     && <span>Replay {"★".repeat(item.musicRatingReplay)}{"☆".repeat(5 - item.musicRatingReplay)}</span>}
+                  {item.musicRatingVibe       && <span>Vibe {"★".repeat(item.musicRatingVibe)}{"☆".repeat(5 - item.musicRatingVibe)}</span>}
                 </div>
               )}
               {item.musicFavLyric && (
                 <blockquote style={{
-                  marginTop: “0.5rem”, padding: “0.5rem 0.75rem”,
-                  borderLeft: “2px solid #0D7377”, fontStyle: “italic”,
-                  fontSize: “0.85rem”, color: “var(--ink-soft)”,
+                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  borderLeft: "2px solid #0D7377", fontStyle: "italic",
+                  fontSize: "0.85rem", color: "var(--ink-soft)",
                 }}>
-                  “{item.musicFavLyric}”
+                  "{item.musicFavLyric}"
                 </blockquote>
               )}
               {item.musicGenres && item.musicGenres.length > 0 && (
@@ -662,20 +662,20 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               </div>
               {(item.filmRatingStory || item.filmRatingActing || item.filmRatingVisuals || item.filmRatingPacing) && (
-                <div style={{ display: “flex”, gap: “14px”, flexWrap: “wrap”, marginTop: “0.4rem”, fontSize: “0.78rem”, color: “var(--mute)” }}>
-                  {item.filmRatingStory   && <span>Story {“★”.repeat(item.filmRatingStory)}{“☆”.repeat(5 - item.filmRatingStory)}</span>}
-                  {item.filmRatingActing  && <span>Acting {“★”.repeat(item.filmRatingActing)}{“☆”.repeat(5 - item.filmRatingActing)}</span>}
-                  {item.filmRatingVisuals && <span>Visuals {“★”.repeat(item.filmRatingVisuals)}{“☆”.repeat(5 - item.filmRatingVisuals)}</span>}
-                  {item.filmRatingPacing  && <span>Pacing {“★”.repeat(item.filmRatingPacing)}{“☆”.repeat(5 - item.filmRatingPacing)}</span>}
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.78rem", color: "var(--mute)" }}>
+                  {item.filmRatingStory   && <span>Story {"★".repeat(item.filmRatingStory)}{"☆".repeat(5 - item.filmRatingStory)}</span>}
+                  {item.filmRatingActing  && <span>Acting {"★".repeat(item.filmRatingActing)}{"☆".repeat(5 - item.filmRatingActing)}</span>}
+                  {item.filmRatingVisuals && <span>Visuals {"★".repeat(item.filmRatingVisuals)}{"☆".repeat(5 - item.filmRatingVisuals)}</span>}
+                  {item.filmRatingPacing  && <span>Pacing {"★".repeat(item.filmRatingPacing)}{"☆".repeat(5 - item.filmRatingPacing)}</span>}
                 </div>
               )}
               {item.filmFavLine && (
                 <blockquote style={{
-                  marginTop: “0.5rem”, padding: “0.5rem 0.75rem”,
-                  borderLeft: “2px solid #2B4C7E”, fontStyle: “italic”,
-                  fontSize: “0.85rem”, color: “var(--ink-soft)”,
+                  marginTop: "0.5rem", padding: "0.5rem 0.75rem",
+                  borderLeft: "2px solid #2B4C7E", fontStyle: "italic",
+                  fontSize: "0.85rem", color: "var(--ink-soft)",
                 }}>
-                  “{item.filmFavLine}”
+                  "{item.filmFavLine}"
                 </blockquote>
               )}
               {item.filmGenres && item.filmGenres.length > 0 && (
