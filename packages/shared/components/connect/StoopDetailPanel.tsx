@@ -257,6 +257,7 @@ interface ClusterStatus {
 
 interface ClusterMember {
   id: number;
+  username?: string;
   name: string;
   avatarUrl: string;
   role: string;
@@ -653,13 +654,15 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
           {isMember && members.length > 0 ? (
             <div className="stoop-dp-member-pills">
               {displayedMembers.map(m => (
-                <span key={m.id} className="stoop-dp-member-pill">
+                <a key={m.id} href={m.username ? `/connect/${m.username}` : undefined}
+                  className="stoop-dp-member-pill"
+                  style={{ textDecoration: "none", cursor: m.username ? "pointer" : "default" }}>
                   <span className="stoop-dp-member-pill-av" style={{ background: avatarColor(m.id) }} aria-hidden="true">
                     {m.name.charAt(0).toUpperCase()}
                   </span>
                   {m.name.split(" ")[0]}
                   {m.role === "host" && <span className="stoop-dp-member-role">(Host)</span>}
-                </span>
+                </a>
               ))}
               {extraCount > 0 && (
                 <span className="stoop-dp-member-pill stoop-dp-member-pill--more">+{extraCount} more</span>

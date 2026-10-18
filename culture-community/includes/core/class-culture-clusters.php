@@ -185,7 +185,7 @@ class Culture_Clusters {
     public static function get_members( int $cluster_id ) : array {
         global $wpdb;
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT m.user_id, m.role, m.joined_at, u.display_name
+            "SELECT m.user_id, m.role, m.joined_at, u.display_name, u.user_login
              FROM " . self::table() . " m
              INNER JOIN {$wpdb->users} u ON u.ID = m.user_id
              WHERE m.cluster_id = %d AND m.status = 'active'
@@ -198,6 +198,7 @@ class Culture_Clusters {
             $user_id   = (int) $row['user_id'];
             $members[] = array(
                 'id'        => $user_id,
+                'username'  => $row['user_login'],
                 'name'      => $row['display_name'],
                 'avatarUrl' => get_user_meta( $user_id, '_culture_avatar_url', true ) ?: '',
                 'role'      => $row['role'],
