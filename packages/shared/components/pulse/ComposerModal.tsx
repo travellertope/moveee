@@ -184,7 +184,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Quote
   const [qText, setQText]           = useState("");
-  const [qAuthor, setQAuthor]       = useState("");
   const [qAuthorEntry, setQAuthorEntry] = useState<any>(null);
   const [qSource, setQSource]       = useState("");
   const [qSourceEntry, setQSourceEntry] = useState<any>(null);
@@ -285,7 +284,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
       if (direct) { setCategory(direct); return; }
     }
     // Keyword inference from text
-    const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
+    const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
     const inferred = inferCategory(combined);
     if (inferred) setCategory(inferred);
   }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qAuthor, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
@@ -312,7 +311,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place"); setRevEntry(null);
     setArtTitle(""); setArtContent("");
     setPollQ(""); setPollOpts(["", ""]);
-    setQText(""); setQAuthor(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
+    setQText(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
     setITitle(""); setIOverview("");
     setStops([{ id: "a", name: "", location: "", note: "", image_url: "" }, { id: "b", name: "", location: "", note: "", image_url: "" }]);
     setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
@@ -374,13 +373,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     try {
       if (activeTab === "quote") {
         if (!qText.trim()) throw new Error("Quote text is required");
-        if (!qAuthorEntry && !qAuthor.trim()) throw new Error("Who said it? Pick someone from the directory or type a name.");
+        if (!qAuthorEntry) throw new Error("Search the directory to pick who said this.");
         const res = await fetch("/api/quotes/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text: qText.trim(),
-            author: (qAuthorEntry?.title || qAuthor).trim(),
+            author: qAuthorEntry.title,
             source: (qSourceEntry?.title || qSource).trim() || undefined,
             quote_author_directory_id: qAuthorEntry?.id || undefined,
             linked_directory_id: qSourceEntry?.id || undefined,
@@ -1094,16 +1093,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   aboutFieldLabel="Known for"
                 />
               </div>
-              {!qAuthorEntry && (
-                <div className="cm-field">
-                  <input
-                    className="cm-input"
-                    placeholder="…or just type a name (proverb, overheard, unattributed)"
-                    value={qAuthor}
-                    onChange={e => setQAuthor(e.target.value)}
-                  />
-                </div>
-              )}
 
               {/* Source — directory search with external catalog when type has one; freeform for Speech/untyped; hidden for Person */}
               {QUOTE_SOURCE_TYPES[qType] ? (
