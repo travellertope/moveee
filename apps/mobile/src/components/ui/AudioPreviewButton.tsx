@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, Pressable } from "react-native";
+import { View, Text, Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { useColors } from "../../hooks/useColors";

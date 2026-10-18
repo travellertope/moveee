@@ -4630,9 +4630,15 @@ class Culture_Mobile_API {
         $author_tier = get_user_meta( $author_id, '_culture_membership_tier', true ) ?: 'citizen';
         $user_reaction = isset( $reactions_map[ $post->ID ] ) ? $reactions_map[ $post->ID ] : null;
 
+        // Preserve paragraph breaks (same logic as format_community_feed_item).
+        $body_html  = wpautop( $post->post_content );
+        $body_text  = preg_replace( '/<\/p>\s*<p[^>]*>/i', "\n\n", $body_html );
+        $body_text  = wp_strip_all_tags( $body_text );
+
         return array(
-            'id'           => (string) $post->ID,
-            'content'      => wp_strip_all_tags( $post->post_content ),
+            'id'      => (string) $post->ID,
+            'title'   => $post->post_title,
+            'content' => $body_text,
             'imageUrl'     => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
             'publishedAt'  => get_date_from_gmt( $post->post_date_gmt, 'c' ),
             'likeCount'    => (int) get_post_meta( $post->ID, '_culture_like_count', true ),
@@ -4716,6 +4722,10 @@ class Culture_Mobile_API {
             'film_recommend'            => get_post_meta( $post->ID, '_film_recommend', true ) === '1',
             'film_genres'               => json_decode( get_post_meta( $post->ID, '_film_genres', true ) ?: '[]', true ),
             'film_cover_url'            => get_post_meta( $post->ID, '_film_cover_url', true ) ?: '',
+            'quote_author'              => get_post_meta( $post->ID, '_quote_author', true ) ?: '',
+            'quote_source'              => get_post_meta( $post->ID, '_quote_source', true ) ?: '',
+            'quote_sharing_reason'      => get_post_meta( $post->ID, '_quote_sharing_reason', true ) ?: '',
+            'quote_type'                => get_post_meta( $post->ID, '_quote_type', true ) ?: '',
         );
     }
 

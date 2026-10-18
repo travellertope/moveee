@@ -51,6 +51,7 @@ interface PublicProfile extends Member {
 
 interface CommunityPost {
   id: string;
+  title?: string;
   content: string;
   imageUrl?: string | null;
   publishedAt: string;
@@ -70,6 +71,8 @@ function mapPostToFeedItem(post: CommunityPost, profile: PublicProfile): FeedIte
     id: `community-${post.id}`,
     wpId: post.id,
     type: "community",
+    // post.title is WP post_title (short heading); post.content is full body text.
+    // Use post.content as the main text body (matches what the feed returns as `title`).
     title: post.content,
     slug: "",
     date: post.publishedAt,
@@ -120,6 +123,37 @@ function mapPostToFeedItem(post: CommunityPost, profile: PublicProfile): FeedIte
     bookFavQuote: post.book_fav_quote || "",
     bookRecommend: !!post.book_recommend,
     bookGenres: post.book_genres || [],
+    bookCoverUrl: post.book_cover_url || undefined,
+    // Music review fields
+    musicTitle: post.music_title || "",
+    musicArtist: post.music_artist || "",
+    musicOverallRating: post.music_overall_rating || undefined,
+    musicRatingProduction: post.music_rating_production || undefined,
+    musicRatingLyrics: post.music_rating_lyrics || undefined,
+    musicRatingReplay: post.music_rating_replay || undefined,
+    musicRatingVibe: post.music_rating_vibe || undefined,
+    musicFavLyric: post.music_fav_lyric || "",
+    musicRecommend: !!post.music_recommend,
+    musicGenres: post.music_genres || [],
+    musicPreviewUrl: post.music_preview_url || undefined,
+    musicCoverUrl: post.music_cover_url || undefined,
+    // Film review fields
+    filmTitle: post.film_title || "",
+    filmDirector: post.film_director || "",
+    filmOverallRating: post.film_overall_rating || undefined,
+    filmRatingStory: post.film_rating_story || undefined,
+    filmRatingActing: post.film_rating_acting || undefined,
+    filmRatingVisuals: post.film_rating_visuals || undefined,
+    filmRatingPacing: post.film_rating_pacing || undefined,
+    filmFavLine: post.film_fav_line || "",
+    filmRecommend: !!post.film_recommend,
+    filmGenres: post.film_genres || [],
+    filmCoverUrl: post.film_cover_url || undefined,
+    // Quote fields
+    quoteAuthor: post.quote_author || "",
+    quoteSource: post.quote_source || "",
+    quoteSharingReason: post.quote_sharing_reason || "",
+    quoteType: post.quote_type || "",
     reactions: { love: 0, fire: 0, clap: 0 },
   };
 }
