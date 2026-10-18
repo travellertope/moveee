@@ -12,7 +12,7 @@ import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
 import EntryLogControl from "./EntryLogControl";
 import SocialProofLine from "./SocialProofLine";
-import SavedLines from "./SavedLines";
+import SaveLineButton from "./SaveLineButton";
 import DirectoryFollowButton from "./DirectoryFollowButton";
 import StoopProximityBanner from "./StoopProximityBanner";
 import { decodeHtml } from "@/lib/decode-html";
@@ -292,13 +292,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
           )}
 
-          {/* Lines saved from this ("Log-First" pass) */}
-          {entry.databaseId && (
-            <div style={{ marginTop: "32px" }}>
-              <SavedLines directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
-            </div>
-          )}
-
           {/* Interests / tags */}
           {interests.length > 0 && (
             <div className="dir-single-tags" style={{ marginTop: "32px" }}>
@@ -438,17 +431,14 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 ))}
               </div>
 
-              {/* Straight into the real composer with this entry already
-                  picked, rather than a second quote form living here. */}
               {entry.databaseId && (
-                <a
-                  className="dir-save-line"
-                  href={`/post/new?template=quote&link_id=${entry.databaseId}&link_role=${quoteLinkRole}` +
-                    `&link_title=${encodeURIComponent(decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, ""))}` +
-                    (quoteLinkType ? `&link_type=${quoteLinkType}` : "")}
-                >
-                  {typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
-                </a>
+                <SaveLineButton
+                  directoryId={entry.databaseId}
+                  entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
+                  quoteLinkRole={quoteLinkRole}
+                  quoteLinkType={quoteLinkType || undefined}
+                  label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
+                />
               )}
             </div>
           )}

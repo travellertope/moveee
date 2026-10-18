@@ -82,12 +82,19 @@ interface Stop {
   image_uploading?: boolean;
 }
 
+interface InitialQuote {
+  authorEntry?: { id: number; title: string };
+  sourceEntry?: { id: number; title: string };
+  quoteType?: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   initialTab?: ComposerTab;
   hubId?: number;
+  initialQuote?: InitialQuote;
 }
 
 function averageRating(vals: Record<string, number>): number {
@@ -163,7 +170,7 @@ function ImageUpload({ url, onUpload, onRemove, uploading }: {
   );
 }
 
-export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId }: Props) {
+export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId, initialQuote }: Props) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
@@ -269,8 +276,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Sync initialTab when it changes (star button sets review)
   useEffect(() => {
-    if (open) setActiveTab(initialTab);
-  }, [open, initialTab]);
+    if (open) {
+      setActiveTab(initialTab);
+      if (initialQuote?.authorEntry) setQAuthorEntry(initialQuote.authorEntry);
+      if (initialQuote?.sourceEntry) setQSourceEntry(initialQuote.sourceEntry);
+      if (initialQuote?.quoteType)   setQType(initialQuote.quoteType);
+    }
+  }, [open, initialTab, initialQuote]);
 
   // Auto-infer hub/category from content unless user has manually picked one
   useEffect(() => {
