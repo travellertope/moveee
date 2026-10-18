@@ -351,23 +351,20 @@ function TemplateHiddenGem({ item, c, styles }: { item: FeedItem; c: ColorPalett
   const images = item.galleryImages ?? [];
   return (
     <>
-      {item.placeName ? <Text style={styles.serifTitle}>{item.placeName}</Text> : null}
-      {(item.placeLocation ?? item.locationName) ? (
-        <View style={styles.locationRow}>
-          <Text style={{ fontSize: 14 }}>📍</Text>
-          <Text style={styles.locationText}>{item.placeLocation ?? item.locationName}</Text>
-        </View>
-      ) : null}
+      <BookCardWrapper
+        directoryId={item.linkedDirectoryId}
+        onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        style={styles.placeHeaderCard}
+      >
+        {item.placeName ? <Text style={styles.serifTitle}>{item.placeName}</Text> : null}
+        {(item.placeLocation ?? item.locationName) ? (
+          <View style={styles.locationRow}>
+            <Text style={{ fontSize: 14 }}>📍</Text>
+            <Text style={styles.locationText}>{item.placeLocation ?? item.locationName}</Text>
+          </View>
+        ) : null}
+      </BookCardWrapper>
       {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
-      {item.linkedDirectoryId ? (
-        <TouchableOpacity
-          style={styles.directoryChip}
-          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        >
-          <Ionicons name="grid-outline" size={12} color={c.gold} />
-          <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </TouchableOpacity>
-      ) : null}
       {(item.priceRange || item.openingHours) ? (
         <View style={[styles.locationRow, { marginBottom: 8 }]}>
           {item.priceRange ? (
@@ -414,16 +411,13 @@ function TemplateFoodReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
 
   return (
     <>
-      <Text style={styles.serifTitle}>{item.foodDishName ?? item.title}</Text>
-      {item.linkedDirectoryId ? (
-        <TouchableOpacity
-          style={styles.directoryChip}
-          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        >
-          <Ionicons name="grid-outline" size={12} color={c.gold} />
-          <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </TouchableOpacity>
-      ) : null}
+      <BookCardWrapper
+        directoryId={item.linkedDirectoryId}
+        onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        style={styles.placeHeaderCard}
+      >
+        <Text style={styles.serifTitle}>{item.foodDishName ?? item.title}</Text>
+      </BookCardWrapper>
       <View style={styles.foodMeta}>
         {item.locationName ? (
           <View style={styles.locationRow}>
@@ -873,16 +867,6 @@ function TemplateBookReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
       {/* Review text */}
       {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
 
-      {item.linkedDirectoryId ? (
-        <TouchableOpacity
-          style={styles.directoryChip}
-          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        >
-          <Ionicons name="grid-outline" size={12} color={c.gold} />
-          <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </TouchableOpacity>
-      ) : null}
-
       {/* Favourite quote */}
       {item.bookFavQuote ? (
         <View style={styles.bookFavQuote}>
@@ -952,9 +936,14 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
         </View>
       ) : null}
 
-      {/* Music card — below writeup; AudioPreviewButton is NOT inside a TouchableOpacity
-          so it can receive its own press events for play/pause */}
-      <View style={styles.musicCard}>
+      {/* Music card — tappable whole card navigates to directory entry.
+          AudioPreviewButton's inner Pressable is a leaf node so it wins
+          the responder over the outer TouchableOpacity on both platforms. */}
+      <BookCardWrapper
+        directoryId={item.linkedDirectoryId}
+        onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        style={styles.musicCard}
+      >
         <View style={{ flexDirection: "row", gap: 12 }}>
           <AudioPreviewButton
             uri={item.musicPreviewUrl}
@@ -962,11 +951,7 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
             width={96}
             height={96}
           />
-          <TouchableOpacity
-            style={{ flex: 1 }}
-            onPress={item.linkedDirectoryId ? () => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId }) : undefined}
-            activeOpacity={item.linkedDirectoryId ? 0.7 : 1}
-          >
+          <View style={{ flex: 1 }}>
             <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle ?? item.title}</Text>
             {item.musicArtist ? <Text style={styles.bookAuthor}>{item.musicArtist}</Text> : null}
             {overall > 0 ? (
@@ -975,7 +960,7 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
                 <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
               </View>
             ) : null}
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* Rating breakdown rows inside the card */}
@@ -990,17 +975,7 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
             ))}
           </View>
         ) : null}
-      </View>
-
-      {item.linkedDirectoryId ? (
-        <TouchableOpacity
-          style={styles.directoryChip}
-          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        >
-          <Ionicons name="grid-outline" size={12} color={c.gold} />
-          <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </TouchableOpacity>
-      ) : null}
+      </BookCardWrapper>
     </>
   );
 }
@@ -1070,16 +1045,6 @@ function TemplateFilmReview({ item, c, styles }: { item: FeedItem; c: ColorPalet
 
       {/* Review text */}
       {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
-
-      {item.linkedDirectoryId ? (
-        <TouchableOpacity
-          style={styles.directoryChip}
-          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        >
-          <Ionicons name="grid-outline" size={12} color={c.gold} />
-          <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </TouchableOpacity>
-      ) : null}
 
       {/* Favourite line */}
       {item.filmFavLine ? (
@@ -1351,8 +1316,13 @@ function createStyles(c: ColorPalette) {
       color: c.inkSoft,
     },
 
+    // Tappable header card for hidden-gem and food-review (wraps place/dish name)
+    placeHeaderCard: {
+      marginBottom: 8,
+    },
+
     // Hidden gem
-    // (uses serifTitle, locationRow, bodyText, directoryChip, heroImage)
+    // (uses serifTitle, locationRow, bodyText, heroImage)
 
     // Cultural take
     takeHeadlineBlock: {
