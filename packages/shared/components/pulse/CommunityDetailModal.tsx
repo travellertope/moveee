@@ -379,6 +379,26 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 ···
               </button>
             )}
+            {item.linkedDirectorySlug && (
+              <Link
+                href={`/directory/${item.linkedDirectorySlug}`}
+                aria-label="View in Directory"
+                title="View in Directory"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "var(--mute)", padding: "0.25rem",
+                  borderRadius: "6px", transition: "color 0.15s",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = "var(--ochre)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "var(--mute)")}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="2" y="3" width="20" height="18" rx="2"/>
+                  <circle cx="9" cy="9" r="2"/>
+                  <path d="M15 7h4M15 11h4M5 17c0-2 1.3-3 4-3h2"/>
+                </svg>
+              </Link>
+            )}
             {item.slug && (
               <Link
                 href={`/community/${item.slug}`}
@@ -728,18 +748,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           )}
           {item.templateType === "event" && item.rsvpEnabled && (
             <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
-          )}
-
-          {/* Directory entry link */}
-          {item.linkedDirectorySlug && (
-            <div style={{ marginBottom: "0.75rem" }}>
-              <Link
-                href={`/directory/${item.linkedDirectorySlug}`}
-                style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "var(--gold)", fontWeight: 600, textDecoration: "none", border: "1px solid var(--gold)", borderRadius: "var(--radius-full)", padding: "4px 12px" }}
-              >
-                View in Directory →
-              </Link>
-            </div>
           )}
 
           {/* Gallery */}

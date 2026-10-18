@@ -872,17 +872,6 @@ export default function FeedCard({
               </div>
             )}
 
-            {/* Directory entry link — for posts that link to a directory entry */}
-            {item.linkedDirectorySlug && (
-              <a
-                href={`/directory/${item.linkedDirectorySlug}`}
-                style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "0.72rem", color: "var(--gold)", fontWeight: 600, marginBottom: "0.5rem", textDecoration: "none" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                View in Directory →
-              </a>
-            )}
-
             {/* Poll inline */}
             {item.templateType === "poll" && item.pollOptions && (
               <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
