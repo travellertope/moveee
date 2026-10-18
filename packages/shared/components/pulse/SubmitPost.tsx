@@ -1220,10 +1220,6 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
                 value={filmEntry}
                 onChange={(entry) => {
                   setFilmEntry(entry);
-                  // Pre-select genre chips from TMDB's own genres for the
-                  // picked film — a suggestion the reviewer can still
-                  // freely add to or remove from, not a locked value.
-                  if (entry?.genres?.length) setFilmGenres(entry.genres);
                 }}
                 typeFilter="film"
                 aboutFieldLabel="Director"
