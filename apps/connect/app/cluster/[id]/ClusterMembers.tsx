@@ -1,5 +1,6 @@
 interface ClusterMember {
   id: number;
+  username?: string;
   name: string;
   avatarUrl: string;
   role: string;
@@ -37,7 +38,12 @@ export default function ClusterMembers({
     <div>
       <div className="stoop-member-list">
         {members.map((m) => (
-          <div key={m.id} className="stoop-member-row">
+          <a
+            key={m.id}
+            href={m.username ? `/connect/${m.username}` : undefined}
+            className="stoop-member-row"
+            style={{ textDecoration: "none", color: "inherit", cursor: m.username ? "pointer" : "default" }}
+          >
             <span className="stoop-member-av" style={{ background: avatarColor(m.id) }} aria-hidden="true">
               {m.avatarUrl ? <img src={m.avatarUrl} alt="" /> : m.name.charAt(0).toUpperCase()}
             </span>
@@ -46,7 +52,7 @@ export default function ClusterMembers({
               {m.role === "host" && <span className="stoop-member-role">Host</span>}
             </span>
             <span className="stoop-member-joined">Joined {formatJoined(m.joinedAt)}</span>
-          </div>
+          </a>
         ))}
       </div>
       {totalCount > members.length && (

@@ -189,17 +189,13 @@ export default function ReactionBar({
     <div style={{
       display: "flex",
       alignItems: "center",
-      ...(noBorder ? {} : { paddingTop: "0.75rem", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: "0.25rem" }),
+      ...(noBorder ? {} : { paddingTop: "0.6rem", borderTop: "1px solid var(--rule, #e8e2d8)", marginTop: "0.25rem" }),
     }}>
-      {/* Action pill */}
+      {/* Action row — flat, inherits card background */}
       <div style={{
         display: "flex",
         alignItems: "center",
         width: "100%",
-        background: "#fff",
-        border: "1.5px solid var(--rule, #e0d8ce)",
-        borderRadius: "10px",
-        boxShadow: "0 2px 14px rgba(20,17,13,0.10), 0 1px 4px rgba(20,17,13,0.06)",
         overflow: "hidden",
       }}>
 
@@ -239,7 +235,7 @@ export default function ReactionBar({
         </button>
 
         {/* Divider */}
-        <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+        <div style={{ width: 1, height: 18, background: "var(--rule, #e8e2d8)", flexShrink: 0, opacity: 0.7 }} />
 
         {/* Bookmark */}
         <button
@@ -267,7 +263,7 @@ export default function ReactionBar({
         </button>
 
         {/* Divider */}
-        <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+        <div style={{ width: 1, height: 18, background: "var(--rule, #e8e2d8)", flexShrink: 0, opacity: 0.7 }} />
 
         {/* Share */}
         <button
@@ -297,7 +293,7 @@ export default function ReactionBar({
         {/* Comment button — optional */}
         {onComment !== undefined && (
           <>
-            <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+            <div style={{ width: 1, height: 18, background: "var(--rule, #e8e2d8)", flexShrink: 0, opacity: 0.7 }} />
             <button
               onClick={(e) => { e.stopPropagation(); onComment(); }}
               aria-label="View comments"
@@ -324,7 +320,7 @@ export default function ReactionBar({
         {/* Flag slot — optional, renders whatever the parent passes */}
         {flagSlot !== undefined && (
           <>
-            <div style={{ width: 1, height: 22, background: "var(--rule, #e0d8ce)", flexShrink: 0 }} />
+            <div style={{ width: 1, height: 18, background: "var(--rule, #e8e2d8)", flexShrink: 0, opacity: 0.7 }} />
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
               {flagSlot}
             </div>
