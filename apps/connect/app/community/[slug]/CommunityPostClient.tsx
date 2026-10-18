@@ -7,6 +7,7 @@ import { Flag } from "lucide-react";
 import HashtagText from "@/components/pulse/HashtagText";
 import ReactionBar from "@/components/pulse/ReactionBar";
 import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
+import AudioPreviewButton from "@/components/pulse/AudioPreviewButton";
 import type { WpComment } from "@/lib/community-wordpress";
 
 function PollDisplay({ postId, options, expiresAt }: { postId: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
@@ -79,6 +80,40 @@ interface Props {
   foodRatingTaste?: number;
   foodRatingValue?: number;
   foodRatingVibe?: number;
+  // book review
+  bookTitle?: string;
+  bookAuthor?: string;
+  bookOverallRating?: number;
+  bookRatingWriting?: number;
+  bookRatingStory?: number;
+  bookRatingCharacters?: number;
+  bookRatingPacing?: number;
+  bookFavQuote?: string;
+  bookGenres?: string[];
+  bookCoverUrl?: string;
+  // music review
+  musicTitle?: string;
+  musicArtist?: string;
+  musicOverallRating?: number;
+  musicRatingProduction?: number;
+  musicRatingLyrics?: number;
+  musicRatingReplay?: number;
+  musicRatingVibe?: number;
+  musicFavLyric?: string;
+  musicGenres?: string[];
+  musicCoverUrl?: string;
+  musicPreviewUrl?: string;
+  // film review
+  filmTitle?: string;
+  filmDirector?: string;
+  filmOverallRating?: number;
+  filmRatingStory?: number;
+  filmRatingActing?: number;
+  filmRatingVisuals?: number;
+  filmRatingPacing?: number;
+  filmFavLine?: string;
+  filmGenres?: string[];
+  filmCoverUrl?: string;
   // link preview
   sourceUrl?: string;
   source?: string;
@@ -181,6 +216,12 @@ export default function CommunityPostClient({
   templateType, starRating, locationName, pollOptions, pollExpiresAt,
   galleryImages, videoUrl, itineraryStops, foodDishName,
   foodRatingTaste, foodRatingValue, foodRatingVibe,
+  bookTitle, bookAuthor, bookOverallRating, bookRatingWriting, bookRatingStory,
+  bookRatingCharacters, bookRatingPacing, bookFavQuote, bookGenres, bookCoverUrl,
+  musicTitle, musicArtist, musicOverallRating, musicRatingProduction, musicRatingLyrics,
+  musicRatingReplay, musicRatingVibe, musicFavLyric, musicGenres, musicCoverUrl, musicPreviewUrl,
+  filmTitle, filmDirector, filmOverallRating, filmRatingStory, filmRatingActing,
+  filmRatingVisuals, filmRatingPacing, filmFavLine, filmGenres, filmCoverUrl,
   sourceUrl, source, ogTitle, ogDescription, ogImage,
   authorId,
 }: Props) {
@@ -341,6 +382,21 @@ export default function CommunityPostClient({
               Food Review{foodDishName ? ` · ${foodDishName}` : ""}
             </span>
           )}
+          {templateType === "music-review" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(122,36,28,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Music Review{musicTitle ? ` · ${musicTitle}` : ""}
+            </span>
+          )}
+          {templateType === "book-review" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(122,36,28,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Book Review{bookTitle ? ` · ${bookTitle}` : ""}
+            </span>
+          )}
+          {templateType === "film-review" && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(122,36,28,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
+              Film Review{filmTitle ? ` · ${filmTitle}` : ""}
+            </span>
+          )}
           {templateType === "project" && (
             <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
               Project
@@ -404,6 +460,121 @@ export default function CommunityPostClient({
           <span>Taste {"★".repeat(foodRatingTaste)}{"☆".repeat(5 - foodRatingTaste)}</span>
           {foodRatingValue && <span>Value {"★".repeat(foodRatingValue)}{"☆".repeat(5 - foodRatingValue)}</span>}
           {foodRatingVibe && <span>Vibe {"★".repeat(foodRatingVibe)}{"☆".repeat(5 - foodRatingVibe)}</span>}
+        </div>
+      )}
+
+      {/* Music review */}
+      {templateType === "music-review" && musicTitle && (
+        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+            {musicCoverUrl && (
+              <img src={musicCoverUrl} alt={musicTitle} style={{ width: 64, height: 64, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{musicTitle}</div>
+              {musicArtist && <div style={{ fontSize: "0.82rem", color: "#7a6f5c" }}>{musicArtist}</div>}
+              {musicOverallRating && (
+                <div style={{ fontSize: "0.85rem", color: "#b38238", marginTop: "4px" }}>
+                  {"★".repeat(musicOverallRating)}{"☆".repeat(5 - musicOverallRating)}
+                </div>
+              )}
+            </div>
+            {musicPreviewUrl && <AudioPreviewButton src={musicPreviewUrl} />}
+          </div>
+          {musicOverallRating && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: musicFavLyric ? "10px" : 0 }}>
+              {musicRatingProduction != null && <span>Production {"★".repeat(musicRatingProduction)}{"☆".repeat(5 - musicRatingProduction)}</span>}
+              {musicRatingLyrics != null && <span>Lyrics {"★".repeat(musicRatingLyrics)}{"☆".repeat(5 - musicRatingLyrics)}</span>}
+              {musicRatingReplay != null && <span>Replay {"★".repeat(musicRatingReplay)}{"☆".repeat(5 - musicRatingReplay)}</span>}
+              {musicRatingVibe != null && <span>Vibe {"★".repeat(musicRatingVibe)}{"☆".repeat(5 - musicRatingVibe)}</span>}
+            </div>
+          )}
+          {musicFavLyric && (
+            <blockquote style={{ margin: "8px 0 0", padding: "0 0 0 10px", borderLeft: "2px solid var(--ochre,#7a241c)", fontSize: "0.85rem", color: "#5a4f3c", fontStyle: "italic", lineHeight: 1.5 }}>
+              "{musicFavLyric}"
+            </blockquote>
+          )}
+          {musicGenres && musicGenres.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
+              {musicGenres.map(g => <span key={g} style={{ fontSize: "0.68rem", fontWeight: 600, color: "#7a6f5c", background: "rgba(20,17,13,0.06)", padding: "2px 8px", borderRadius: "9999px" }}>{g}</span>)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Book review */}
+      {templateType === "book-review" && bookTitle && (
+        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
+            {bookCoverUrl && (
+              <img src={bookCoverUrl} alt={bookTitle} style={{ width: 56, height: 80, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{bookTitle}</div>
+              {bookAuthor && <div style={{ fontSize: "0.82rem", color: "#7a6f5c" }}>{bookAuthor}</div>}
+              {bookOverallRating && (
+                <div style={{ fontSize: "0.85rem", color: "#b38238", marginTop: "4px" }}>
+                  {"★".repeat(bookOverallRating)}{"☆".repeat(5 - bookOverallRating)}
+                </div>
+              )}
+            </div>
+          </div>
+          {bookOverallRating && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: bookFavQuote ? "10px" : 0 }}>
+              {bookRatingWriting != null && <span>Writing {"★".repeat(bookRatingWriting)}{"☆".repeat(5 - bookRatingWriting)}</span>}
+              {bookRatingStory != null && <span>Story {"★".repeat(bookRatingStory)}{"☆".repeat(5 - bookRatingStory)}</span>}
+              {bookRatingCharacters != null && <span>Characters {"★".repeat(bookRatingCharacters)}{"☆".repeat(5 - bookRatingCharacters)}</span>}
+              {bookRatingPacing != null && <span>Pacing {"★".repeat(bookRatingPacing)}{"☆".repeat(5 - bookRatingPacing)}</span>}
+            </div>
+          )}
+          {bookFavQuote && (
+            <blockquote style={{ margin: "8px 0 0", padding: "0 0 0 10px", borderLeft: "2px solid var(--ochre,#7a241c)", fontSize: "0.85rem", color: "#5a4f3c", fontStyle: "italic", lineHeight: 1.5 }}>
+              "{bookFavQuote}"
+            </blockquote>
+          )}
+          {bookGenres && bookGenres.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
+              {bookGenres.map(g => <span key={g} style={{ fontSize: "0.68rem", fontWeight: 600, color: "#7a6f5c", background: "rgba(20,17,13,0.06)", padding: "2px 8px", borderRadius: "9999px" }}>{g}</span>)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Film review */}
+      {templateType === "film-review" && filmTitle && (
+        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
+            {filmCoverUrl && (
+              <img src={filmCoverUrl} alt={filmTitle} style={{ width: 54, height: 80, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{filmTitle}</div>
+              {filmDirector && <div style={{ fontSize: "0.82rem", color: "#7a6f5c" }}>Dir. {filmDirector}</div>}
+              {filmOverallRating && (
+                <div style={{ fontSize: "0.85rem", color: "#b38238", marginTop: "4px" }}>
+                  {"★".repeat(filmOverallRating)}{"☆".repeat(5 - filmOverallRating)}
+                </div>
+              )}
+            </div>
+          </div>
+          {filmOverallRating && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: filmFavLine ? "10px" : 0 }}>
+              {filmRatingStory != null && <span>Story {"★".repeat(filmRatingStory)}{"☆".repeat(5 - filmRatingStory)}</span>}
+              {filmRatingActing != null && <span>Acting {"★".repeat(filmRatingActing)}{"☆".repeat(5 - filmRatingActing)}</span>}
+              {filmRatingVisuals != null && <span>Visuals {"★".repeat(filmRatingVisuals)}{"☆".repeat(5 - filmRatingVisuals)}</span>}
+              {filmRatingPacing != null && <span>Pacing {"★".repeat(filmRatingPacing)}{"☆".repeat(5 - filmRatingPacing)}</span>}
+            </div>
+          )}
+          {filmFavLine && (
+            <blockquote style={{ margin: "8px 0 0", padding: "0 0 0 10px", borderLeft: "2px solid var(--ochre,#7a241c)", fontSize: "0.85rem", color: "#5a4f3c", fontStyle: "italic", lineHeight: 1.5 }}>
+              "{filmFavLine}"
+            </blockquote>
+          )}
+          {filmGenres && filmGenres.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
+              {filmGenres.map(g => <span key={g} style={{ fontSize: "0.68rem", fontWeight: 600, color: "#7a6f5c", background: "rgba(20,17,13,0.06)", padding: "2px 8px", borderRadius: "9999px" }}>{g}</span>)}
+            </div>
+          )}
         </div>
       )}
 

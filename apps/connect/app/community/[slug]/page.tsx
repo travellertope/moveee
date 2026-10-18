@@ -107,6 +107,44 @@ export default async function CommunityPostPage({
   const foodRatingTaste = m._food_rating_taste ? Number(m._food_rating_taste) : undefined;
   const foodRatingValue = m._food_rating_value ? Number(m._food_rating_value) : undefined;
   const foodRatingVibe  = m._food_rating_vibe  ? Number(m._food_rating_vibe)  : undefined;
+
+  // Book review
+  const bookTitle      = m._book_title || undefined;
+  const bookAuthor     = m._book_author || undefined;
+  const bookOverallRating   = m._book_overall_rating ? Number(m._book_overall_rating) : undefined;
+  const bookRatingWriting   = m._book_rating_writing ? Number(m._book_rating_writing) : undefined;
+  const bookRatingStory     = m._book_rating_story ? Number(m._book_rating_story) : undefined;
+  const bookRatingCharacters = m._book_rating_characters ? Number(m._book_rating_characters) : undefined;
+  const bookRatingPacing    = m._book_rating_pacing ? Number(m._book_rating_pacing) : undefined;
+  const bookFavQuote   = m._book_fav_quote || undefined;
+  const bookGenres     = m._book_genres ? (typeof m._book_genres === "string" ? JSON.parse(m._book_genres) : m._book_genres) as string[] : undefined;
+  const bookCoverUrl   = m._book_cover_url || undefined;
+
+  // Music review
+  const musicTitle     = m._music_title || undefined;
+  const musicArtist    = m._music_artist || undefined;
+  const musicOverallRating   = m._music_overall_rating ? Number(m._music_overall_rating) : undefined;
+  const musicRatingProduction = m._music_rating_production ? Number(m._music_rating_production) : undefined;
+  const musicRatingLyrics    = m._music_rating_lyrics ? Number(m._music_rating_lyrics) : undefined;
+  const musicRatingReplay    = m._music_rating_replay ? Number(m._music_rating_replay) : undefined;
+  const musicRatingVibe      = m._music_rating_vibe ? Number(m._music_rating_vibe) : undefined;
+  const musicFavLyric  = m._music_fav_lyric || undefined;
+  const musicGenres    = m._music_genres ? (typeof m._music_genres === "string" ? JSON.parse(m._music_genres) : m._music_genres) as string[] : undefined;
+  const musicCoverUrl  = m._music_cover_url || undefined;
+  const musicPreviewUrl = m._music_preview_url || undefined;
+
+  // Film review
+  const filmTitle      = m._film_title || undefined;
+  const filmDirector   = m._film_director || undefined;
+  const filmOverallRating    = m._film_overall_rating ? Number(m._film_overall_rating) : undefined;
+  const filmRatingStory      = m._film_rating_story ? Number(m._film_rating_story) : undefined;
+  const filmRatingActing     = m._film_rating_acting ? Number(m._film_rating_acting) : undefined;
+  const filmRatingVisuals    = m._film_rating_visuals ? Number(m._film_rating_visuals) : undefined;
+  const filmRatingPacing     = m._film_rating_pacing ? Number(m._film_rating_pacing) : undefined;
+  const filmFavLine    = m._film_fav_line || undefined;
+  const filmGenres     = m._film_genres ? (typeof m._film_genres === "string" ? JSON.parse(m._film_genres) : m._film_genres) as string[] : undefined;
+  const filmCoverUrl   = m._film_cover_url || undefined;
+
   const sourceUrl    = m.community_link_url || undefined;
   const source       = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })() : undefined;
   const ogTitle      = m.community_og_title || undefined;
@@ -243,6 +281,37 @@ export default async function CommunityPostPage({
                 foodRatingTaste={foodRatingTaste}
                 foodRatingValue={foodRatingValue}
                 foodRatingVibe={foodRatingVibe}
+                bookTitle={bookTitle}
+                bookAuthor={bookAuthor}
+                bookOverallRating={bookOverallRating}
+                bookRatingWriting={bookRatingWriting}
+                bookRatingStory={bookRatingStory}
+                bookRatingCharacters={bookRatingCharacters}
+                bookRatingPacing={bookRatingPacing}
+                bookFavQuote={bookFavQuote}
+                bookGenres={bookGenres}
+                bookCoverUrl={bookCoverUrl}
+                musicTitle={musicTitle}
+                musicArtist={musicArtist}
+                musicOverallRating={musicOverallRating}
+                musicRatingProduction={musicRatingProduction}
+                musicRatingLyrics={musicRatingLyrics}
+                musicRatingReplay={musicRatingReplay}
+                musicRatingVibe={musicRatingVibe}
+                musicFavLyric={musicFavLyric}
+                musicGenres={musicGenres}
+                musicCoverUrl={musicCoverUrl}
+                musicPreviewUrl={musicPreviewUrl}
+                filmTitle={filmTitle}
+                filmDirector={filmDirector}
+                filmOverallRating={filmOverallRating}
+                filmRatingStory={filmRatingStory}
+                filmRatingActing={filmRatingActing}
+                filmRatingVisuals={filmRatingVisuals}
+                filmRatingPacing={filmRatingPacing}
+                filmFavLine={filmFavLine}
+                filmGenres={filmGenres}
+                filmCoverUrl={filmCoverUrl}
                 sourceUrl={sourceUrl}
                 source={source}
                 ogTitle={ogTitle}
