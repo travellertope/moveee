@@ -93,10 +93,10 @@ export default function HubContent({
         {/* Tabs */}
         <div style={{ display: "flex", alignItems: "flex-end" }}>
           <TabBtn active={tab === "feed"} onClick={() => setTab("feed")}>
-            Discussions &amp; Posts
+            Posts
           </TabBtn>
           <TabBtn active={tab === "contributors"} onClick={switchToContributors}>
-            Top Contributors
+            Top
           </TabBtn>
         </div>
 
