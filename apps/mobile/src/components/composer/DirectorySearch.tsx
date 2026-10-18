@@ -258,7 +258,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
     );
   }
 
-  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "Spotify" : "TMDB";
+  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "iTunes" : "TMDB";
   const noLocalMatches = showList && results.length === 0;
   const noExternalMatches = !externalSource || (!externalLoading && externalResults.length === 0);
 

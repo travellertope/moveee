@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, Pressable } from "react-native";
+import { View, Text, Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { useColors } from "../../hooks/useColors";
 import { radius } from "../../theme";
 
-/** Album cover with an overlay play/pause circle for Spotify 30s preview clips.
+/** Album cover with an overlay play/pause circle for iTunes 30s preview clips.
  * Mirrors packages/shared/components/pulse/AudioPreviewButton.tsx (web).
  *
  * NOTE: overflow:"hidden" is applied only to the inner image wrapper, NOT the
@@ -62,8 +62,10 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
 
   if (!uri && !coverUri) return null;
 
-  const btnSize = Math.round(Math.min(width, height) * 0.44);
-  const iconSize = Math.round(btnSize * 0.4);
+  // Larger cover → larger rounded corners, bigger play button
+  const coverRadius = width >= 60 ? radius.xl : radius.md;
+  const btnSize = Math.round(Math.min(width, height) * 0.46);
+  const iconSize = Math.round(btnSize * 0.42);
 
   return (
     <View style={{ width, height, flexShrink: 0 }}>
@@ -74,7 +76,7 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
           position: "absolute",
           width,
           height,
-          borderRadius: radius.md,
+          borderRadius: coverRadius,
           overflow: "hidden",
         }}
       >
@@ -85,39 +87,43 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
             style={{
               width,
               height,
-              backgroundColor: c.ghost,
+              backgroundColor: c.paperDeep,
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontSize: 20 }}>🎵</Text>
+            <Text style={{ fontSize: width >= 60 ? 28 : 16 }}>🎵</Text>
           </View>
         )}
       </View>
 
-      {/* Overlay button lives outside overflow:hidden so it receives touches */}
+      {/* Overlay button lives outside overflow:hidden so it receives touches.
+          White frosted circle with dark icon — readable on any cover colour. */}
       {uri ? (
         <Pressable
           onPress={toggle}
-          hitSlop={8}
-          style={{
+          hitSlop={10}
+          style={({ pressed }) => ({
             position: "absolute",
             top: (height - btnSize) / 2,
             left: (width - btnSize) / 2,
             width: btnSize,
             height: btnSize,
             borderRadius: btnSize / 2,
-            backgroundColor: "rgba(0,0,0,0.55)",
-            borderWidth: 1.5,
-            borderColor: "rgba(255,255,255,0.75)",
+            backgroundColor: pressed ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.92)",
+            shadowColor: "#000",
+            shadowOpacity: 0.18,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 4,
             alignItems: "center",
             justifyContent: "center",
-          }}
+          })}
         >
-            <Ionicons
+          <Ionicons
             name={playing ? "pause" : "play"}
             size={iconSize}
-            color="#fff"
+            color="#14110d"
             style={{ marginLeft: playing ? 0 : 2 }}
           />
         </Pressable>

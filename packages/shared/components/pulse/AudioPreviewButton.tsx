@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 interface Props {
-  /** Spotify 30s preview URL — if omitted the cover is shown without a button. */
+  /** iTunes 30s preview URL — if omitted the cover is shown without a button. */
   src?: string;
   /** Album cover image URL — if omitted just the button circle is shown. */
   coverUrl?: string;
@@ -11,7 +11,7 @@ interface Props {
   size?: number;
 }
 
-/** Album cover with an overlay play/pause button for Spotify 30s preview clips.
+/** Album cover with an overlay play/pause button for iTunes 30s preview clips.
  * Stops propagation so it doesn't trigger the card's click-to-open handler. */
 export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);

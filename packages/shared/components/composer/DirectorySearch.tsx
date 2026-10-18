@@ -13,7 +13,7 @@ interface DirectoryResult {
   /** Generic labelled bio field — Author for books, Artist for music,
    * Director for film, … whatever aboutFieldLabel was set to. */
   about?: string;
-  /** Spotify 30s track preview (Music Review only). */
+  /** iTunes 30s track preview (Music Review only). */
   previewUrl?: string | null;
   /** TMDB genres pre-mapped to the composer's own FILM_GENRES vocabulary
    * (Film Review only) — a suggestion to pre-select genre chips with, not a
@@ -59,7 +59,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   const [aboutInput, setAboutInput] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // External catalog search (Google Books/Spotify/TMDB)
+  // External catalog search (Google Books/iTunes/TMDB)
   const [externalResults, setExternalResults] = useState<ExternalResult[]>([]);
   const [externalLoading, setExternalLoading] = useState(false);
   const [creatingExternalId, setCreatingExternalId] = useState<string | null>(null);
@@ -145,7 +145,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     if (!externalSource) return;
     setCreatingExternalId(r.externalId);
     try {
-      // Spotify only — album search results carry no track data, so the
+      // iTunes only — album search results carry no track data, so the
       // 30s preview clip is resolved lazily here, just for the picked
       // album, rather than fanning out one extra call per search result.
       let previewUrl: string | null = null;
@@ -156,7 +156,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
 
       // TMDB only — search results carry no crew data, so the director is
       // resolved lazily here, just for the picked film, same reasoning as
-      // Spotify's preview lookup above.
+      // iTunes preview lookup above.
       let about = r.about;
       if (externalSource === "tmdb") {
         const creditsRes = await fetch(`/api/external/tmdb/credits?movieId=${encodeURIComponent(r.externalId)}`).catch(() => null);
@@ -211,7 +211,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
 
   const externalSourceLabel =
     externalSource === "google_books" ? "Google Books" :
-    externalSource === "spotify" ? "Spotify" :
+    externalSource === "spotify" ? "iTunes" :
     externalSource === "google_places" ? "Google Maps" :
     "TMDB";
 
