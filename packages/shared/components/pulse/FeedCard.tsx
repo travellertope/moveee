@@ -848,13 +848,10 @@ export default function FeedCard({
             {/* Music review rating/recommend/preview */}
             {item.templateType === "music-review" && item.musicOverallRating && (
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.5rem" }}>
-                {item.musicCoverUrl && (
-                  <img src={item.musicCoverUrl} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
-                )}
+                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={44} />
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.72rem", color: "var(--mute)", flexWrap: "wrap" }}>
                   <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
-                  {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Doesn't recommend"}</span>}
-                  {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
+                  {item.musicRecommend != null && <span>{item.musicRecommend ? "👍" : "👎"}</span>}
                 </div>
               </div>
             )}

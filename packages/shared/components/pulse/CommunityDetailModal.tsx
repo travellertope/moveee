@@ -635,13 +635,10 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           {item.templateType === "music-review" && item.musicOverallRating && (
             <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                {item.musicCoverUrl && (
-                  <img src={item.musicCoverUrl} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
-                )}
+                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={64} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
                     <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
-                    {item.musicPreviewUrl && <AudioPreviewButton src={item.musicPreviewUrl} />}
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
                     {item.musicArtist && <span>by {item.musicArtist}</span>}

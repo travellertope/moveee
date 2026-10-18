@@ -1797,17 +1797,10 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
         {/* Album card */}
         {item.musicTitle ? (
           <View style={styles.bookCard}>
-            {coverUri ? (
-              <Image source={{ uri: coverUri }} style={styles.bookCover} resizeMode="cover" />
-            ) : (
-              <View style={[styles.bookCover, styles.bookCoverFallback]}>
-                <Ionicons name="musical-notes-outline" size={22} color={c.mute} />
-              </View>
-            )}
+            <AudioPreviewButton uri={item.musicPreviewUrl} coverUri={coverUri} width={48} height={64} />
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle}</Text>
               {item.musicArtist ? <Text style={styles.bookMeta}>{item.musicArtist}</Text> : null}
-              {item.musicPreviewUrl ? <AudioPreviewButton uri={item.musicPreviewUrl} /> : null}
             </View>
             {item.musicOverallRating != null ? (
               <View style={styles.bookOverallWrap}>

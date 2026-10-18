@@ -1,28 +1,26 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { TouchableOpacity, Text, StyleSheet, GestureResponderEvent } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { View, Image, TouchableOpacity, Text, GestureResponderEvent } from "react-native";
 import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "../../hooks/useColors";
-import { fonts, fontSize, radius, type ColorPalette } from "../../theme";
+import { radius } from "../../theme";
 
-/** 30s Spotify preview clip play/pause button — used on Music Review cards.
+/** Album cover with an overlay play/pause circle for Spotify 30s preview clips.
  * Mirrors packages/shared/components/pulse/AudioPreviewButton.tsx (web).
- *
- * Uses expo-audio, not expo-av: expo-av was removed in Expo SDK 57. The
- * shapes differ — expo-audio's play/pause are synchronous void calls and
- * `playing` is a plain property, where expo-av returned promises and a
- * status object. Behaviour here is unchanged: tap toggles, the clip
- * resets the button when it finishes, and the player is torn down on
- * unmount so a card scrolling out of view can't keep audio alive. */
-export default function AudioPreviewButton({ uri }: { uri: string }) {
+ * Uses expo-audio (not expo-av, which was removed in Expo SDK 57). */
+interface Props {
+  uri?: string | null;
+  coverUri?: string | null;
+  width?: number;
+  height?: number;
+}
+
+export default function AudioPreviewButton({ uri, coverUri, width = 48, height = 64 }: Props) {
   const c = useColors();
-  const styles = useMemo(() => createStyles(c), [c]);
   const playerRef = useRef<AudioPlayer | null>(null);
   const subRef = useRef<{ remove: () => void } | null>(null);
   const [playing, setPlaying] = useState(false);
 
-  // Keyed on uri so this covers both unmount and a card being recycled
-  // onto a different clip — a stale player must never outlive its source.
   useEffect(() => {
     return () => {
       subRef.current?.remove();
@@ -33,19 +31,17 @@ export default function AudioPreviewButton({ uri }: { uri: string }) {
     };
   }, [uri]);
 
-  const toggle = (e: GestureResponderEvent) => {
+  function toggle(e: GestureResponderEvent) {
     e.stopPropagation();
     try {
       if (!playerRef.current) {
+        if (!uri) return;
         const player = createAudioPlayer(uri);
         playerRef.current = player;
-        subRef.current = player.addListener(
-          "playbackStatusUpdate",
-          (status: AudioStatus) => {
-            if (!status.isLoaded) return;
-            if (status.didJustFinish) setPlaying(false);
-          }
-        );
+        subRef.current = player.addListener("playbackStatusUpdate", (status: AudioStatus) => {
+          if (!status.isLoaded) return;
+          if (status.didJustFinish) setPlaying(false);
+        });
         player.play();
         setPlaying(true);
         return;
@@ -60,37 +56,56 @@ export default function AudioPreviewButton({ uri }: { uri: string }) {
     } catch {
       setPlaying(false);
     }
-  };
+  }
+
+  if (!uri && !coverUri) return null;
+
+  const btnSize = Math.round(Math.min(width, height) * 0.44);
 
   return (
-    <TouchableOpacity
-      onPress={toggle}
-      style={styles.btn}
-      activeOpacity={0.75}
-      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+    <View
+      style={{
+        width,
+        height,
+        borderRadius: radius.md,
+        overflow: "hidden",
+        flexShrink: 0,
+        backgroundColor: coverUri ? "transparent" : c.ghost,
+      }}
     >
-      <Ionicons name={playing ? "pause" : "play"} size={11} color={c.templateMusicText} />
-      <Text style={styles.label}>Preview</Text>
-    </TouchableOpacity>
+      {coverUri ? (
+        <Image source={{ uri: coverUri }} style={{ width, height }} resizeMode="cover" />
+      ) : (
+        <View style={{ width, height, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ fontSize: 20 }}>🎵</Text>
+        </View>
+      )}
+      {uri ? (
+        <TouchableOpacity
+          onPress={toggle}
+          activeOpacity={0.75}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          style={{
+            position: "absolute",
+            top: (height - btnSize) / 2,
+            left: (width - btnSize) / 2,
+            width: btnSize,
+            height: btnSize,
+            borderRadius: btnSize / 2,
+            backgroundColor: "rgba(0,0,0,0.52)",
+            borderWidth: 1.5,
+            borderColor: "rgba(255,255,255,0.7)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Ionicons
+            name={playing ? "pause" : "play"}
+            size={Math.round(btnSize * 0.38)}
+            color="#fff"
+          />
+        </TouchableOpacity>
+      ) : null}
+    </View>
   );
-}
-
-function createStyles(c: ColorPalette) {
-  return StyleSheet.create({
-    btn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      backgroundColor: c.templateMusicBg,
-      borderRadius: radius.full,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      alignSelf: "flex-start",
-    },
-    label: {
-      fontFamily: fonts.sansBold,
-      fontSize: fontSize.xs - 0.5,
-      color: c.templateMusicText,
-    },
-  });
 }

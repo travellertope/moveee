@@ -485,9 +485,7 @@ export default function CommunityPostClient({
       {templateType === "music-review" && musicTitle && (
         <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-            {musicCoverUrl && (
-              <img src={musicCoverUrl} alt={musicTitle} style={{ width: 64, height: 64, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
-            )}
+            <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={64} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{musicTitle}</div>
               {musicArtist && <div style={{ fontSize: "0.82rem", color: "#7a6f5c" }}>{musicArtist}</div>}
@@ -497,7 +495,6 @@ export default function CommunityPostClient({
                 </div>
               )}
             </div>
-            {musicPreviewUrl && <AudioPreviewButton src={musicPreviewUrl} />}
           </div>
           {musicOverallRating && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: musicFavLyric ? "10px" : 0 }}>
