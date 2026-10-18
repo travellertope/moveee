@@ -28,6 +28,7 @@ export interface WpCommunityPost {
     // template fields
     _template_type?:        string;
     _linked_directory_id?:  number | string;
+    _linked_directory_slug?: string;
     _star_rating?:          number | string;
     _location_name?:        string;
     _poll_options?:         string | { text: string; votes: number }[];
