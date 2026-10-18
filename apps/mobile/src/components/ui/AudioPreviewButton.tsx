@@ -5,7 +5,7 @@ import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audi
 import { useColors } from "../../hooks/useColors";
 import { radius } from "../../theme";
 
-/** Album cover with an overlay play/pause circle for Spotify 30s preview clips.
+/** Album cover with an overlay play/pause circle for iTunes 30s preview clips.
  * Mirrors packages/shared/components/pulse/AudioPreviewButton.tsx (web).
  *
  * NOTE: overflow:"hidden" is applied only to the inner image wrapper, NOT the

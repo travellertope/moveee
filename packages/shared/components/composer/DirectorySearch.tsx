@@ -211,7 +211,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
 
   const externalSourceLabel =
     externalSource === "google_books" ? "Google Books" :
-    externalSource === "spotify" ? "Spotify" :
+    externalSource === "spotify" ? "iTunes" :
     externalSource === "google_places" ? "Google Maps" :
     "TMDB";
 
