@@ -134,7 +134,7 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
 
   // ── 5b. KAFART2026 partner stories ────────────────────────────────────────
   try {
-    const kafartData = await getWPData(GET_STORIES, { first: 10, tag: "kafart2026" }, OPT);
+    const kafartData = await getWPData(GET_STORIES, { first: 30, tag: "kafart2026" }, OPT);
     kafartStories = (kafartData?.posts?.nodes || []).filter((p: any) => !isCommonsPost(p));
   } catch (err) { console.error("KAFART2026 fetch error:", err); }
 
@@ -148,7 +148,17 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
   } catch (err) { console.error("Series fetch error:", err); }
 
   // ── Deduplicate by slug ───────────────────────────────────────────────────
-  const usedSlugs = new Set<string>();
+  // Seed with kafart slugs so those posts are excluded from every other pool
+  // (featuredPool / coverStory, stories, interviewStories, series sections).
+  const usedSlugs = new Set<string>(kafartStories.map(s => s.slug).filter(Boolean));
+
+  featuredPool = featuredPool.filter(s => s.slug && !usedSlugs.has(s.slug));
+  if (featuredPool.length > 0 || !coverStory || usedSlugs.has(coverStory?.slug ?? "")) {
+    // Re-pick coverStory from the filtered featuredPool if the current one was a kafart post
+    if (coverStory?.slug && usedSlugs.has(coverStory.slug)) {
+      coverStory = featuredPool[0] || stories.find(s => !usedSlugs.has(s.slug)) || null;
+    }
+  }
 
   latestIssueStories = latestIssueStories.filter(s => {
     if (!s.slug || usedSlugs.has(s.slug)) return false;

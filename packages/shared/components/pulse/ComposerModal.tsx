@@ -66,7 +66,7 @@ function inferCategory(text: string): string {
 const TABS: { key: ComposerTab; label: string; icon: string }[] = [
   { key: "update",    label: "Update",       icon: "✏️" },
   { key: "review",    label: "Review",       icon: "⭐" },
-  { key: "art",       label: "Art / Showcase", icon: "🎨" },
+  { key: "art",       label: "Project",        icon: "🎨" },
   { key: "poll",      label: "Poll",         icon: "📊" },
   { key: "quote",     label: "Quote",        icon: "💬" },
   { key: "itinerary", label: "Itinerary",    icon: "🗺️" },
@@ -82,12 +82,19 @@ interface Stop {
   image_uploading?: boolean;
 }
 
+interface InitialQuote {
+  authorEntry?: { id: number; title: string };
+  sourceEntry?: { id: number; title: string };
+  quoteType?: string;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   initialTab?: ComposerTab;
   hubId?: number;
+  initialQuote?: InitialQuote;
 }
 
 function averageRating(vals: Record<string, number>): number {
@@ -163,7 +170,7 @@ function ImageUpload({ url, onUpload, onRemove, uploading }: {
   );
 }
 
-export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId }: Props) {
+export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId, initialQuote }: Props) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
@@ -269,8 +276,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Sync initialTab when it changes (star button sets review)
   useEffect(() => {
-    if (open) setActiveTab(initialTab);
-  }, [open, initialTab]);
+    if (open) {
+      setActiveTab(initialTab);
+      if (initialQuote?.authorEntry) setQAuthorEntry(initialQuote.authorEntry);
+      if (initialQuote?.sourceEntry) setQSourceEntry(initialQuote.sourceEntry);
+      if (initialQuote?.quoteType)   setQType(initialQuote.quoteType);
+    }
+  }, [open, initialTab, initialQuote]);
 
   // Auto-infer hub/category from content unless user has manually picked one
   useEffect(() => {
@@ -919,7 +931,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               )}
 
               <div className="cm-field">
-                <label className="cm-label">Cover photo <span className="cm-label-opt">(optional)</span></label>
+                <label className="cm-label">Photos <span className="cm-label-opt">(optional)</span></label>
                 <ImageUpload url={imageUrl} onUpload={handleImageUpload} onRemove={() => setImageUrl("")} uploading={uploading} />
               </div>
             </>

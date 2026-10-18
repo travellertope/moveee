@@ -27,6 +27,7 @@ import EntryLogControl from "../../components/community/EntryLogControl";
 import SocialProofLine from "../../components/community/SocialProofLine";
 import StoopProximityBanner from "../../components/community/StoopProximityBanner";
 import DirectoryFollowButton from "../../components/community/DirectoryFollowButton";
+import QuoteComposerSheet from "../../components/community/QuoteComposerSheet";
 import type { AlsoLoggedEntry } from "../../features/community/readingTracker";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -427,6 +428,7 @@ export default function DirectoryDetailScreen() {
   const [error, setError] = useState(false);
   const [bodyExpanded, setBodyExpanded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [quoteSheetOpen, setQuoteSheetOpen] = useState(false);
 
   // Derive display values (optimistic while loading)
   const displayType = entry?.entryType ?? routeType ?? "concept";
@@ -785,20 +787,7 @@ export default function DirectoryDetailScreen() {
                 </View>
               ))}
             </View>
-            {/* Reuses the real composer rather than a second quote form here —
-                the entry arrives pre-selected, so all of SubmitPost's own
-                validation and both link fields still apply. */}
-            <TouchableOpacity
-              onPress={() =>
-                nav.navigate("NewPost", {
-                  template: "quote",
-                  quoteLinkId: entry.id,
-                  quoteLinkTitle: entry.title,
-                  quoteLinkRole: entry.entryType === "person" ? "author" : "source",
-                  quoteLinkType: quoteLinkType || undefined,
-                })
-              }
-            >
+            <TouchableOpacity onPress={() => setQuoteSheetOpen(true)}>
               <Text style={styles.saveLine}>
                 {entry.entryType === "person"
                   ? "Save a line from them \u2192"
@@ -942,6 +931,14 @@ export default function DirectoryDetailScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <QuoteComposerSheet
+        visible={quoteSheetOpen}
+        onClose={() => setQuoteSheetOpen(false)}
+        entryId={entry.id}
+        entryTitle={entry.title}
+        quoteLinkRole={entry.entryType === "person" ? "author" : "source"}
+        quoteLinkType={quoteLinkType || undefined}
+      />
     </View>
   );
 }

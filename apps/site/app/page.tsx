@@ -100,7 +100,13 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
     const { coverStory, featuredPool: heroPlusFeatured, stories, products, kafartStories: rawKafart } = homepageData;
     const { topPool, editorialStories, opinionStories, portraitStories, digestStories } = sections;
 
-    const usedSlugs = new Set<string>([coverStory?.slug].filter(Boolean));
+    // Seed usedSlugs with kafart slugs first so those posts are excluded from
+    // every other homepage section (hero carousel, Front Page masonry, The Lane,
+    // Reviews, Viewpoints, Culture News). kafart stories have their own dedicated
+    // section and must not appear elsewhere on the page.
+    const usedSlugs = new Set<string>(
+      [...(rawKafart || []).map((s: any) => s.slug), coverStory?.slug].filter(Boolean)
+    );
     const carouselPool = (heroPlusFeatured || []).filter((s: any) => !usedSlugs.has(s.slug)).slice(0, 7);
     carouselPool.forEach((s: any) => usedSlugs.add(s.slug));
     const featuredPool = (topPool || []).filter((s: any) => !usedSlugs.has(s.slug));
