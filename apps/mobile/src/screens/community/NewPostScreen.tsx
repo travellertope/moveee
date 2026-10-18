@@ -149,7 +149,6 @@ const EVENT_CATEGORIES: { id: string; label: string }[] = [
 ];
 
 const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing"];
-const CUISINE_TAGS = ["Nigerian", "West African", "Continental", "Pan-Cultural", "Fusion", "Seafood"];
 const PRICE_RANGES_NGN = ["₦", "₦₦", "₦₦₦", "₦₦₦₦"];
 const PRICE_RANGES_GBP = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Finished", "Reading", "Want to Read"] as const;
