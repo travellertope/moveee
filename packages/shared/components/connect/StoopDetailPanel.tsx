@@ -280,7 +280,7 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
   const [error, setError] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
-  const [activeTab, setActiveTab] = useState<TabId>("about");
+  const [activeTab, setActiveTab] = useState<TabId>("chat");
   const [coverUploading, setCoverUploading] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -409,9 +409,9 @@ export default function StoopDetailPanel({ clusterId, onBack }: Props) {
   const extraCount = members.length > 24 ? members.length - 24 : 0;
 
   const TABS: { id: TabId; label: string }[] = [
+    { id: "chat",    label: "Chat" },
     { id: "about",   label: "About" },
     { id: "meetups", label: "Meetups" },
-    { id: "chat",    label: "Stoop Chat" },
     { id: "members", label: `Members${isMember && members.length > 0 ? ` (${members.length})` : ""}` },
   ];
 

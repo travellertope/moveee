@@ -1954,8 +1954,6 @@
 /* Section blocks */
 .stoop-dp-section {
   padding: 20px 0 4px;
-  border-top: 1px solid var(--rule, rgba(0,0,0,0.07));
-  margin-top: 8px;
 }
 .stoop-dp-section-heading {
   font-size: 11px;

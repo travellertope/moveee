@@ -30,6 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
+  const wpUserId = session.user.wpUserId ? Number(session.user.wpUserId) : 0;
 
   const res = await fetch(
     `${WP_URL}/wp-json/culture/v1/cluster/${id}/chatter`,
@@ -38,9 +39,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       headers: {
         Authorization: `Bearer ${API_SECRET}`,
         "Content-Type": "application/json",
-        "X-WP-User-Id": String(session.user.wpUserId ?? ""),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, user_id: wpUserId }),
       cache: "no-store",
     }
   );
