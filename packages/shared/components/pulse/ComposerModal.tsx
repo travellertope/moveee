@@ -29,9 +29,6 @@ const EVENT_CATEGORIES = ["Art", "Music", "Fashion", "Food", "Film", "Literature
 const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing", "Mixed Media"];
 const ITINERARY_BUDGETS = ["£", "££", "£££", "££££"];
 const ITINERARY_DURATIONS = ["Day trip", "Weekend", "3–4 days", "1 week", "2 weeks", "1 month+"];
-const BOOK_GENRES = ["Fiction", "Non-Fiction", "Poetry", "Essays", "Sci-Fi", "Romance", "Mystery", "Biography", "History", "Self-Help", "Business", "Fantasy"];
-const MUSIC_GENRES = ["R&B", "Hip-Hop", "Afrobeats", "Afropop", "Pop", "Electronic", "Jazz", "Soul", "Rock", "Gospel", "Reggae", "Classical"];
-const FILM_GENRES = ["Drama", "Comedy", "Action", "Horror", "Thriller", "Romance", "Documentary", "Sci-Fi", "Animation", "Fantasy"];
 const CUISINE_TAGS = ["Nigerian", "West African", "Caribbean", "British", "American", "Italian", "Japanese", "Korean", "Indian", "Middle Eastern", "Chinese", "Mexican", "Fusion"];
 const PRICE_RANGES = ["£", "££", "£££", "££££"];
 const BOOK_STATUSES = ["Want to Read", "Reading", "Finished"];
@@ -230,20 +227,14 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [bookStatus, setBookStatus] = useState("");
   const [bookRatings, setBookRatings] = useState<Record<string, number>>({ writing: 0, story: 0, characters: 0, pacing: 0 });
   const [bookFavQuote, setBookFavQuote] = useState("");
-  const [bookRecommend, setBookRecommend] = useState<boolean | null>(null);
-  const [bookGenres, setBookGenres] = useState<string[]>([]);
 
   // Music review additions
   const [musicRatings, setMusicRatings] = useState<Record<string, number>>({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
   const [musicFavLyric, setMusicFavLyric] = useState("");
-  const [musicRecommend, setMusicRecommend] = useState<boolean | null>(null);
-  const [musicGenres, setMusicGenres] = useState<string[]>([]);
 
   // Film review additions
   const [filmRatings, setFilmRatings] = useState<Record<string, number>>({ story: 0, acting: 0, visuals: 0, pacing: 0 });
   const [filmFavLine, setFilmFavLine] = useState("");
-  const [filmRecommend, setFilmRecommend] = useState<boolean | null>(null);
-  const [filmGenres, setFilmGenres] = useState<string[]>([]);
 
   // Food review additions
   const [foodRatings, setFoodRatings] = useState<Record<string, number>>({ taste: 0, value: 0, vibe: 0 });
@@ -444,8 +435,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (bookRatings.characters) payload.book_rating_characters = bookRatings.characters;
             if (bookRatings.pacing)     payload.book_rating_pacing     = bookRatings.pacing;
             if (bookFavQuote.trim()) payload.book_fav_quote = bookFavQuote.trim();
-            if (bookRecommend !== null) payload.book_recommend = bookRecommend;
-            if (bookGenres.length) payload.book_genres = bookGenres;
           } else if (revSubtype === "music") {
             payload.music_overall_rating = revRating;
             if (musicRatings.production) payload.music_rating_production = musicRatings.production;
@@ -453,8 +442,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (musicRatings.replay)     payload.music_rating_replay    = musicRatings.replay;
             if (musicRatings.vibe)       payload.music_rating_vibe      = musicRatings.vibe;
             if (musicFavLyric.trim()) payload.music_fav_lyric = musicFavLyric.trim();
-            if (musicRecommend !== null) payload.music_recommend = musicRecommend;
-            if (musicGenres.length) payload.music_genres = musicGenres;
           } else if (revSubtype === "film") {
             payload.film_overall_rating = revRating;
             if (filmRatings.story)   payload.film_rating_story   = filmRatings.story;
@@ -462,8 +449,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (filmRatings.visuals) payload.film_rating_visuals = filmRatings.visuals;
             if (filmRatings.pacing)  payload.film_rating_pacing  = filmRatings.pacing;
             if (filmFavLine.trim()) payload.film_fav_line = filmFavLine.trim();
-            if (filmRecommend !== null) payload.film_recommend = filmRecommend;
-            if (filmGenres.length) payload.film_genres = filmGenres;
           } else if (revSubtype === "food") {
             if (foodRatings.taste) payload.food_rating_taste = foodRatings.taste;
             if (foodRatings.value) payload.food_rating_value = foodRatings.value;
@@ -851,80 +836,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     onChange={e => setFilmFavLine(e.target.value)}
                     rows={2}
                   />
-                </div>
-              )}
-
-              {/* Genres */}
-              {revSubtype === "book" && (
-                <div className="cm-field">
-                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills cm-pills-wrap">
-                    {BOOK_GENRES.map(g => (
-                      <button
-                        key={g}
-                        type="button"
-                        className={`cm-pill${bookGenres.includes(g) ? " cm-pill--active" : ""}`}
-                        onClick={() => setBookGenres(bookGenres.includes(g) ? bookGenres.filter(x => x !== g) : [...bookGenres, g])}
-                      >{g}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {revSubtype === "music" && (
-                <div className="cm-field">
-                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills cm-pills-wrap">
-                    {MUSIC_GENRES.map(g => (
-                      <button
-                        key={g}
-                        type="button"
-                        className={`cm-pill${musicGenres.includes(g) ? " cm-pill--active" : ""}`}
-                        onClick={() => setMusicGenres(musicGenres.includes(g) ? musicGenres.filter(x => x !== g) : [...musicGenres, g])}
-                      >{g}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {revSubtype === "film" && (
-                <div className="cm-field">
-                  <label className="cm-label">Genres <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills cm-pills-wrap">
-                    {FILM_GENRES.map(g => (
-                      <button
-                        key={g}
-                        type="button"
-                        className={`cm-pill${filmGenres.includes(g) ? " cm-pill--active" : ""}`}
-                        onClick={() => setFilmGenres(filmGenres.includes(g) ? filmGenres.filter(x => x !== g) : [...filmGenres, g])}
-                      >{g}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recommend */}
-              {(revSubtype === "book" || revSubtype === "music" || revSubtype === "film") && (
-                <div className="cm-field">
-                  <label className="cm-label">Would you recommend it? <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills">
-                    <button
-                      type="button"
-                      className={`cm-pill${revSubtype === "book" ? (bookRecommend === true ? " cm-pill--active" : "") : revSubtype === "music" ? (musicRecommend === true ? " cm-pill--active" : "") : (filmRecommend === true ? " cm-pill--active" : "")}`}
-                      onClick={() => {
-                        if (revSubtype === "book") setBookRecommend(bookRecommend === true ? null : true);
-                        else if (revSubtype === "music") setMusicRecommend(musicRecommend === true ? null : true);
-                        else setFilmRecommend(filmRecommend === true ? null : true);
-                      }}
-                    >👍 Yes</button>
-                    <button
-                      type="button"
-                      className={`cm-pill${revSubtype === "book" ? (bookRecommend === false ? " cm-pill--active" : "") : revSubtype === "music" ? (musicRecommend === false ? " cm-pill--active" : "") : (filmRecommend === false ? " cm-pill--active" : "")}`}
-                      onClick={() => {
-                        if (revSubtype === "book") setBookRecommend(bookRecommend === false ? null : false);
-                        else if (revSubtype === "music") setMusicRecommend(musicRecommend === false ? null : false);
-                        else setFilmRecommend(filmRecommend === false ? null : false);
-                      }}
-                    >👎 No</button>
-                  </div>
                 </div>
               )}
 
