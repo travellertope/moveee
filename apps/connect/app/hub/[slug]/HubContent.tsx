@@ -6,7 +6,7 @@ import HubFeed from "./HubFeed";
 interface HubMember {
   userId: number;
   username: string;
-  displayName: string;
+  name: string;
   avatarUrl?: string;
   role: string;
   joinedAt: string;
@@ -96,7 +96,7 @@ export default function HubContent({
             Posts
           </TabBtn>
           <TabBtn active={tab === "contributors"} onClick={switchToContributors}>
-            Top
+            Contributors
           </TabBtn>
         </div>
 
@@ -189,13 +189,13 @@ export default function HubContent({
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: "0.8rem", fontWeight: 700, flexShrink: 0,
                     }}>
-                      {(m.displayName || m.username || "?").charAt(0).toUpperCase()}
+                      {(m.name || m.username || "?").charAt(0).toUpperCase()}
                     </div>
                   )}
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: "0 0 0.08rem", fontSize: "0.85rem", fontWeight: 600, color: "#14110d" }}>
-                      {m.displayName || m.username}
+                      {m.name || m.username}
                     </p>
                     <p style={{ margin: 0, fontSize: "0.7rem", color: "#7a6f5c" }}>
                       @{m.username}
