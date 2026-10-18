@@ -79,13 +79,7 @@ export default function HubContent({
   };
 
   return (
-    <div style={{
-      margin: "0 1.25rem 1rem",
-      background: "#fff",
-      border: "1px solid var(--rule, #e8e2d8)",
-      borderRadius: "var(--radius-xl, 12px)",
-      overflow: "hidden",
-    }}>
+    <div>
       {/* ── Tab bar + sort row ── */}
       <div style={{
         display: "flex",
@@ -138,15 +132,13 @@ export default function HubContent({
 
       {/* ── Feed tab ── */}
       {tab === "feed" && (
-        <div style={{ padding: "1rem 1.25rem" }}>
-          <HubFeed
-            hubId={hubId}
-            hubSlug={hubSlug}
-            isMember={isMember}
-            isModerator={isModerator}
-            sort={sort}
-          />
-        </div>
+        <HubFeed
+          hubId={hubId}
+          hubSlug={hubSlug}
+          isMember={isMember}
+          isModerator={isModerator}
+          sort={sort}
+        />
       )}
 
       {/* ── Top Contributors tab ── */}
