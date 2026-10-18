@@ -311,9 +311,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setPollDuration("3"); setPollDescription("");
     setICity(""); setIDurationPick(""); setIBudget(""); setIBestTime("");
     setShowcaseMedium("");
-    setBookStatus(""); setBookRatings({ writing: 0, story: 0, characters: 0, pacing: 0 }); setBookFavQuote(""); setBookRecommend(null); setBookGenres([]);
-    setMusicRatings({ production: 0, lyrics: 0, replay: 0, vibe: 0 }); setMusicFavLyric(""); setMusicRecommend(null); setMusicGenres([]);
-    setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine(""); setFilmRecommend(null); setFilmGenres([]);
+    setBookStatus(""); setBookRatings({ writing: 0, story: 0, characters: 0, pacing: 0 }); setBookFavQuote("");
+    setMusicRatings({ production: 0, lyrics: 0, replay: 0, vibe: 0 }); setMusicFavLyric("");
+    setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine("");
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setCuisineTag(""); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
     setGalleryUrls([]); setError("");
