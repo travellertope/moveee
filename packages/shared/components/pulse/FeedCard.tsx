@@ -722,10 +722,8 @@ export default function FeedCard({
                   const typeMap: Record<string, { label: string; color: string; bg: string }> = {
                     "itinerary":         { label: "🗺 Itinerary",    color: "#4f46e5", bg: "rgba(79,70,229,0.10)" },
                     "hidden-gem":        { label: "💎 Place",        color: "#d97706", bg: "rgba(217,119,6,0.10)" },
-                    "food-review":       { label: "🍽 Food",         color: "#d97706", bg: "rgba(217,119,6,0.10)" },
-                    "book-review":       { label: "📚 Book",         color: "#7c3aed", bg: "rgba(124,58,237,0.10)" },
-                    "music-review":      { label: "🎵 Music",        color: "#059669", bg: "rgba(5,150,105,0.10)" },
-                    "film-review":       { label: "🎬 Film",         color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
+                    // review types: info card already conveys the type — no separate badge
+
                     "poll":              { label: "📊 Poll",         color: "#059669", bg: "rgba(5,150,105,0.10)" },
                     "project":           { label: "🎨 Project",      color: "#2563eb", bg: "rgba(37,99,235,0.10)" },
                     "cultural-take":     { label: "💭 Take",         color: "#7c3aed", bg: "rgba(124,58,237,0.10)" },

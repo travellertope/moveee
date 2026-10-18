@@ -1476,7 +1476,6 @@ function FoodReviewCard({ item, onPress, onAuthorPress }: FeedCardProps) {
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
         <AuthorRow item={item} onAuthorPress={onAuthorPress} />
         <View style={{ paddingHorizontal: 14 }}>
-          <BadgePill label="🍽️ FOOD REVIEW" bg={c.templateFoodBg} color={c.templateFoodText} styles={styles} />
           {(item.placeLocation ?? item.locationName) ? (
             <Text style={[styles.locationText, { marginTop: 6 }]}>📍 {item.placeLocation ?? item.locationName}</Text>
           ) : null}
@@ -1709,7 +1708,6 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="📚 BOOK REVIEW" bg={c.templateBookBg} color={c.templateBookText} styles={styles} />
 
         {/* Book card */}
         {item.bookTitle ? (
@@ -1800,7 +1798,6 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="🎵 MUSIC REVIEW" bg={c.templateMusicBg} color={c.templateMusicText} styles={styles} />
 
         {/* Album card */}
         {item.musicTitle ? (
@@ -1875,7 +1872,6 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <AuthorRow item={item} forYouBadge={forYouBadge} onAuthorPress={onAuthorPress} />
       <View style={{ paddingHorizontal: 14 }}>
-        <BadgePill label="🎬 FILM REVIEW" bg={c.templateFilmBg} color={c.templateFilmText} styles={styles} />
 
         {/* Film card */}
         {item.filmTitle ? (

@@ -503,26 +503,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                   Take{item.locationName ? ` · ${item.locationName}` : ""}
                 </span>
               )}
-              {item.templateType === "food-review" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ochre)", background: "rgba(197,73,31,0.08)", padding: "2px 8px", borderRadius: "999px" }}>
-                  Food Review{item.foodDishName ? ` · ${item.foodDishName}` : ""}
-                </span>
-              )}
-              {item.templateType === "book-review" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#6B48A8", background: "rgba(107,72,168,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
-                  📚 Book Review{item.bookTitle ? ` · ${item.bookTitle}` : ""}
-                </span>
-              )}
-              {item.templateType === "music-review" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#0D7377", background: "rgba(13,115,119,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
-                  🎵 Music Review{item.musicTitle ? ` · ${item.musicTitle}` : ""}
-                </span>
-              )}
-              {item.templateType === "film-review" && (
-                <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#2B4C7E", background: "rgba(43,76,126,0.1)", padding: "2px 8px", borderRadius: "999px" }}>
-                  🎬 Film Review{item.filmTitle ? ` · ${item.filmTitle}` : ""}
-                </span>
-              )}
+              {/* review types: info card already conveys the type and title — no separate eyebrow badge */}
               {item.templateType === "project" && (
                 <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cat-blue-fg)", background: "var(--cat-blue-bg)", padding: "2px 8px", borderRadius: "999px" }}>
                   Project

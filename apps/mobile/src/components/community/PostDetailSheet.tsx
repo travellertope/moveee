@@ -1153,13 +1153,15 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
   return (
     <>
     <BottomSheet ref={sheetRef} visible={visible} onClose={onClose} initialState="full">
-      {/* Type badge + time */}
+      {/* Type badge + time — hidden for review types whose info card already signals the type */}
       <View style={styles.topRow}>
-        <View style={[styles.typeBadge, { backgroundColor: badge.bg }]}>
-          <Text style={[styles.typeBadgeText, { color: badge.color }]}>
-            {badge.emoji} {badge.label}
-          </Text>
-        </View>
+        {!["music-review","book-review","film-review","food-review"].includes(item.templateType ?? "") && (
+          <View style={[styles.typeBadge, { backgroundColor: badge.bg }]}>
+            <Text style={[styles.typeBadgeText, { color: badge.color }]}>
+              {badge.emoji} {badge.label}
+            </Text>
+          </View>
+        )}
         <Text style={styles.timeAgo}>{timeAgo(item.date)}</Text>
       </View>
 
