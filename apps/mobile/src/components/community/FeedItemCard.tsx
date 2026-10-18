@@ -1815,8 +1815,8 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
           </View>
         ) : null}
 
-        {/* Review body */}
-        {item.title ? (
+        {/* Review body — only shown when it's a real writeup, not a duplicate of the album title */}
+        {item.title && item.title !== item.musicTitle ? (
           <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
         ) : null}
 

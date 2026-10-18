@@ -916,28 +916,13 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
     { label: "Vibe",       val: item.musicRatingVibe },
   ].filter((r) => r.val !== undefined && r.val > 0);
 
+  // Only show review text if it's a real writeup (not a duplicate of the album title)
+  const reviewText = item.title && item.title !== item.musicTitle ? item.title : null;
+
   return (
     <>
-      {/* Album card */}
-      <BookCardWrapper
-        directoryId={item.linkedDirectoryId}
-        onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        style={styles.bookCard}
-      >
-        <AudioPreviewButton uri={item.musicPreviewUrl} coverUri={item.musicCoverUrl ?? item.image} width={48} height={64} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle ?? item.title}</Text>
-          {item.musicArtist ? (
-            <Text style={styles.bookAuthor}>{item.musicArtist}</Text>
-          ) : null}
-          {overall > 0 ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
-              <StarRow rating={overall} c={c} />
-              <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
-            </View>
-          ) : null}
-        </View>
-      </BookCardWrapper>
+      {/* Review text — above the card */}
+      {reviewText ? <Text style={styles.bodyText}>{reviewText}</Text> : null}
 
       {/* Recommend chip */}
       {item.musicRecommend === true ? (
@@ -946,33 +931,6 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
             <Text style={[styles.tagText, { color: c.gold }]}>👍 Recommended</Text>
           </View>
         </View>
-      ) : null}
-
-      {/* Ratings section */}
-      {ratingRows.length > 0 ? (
-        <View style={styles.ratingsBlock}>
-          <Text style={styles.ratingsLabel}>RATINGS</Text>
-          {ratingRows.map((row) => (
-            <View key={row.label} style={styles.ratingRow}>
-              <Text style={styles.ratingLabel}>{row.label}</Text>
-              <StarRow rating={row.val!} c={c} />
-              <Text style={styles.ratingScore}>{row.val!.toFixed(1)}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-
-      {/* Review text */}
-      {item.title ? <Text style={styles.bodyText}>{item.title}</Text> : null}
-
-      {item.linkedDirectoryId ? (
-        <TouchableOpacity
-          style={styles.directoryChip}
-          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
-        >
-          <Ionicons name="grid-outline" size={12} color={c.gold} />
-          <Text style={styles.directoryChipText}>View in Directory →</Text>
-        </TouchableOpacity>
       ) : null}
 
       {/* Favourite lyric */}
@@ -985,13 +943,63 @@ function TemplateMusicReview({ item, c, styles }: { item: FeedItem; c: ColorPale
 
       {/* Genre chips */}
       {item.musicGenres && item.musicGenres.length > 0 ? (
-        <View style={[styles.tagRow, { marginTop: 8 }]}>
+        <View style={[styles.tagRow, { marginTop: 0, marginBottom: 14 }]}>
           {item.musicGenres.map((g, i) => (
             <View key={g} style={[styles.tag, i === 0 ? { backgroundColor: c.ink, borderColor: c.ink } : {}]}>
               <Text style={[styles.tagText, i === 0 ? { color: "#fff" } : { color: c.inkSoft }]}>{g}</Text>
             </View>
           ))}
         </View>
+      ) : null}
+
+      {/* Music card — below writeup; AudioPreviewButton is NOT inside a TouchableOpacity
+          so it can receive its own press events for play/pause */}
+      <View style={styles.musicCard}>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <AudioPreviewButton
+            uri={item.musicPreviewUrl}
+            coverUri={item.musicCoverUrl ?? item.image}
+            width={96}
+            height={96}
+          />
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            onPress={item.linkedDirectoryId ? () => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId }) : undefined}
+            activeOpacity={item.linkedDirectoryId ? 0.7 : 1}
+          >
+            <Text style={styles.bookTitle} numberOfLines={2}>{item.musicTitle ?? item.title}</Text>
+            {item.musicArtist ? <Text style={styles.bookAuthor}>{item.musicArtist}</Text> : null}
+            {overall > 0 ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <StarRow rating={overall} c={c} />
+                <Text style={{ fontSize: 11, fontFamily: fonts.mono, color: c.gold }}>{overall.toFixed(1)}</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        </View>
+
+        {/* Rating breakdown rows inside the card */}
+        {ratingRows.length > 0 ? (
+          <View style={{ marginTop: 10, gap: 2, borderTopWidth: 1, borderTopColor: c.ghost + "40", paddingTop: 8 }}>
+            {ratingRows.map((row) => (
+              <View key={row.label} style={styles.musicRatingRow}>
+                <Text style={styles.musicRatingLabel}>{row.label}</Text>
+                <StarRow rating={row.val!} c={c} />
+                <Text style={styles.ratingScore}>{row.val!.toFixed(1)}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </View>
+
+      {item.linkedDirectoryId ? (
+        <TouchableOpacity
+          style={styles.directoryChip}
+          onPress={() => nav.navigate("DirectoryDetail", { id: item.linkedDirectoryId })}
+        >
+          <Ionicons name="grid-outline" size={12} color={c.gold} />
+          <Text style={styles.directoryChipText}>View in Directory →</Text>
+        </TouchableOpacity>
       ) : null}
     </>
   );
@@ -1714,6 +1722,27 @@ function createStyles(c: ColorPalette) {
       color: c.ghost,
       paddingHorizontal: 16,
       paddingBottom: 8,
+    },
+
+    // Music review card — separate from bookCard so AudioPreviewButton is not nested
+    // inside a TouchableOpacity (which would block its own press events)
+    musicCard: {
+      padding: 12,
+      borderWidth: 1,
+      borderColor: c.ghost + "40",
+      borderRadius: 12,
+      backgroundColor: c.paperWarm,
+      marginBottom: 12,
+    },
+    musicRatingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      height: 22,
+    },
+    musicRatingLabel: {
+      fontSize: 11,
+      color: c.inkSoft,
+      flex: 1,
     },
 
     // Book review
