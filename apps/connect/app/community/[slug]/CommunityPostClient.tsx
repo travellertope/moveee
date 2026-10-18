@@ -442,8 +442,18 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      {/* Post text — first paragraph (before \n\n) is the title, rest is body */}
+      {/* Post text — review types skip the first paragraph (item title, shown in card) */}
       {(() => {
+        const isReviewType = ["music-review", "book-review", "film-review"].includes(templateType ?? "");
+        if (isReviewType) {
+          const nlIdx = displayText.indexOf("\n\n");
+          const bodyText = nlIdx !== -1 ? displayText.slice(nlIdx + 2).trim() : displayText;
+          return bodyText ? (
+            <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
+              <HashtagText text={bodyText} onMentionClick={handleMentionClick} />
+            </p>
+          ) : null;
+        }
         const nlIdx = displayText.indexOf("\n\n");
         if (nlIdx === -1) return (
           <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
@@ -479,8 +489,8 @@ export default function CommunityPostClient({
       {templateType === "music-review" && musicTitle && (
         <CardLink slug={linkedDirectorySlug}>
         <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-            <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={64} />
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
+            <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={100} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{musicTitle}</div>
               {musicArtist && <div style={{ fontSize: "0.82rem", color: "#7a6f5c" }}>{musicArtist}</div>}
@@ -492,7 +502,7 @@ export default function CommunityPostClient({
             </div>
           </div>
           {musicOverallRating && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: musicFavLyric ? "10px" : 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: musicFavLyric ? "10px" : 0 }}>
               {musicRatingProduction != null && <span>Production {"★".repeat(musicRatingProduction)}{"☆".repeat(5 - musicRatingProduction)}</span>}
               {musicRatingLyrics != null && <span>Lyrics {"★".repeat(musicRatingLyrics)}{"☆".repeat(5 - musicRatingLyrics)}</span>}
               {musicRatingReplay != null && <span>Replay {"★".repeat(musicRatingReplay)}{"☆".repeat(5 - musicRatingReplay)}</span>}
@@ -519,7 +529,7 @@ export default function CommunityPostClient({
         <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             {bookCoverUrl && (
-              <img src={bookCoverUrl} alt={bookTitle} style={{ width: 56, height: 80, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+              <img src={bookCoverUrl} alt={bookTitle} style={{ width: 78, height: 110, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{bookTitle}</div>
@@ -532,7 +542,7 @@ export default function CommunityPostClient({
             </div>
           </div>
           {bookOverallRating && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: bookFavQuote ? "10px" : 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: bookFavQuote ? "10px" : 0 }}>
               {bookRatingWriting != null && <span>Writing {"★".repeat(bookRatingWriting)}{"☆".repeat(5 - bookRatingWriting)}</span>}
               {bookRatingStory != null && <span>Story {"★".repeat(bookRatingStory)}{"☆".repeat(5 - bookRatingStory)}</span>}
               {bookRatingCharacters != null && <span>Characters {"★".repeat(bookRatingCharacters)}{"☆".repeat(5 - bookRatingCharacters)}</span>}
@@ -559,7 +569,7 @@ export default function CommunityPostClient({
         <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             {filmCoverUrl && (
-              <img src={filmCoverUrl} alt={filmTitle} style={{ width: 54, height: 80, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+              <img src={filmCoverUrl} alt={filmTitle} style={{ width: 78, height: 110, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{filmTitle}</div>
@@ -572,7 +582,7 @@ export default function CommunityPostClient({
             </div>
           </div>
           {filmOverallRating && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: filmFavLine ? "10px" : 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px", fontSize: "0.78rem", color: "#7a6f5c", marginBottom: filmFavLine ? "10px" : 0 }}>
               {filmRatingStory != null && <span>Story {"★".repeat(filmRatingStory)}{"☆".repeat(5 - filmRatingStory)}</span>}
               {filmRatingActing != null && <span>Acting {"★".repeat(filmRatingActing)}{"☆".repeat(5 - filmRatingActing)}</span>}
               {filmRatingVisuals != null && <span>Visuals {"★".repeat(filmRatingVisuals)}{"☆".repeat(5 - filmRatingVisuals)}</span>}

@@ -532,6 +532,13 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
               const ytFromInline = !item.videoUrl && !(item.sourceUrl?.includes("youtu.be") || item.sourceUrl?.includes("youtube.com/watch")) && ytUrl !== null;
               const urlToStrip = ytFromInline ? ytUrl! : (item.sourceUrl && !item.image ? item.sourceUrl : undefined);
               const fullText = stripTrailingUrl(item.title, urlToStrip);
+              // For review types the first paragraph is just the item title, already shown in the card below
+              const isReviewType = ["music-review", "book-review", "film-review"].includes(item.templateType ?? "");
+              if (isReviewType) {
+                const nlIdx = fullText.indexOf("\n\n");
+                const bodyText = nlIdx !== -1 ? fullText.slice(nlIdx + 2).trim() : fullText;
+                return bodyText ? <HashtagText text={bodyText} onMentionClick={onMentionClick} /> : null;
+              }
               const nlIdx = fullText.indexOf("\n\n");
               if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={onMentionClick} />;
               const titlePart = fullText.slice(0, nlIdx).trim();
@@ -562,19 +569,18 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
             <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 {item.bookCoverUrl && (
-                  <img src={item.bookCoverUrl} alt="" style={{ width: 56, height: 80, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
+                  <img src={item.bookCoverUrl} alt="" style={{ width: 78, height: 110, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
-                    <span>{"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}</span>
+                  {item.bookTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.bookTitle}</div>}
+                  {item.bookAuthor && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>by {item.bookAuthor}</div>}
+                  <div style={{ fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
+                    {"★".repeat(item.bookOverallRating)}{"☆".repeat(5 - item.bookOverallRating)}
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
-                    {item.bookAuthor && <span>by {item.bookAuthor}</span>}
-                    {item.bookStatus && <span>{item.bookStatus}</span>}
-                    {item.bookRecommend != null && <span>{item.bookRecommend ? "👍 Recommends" : "👎 Does not recommend"}</span>}
-                  </div>
+                  {item.bookRecommend != null && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>{item.bookRecommend ? "👍 Recommends" : "👎 Does not recommend"}</div>}
+                  {item.bookStatus && <div style={{ fontSize: "0.8rem", color: "var(--mute)" }}>{item.bookStatus}</div>}
                   {(item.bookRatingWriting || item.bookRatingStory || item.bookRatingCharacters || item.bookRatingPacing) && (
-                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--mute)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", marginTop: "6px", fontSize: "0.75rem", color: "var(--mute)" }}>
                       {item.bookRatingWriting    && <span>Writing {"★".repeat(item.bookRatingWriting)}{"☆".repeat(5 - item.bookRatingWriting)}</span>}
                       {item.bookRatingStory      && <span>Story {"★".repeat(item.bookRatingStory)}{"☆".repeat(5 - item.bookRatingStory)}</span>}
                       {item.bookRatingCharacters && <span>Characters {"★".repeat(item.bookRatingCharacters)}{"☆".repeat(5 - item.bookRatingCharacters)}</span>}
@@ -608,17 +614,16 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
             <CardLink slug={item.linkedDirectorySlug}>
             <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={64} />
+                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
-                    <span>{"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}</span>
+                  {item.musicTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.musicTitle}</div>}
+                  {item.musicArtist && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>{item.musicArtist}</div>}
+                  <div style={{ fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
+                    {"★".repeat(item.musicOverallRating)}{"☆".repeat(5 - item.musicOverallRating)}
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
-                    {item.musicArtist && <span>by {item.musicArtist}</span>}
-                    {item.musicRecommend != null && <span>{item.musicRecommend ? "👍 Recommends" : "👎 Does not recommend"}</span>}
-                  </div>
+                  {item.musicRecommend != null && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>{item.musicRecommend ? "👍 Recommends" : "👎 Does not recommend"}</div>}
                   {(item.musicRatingProduction || item.musicRatingLyrics || item.musicRatingReplay || item.musicRatingVibe) && (
-                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--mute)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", marginTop: "6px", fontSize: "0.75rem", color: "var(--mute)" }}>
                       {item.musicRatingProduction && <span>Production {"★".repeat(item.musicRatingProduction)}{"☆".repeat(5 - item.musicRatingProduction)}</span>}
                       {item.musicRatingLyrics     && <span>Lyrics {"★".repeat(item.musicRatingLyrics)}{"☆".repeat(5 - item.musicRatingLyrics)}</span>}
                       {item.musicRatingReplay     && <span>Replay {"★".repeat(item.musicRatingReplay)}{"☆".repeat(5 - item.musicRatingReplay)}</span>}
@@ -653,18 +658,17 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
             <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
                 {item.filmCoverUrl && (
-                  <img src={item.filmCoverUrl} alt="" style={{ width: 54, height: 80, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
+                  <img src={item.filmCoverUrl} alt="" style={{ width: 78, height: 110, objectFit: "cover", borderRadius: "var(--radius-md)", flexShrink: 0 }} />
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
-                    <span>{"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}</span>
+                  {item.filmTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.filmTitle}</div>}
+                  {item.filmDirector && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>Dir. {item.filmDirector}</div>}
+                  <div style={{ fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
+                    {"★".repeat(item.filmOverallRating)}{"☆".repeat(5 - item.filmOverallRating)}
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.8rem", color: "var(--mute)" }}>
-                    {item.filmDirector && <span>dir. {item.filmDirector}</span>}
-                    {item.filmRecommend != null && <span>{item.filmRecommend ? "👍 Recommends" : "👎 Does not recommend"}</span>}
-                  </div>
+                  {item.filmRecommend != null && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>{item.filmRecommend ? "👍 Recommends" : "👎 Does not recommend"}</div>}
                   {(item.filmRatingStory || item.filmRatingActing || item.filmRatingVisuals || item.filmRatingPacing) && (
-                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.75rem", color: "var(--mute)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", marginTop: "6px", fontSize: "0.75rem", color: "var(--mute)" }}>
                       {item.filmRatingStory   && <span>Story {"★".repeat(item.filmRatingStory)}{"☆".repeat(5 - item.filmRatingStory)}</span>}
                       {item.filmRatingActing  && <span>Acting {"★".repeat(item.filmRatingActing)}{"☆".repeat(5 - item.filmRatingActing)}</span>}
                       {item.filmRatingVisuals && <span>Visuals {"★".repeat(item.filmRatingVisuals)}{"☆".repeat(5 - item.filmRatingVisuals)}</span>}
