@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Image, TouchableOpacity, Text, GestureResponderEvent } from "react-native";
+import { View, Image, Pressable, Text } from "react-native";
 import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
-import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "../../hooks/useColors";
 import { radius } from "../../theme";
 
 /** Album cover with an overlay play/pause circle for Spotify 30s preview clips.
  * Mirrors packages/shared/components/pulse/AudioPreviewButton.tsx (web).
- * Uses expo-audio (not expo-av, which was removed in Expo SDK 57). */
+ *
+ * NOTE: overflow:"hidden" is applied only to the inner image wrapper, NOT the
+ * outer container. On Android, overflow:"hidden" clips touch events for any
+ * absolutely-positioned children, so the overlay button must live outside it. */
 interface Props {
   uri?: string | null;
   coverUri?: string | null;
@@ -31,8 +33,7 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
     };
   }, [uri]);
 
-  function toggle(e: GestureResponderEvent) {
-    e.stopPropagation();
+  function toggle() {
     try {
       if (!playerRef.current) {
         if (!uri) return;
@@ -61,30 +62,43 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
   if (!uri && !coverUri) return null;
 
   const btnSize = Math.round(Math.min(width, height) * 0.44);
+  const iconSize = Math.round(btnSize * 0.4);
 
   return (
-    <View
-      style={{
-        width,
-        height,
-        borderRadius: radius.md,
-        overflow: "hidden",
-        flexShrink: 0,
-        backgroundColor: coverUri ? "transparent" : c.ghost,
-      }}
-    >
-      {coverUri ? (
-        <Image source={{ uri: coverUri }} style={{ width, height }} resizeMode="cover" />
-      ) : (
-        <View style={{ width, height, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontSize: 20 }}>🎵</Text>
-        </View>
-      )}
+    <View style={{ width, height, flexShrink: 0 }}>
+      {/* Inner wrapper with overflow:hidden for rounded corners — kept separate so
+          the absolute overlay button below is NOT clipped on Android */}
+      <View
+        style={{
+          position: "absolute",
+          width,
+          height,
+          borderRadius: radius.md,
+          overflow: "hidden",
+        }}
+      >
+        {coverUri ? (
+          <Image source={{ uri: coverUri }} style={{ width, height }} resizeMode="cover" />
+        ) : (
+          <View
+            style={{
+              width,
+              height,
+              backgroundColor: c.ghost,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontSize: 20 }}>🎵</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Overlay button lives outside overflow:hidden so it receives touches */}
       {uri ? (
-        <TouchableOpacity
+        <Pressable
           onPress={toggle}
-          activeOpacity={0.75}
-          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          hitSlop={8}
           style={{
             position: "absolute",
             top: (height - btnSize) / 2,
@@ -92,19 +106,24 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
             width: btnSize,
             height: btnSize,
             borderRadius: btnSize / 2,
-            backgroundColor: "rgba(0,0,0,0.52)",
+            backgroundColor: "rgba(0,0,0,0.55)",
             borderWidth: 1.5,
-            borderColor: "rgba(255,255,255,0.7)",
+            borderColor: "rgba(255,255,255,0.75)",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons
-            name={playing ? "pause" : "play"}
-            size={Math.round(btnSize * 0.38)}
-            color="#fff"
-          />
-        </TouchableOpacity>
+          <Text
+            style={{
+              color: "#fff",
+              fontSize: iconSize,
+              lineHeight: iconSize + 2,
+              paddingLeft: playing ? 0 : 1,
+            }}
+          >
+            {playing ? "⏸" : "▶"}
+          </Text>
+        </Pressable>
       ) : null}
     </View>
   );
