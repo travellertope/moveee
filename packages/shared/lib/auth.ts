@@ -322,6 +322,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (trigger === "update" && updatePayload) {
+        if (updatePayload.name                 !== undefined) token.name                 = updatePayload.name;
         if (updatePayload.isVendor             !== undefined) token.isVendor             = updatePayload.isVendor;
         if (updatePayload.vendorSlug           !== undefined) token.vendorSlug           = updatePayload.vendorSlug;
         if (updatePayload.avatarUrl            !== undefined) token.avatarUrl            = updatePayload.avatarUrl;
