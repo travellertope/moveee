@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const WP_GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://cms.themoveee.com/graphql";
-const WP_BASE_URL = WP_GRAPHQL_URL.replace(/\/graphql\/?$/, "");
+// Must match the WP_URL used in packages/shared/lib/auth.ts so that the
+// code stored by this request is verified against the same WordPress instance.
+const WP_BASE_URL =
+  process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 /**
  * Step 1 of the magic-code sign-in/subscribe flow every <SubscribeForm>
