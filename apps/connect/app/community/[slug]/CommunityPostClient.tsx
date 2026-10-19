@@ -431,10 +431,15 @@ export default function CommunityPostClient({
       {(() => {
         const isReviewType = ["music-review", "book-review", "film-review", "food-review"].includes(templateType ?? "");
         if (isReviewType) {
-          // displayText = post_content (the user's review text) — no title prefix to strip
-          return displayText ? (
+          // Strip any leading title the user typed (it duplicates the info card)
+          const reviewTitle = musicTitle || bookTitle || filmTitle || foodDishName;
+          let reviewBody = displayText;
+          if (reviewTitle && reviewBody.toLowerCase().startsWith(reviewTitle.toLowerCase())) {
+            reviewBody = reviewBody.slice(reviewTitle.length).replace(/^[\n\r\s]+/, "");
+          }
+          return reviewBody ? (
             <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
-              <HashtagText text={displayText} onMentionClick={handleMentionClick} />
+              <HashtagText text={reviewBody} onMentionClick={handleMentionClick} />
             </p>
           ) : null;
         }

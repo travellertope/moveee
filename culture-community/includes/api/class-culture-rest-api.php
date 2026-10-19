@@ -6380,6 +6380,17 @@ class Culture_REST_API {
     // — used by handle_get_community_posts() and the portfolio pinned-posts resolver
     // so both surfaces render identically.
     /**
+     * Convert post_content HTML to plain text, preserving paragraph breaks as \n\n.
+     * wp_strip_all_tags() alone collapses </p><p> without a separator.
+     */
+    private static function post_content_to_plain( string $html ): string {
+        $text = preg_replace( '#</p>\s*<p[^>]*>#i', "\n\n", $html );
+        $text = preg_replace( '#<br\s*/?>(\s*<br\s*/?>)+#i', "\n\n", $text );
+        $text = preg_replace( '#<br\s*/?>#i', "\n", $text );
+        return trim( wp_strip_all_tags( $text ) );
+    }
+
+    /**
      * Return the stored community_author_avatar for a post, with a lazy
      * backfill from _culture_avatar_url the first time it is missing.
      * Older posts were created before the avatar was snapshotted at save time.
@@ -6406,7 +6417,7 @@ class Culture_REST_API {
             'id'             => $pid,
             'slug'           => $post->post_name,
             'date'           => get_the_date( 'c', $pid ),
-            'text'           => wp_strip_all_tags( $post->post_content ),
+            'text'           => self::post_content_to_plain( $post->post_content ),
             'image_url'      => get_post_meta( $pid, 'community_image_url', true ) ?: '',
             'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
             'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',

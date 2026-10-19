@@ -805,8 +805,13 @@ export default function FeedCard({
                   const fullText = stripTrailingUrl(item.title, stripBy);
                   const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
                   if (isInfoCardType) {
-                    // item.title = post_content (the user's review text) — no title prefix to strip
-                    return fullText ? <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} /> : null;
+                    // Strip any leading title the user typed (it duplicates the info card)
+                    const reviewTitle = item.musicTitle || item.bookTitle || item.filmTitle || item.foodDishName;
+                    let body = fullText;
+                    if (reviewTitle && body.toLowerCase().startsWith(reviewTitle.toLowerCase())) {
+                      body = body.slice(reviewTitle.length).replace(/^[\n\r\s]+/, "");
+                    }
+                    return body ? <HashtagText text={body} onMentionClick={handleMentionClick} clamp={6} /> : null;
                   }
                   const dblNl = fullText.indexOf("\n\n");
                   const singleNl = fullText.indexOf("\n");
