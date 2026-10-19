@@ -427,28 +427,28 @@ export default function CommunityPostClient({
         </div>
       )}
 
-      {/* Post text — review types skip the first paragraph (item title, shown in card) */}
+      {/* Post text */}
       {(() => {
         const isReviewType = ["music-review", "book-review", "film-review", "food-review"].includes(templateType ?? "");
         if (isReviewType) {
-          const dblNl = displayText.indexOf("\n\n");
-          const singleNl = displayText.indexOf("\n");
-          const sepIdx = dblNl !== -1 ? dblNl : singleNl;
-          const bodyText = sepIdx !== -1 ? displayText.slice(sepIdx + (dblNl !== -1 ? 2 : 1)).trim() : "";
-          return bodyText ? (
+          // displayText = post_content (the user's review text) — no title prefix to strip
+          return displayText ? (
             <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
-              <HashtagText text={bodyText} onMentionClick={handleMentionClick} />
+              <HashtagText text={displayText} onMentionClick={handleMentionClick} />
             </p>
           ) : null;
         }
-        const nlIdx = displayText.indexOf("\n\n");
+        const dblNl = displayText.indexOf("\n\n");
+        const singleNl = displayText.indexOf("\n");
+        const nlIdx = dblNl !== -1 ? dblNl : singleNl;
+        const sepLen = dblNl !== -1 ? 2 : 1;
         if (nlIdx === -1) return (
           <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
             <HashtagText text={displayText} onMentionClick={handleMentionClick} />
           </p>
         );
         const titlePart = displayText.slice(0, nlIdx).trim();
-        const bodyPart = displayText.slice(nlIdx + 2).trim();
+        const bodyPart = displayText.slice(nlIdx + sepLen).trim();
         return (
           <>
             <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1.1rem", fontWeight: 700, lineHeight: 1.45, margin: "0 0 0.6rem" }}>
