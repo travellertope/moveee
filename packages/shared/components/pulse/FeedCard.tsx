@@ -1085,6 +1085,8 @@ export default function FeedCard({
               </div>
             )}
 
+            </div>
+
             {/* Reactions + comment + flag — all inside the action pill */}
             {item.wpId && (
               <div style={{
