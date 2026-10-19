@@ -16,6 +16,7 @@ interface Props {
 export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [buffering, setBuffering] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
 
   function toggle(e: React.MouseEvent) {
@@ -26,14 +27,17 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
     if (playing) {
       audio.pause();
       setPlaying(false);
+      setBuffering(false);
     } else {
       setUnavailable(false);
-      // Reload the source so the browser re-fetches if a previous load failed.
-      audio.load();
-      setPlaying(true);
+      setBuffering(true);
+      // Only reload if the element is in an error state; otherwise the browser
+      // may have already buffered some data and load() would throw it away.
+      if (audio.error) audio.load();
       audio.play().catch((err) => {
         console.warn("[AudioPreviewButton] play() rejected:", err);
         setPlaying(false);
+        setBuffering(false);
         setUnavailable(true);
         setTimeout(() => setUnavailable(false), 2500);
       });
@@ -45,6 +49,7 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
   const coverRadius = size >= 60 ? "var(--radius-xl)" : "var(--radius-md)";
   const btnSize = Math.round(size * 0.44);
   const iconSize = Math.round(btnSize * 0.42);
+  const spinnerSize = Math.round(btnSize * 0.55);
 
   return (
     <div
@@ -70,12 +75,14 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
           <audio
             ref={audioRef}
             src={src}
-            preload="none"
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
+            preload="metadata"
+            onPlay={() => { setPlaying(true); setBuffering(false); }}
+            onPause={() => { setPlaying(false); setBuffering(false); }}
+            onEnded={() => { setPlaying(false); setBuffering(false); }}
+            onCanPlay={() => setBuffering(false)}
             onError={() => {
               setPlaying(false);
+              setBuffering(false);
               setUnavailable(true);
               setTimeout(() => setUnavailable(false), 2500);
             }}
@@ -118,9 +125,25 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
               }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.75)")}
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.92)")}
-              aria-label={playing ? "Pause preview" : "Play preview"}
+              aria-label={playing ? "Pause preview" : buffering ? "Loading…" : "Play preview"}
             >
-              {playing ? (
+              {buffering ? (
+                <svg
+                  width={spinnerSize}
+                  height={spinnerSize}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#14110d"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                  style={{ animation: "apb-spin 0.8s linear infinite" }}
+                >
+                  <circle cx="12" cy="12" r="9" strokeOpacity="0.2" />
+                  <path d="M12 3 A9 9 0 0 1 21 12" />
+                  <style>{`@keyframes apb-spin { to { transform: rotate(360deg) } }`}</style>
+                </svg>
+              ) : playing ? (
                 <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" aria-hidden="true">
                   <rect x="5" y="4" width="4" height="16" rx="1"/>
                   <rect x="15" y="4" width="4" height="16" rx="1"/>
