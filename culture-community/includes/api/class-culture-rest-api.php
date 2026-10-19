@@ -6745,6 +6745,8 @@ class Culture_REST_API {
         $allowed = array( 'active', 'paused', 'expired' );
         $status  = sanitize_key( $request->get_param( 'status' ) ?: 'active' );
         if ( ! in_array( $status, $allowed, true ) ) $status = 'active';
+        $perk_type = in_array( $request->get_param( 'perk_type' ), array( 'partner', 'airtime', 'data_bundle' ), true )
+            ? $request->get_param( 'perk_type' ) : 'partner';
         return array(
             'values'  => array(
                 'title'                => $title,
@@ -6760,8 +6762,12 @@ class Culture_REST_API {
                 'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
                 'min_rep_tier'         => in_array( $request->get_param( 'min_rep_tier' ), array( 'member', 'culture-contributor', 'taste-maker', 'culture-authority', 'culture-icon' ), true )
                                           ? $request->get_param( 'min_rep_tier' ) : 'member',
+                'perk_type'            => $perk_type,
+                'airtime_country'      => strtoupper( substr( sanitize_text_field( $request->get_param( 'airtime_country' ) ?: 'NG' ), 0, 3 ) ),
+                'airtime_amount_local' => max( 0, (int) $request->get_param( 'airtime_amount_local' ) ),
+                'data_bundle_code'     => sanitize_text_field( $request->get_param( 'data_bundle_code' ) ?: '' ),
             ),
-            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s' ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%s' ),
         );
     }
 

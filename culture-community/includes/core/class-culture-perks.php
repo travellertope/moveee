@@ -370,6 +370,111 @@ class Culture_Perks {
             );
         }
 
+        // ── Data bundle perk: auto-fulfill via Flutterwave ───────────────────
+        if ( 'data_bundle' === $perk_type ) {
+            $resolved_phone = sanitize_text_field( $phone );
+            if ( empty( $resolved_phone ) ) {
+                $resolved_phone = (string) get_user_meta( $user_id, '_culture_phone', true );
+            }
+            if ( empty( $resolved_phone ) ) {
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return new WP_Error(
+                    'phone_required',
+                    'Please add a phone number to your profile before redeeming a data bundle.',
+                    array( 'status' => 400 )
+                );
+            }
+
+            $bundle_code = trim( $perk['data_bundle_code'] ?? '' );
+            if ( empty( $bundle_code ) ) {
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return new WP_Error(
+                    'data_bundle_misconfigured',
+                    'This data bundle perk is not properly configured. Please contact support.',
+                    array( 'status' => 500 )
+                );
+            }
+
+            if ( ! class_exists( 'Culture_Flutterwave' ) || ! Culture_Flutterwave::is_configured() ) {
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return new WP_Error(
+                    'data_bundle_unavailable',
+                    'Data bundle delivery is temporarily unavailable. Please try again later.',
+                    array( 'status' => 503 )
+                );
+            }
+
+            $flw_ref    = 'moveee_db_' . $redemption_id . '_' . time();
+            $flw_result = Culture_Flutterwave::send_data_bundle(
+                $resolved_phone,
+                $bundle_code,
+                (float) $perk['airtime_amount_local'],
+                $perk['airtime_country'] ?: 'NG',
+                $flw_ref
+            );
+
+            if ( is_wp_error( $flw_result ) ) {
+                Culture_Gamification::award_credits( $user_id, $cost, 'perk_redeem_rollback', $perk_id );
+                $wpdb->delete( $redemptions_table, array( 'id' => $redemption_id ), array( '%d' ) );
+                $wpdb->query( $wpdb->prepare(
+                    "UPDATE {$perks_table} SET redeemed_count = redeemed_count - 1 WHERE id = %d AND redeemed_count > 0",
+                    $perk_id
+                ) );
+                return $flw_result;
+            }
+
+            $flw_tx_ref = $flw_result['flw_ref'] ?? $flw_ref;
+            $wpdb->update(
+                $redemptions_table,
+                array(
+                    'fulfillment_status' => 'sent',
+                    'fulfillment_ref'    => substr( $flw_tx_ref, 0, 200 ),
+                    'qr_scanned'         => 1,
+                ),
+                array( 'id' => $redemption_id ),
+                array( '%s', '%s', '%d' ),
+                array( '%d' )
+            );
+
+            if ( class_exists( 'Culture_Notifications' ) ) {
+                Culture_Notifications::add(
+                    $user_id,
+                    'data_bundle_redeemed',
+                    'Data Bundle Sent!',
+                    sprintf( '%s has been sent to %s.', $perk['title'], $resolved_phone ),
+                    '/member/wallet',
+                    array( 'redemption_id' => $redemption_id, 'perk_id' => $perk_id )
+                );
+            }
+
+            return array(
+                'success'            => true,
+                'perk_type'          => 'data_bundle',
+                'redemption_id'      => $redemption_id,
+                'phone'              => $resolved_phone,
+                'data_bundle_code'   => $bundle_code,
+                'airtime_amount'     => (int) $perk['airtime_amount_local'],
+                'airtime_country'    => $perk['airtime_country'] ?: 'NG',
+                'fulfillment_status' => 'sent',
+                'new_balance'        => (int) $new_balance,
+            );
+        }
+
         // ── Partner perk: QR code flow ────────────────────────────────────────
         if ( class_exists( 'Culture_Notifications' ) ) {
             Culture_Notifications::add(
