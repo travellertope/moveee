@@ -191,7 +191,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
           alignItems: "center",
           gap: showLabel ? 12 : 0,
           width: showLabel ? "100%" : undefined,
-          color: "#14110d",
+          color: "var(--ink)",
           lineHeight: 1,
           fontFamily: showLabel ? "var(--font-dm-sans), 'DM Sans', sans-serif" : undefined,
         }}
@@ -215,7 +215,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
               borderRadius: "50%",
               width: 8,
               height: 8,
-              border: "1.5px solid #fff",
+              border: "1.5px solid var(--paper)",
             }} />
           )}
         </span>
@@ -253,7 +253,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
           width: "min(340px, calc(100vw - 32px))",
           maxHeight: 440,
           overflowY: "auto",
-          background: "#fff",
+          background: "var(--paper)",
           border: "1px solid rgba(42,36,28,.12)",
           borderRadius: 6,
           boxShadow: "0 10px 25px -5px rgba(20,17,13,0.15), 0 8px 10px -6px rgba(20,17,13,0.1)",
@@ -267,7 +267,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
           width: "min(340px, calc(100vw - 32px))",
           maxHeight: 440,
           overflowY: "auto",
-          background: "#fff",
+          background: "var(--paper)",
           border: "1px solid rgba(42,36,28,.12)",
           borderRadius: 6,
           boxShadow: "0 10px 25px -5px rgba(20,17,13,0.15), 0 8px 10px -6px rgba(20,17,13,0.1)",
@@ -284,9 +284,9 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
             borderBottom: "1px solid rgba(42,36,28,.08)",
             position: "sticky",
             top: 0,
-            background: "#fff",
+            background: "var(--paper)",
           }}>
-            <span style={{ fontWeight: 700, fontSize: "0.82rem", color: "#14110d" }}>
+            <span style={{ fontWeight: 700, fontSize: "0.82rem", color: "var(--ink)" }}>
               Notifications {unread > 0 && <span style={{ color: "#7a241c" }}>({unread})</span>}
             </span>
             {unread > 0 && (
@@ -328,11 +328,11 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
                     gap: 10,
                     padding: "12px 16px",
                     borderBottom: "1px solid rgba(42,36,28,.06)",
-                    background: isUnread ? "rgba(197,73,31,.05)" : "#fff",
+                    background: isUnread ? "rgba(197,73,31,.05)" : "var(--paper)",
                     cursor: "pointer",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = isUnread ? "rgba(197,73,31,.1)" : "#f9fafb"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = isUnread ? "rgba(197,73,31,.05)" : "#fff"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isUnread ? "rgba(197,73,31,.1)" : "var(--paper-deep)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isUnread ? "rgba(197,73,31,.05)" : "var(--paper)"; }}
                   onClick={() => isUnread && markRead(n.id)}
                 >
                   <div style={{ fontSize: "1.1rem", flexShrink: 0, lineHeight: 1.2, marginTop: 1 }}>
@@ -342,7 +342,7 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
                     <div style={{
                       fontSize: "0.78rem",
                       fontWeight: isUnread ? 700 : 500,
-                      color: "#14110d",
+                      color: "var(--ink)",
                       marginBottom: 2,
                       lineHeight: 1.3,
                     }}>
@@ -392,14 +392,14 @@ export default function NotificationBell({ showLabel = false }: NotificationBell
                 textDecoration: "none",
                 fontSize: "0.75rem",
                 fontWeight: 700,
-                color: "#14110d",
-                background: "#f5f5f5",
+                color: "var(--ink)",
+                background: "var(--paper-deep)",
                 borderTop: "1px solid rgba(42,36,28,.08)",
                 position: "sticky",
                 bottom: 0,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#e8e4db"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#f5f5f5"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--rule)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--paper-deep)"; }}
             >
               View all notifications →
             </Link>
