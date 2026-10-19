@@ -2,6 +2,7 @@
 import { readFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import withSerwist from "@serwist/next";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const tempRedirects = JSON.parse(readFileSync("./redirects.json", "utf-8"));
@@ -109,4 +110,10 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+const withSerwistConfig = withSerwist({
+  swSrc: "src/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+});
+
+export default withSerwistConfig(nextConfig);

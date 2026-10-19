@@ -23,6 +23,7 @@ import { AdsProvider, type AdSettings } from "@/context/AdsContext";
 import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -61,6 +62,14 @@ export const metadata: Metadata = {
   // default-without-template behavior.)
   title: "Moveee — Culture. Discover and Engage.",
   description: "Moveee is a community that rewards you for being an active part of culture — post, discover, and earn for your taste. Moveee Magazine is our editorial arm, covering the best of culture.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Moveee",
+    startupImage: [{ url: "/icons/apple-touch-icon.png" }],
+  },
+  formatDetection: { telephone: false },
   alternates: {
     canonical: "https://themoveee.com/",
   },
@@ -178,6 +187,7 @@ export default async function RootLayout({
                   <CartDrawer />
                   <CookieConsent />
                   <GlobalAuthModal />
+                  <PWAInstallPrompt />
                 </AdsProvider>
               </CartProvider>
             </LanguageProvider>
