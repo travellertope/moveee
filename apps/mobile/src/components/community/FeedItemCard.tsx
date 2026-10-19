@@ -1815,9 +1815,17 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
           </View>
         ) : null}
 
-        {/* Review body — only shown when it's a real writeup, not a duplicate of the album title */}
+        {/* Review body — strip any leading song/album title that may have ended up in
+            post_content (mirrors the web FeedCard strip at lines 806-814), then hide
+            when nothing meaningful remains. */}
         {item.title && item.title !== item.musicTitle ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+          (() => {
+            let body = item.title;
+            if (item.musicTitle && body.toLowerCase().startsWith(item.musicTitle.toLowerCase())) {
+              body = body.slice(item.musicTitle.length).replace(/^[\n\r\s]+/, "");
+            }
+            return body ? <HashtagText text={body} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} /> : null;
+          })()
         ) : null}
 
         {/* Favourite lyric */}
