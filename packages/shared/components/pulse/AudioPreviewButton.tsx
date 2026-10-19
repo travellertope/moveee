@@ -16,6 +16,7 @@ interface Props {
 export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   function toggle(e: React.MouseEvent) {
     e.preventDefault();
@@ -26,8 +27,16 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
       audio.pause();
       setPlaying(false);
     } else {
+      setUnavailable(false);
+      // Reload the source so the browser re-fetches if a previous load failed.
+      audio.load();
       setPlaying(true);
-      audio.play().catch(() => setPlaying(false));
+      audio.play().catch((err) => {
+        console.warn("[AudioPreviewButton] play() rejected:", err);
+        setPlaying(false);
+        setUnavailable(true);
+        setTimeout(() => setUnavailable(false), 2500);
+      });
     }
   }
 
@@ -61,46 +70,68 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
           <audio
             ref={audioRef}
             src={src}
+            preload="none"
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
             onEnded={() => setPlaying(false)}
+            onError={() => {
+              setPlaying(false);
+              setUnavailable(true);
+              setTimeout(() => setUnavailable(false), 2500);
+            }}
             style={{ display: "none" }}
           />
-          <button
-            type="button"
-            onClick={toggle}
-            style={{
+          {unavailable ? (
+            <div style={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: btnSize,
-              height: btnSize,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.92)",
-              border: "none",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
-              cursor: "pointer",
+              inset: 0,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.75)")}
-            onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.92)")}
-            aria-label={playing ? "Pause preview" : "Play preview"}
-          >
-            {playing ? (
-              <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" aria-hidden="true">
-                <rect x="5" y="4" width="4" height="16" rx="1"/>
-                <rect x="15" y="4" width="4" height="16" rx="1"/>
-              </svg>
-            ) : (
-              <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" style={{ marginLeft: "2px" }} aria-hidden="true">
-                <polygon points="6,4 20,12 6,20"/>
-              </svg>
-            )}
-          </button>
+              background: "rgba(0,0,0,0.55)",
+              borderRadius: coverRadius,
+            }}>
+              <span style={{ fontSize: Math.max(8, Math.round(size * 0.12)), color: "#fff", fontWeight: 700, textAlign: "center", padding: "0 4px", lineHeight: 1.2 }}>
+                No preview
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={toggle}
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: btnSize,
+                height: btnSize,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.92)",
+                border: "none",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.75)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.92)")}
+              aria-label={playing ? "Pause preview" : "Play preview"}
+            >
+              {playing ? (
+                <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" aria-hidden="true">
+                  <rect x="5" y="4" width="4" height="16" rx="1"/>
+                  <rect x="15" y="4" width="4" height="16" rx="1"/>
+                </svg>
+              ) : (
+                <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" style={{ marginLeft: "2px" }} aria-hidden="true">
+                  <polygon points="6,4 20,12 6,20"/>
+                </svg>
+              )}
+            </button>
+          )}
         </>
       )}
     </div>

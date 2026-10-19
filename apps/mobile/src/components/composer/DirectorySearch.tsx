@@ -40,6 +40,8 @@ interface Props {
   onSelect: (entry: DirectoryEntry) => void;
   selected?: DirectoryEntry | null;
   label?: string;
+  /** Placeholder text for the search input (default "Search directory…"). */
+  placeholder?: string;
   /** Optional slug to pass as ?type= to the backend search endpoint, and as
    * entry_type when quick-creating a new entry (defaults to "place"). */
   typeFilter?: string;
@@ -55,7 +57,7 @@ interface Props {
 let debounceTimer: ReturnType<typeof setTimeout>;
 let externalDebounceTimer: ReturnType<typeof setTimeout>;
 
-export default function DirectorySearch({ onSelect, selected, label, typeFilter, aboutFieldLabel, externalSource }: Props) {
+export default function DirectorySearch({ onSelect, selected, label, placeholder, typeFilter, aboutFieldLabel, externalSource }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -271,7 +273,7 @@ export default function DirectorySearch({ onSelect, selected, label, typeFilter,
           style={styles.searchInput}
           value={query}
           onChangeText={handleChange}
-          placeholder="Search directory…"
+          placeholder={placeholder ?? "Search directory…"}
           placeholderTextColor={colors.ghost}
         />
         {(loading || externalLoading) && <ActivityIndicator size="small" color={colors.gold} />}

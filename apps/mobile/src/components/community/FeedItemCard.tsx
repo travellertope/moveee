@@ -1741,9 +1741,15 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
           </View>
         ) : null}
 
-        {/* Review body */}
-        {item.title ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+        {/* Review body — strip leading book title if present (mirrors web FeedCard strip) */}
+        {item.title && item.title !== item.bookTitle ? (
+          (() => {
+            let body = item.title;
+            if (item.bookTitle && body.toLowerCase().startsWith(item.bookTitle.toLowerCase())) {
+              body = body.slice(item.bookTitle.length).replace(/^[\n\r\s]+/, "");
+            }
+            return body ? <HashtagText text={body} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} /> : null;
+          })()
         ) : null}
 
         {/* Favourite quote */}
@@ -1815,9 +1821,17 @@ function MusicReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionP
           </View>
         ) : null}
 
-        {/* Review body — only shown when it's a real writeup, not a duplicate of the album title */}
+        {/* Review body — strip any leading song/album title that may have ended up in
+            post_content (mirrors the web FeedCard strip at lines 806-814), then hide
+            when nothing meaningful remains. */}
         {item.title && item.title !== item.musicTitle ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+          (() => {
+            let body = item.title;
+            if (item.musicTitle && body.toLowerCase().startsWith(item.musicTitle.toLowerCase())) {
+              body = body.slice(item.musicTitle.length).replace(/^[\n\r\s]+/, "");
+            }
+            return body ? <HashtagText text={body} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} /> : null;
+          })()
         ) : null}
 
         {/* Favourite lyric */}
@@ -1895,9 +1909,15 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
           </View>
         ) : null}
 
-        {/* Review body */}
-        {item.title ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+        {/* Review body — strip leading film title if present (mirrors web FeedCard strip) */}
+        {item.title && item.title !== item.filmTitle ? (
+          (() => {
+            let body = item.title;
+            if (item.filmTitle && body.toLowerCase().startsWith(item.filmTitle.toLowerCase())) {
+              body = body.slice(item.filmTitle.length).replace(/^[\n\r\s]+/, "");
+            }
+            return body ? <HashtagText text={body} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} /> : null;
+          })()
         ) : null}
 
         {/* Favourite line */}
