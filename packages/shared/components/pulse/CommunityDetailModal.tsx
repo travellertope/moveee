@@ -612,13 +612,12 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
 
           {/* Music review rating/artist/recommend/genres/favourite lyric/preview */}
           {item.templateType === "music-review" && item.musicOverallRating && (
-            <CardLink slug={item.linkedDirectorySlug}>
-            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
+            <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem" }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                <div onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
-                  <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                {/* AudioPreviewButton sits OUTSIDE any link so clicking play/cover never navigates */}
+                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
+                <CardLink slug={item.linkedDirectorySlug}>
+                <div style={{ flex: 1, minWidth: 0, cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
                   {item.musicTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.musicTitle}</div>}
                   {item.musicArtist && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>{item.musicArtist}</div>}
                   <div style={{ fontSize: "0.9rem", color: "var(--ochre)", marginBottom: "4px" }}>
@@ -634,6 +633,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                     </div>
                   )}
                 </div>
+                </CardLink>
               </div>
               {item.musicFavLyric && (
                 <blockquote style={{
@@ -652,7 +652,6 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
                 </div>
               )}
             </div>
-            </CardLink>
           )}
 
           {/* Film review rating/director/recommend/genres/favourite line */}
