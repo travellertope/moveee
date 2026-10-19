@@ -805,8 +805,10 @@ export default function FeedCard({
                   const fullText = stripTrailingUrl(item.title, stripBy);
                   const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
                   if (isInfoCardType) {
-                    const nlIdx = fullText.indexOf("\n\n");
-                    const bodyText = nlIdx !== -1 ? fullText.slice(nlIdx + 2).trim() : fullText;
+                    const dblNl = fullText.indexOf("\n\n");
+                    const singleNl = fullText.indexOf("\n");
+                    const sepIdx = dblNl !== -1 ? dblNl : singleNl;
+                    const bodyText = sepIdx !== -1 ? fullText.slice(sepIdx + (dblNl !== -1 ? 2 : 1)).trim() : "";
                     return bodyText ? <HashtagText text={bodyText} onMentionClick={handleMentionClick} clamp={6} /> : null;
                   }
                   const nlIdx = fullText.indexOf("\n\n");

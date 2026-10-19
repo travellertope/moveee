@@ -142,13 +142,17 @@ class Culture_Perks_Admin {
                                 </td>
                                 <td><?php echo (int) $perk['credit_cost']; ?></td>
                                 <td>
-                                    <?php if ( $is_delivery ) :
+                                    <?php
+                                    if ( $is_delivery ) {
                                         $sym = 'NG' === ( $perk['airtime_country'] ?: 'NG' ) ? '₦' : '';
                                         echo esc_html( $sym . number_format( (int) $perk['airtime_amount_local'] ) );
                                         if ( $is_data_bundle && ! empty( $perk['data_bundle_code'] ) ) {
                                             echo ' <small style="color:#666;">(' . esc_html( $perk['data_bundle_code'] ) . ')</small>';
                                         }
-                                    else : ?>—<?php endif; ?>
+                                    } else {
+                                        echo '—';
+                                    }
+                                    ?>
                                 </td>
                                 <td><?php echo $is_delivery ? esc_html( $perk['airtime_country'] ?: 'NG' ) : '—'; ?></td>
                                 <td>
