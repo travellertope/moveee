@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import ShopSearchModal from "./ShopSearchModal";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 // The Moveee Lifestyle's own standalone masthead — ticker + logo + a
 // left-hand Categories menu, then a right-hand cluster (text nav,

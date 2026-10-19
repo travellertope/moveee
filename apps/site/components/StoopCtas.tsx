@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 const STOOP_URL = `${CONNECT_URL}/connect/stoop`;
 const CREATE_URL = `${CONNECT_URL}/cluster/create`;
 const REGISTER_HREF = `${CONNECT_URL}/register?callbackUrl=${encodeURIComponent(STOOP_URL)}`;

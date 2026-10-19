@@ -5,9 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Moveee",
     short_name: "Moveee",
     description: "Best in Culture — Moveee Magazine",
-    // Smart launch: /pwa-launch redirects logged-in members to the community
-    // feed at web.themoveee.com/feed, and guests to the magazine homepage.
-    start_url: "/pwa-launch",
+    start_url: "/feed",
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",

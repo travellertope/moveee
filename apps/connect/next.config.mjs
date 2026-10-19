@@ -25,6 +25,15 @@ const nextConfig = {
       { protocol: 'https', hostname: 'i1.wp.com' },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        destination: "https://themoveee.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

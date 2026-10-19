@@ -1,0 +1,3032 @@
+/* ═══════════════════════════════════════════════════
+   STOOP — stoop = Stoop namespace
+   Follows the Feed/Discover/People/Events conventions (search-modal
+   trigger button, chip-driven filters via stoopFiltersBus, white
+   feed-card visual language). Full-width, single-column layout for the
+   browse page — same as .disc-wrap/.ppl-wrap — plus a narrower
+   single-column layout for the individual Stoop detail page (fewer facts
+   to show than Directory's 3-column entry page).
+   ═══════════════════════════════════════════════════ */
+
+.stoop-page-bg {
+  background: var(--paper, #fff);
+  min-height: 100vh;
+}
+
+.stoop-wrap {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.stoop-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 0 16px;
+  flex-wrap: wrap;
+}
+.stoop-header-text { max-width: 620px; }
+.stoop-title {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  line-height: 1.15;
+}
+.stoop-title em { font-style: italic; color: var(--ochre); }
+.stoop-lede {
+  font-size: 13.5px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Same "opens the shared SearchModal" pill button as .disc-search-btn /
+   .ppl-search-btn / .evt-search-btn — kept visually identical across every
+   surface that uses this pattern. */
+.stoop-search-btn {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 4px 0 4px;
+  border-radius: var(--radius-full, 999px);
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  background: var(--paper-deep);
+  color: var(--mute);
+  font-family: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.stoop-search-btn:hover { border-color: var(--ochre); color: var(--ink-soft); }
+.stoop-search-btn svg { flex-shrink: 0; }
+
+/* Active-filter chip — the only on-page trace of City once applied via
+   SearchModal (same "chip is the only trace, modal always resets to
+   defaults on open" pattern Discover/People established). */
+.stoop-active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.stoop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+}
+.stoop-chip-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 16%, transparent);
+  border: none;
+  color: var(--paper);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.stoop-chip-clear:hover { background: color-mix(in srgb, var(--paper) 30%, transparent); }
+
+/* ── "How Stoop Works" compact 3-step band — the discoverability/onboarding
+   explainer, kept brief since the full 4-step version already lives on the
+   /connect marketing landing page. Shown only in the browse (non-member)
+   state. ── */
+.stoop-how-band {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  background: var(--paper-warm);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  padding: 22px 26px;
+  margin: 18px 0 34px;
+}
+.stoop-how-step { display: flex; gap: 12px; align-items: flex-start; }
+.stoop-how-num {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--paper);
+  background: var(--ochre);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.stoop-how-copy h4 { margin: 0 0 3px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.stoop-how-copy p { margin: 0; font-size: 12px; color: var(--mute); line-height: 1.45; }
+
+/* ── "Your Stoop" hero card (member state) ── */
+.your-stoop {
+  background: linear-gradient(135deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 80%, var(--ochre) 20%) 100%);
+  border-radius: var(--radius-xl, 12px);
+  padding: 30px 32px;
+  color: var(--paper);
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+}
+.your-stoop::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ochre) 35%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ys-eyebrow {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ochre) 60%, var(--paper) 40%);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ys-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 25%, transparent);
+}
+.ys-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+.ys-name { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 27px; font-weight: 400; margin: 0 0 8px; }
+.ys-meta { font-size: 13px; color: color-mix(in srgb, var(--paper) 72%, transparent); margin: 0 0 4px; }
+.ys-meta b { color: var(--paper); font-weight: 600; }
+.ys-meta-note { font-size: 11px; color: color-mix(in srgb, var(--paper) 45%, transparent); }
+.ys-host { font-size: 12px; color: color-mix(in srgb, var(--paper) 55%, transparent); margin: 10px 0 0; }
+.ys-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.ys-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 12px 22px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ys-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--paper) 8%, transparent);
+  color: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--paper) 20%, transparent);
+  padding: 12px 20px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ys-members { display: flex; align-items: center; margin-top: 18px; position: relative; z-index: 1; }
+.ys-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  margin-left: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+}
+.ys-avatar:first-child { margin-left: 0; }
+.ys-members-count { font-size: 11.5px; color: color-mix(in srgb, var(--paper) 60%, transparent); margin-left: 10px; }
+
+.stoop-sec-heading { font-size: 16px; font-weight: 700; margin: 0 0 4px; color: var(--ink); }
+.stoop-sec-sub { font-size: 12px; color: var(--mute); margin: 0 0 14px; }
+
+/* ── Rails: compact cards for Near You / More overflow ── */
+.stoop-rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 38px;
+  scrollbar-width: none;
+}
+.stoop-rail::-webkit-scrollbar { display: none; }
+
+.stoop-rail-card {
+  flex: 0 0 260px;
+  width: 260px;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper, #fff);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.stoop-rail-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+.stoop-rail-badge--filling { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
+.stoop-rail-day {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.stoop-rail-name { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 17px; font-weight: 400; margin: 0 0 6px; color: var(--ink); }
+.stoop-rail-loc { font-size: 12px; color: var(--ink-soft); margin: 0 0 12px; }
+.stoop-rail-loc svg { vertical-align: -2px; margin-right: 3px; }
+
+.stoop-cap-wrap { margin-bottom: 12px; }
+.stoop-cap-track { height: 4px; background: var(--rule); border-radius: 999px; overflow: hidden; margin-bottom: 5px; }
+.stoop-cap-fill { height: 100%; background: var(--gold); border-radius: 999px; }
+.stoop-cap-label { font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; color: var(--mute); }
+
+.stoop-rail-join {
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 9px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stoop-rail-join:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Explore grid ── */
+.stoop-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.stoop-sort-select {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  color: var(--mute);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 7px 10px;
+  border-radius: var(--radius-lg, 6px);
+}
+.stoop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 8px; }
+.stoop-g-card {
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper, #fff);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.stoop-g-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.stoop-g-name { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 18px; font-weight: 400; margin: 0; color: var(--ink); }
+.stoop-g-venue {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.stoop-g-meta-row { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--ink-soft); }
+.stoop-g-meta-row span { display: flex; align-items: center; gap: 5px; }
+.stoop-g-note { font-size: 12.5px; color: var(--mute); line-height: 1.5; margin: 0; }
+.stoop-g-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--rule); }
+.stoop-g-host { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); }
+.stoop-g-host-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+}
+.stoop-g-join {
+  background: transparent;
+  color: var(--ochre);
+  border: 1px solid var(--ochre);
+  padding: 7px 16px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stoop-g-join:disabled { opacity: .5; cursor: not-allowed; }
+
+.stoop-load-more {
+  display: block;
+  margin: 8px auto 32px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-full, 999px);
+  padding: 10px 20px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stoop-count {
+  text-align: center;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  color: var(--mute);
+  margin: 8px 0 24px;
+}
+
+/* ── Empty state ── */
+.stoop-empty {
+  text-align: center;
+  padding: 48px 24px;
+  border: 2px dashed var(--ghost, var(--rule));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper-deep) 60%, transparent);
+  margin-bottom: 40px;
+}
+.stoop-empty-icon { font-size: 30px; filter: grayscale(1); opacity: 0.5; margin-bottom: 8px; }
+.stoop-empty h4 { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 19px; font-weight: 300; font-style: italic; margin: 0 0 8px; color: var(--ink); }
+.stoop-empty p { font-size: 13px; color: var(--mute); max-width: 380px; margin: 0 auto 18px; line-height: 1.6; }
+.stoop-loading { text-align: center; color: var(--mute); padding: 24px 0; font-size: 13px; }
+
+/* ── Bottom "Start a Stoop" CTA band ── */
+.stoop-start-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  padding: 26px 30px;
+  margin-top: 12px;
+  background: var(--paper-warm);
+}
+.stoop-start-band h4 { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 19px; font-weight: 400; margin: 0 0 4px; color: var(--ink); }
+.stoop-start-band p { font-size: 12.5px; color: var(--mute); margin: 0; max-width: 420px; }
+.stoop-start-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+}
+
+@media (max-width: 640px) {
+  .stoop-wrap { padding: 0 16px 32px; }
+  .stoop-header { flex-direction: column; align-items: flex-start; }
+  .stoop-how-band { grid-template-columns: 1fr; gap: 18px; padding: 20px; }
+  .stoop-grid { grid-template-columns: 1fr; }
+  .stoop-start-band { flex-direction: column; align-items: flex-start; }
+  .stoop-start-btn { width: 100%; text-align: center; }
+  .ys-body { flex-direction: column; align-items: flex-start; }
+}
+
+/* ═══════════════════════════════════════════════════
+   Individual Stoop detail page (/cluster/[id])
+   Single-column — mirrors the Directory Entry Detail page's simplicity,
+   not its 3-column layout (a Stoop has far fewer facts to show).
+   ═══════════════════════════════════════════════════ */
+
+.stoop-detail-wrap { max-width: 880px; margin: 0 auto; padding: 0 24px 56px; }
+.stoop-detail-back {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+  text-decoration: none;
+  display: inline-block;
+  margin: 22px 0 18px;
+}
+.stoop-detail-back:hover { color: var(--ochre); }
+
+.stoop-detail-status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.stoop-detail-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+.stoop-detail-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+
+.stoop-detail-name { font-family: var(--font-inter), 'Inter', sans-serif; font-size: 32px; font-weight: 400; margin: 0 0 12px; line-height: 1.1; color: var(--ink); }
+.stoop-detail-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.stoop-d-badge {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 999px);
+  white-space: nowrap;
+}
+.stoop-d-badge--host { background: color-mix(in srgb, var(--gold) 12%, transparent); color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent); }
+.stoop-d-badge--venue { background: var(--paper-deep); color: var(--ink-soft); border: 1px solid var(--rule); }
+.stoop-d-badge--access { background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); }
+
+.stoop-detail-cap-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  padding: 18px 22px;
+  margin-bottom: 22px;
+  background: var(--paper-warm);
+}
+.stoop-detail-cap-left { flex: 1; }
+.stoop-detail-cap-when { font-size: 14px; font-weight: 700; margin: 0 0 4px; color: var(--ink); }
+.stoop-detail-cap-where { font-size: 12.5px; color: var(--mute); margin: 0; }
+.stoop-detail-cap-count { text-align: right; }
+.stoop-detail-cap-num { font-family: var(--font-jetbrains-mono), monospace; font-size: 20px; font-weight: 700; color: var(--ink); }
+.stoop-detail-cap-label { font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; }
+.stoop-detail-cap-track { width: 140px; height: 5px; background: var(--rule); border-radius: 999px; overflow: hidden; margin-top: 8px; margin-left: auto; }
+.stoop-detail-cap-fill { height: 100%; background: var(--gold); border-radius: 999px; }
+
+.stoop-detail-primary-cta {
+  width: 100%;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 15px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 28px;
+}
+.stoop-detail-primary-cta:disabled { opacity: .55; cursor: not-allowed; }
+
+.stoop-detail-note { font-size: 12.5px; color: var(--mute); line-height: 1.55; margin: 0 0 14px; }
+
+.stoop-detail-section { border-top: 1px solid var(--rule); padding: 26px 0; }
+.stoop-detail-section:first-of-type { border-top: none; padding-top: 0; }
+.stoop-detail-sec-title { font-size: 14px; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; justify-content: space-between; color: var(--ink); }
+.stoop-detail-sec-count { font-family: var(--font-jetbrains-mono), monospace; font-weight: 400; color: var(--mute); font-size: 11px; }
+.stoop-detail-sec-sub { font-size: 12px; color: var(--mute); margin: 0 0 16px; }
+.stoop-detail-link-btn {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.stoop-detail-link-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.stoop-member-list { display: flex; flex-direction: column; gap: 2px; }
+.stoop-member-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+.stoop-member-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.stoop-member-av img { width: 100%; height: 100%; object-fit: cover; }
+.stoop-member-name { font-size: 13px; font-weight: 600; flex: 1; color: var(--ink); }
+.stoop-member-role {
+  color: var(--gold);
+  font-size: 10.5px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+.stoop-member-joined { font-size: 11px; color: var(--mute); font-family: var(--font-jetbrains-mono), monospace; }
+.stoop-member-more { font-size: 12px; color: var(--ochre); margin-top: 8px; }
+
+.stoop-checkin-stats { display: flex; gap: 32px; margin-bottom: 16px; }
+.stoop-stat-num { font-family: var(--font-jetbrains-mono), monospace; font-size: 22px; font-weight: 700; color: var(--ink); }
+.stoop-stat-label { font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+.stoop-checkin-host-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.stoop-btn-secondary {
+  background: transparent;
+  color: var(--ochre);
+  border: 1px solid var(--ochre);
+  padding: 9px 18px;
+  border-radius: var(--radius-full, 999px);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stoop-btn-secondary--muted { color: var(--ink-soft); border-color: var(--rule); }
+.stoop-btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
+
+.stoop-qr-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  padding: 16px 18px;
+  margin-top: 14px;
+  background: var(--paper-deep);
+}
+.stoop-qr-copy p { margin: 0; font-size: 12px; color: var(--mute); line-height: 1.5; }
+.stoop-qr-copy p b { color: var(--ink); }
+
+.stoop-election-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.stoop-election-name { font-size: 13px; font-weight: 600; width: 100px; flex-shrink: 0; color: var(--ink); }
+.stoop-election-bar-track { flex: 1; height: 20px; background: var(--paper-deep); border-radius: var(--radius-lg, 6px); overflow: hidden; position: relative; }
+.stoop-election-bar-fill { height: 100%; background: color-mix(in srgb, var(--gold) 35%, transparent); border-radius: var(--radius-lg, 6px); }
+.stoop-election-votes { position: absolute; right: 8px; top: 2px; font-family: var(--font-jetbrains-mono), monospace; font-size: 10.5px; color: var(--ink-soft); }
+.stoop-election-vote-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre);
+  background: none;
+  border: 1px solid var(--ochre);
+  border-radius: var(--radius-full, 999px);
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.stoop-election-vote-btn:disabled { opacity: .5; cursor: not-allowed; }
+.stoop-election-vote-btn--voted { background: var(--ochre); color: #fff; }
+.stoop-election-run-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 12px;
+  color: var(--ochre);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.stoop-detail-leave { text-align: center; margin-top: 8px; }
+.stoop-detail-leave button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  color: var(--mute);
+  text-decoration: underline;
+}
+.stoop-detail-leave button:hover { color: var(--error, #c62828); }
+
+.stoop-detail-error { font-size: 0.78rem; color: var(--error, #c0392b); margin: 8px 0 0; }
+
+@media (max-width: 640px) {
+  .stoop-detail-wrap { padding: 0 16px 40px; }
+  .stoop-detail-cap-card { flex-direction: column; align-items: stretch; gap: 14px; }
+  .stoop-detail-cap-count { text-align: left; }
+  .stoop-detail-cap-track { width: 100%; margin-left: 0; }
+}
+
+/* ── Location prompt ────────────────────────────────────────────────────────
+   Signing up no longer collects a city (see the auth flow in CLAUDE.md), so
+   Stoop asks for one itself — this is the only surface where "near you" is
+   load-bearing. Shown only when the viewer has no city or country on their
+   profile and hasn't set a city filter. Tokens are the same --paper/--ink/
+   --ochre/--rule set the rest of this file uses. */
+
+.stoop-loc-prompt {
+  background: var(--paper);
+  border: 1px solid var(--ochre);
+  border-radius: var(--radius-xl, 12px);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(20, 17, 13, 0.08));
+  padding: 20px 22px;
+  margin-bottom: 22px;
+}
+.stoop-loc-copy h3 {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.stoop-loc-copy p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--mute);
+  margin: 0 0 16px;
+  max-width: 52ch;
+}
+.stoop-loc-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.stoop-loc-fields > * { flex: 1 1 180px; min-width: 0; }
+.stoop-loc-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+}
+.stoop-loc-input:focus { outline: none; border-color: var(--ochre); }
+.stoop-loc-save {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+}
+.stoop-loc-save:hover { background: var(--ochre); }
+.stoop-loc-save:disabled { opacity: 0.6; cursor: default; }
+.stoop-loc-error {
+  font-size: 13px;
+  color: var(--error, #c62828);
+  margin: 12px 0 0;
+}
+
+@media (max-width: 560px) {
+  .stoop-loc-fields > *,
+  .stoop-loc-save { flex: 1 1 100%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STOOP IRL HUB — redesigned browse view (October 2026)
+   Hero banner → category chips → 2-col cover-photo card grid
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Hero banner ─────────────────────────────────────────────── */
+.stoop-hero {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  margin: 16px 0 28px;
+  min-height: 200px;
+  background: linear-gradient(
+    120deg,
+    var(--ink) 0%,
+    color-mix(in srgb, var(--ink) 65%, var(--ochre)) 60%,
+    color-mix(in srgb, var(--ochre) 55%, #6b1510) 100%
+  );
+}
+
+.stoop-hero-content {
+  flex: 1;
+  padding: 32px 36px;
+  position: relative;
+  z-index: 2;
+  max-width: 68%;
+}
+
+.stoop-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  color: var(--gold);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.stoop-hero-heading {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--paper);
+  margin: 0 0 10px;
+}
+
+.stoop-hero-sub {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
+  line-height: 1.55;
+  margin: 0 0 22px;
+  max-width: 46ch;
+}
+
+.stoop-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stoop-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: opacity 0.15s, background 0.15s;
+}
+.stoop-hero-btn--primary {
+  background: var(--ochre);
+  color: #fff;
+}
+.stoop-hero-btn--primary:hover { background: var(--ochre-deep, #5c1b15); }
+.stoop-hero-btn--ghost {
+  background: color-mix(in srgb, var(--paper) 10%, transparent);
+  color: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent);
+}
+.stoop-hero-btn--ghost:hover { background: color-mix(in srgb, var(--paper) 18%, transparent); }
+.stoop-hero-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* Decorative right-side panel */
+.stoop-hero-art {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 38%;
+  background:
+    radial-gradient(circle at 70% 40%, color-mix(in srgb, var(--gold) 18%, transparent) 0%, transparent 55%),
+    radial-gradient(circle at 90% 80%, color-mix(in srgb, var(--ochre) 22%, transparent) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+/* Subtle dot-grid overlay on the art panel */
+.stoop-hero-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--paper) 12%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ── Category filter button + bottom-sheet ──────────────────── */
+.stoop-cats-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* The filter trigger button */
+.stoop-cat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink-soft);
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.stoop-cat-btn:hover { border-color: var(--ochre); color: var(--ink); }
+.stoop-cat-btn--active {
+  border-color: var(--ochre);
+  background: color-mix(in srgb, var(--ochre) 8%, var(--paper));
+  color: var(--ochre);
+}
+
+.stoop-cats-count {
+  font-size: 12px;
+  color: var(--mute);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Backdrop overlay */
+.stoop-cat-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.45);
+  z-index: 1200;
+  animation: stoop-fade-in 0.18s ease;
+}
+
+/* Bottom sheet */
+.stoop-cat-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1201;
+  background: var(--paper);
+  border-radius: var(--radius-xl, 12px) var(--radius-xl, 12px) 0 0;
+  padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: stoop-sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -4px 32px rgba(20, 17, 13, 0.18);
+}
+
+.stoop-cat-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--rule);
+  margin: 0 auto 12px;
+  flex-shrink: 0;
+}
+
+.stoop-cat-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 10px;
+  flex-shrink: 0;
+}
+
+.stoop-cat-sheet-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding: 0;
+}
+
+.stoop-cat-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: var(--radius-full);
+  transition: color 0.15s, background 0.15s;
+}
+.stoop-cat-sheet-close:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.stoop-cat-sheet-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Each row in the sheet */
+.stoop-cat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 13px 12px;
+  border-radius: var(--radius-md, 4px);
+  font-family: inherit;
+  font-size: 0.925rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+.stoop-cat-row:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.stoop-cat-row--active { color: var(--ochre); font-weight: 700; }
+.stoop-cat-row--active:hover { background: color-mix(in srgb, var(--ochre) 6%, transparent); }
+
+.stoop-cat-row-label { flex: 1; }
+
+@keyframes stoop-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes stoop-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ── "Your Stoop" member card (new dark-gradient design) ────── */
+.stoop-my-card {
+  background: linear-gradient(135deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 78%, var(--ochre)) 100%);
+  border-radius: var(--radius-xl, 12px);
+  padding: 28px 30px;
+  color: var(--paper);
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.stoop-my-card::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ochre) 30%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.stoop-my-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ochre) 60%, var(--paper) 40%);
+  margin: 0 0 12px;
+}
+.stoop-my-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success, #2e7d32);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success, #2e7d32) 25%, transparent);
+  flex-shrink: 0;
+}
+
+.stoop-my-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.stoop-my-name {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  color: var(--paper);
+}
+
+.stoop-my-meta {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
+  margin: 0 0 4px;
+}
+.stoop-my-meta b { color: var(--paper); font-weight: 600; }
+
+/* ── Cover-photo Stoop cards (new grid design) ─────────────── */
+.stoop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.stoop-card {
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  box-shadow: var(--shadow-card, 0 1px 3px rgba(20,17,13,0.07));
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.stoop-card:hover {
+  box-shadow: 0 4px 18px rgba(20,17,13,0.12);
+  transform: translateY(-1px);
+}
+
+.stoop-card-cover {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+.stoop-card-cover-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.stoop-card-date-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 999px);
+  background: color-mix(in srgb, var(--gold) 85%, #000);
+  color: #fff;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stoop-card-body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.stoop-card-host {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stoop-card-host-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stoop-card-host-label {
+  font-size: 11.5px;
+  color: var(--mute);
+  font-weight: 500;
+}
+
+.stoop-card-name {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.stoop-card-venue {
+  font-size: 12px;
+  color: var(--mute);
+  margin: 0;
+}
+
+.stoop-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.stoop-card-loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stoop-card-loc svg { flex-shrink: 0; }
+
+.stoop-card-rsvp {
+  flex-shrink: 0;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s;
+}
+.stoop-card-rsvp:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-card-rsvp--full { background: var(--rule); color: var(--mute); cursor: not-allowed; }
+.stoop-card-rsvp:disabled:not(.stoop-card-rsvp--full) { opacity: 0.6; cursor: default; }
+
+/* ── "Start a Stoop" quick modal ────────────────────────────── */
+.stoop-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+}
+@media (min-width: 560px) {
+  .stoop-modal-backdrop { align-items: center; padding: 24px; }
+}
+
+.stoop-modal-card {
+  background: var(--paper);
+  border-radius: var(--radius-2xl, 20px) var(--radius-2xl, 20px) 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  box-shadow: 0 -4px 40px rgba(20, 17, 13, 0.2);
+}
+@media (min-width: 560px) {
+  .stoop-modal-card { border-radius: var(--radius-2xl, 20px); }
+}
+
+.stoop-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 1;
+}
+.stoop-modal-title {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+.stoop-modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.stoop-modal-close:hover { background: var(--rule); }
+
+.stoop-modal-body {
+  padding: 20px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stoop-modal-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+
+.stoop-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 13px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+}
+.stoop-modal-input:focus { outline: none; border-color: var(--ochre); }
+
+/* ── Places autocomplete input (Stoop wizard) ─────────────── */
+.stoop-places-wrap { position: relative; }
+
+.stoop-places-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-lg, 6px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.10);
+  z-index: 60;
+  overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.stoop-places-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule, #e8e2d8);
+}
+.stoop-places-row:last-child { border-bottom: none; }
+.stoop-places-row:hover { background: #f5f5f3; }
+
+.stoop-places-row--muted { color: var(--mute); cursor: default; font-style: italic; }
+.stoop-places-row--muted:hover { background: none; }
+
+.stoop-places-row--manual {
+  color: var(--mute);
+  font-size: 12px;
+  border-top: 1px solid var(--rule, #e8e2d8);
+}
+.stoop-places-row--manual:hover { background: #f5f5f3; color: var(--ink); }
+
+.stoop-places-row-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+.stoop-places-row-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+.stoop-places-row-name {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stoop-places-row-addr {
+  font-size: 11px;
+  color: var(--mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Selected chip */
+.stoop-places-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #f5f5f3;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-md, 4px);
+  font-size: 13px;
+}
+.stoop-places-chip-icon { font-size: 14px; flex-shrink: 0; }
+.stoop-places-chip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.stoop-places-chip-clear {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.stoop-places-chip-clear:hover { color: var(--ink); }
+
+.stoop-modal-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stoop-modal-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.stoop-modal-note {
+  font-size: 12px;
+  color: var(--mute);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.stoop-modal-submit {
+  width: 100%;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  padding: 13px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.stoop-modal-submit:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-modal-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Wizard progress bar ─────────────────────────────────────── */
+.stoop-wiz-progress {
+  height: 3px;
+  background: var(--rule);
+  position: sticky;
+  top: 61px;
+  z-index: 1;
+}
+.stoop-wiz-progress-fill {
+  height: 100%;
+  background: var(--ochre);
+  transition: width 0.3s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Back button in header */
+.stoop-wiz-back {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+  cursor: pointer;
+  padding: 0;
+}
+.stoop-wiz-back:hover { opacity: 0.75; }
+
+/* Shared step sub-heading */
+.stoop-wiz-sub {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
+  line-height: 1.55;
+}
+
+/* ── Step 1: country chips ───────────────────────────────────── */
+.stoop-wiz-country-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stoop-wiz-country-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.stoop-wiz-country-chip:hover { border-color: var(--ochre); }
+.stoop-wiz-country-chip--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+  color: var(--ochre);
+  font-weight: 700;
+}
+
+/* ── Step 2: venue grid ──────────────────────────────────────── */
+.stoop-wiz-venue-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stoop-wiz-venue-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  transition: border-color 0.12s, background 0.12s;
+  text-align: left;
+}
+.stoop-wiz-venue-chip:hover { border-color: var(--ochre); }
+.stoop-wiz-venue-chip--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+}
+.stoop-wiz-venue-icon { font-size: 22px; }
+.stoop-wiz-venue-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.stoop-wiz-venue-sub { font-size: 11px; color: var(--mute); line-height: 1.4; }
+.stoop-wiz-venue-chip--active .stoop-wiz-venue-name { color: var(--ochre); }
+
+/* ── Step 3: capacity stepper ────────────────────────────────── */
+.stoop-wiz-cap-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 8px 0;
+}
+.stoop-wiz-cap-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ochre);
+  background: #fff;
+  color: var(--ochre);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.stoop-wiz-cap-btn:hover:not(:disabled) { background: #fdf5f4; }
+.stoop-wiz-cap-btn:disabled { border-color: var(--rule); color: var(--mute); cursor: default; }
+.stoop-wiz-cap-value {
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 56px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.stoop-wiz-cap-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--mute);
+  margin: -4px 0 4px;
+}
+.stoop-wiz-accessible-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+}
+.stoop-wiz-accessible-row input { margin-top: 2px; accent-color: var(--ochre); }
+
+/* ── Step 4: locality commitment ─────────────────────────────── */
+.stoop-wiz-context-note {
+  padding: 12px 16px;
+  background: #fdf5f4;
+  border-left: 3px solid var(--ochre);
+  border-radius: 0 var(--radius-md, 4px) var(--radius-md, 4px) 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.stoop-wiz-commit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  line-height: 1.5;
+  transition: border-color 0.14s, background 0.14s, color 0.14s;
+}
+.stoop-wiz-commit:hover { border-color: var(--ochre); }
+.stoop-wiz-commit--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+  color: var(--ochre);
+}
+
+/* ── Step 5: address options + summary ───────────────────────── */
+.stoop-wiz-addr-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stoop-wiz-addr-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 12px 16px;
+  font-family: inherit;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  transition: border-color 0.12s, background 0.12s;
+}
+.stoop-wiz-addr-option:hover { border-color: var(--ochre); }
+.stoop-wiz-addr-option--active {
+  border-color: var(--ochre);
+  background: #fdf5f4;
+}
+.stoop-wiz-addr-label { font-size: 14px; font-weight: 700; color: var(--ink); }
+.stoop-wiz-addr-sub { font-size: 12px; color: var(--mute); }
+.stoop-wiz-addr-option--active .stoop-wiz-addr-label { color: var(--ochre); }
+
+.stoop-wiz-summary {
+  padding: 12px 16px;
+  background: var(--paper-deep, #f0e9da);
+  border-radius: var(--radius-lg, 6px);
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stoop-wiz-summary p { margin: 0; }
+
+/* ── Step 6: detail form extras ──────────────────────────────── */
+.stoop-wiz-required { color: var(--ochre); }
+.stoop-wiz-geo-note {
+  font-size: 11px;
+  color: var(--mute);
+  margin: -6px 0 0;
+  line-height: 1.4;
+}
+.stoop-wiz-geo-confirmed {
+  font-size: 12px;
+  color: #2e7d32;
+  margin: -4px 0 0;
+  font-weight: 600;
+}
+
+/* ── Nav row ─────────────────────────────────────────────────── */
+.stoop-wiz-nav {
+  padding-top: 4px;
+}
+.stoop-wiz-nav-next {
+  width: 100%;
+  padding: 13px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--ochre);
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  cursor: pointer;
+  transition: background 0.14s;
+}
+.stoop-wiz-nav-next:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-wiz-nav-next:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Success screen ──────────────────────────────────────────── */
+.stoop-wiz-success {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  text-align: center;
+  padding: 8px 0;
+}
+.stoop-wiz-success-name {
+  font-family: var(--font-fraunces, serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+.stoop-wiz-success-sub {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0;
+  line-height: 1.55;
+  max-width: 380px;
+}
+.stoop-wiz-copy-btn {
+  padding: 10px 22px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre);
+  background: #fff;
+  border: 1.5px solid var(--ochre);
+  border-radius: var(--radius-full, 999px);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.stoop-wiz-copy-btn:hover { background: #fdf5f4; }
+
+/* ── Responsive adjustments for new elements ─────────────────── */
+@media (max-width: 640px) {
+  .stoop-hero { margin: 12px 0 20px; }
+  .stoop-hero-content { max-width: 100%; padding: 24px 20px; }
+  .stoop-hero-art { display: none; }
+  .stoop-hero-heading { font-size: 19px; }
+  .stoop-grid { grid-template-columns: 1fr; }
+  .stoop-cats-row { flex-direction: column; align-items: flex-start; }
+  .stoop-modal-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .stoop-my-body { flex-direction: column; align-items: flex-start; }
+}
+
+/* ═══════════════════════════════════════════════════
+   STOOP DETAIL PANEL — .stoop-dp-* namespace
+   Renders inline as the centre column between sidebars
+   ═══════════════════════════════════════════════════ */
+
+.stoop-dp-root {
+  padding-bottom: 40px;
+}
+
+/* Back button */
+.stoop-dp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--ochre, #7a241c);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 12px 0 16px;
+  letter-spacing: 0.02em;
+  transition: opacity 0.12s;
+}
+.stoop-dp-back:hover { opacity: 0.7; }
+
+/* Loading / error states */
+.stoop-dp-loading {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--mute, #888);
+  font-size: 14px;
+}
+.stoop-dp-error {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--mute, #888);
+  font-size: 14px;
+}
+.stoop-dp-retry {
+  margin-top: 12px;
+  background: var(--ochre);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Cover header */
+.stoop-dp-cover {
+  position: relative;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 0;
+}
+.stoop-dp-cover-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 18px 18px;
+  pointer-events: none;
+}
+.stoop-dp-cover-content {
+  position: relative;
+  padding: 24px 24px 22px;
+  width: 100%;
+}
+.stoop-dp-neighborhood {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 8px;
+}
+.stoop-dp-title {
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.stoop-dp-schedule {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}
+
+/* Action bar */
+.stoop-dp-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0 14px;
+  border-bottom: 1px solid var(--rule, rgba(0,0,0,0.1));
+  flex-wrap: wrap;
+}
+.stoop-dp-host-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stoop-dp-host-av {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full, 999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stoop-dp-host-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stoop-dp-host-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+}
+.stoop-dp-member-count {
+  font-size: 12px;
+  color: var(--mute, #888);
+}
+.stoop-dp-join-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.stoop-dp-action-error {
+  font-size: 11px;
+  color: var(--ochre, #7a241c);
+  text-align: right;
+}
+
+/* Buttons */
+.stoop-dp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full, 999px);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.13s, opacity 0.13s;
+  white-space: nowrap;
+}
+.stoop-dp-btn--primary {
+  background: var(--ochre, #7a241c);
+  color: #fff;
+}
+.stoop-dp-btn--primary:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-dp-btn--leave {
+  background: transparent;
+  color: var(--mute, #888);
+  border: 1px solid var(--rule, rgba(0,0,0,0.15));
+}
+.stoop-dp-btn--leave:hover:not(:disabled) { color: var(--ochre); border-color: var(--ochre); }
+.stoop-dp-btn--disabled {
+  background: var(--rule, rgba(0,0,0,0.1));
+  color: var(--mute, #888);
+  cursor: not-allowed;
+}
+.stoop-dp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Capacity bar */
+.stoop-dp-cap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+.stoop-dp-cap-track {
+  flex: 1;
+  height: 4px;
+  background: var(--rule, rgba(0,0,0,0.1));
+  border-radius: var(--radius-full, 999px);
+  overflow: hidden;
+}
+.stoop-dp-cap-fill {
+  height: 100%;
+  background: var(--ochre, #7a241c);
+  border-radius: inherit;
+  transition: width 0.3s;
+}
+.stoop-dp-cap-label {
+  font-size: 11px;
+  color: var(--mute, #888);
+  white-space: nowrap;
+}
+
+/* Section blocks */
+.stoop-dp-section {
+  padding: 20px 0 4px;
+}
+.stoop-dp-section-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute, #888);
+  margin: 0 0 10px;
+}
+.stoop-dp-about {
+  font-size: 14px;
+  color: var(--ink-soft, #444);
+  line-height: 1.65;
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Address — locked */
+.stoop-dp-address-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--paper-deep, #ede6d9);
+  border-radius: var(--radius-lg, 6px);
+  padding: 16px;
+}
+.stoop-dp-lock-icon {
+  flex-shrink: 0;
+  color: var(--mute, #888);
+  margin-top: 2px;
+}
+.stoop-dp-locked-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+  margin: 0 0 4px;
+}
+.stoop-dp-locked-sub {
+  font-size: 12px;
+  color: var(--mute, #888);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Address — unlocked */
+.stoop-dp-address-unlocked {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: color-mix(in srgb, var(--ochre, #7a241c) 6%, transparent);
+  border-radius: var(--radius-lg, 6px);
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--ochre, #7a241c) 18%, transparent);
+}
+.stoop-dp-unlock-icon {
+  flex-shrink: 0;
+  color: var(--ochre, #7a241c);
+  margin-top: 2px;
+}
+.stoop-dp-address-line {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+  margin: 0 0 4px;
+}
+.stoop-dp-location-note {
+  font-size: 12px;
+  color: var(--ink-soft, #444);
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.stoop-dp-accessible-badge {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  background: color-mix(in srgb, var(--ochre, #7a241c) 10%, transparent);
+  padding: 3px 8px;
+  border-radius: var(--radius-full, 999px);
+}
+
+/* Members roster */
+.stoop-dp-members-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.stoop-dp-member-chip {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full, 999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.stoop-dp-member-extra {
+  font-size: 12px;
+  color: var(--mute, #888);
+  font-weight: 600;
+  padding-left: 4px;
+}
+
+/* Hub link */
+.stoop-dp-hub-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.12s;
+}
+.stoop-dp-hub-link:hover { opacity: 0.75; }
+
+/* Footer */
+.stoop-dp-footer {
+  padding: 20px 0 8px;
+  border-top: 1px solid var(--rule, rgba(0,0,0,0.07));
+  margin-top: 8px;
+}
+.stoop-dp-full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft, #444);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.stoop-dp-full-link:hover { color: var(--ochre, #7a241c); }
+
+/* Cover badge (location pill) */
+.stoop-dp-cover-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 9999px);
+  margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* Cover meta row (schedule + member count) */
+.stoop-dp-cover-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* Cover edit button (host only) */
+.stoop-dp-cover-edit-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 2;
+}
+.stoop-dp-cover-edit-btn:hover:not(:disabled) { background: rgba(0,0,0,0.65); }
+.stoop-dp-cover-edit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Spinner for cover upload */
+@keyframes stoop-spin { to { transform: rotate(360deg); } }
+.stoop-dp-cover-edit-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: stoop-spin 0.7s linear infinite;
+}
+
+/* Stoop display avatar (overlapping action bar, below cover) */
+.stoop-dp-stoop-avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.stoop-dp-stoop-avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-xl, 12px);
+  object-fit: cover;
+  border: 2px solid var(--paper, #f3ece0);
+}
+.stoop-dp-stoop-avatar-fallback {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-xl, 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+.stoop-dp-avatar-edit-btn {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border: 2px solid var(--paper, #f3ece0);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 2;
+  transition: background 0.15s;
+}
+.stoop-dp-avatar-edit-btn:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-dp-avatar-edit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Tab bar */
+.stoop-dp-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--rule, rgba(0,0,0,0.1));
+  margin: 8px 0 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stoop-dp-tabs::-webkit-scrollbar { display: none; }
+
+.stoop-dp-tab {
+  padding: 11px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mute, #888);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: color 0.14s, border-color 0.14s;
+  letter-spacing: 0.01em;
+  margin-bottom: -1px;
+}
+.stoop-dp-tab:hover { color: var(--ink, #14110d); }
+.stoop-dp-tab--active {
+  color: var(--ochre, #7a241c);
+  border-bottom-color: var(--ochre, #7a241c);
+}
+
+/* Empty tab state */
+.stoop-dp-empty-tab {
+  font-size: 13px;
+  color: var(--mute, #888);
+  padding: 4px 0 8px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Vibe tags */
+.stoop-dp-vibe-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.stoop-dp-vibe-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: color-mix(in srgb, var(--ochre, #7a241c) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ochre, #7a241c) 20%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  letter-spacing: 0.02em;
+}
+
+/* Schedule card (About tab) */
+.stoop-dp-schedule-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--paper-deep, #ede6d9);
+  border-radius: var(--radius-lg, 6px);
+  padding: 14px 16px;
+  color: var(--ink-soft, #444);
+}
+.stoop-dp-schedule-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+  margin: 0 0 2px;
+}
+.stoop-dp-schedule-venue {
+  font-size: 12px;
+  color: var(--mute, #888);
+  margin: 0;
+}
+
+/* Chat tab modifier — let it grow taller */
+.stoop-dp-section--chat {
+  border-top: none;
+  padding-top: 12px;
+}
+
+/* Member pills (Members tab) */
+.stoop-dp-member-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+.stoop-dp-member-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 5px;
+  background: var(--paper-deep, #ede6d9);
+  border: 1px solid var(--rule, rgba(0,0,0,0.1));
+  border-radius: var(--radius-full, 9999px);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+}
+.stoop-dp-member-pill-av {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.stoop-dp-member-role {
+  font-size: 10px;
+  color: var(--mute, #888);
+  font-weight: 400;
+  margin-left: 1px;
+}
+.stoop-dp-member-pill--more {
+  opacity: 0.65;
+  font-size: 11px;
+}
+
+/* Lock section (Members tab, non-member) */
+.stoop-dp-lock-section {
+  background: var(--paper-deep, #ede6d9);
+  border: 2px dashed var(--rule, rgba(0,0,0,0.12));
+  border-radius: var(--radius-xl, 12px);
+  padding: 28px 16px;
+  text-align: center;
+}
+.stoop-dp-lock-section-icon {
+  display: block;
+  margin: 0 auto 10px;
+  color: var(--mute, #888);
+}
+.stoop-dp-lock-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #14110d);
+  margin: 0 0 6px;
+}
+.stoop-dp-lock-section-desc {
+  font-size: 12px;
+  color: var(--mute, #888);
+  max-width: 280px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Gathering list */
+.stoop-gather-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.stoop-gather-heading-row .stoop-dp-section-heading { margin-bottom: 0; }
+.stoop-gather-add-btn {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ochre, #7a241c);
+  background: none;
+  border: 1px solid var(--ochre, #7a241c);
+  border-radius: var(--radius-full, 9999px);
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.13s, color 0.13s;
+}
+.stoop-gather-add-btn:hover { background: var(--ochre, #7a241c); color: #fff; }
+
+.stoop-gather-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 14px;
+  background: var(--paper-deep, #ede6d9);
+  border-radius: var(--radius-lg, 6px);
+}
+.stoop-gather-add-input {
+  border: 1px solid var(--rule, rgba(0,0,0,0.15));
+  border-radius: var(--radius-md, 4px);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--paper, #f3ece0);
+  color: var(--ink, #14110d);
+}
+.stoop-gather-add-input:focus { outline: none; border-color: var(--ochre, #7a241c); }
+.stoop-gather-add-error { font-size: 11px; color: var(--error, #c62828); margin: 0; }
+.stoop-gather-save-btn {
+  align-self: flex-start;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.13s;
+}
+.stoop-gather-save-btn:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-gather-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.stoop-gather-list { display: flex; flex-direction: column; gap: 0; }
+.stoop-gather-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule, rgba(0,0,0,0.07));
+  flex-wrap: wrap;
+}
+.stoop-gather-row:last-child { border-bottom: none; }
+
+.stoop-gather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.stoop-gather-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre, #7a241c);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stoop-gather-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+}
+.stoop-gather-attending {
+  font-size: 11px;
+  color: var(--mute, #888);
+}
+
+.stoop-gather-rsvp-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.stoop-gather-btn {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 5px 12px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--rule, rgba(0,0,0,0.15));
+  background: transparent;
+  color: var(--mute, #888);
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  white-space: nowrap;
+}
+.stoop-gather-btn:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
+.stoop-gather-btn--yes { background: var(--ochre, #7a241c); color: #fff; border-color: var(--ochre, #7a241c); }
+.stoop-gather-btn--yes:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); border-color: var(--ochre-deep); }
+.stoop-gather-btn--no { background: var(--ink, #14110d); color: #fff; border-color: var(--ink, #14110d); }
+.stoop-gather-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.stoop-gather-locked {
+  font-size: 11px;
+  color: var(--mute, #888);
+  font-style: italic;
+}
+
+/* Chatter live dot */
+.stoop-chatter-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.stoop-chatter-live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--mute, #888);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.stoop-chatter-live-dot-inner {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3d9e3d;
+  display: inline-block;
+}
+@keyframes stoop-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+.stoop-chatter-live-dot--pulse .stoop-chatter-live-dot-inner {
+  animation: stoop-live-pulse 0.6s ease-in-out 3;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .stoop-dp-action-bar { gap: 12px; }
+  .stoop-dp-join-col { align-items: flex-start; }
+  .stoop-dp-cover { min-height: 150px; }
+  .stoop-dp-title { font-size: 20px; }
+  .stoop-dp-tab { padding: 10px 12px; font-size: 11px; }
+  .stoop-gather-row { gap: 8px; }
+}
+
+/* ═══════════════════════════════════════════════════
+   STOOP CHATTER — .stoop-chatter-* namespace
+   Lightweight chat box inside StoopDetailPanel
+   ═══════════════════════════════════════════════════ */
+
+.stoop-chatter-root {
+  /* inherits stoop-dp-section padding */
+}
+.stoop-chatter-loading,
+.stoop-chatter-empty {
+  font-size: 12px;
+  color: var(--mute);
+  padding: 12px 0 4px;
+  line-height: 1.5;
+}
+
+.stoop-chatter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+.stoop-chatter-msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.stoop-chatter-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.stoop-chatter-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stoop-chatter-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.stoop-chatter-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.stoop-chatter-time {
+  font-size: 11px;
+  color: var(--mute);
+}
+
+.stoop-chatter-text {
+  font-size: 13px;
+  color: var(--ink-soft, var(--ink));
+  line-height: 1.5;
+  margin: 0;
+  word-break: break-word;
+}
+
+.stoop-chatter-images {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.stoop-chatter-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 4px);
+  border: 1px solid var(--rule);
+}
+
+/* Composer */
+.stoop-chatter-composer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+.stoop-chatter-preview-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.stoop-chatter-preview-item {
+  position: relative;
+}
+
+.stoop-chatter-preview-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 4px);
+  border: 1px solid var(--rule);
+  display: block;
+}
+
+.stoop-chatter-preview-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.stoop-chatter-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.stoop-chatter-input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+.stoop-chatter-input:focus {
+  outline: none;
+  border-color: var(--ochre, #7a241c);
+}
+.stoop-chatter-input::placeholder { color: var(--mute); }
+
+.stoop-chatter-img-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper);
+  color: var(--mute);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.stoop-chatter-img-btn:hover {
+  border-color: var(--ochre, #7a241c);
+  color: var(--ochre, #7a241c);
+}
+
+.stoop-chatter-post-btn {
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg, 6px);
+  padding: 0 14px;
+  height: 34px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.stoop-chatter-post-btn:hover:not(:disabled) { background: var(--ochre-deep, #5c1b15); }
+.stoop-chatter-post-btn--disabled,
+.stoop-chatter-post-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.stoop-chatter-error {
+  font-size: 11px;
+  color: var(--error, #c62828);
+  margin: 6px 0 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   STOOP EMBED CARD — .stoop-embed-* namespace
+   Inline stoop preview card inside a feed Update post
+   ═══════════════════════════════════════════════════ */
+
+.stoop-embed-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-xl, 12px);
+  background: var(--paper);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+.stoop-embed-card:hover {
+  border-color: var(--ochre, #7a241c);
+  background: var(--paper-deep, #f2f2f2);
+}
+
+.stoop-embed-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg, 6px);
+  flex-shrink: 0;
+  display: block;
+}
+
+.stoop-embed-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.stoop-embed-label {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ochre, #7a241c);
+  margin-bottom: 2px;
+}
+
+.stoop-embed-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-serif, Georgia, serif);
+}
+
+.stoop-embed-meta {
+  font-size: 11px;
+  color: var(--mute);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stoop-embed-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
+
+/* ═══════════════════════════════════════════════════
+   STOOPS NEAR YOU WIDGET — .stoops-widget-* namespace
+   Right-sidebar widget in PulseFeed + per-stoop page
+   ═══════════════════════════════════════════════════ */
+
+.stoops-widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stoops-widget-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.stoops-widget-row:last-child { border-bottom: none; }
+.stoops-widget-row:hover { opacity: 0.75; }
+
+.stoops-widget-cover {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg, 6px);
+  flex-shrink: 0;
+  display: block;
+}
+
+.stoops-widget-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.stoops-widget-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stoops-widget-city {
+  font-size: 11px;
+  color: var(--mute);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stoops-widget-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ochre, #7a241c);
+  border: 1px solid var(--ochre, #7a241c);
+  border-radius: 9999px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.stoops-widget-chevron {
+  color: var(--mute);
+  flex-shrink: 0;
+}
+
+/* ── Stoop Gatherings ─────────────────────────────────── */
+.stoop-gather-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.stoop-gather-add-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ochre, #7a241c);
+  border: 1px solid var(--ochre, #7a241c);
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  padding: 2px 10px;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+.stoop-gather-add-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.stoop-gather-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.stoop-gather-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.stoop-gather-row:last-child {
+  border-bottom: none;
+}
+.stoop-gather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.stoop-gather-date {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ochre, #7a241c);
+}
+.stoop-gather-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stoop-gather-rsvp-btns {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.stoop-gather-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.stoop-gather-btn:hover {
+  border-color: var(--ochre, #7a241c);
+  color: var(--ochre, #7a241c);
+}
+.stoop-gather-btn--yes {
+  background: var(--ochre, #7a241c);
+  border-color: var(--ochre, #7a241c);
+  color: #fff !important;
+}
+.stoop-gather-btn--no {
+  background: var(--ink, #14110d);
+  border-color: var(--ink, #14110d);
+  color: #fff !important;
+}
+.stoop-gather-locked {
+  font-size: 11px;
+  color: var(--mute);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Host Add Gathering Form ──────────────────────────── */
+.stoop-gather-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--paper-deep, #ede5d5);
+  border-radius: var(--radius-lg, 6px);
+  margin-bottom: 0.75rem;
+}
+.stoop-gather-add-input {
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md, 4px);
+  background: var(--paper, #f3ece0);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.stoop-gather-add-input:focus {
+  border-color: var(--ochre, #7a241c);
+}
+.stoop-gather-add-error {
+  font-size: 11px;
+  color: var(--ochre, #7a241c);
+  margin: 0;
+}
+.stoop-gather-save-btn {
+  align-self: flex-end;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: var(--radius-full, 9999px);
+  border: none;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.stoop-gather-save-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

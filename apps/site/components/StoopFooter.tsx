@@ -3,7 +3,7 @@ import SubscribeForm from "@/components/SubscribeForm";
 
 // Community/auth routes don't exist in apps/site — link straight to Site B,
 // same reasoning as the sitewide Footer.tsx's own CONNECT_URL constant.
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 export default function StoopFooter() {
   return (

@@ -7,7 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import SearchOverlay from "./SearchOverlay";
 import { useCart } from "@/context/CartContext";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 interface FeaturedProduct {
   name: string;

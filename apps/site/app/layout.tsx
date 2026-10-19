@@ -1,29 +1,10 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import "./homepage.css";
-import "./header.css";
-import "./footer.css";
-import "./homepage-v2.css";
-import "./moveee-zone.css";
-import "./features.css";
-import "./editorial.css";
-import "./not-found.css";
-import "./legal.css";
-import "./literary.css";
-import "./commons.css";
-import Header from "@/components/Header";
-import ConditionalFooter from "@/components/ConditionalFooter";
-import CookieConsent from "@/components/CookieConsent";
-import CartDrawer from "@/components/CartDrawer";
+import "./connect-globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
-import { CartProvider } from "@/context/CartContext";
-import { AdsProvider, type AdSettings } from "@/context/AdsContext";
-import Script from "next/script";
 import SessionProvider from "@/components/SessionProvider";
-import GlobalAuthModal from "@/components/GlobalAuthModal";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -40,6 +21,12 @@ const fraunces = Fraunces({
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -106,21 +93,10 @@ export default async function RootLayout({
 }>) {
   const siteData = await getWPData(GET_SITE_SETTINGS, {}, { revalidate: 3600 });
 
-  const rawAds = siteData?.adSettings;
-  const adSettings: AdSettings = {
-    adsEnabled:              rawAds?.adsEnabled        ?? false,
-    publisherId:             rawAds?.publisherId        ?? null,
-    customScript:            rawAds?.customScript       ?? null,
-    slotLeaderboardTop:      rawAds?.slotLeaderboardTop      ?? null,
-    slotLeaderboardMid:      rawAds?.slotLeaderboardMid      ?? null,
-    slotLeaderboardPreQuotes:rawAds?.slotLeaderboardPreQuotes ?? null,
-    slotHeroSidebar:         rawAds?.slotHeroSidebar         ?? null,
-  };
-
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Moveee Magazine",
+    name: "Moveee",
     url: "https://themoveee.com",
     potentialAction: {
       "@type": "SearchAction",
@@ -132,19 +108,28 @@ export default async function RootLayout({
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Moveee Magazine",
+    name: "Moveee",
     url: "https://themoveee.com",
     logo: "https://themoveee.com/logo.png",
     sameAs: [
       "https://twitter.com/moveeemedia",
       "https://instagram.com/moveeemedia",
     ],
-    description: "An independent magazine for people who live for culture — music, film, art, food, travel, and ideas.",
+    description: "An independent magazine and community for people who live for culture.",
   };
 
   return (
     <html lang="en" className="scroll-smooth">
       <head>
+        {/* Set data-theme before paint — prevents light/dark flash on connect pages */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("moveee-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`,
+          }}
+        />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3ece0" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14110d" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
@@ -155,7 +140,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable}`}
+        className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable} ${inter.variable}`}
       >
         <SessionProvider>
           <CurrencyProvider
@@ -163,33 +148,7 @@ export default async function RootLayout({
             initialPricing={siteData?.membershipSettings || null}
           >
             <LanguageProvider>
-              <CartProvider>
-                <AdsProvider settings={adSettings}>
-                  {/* AdSense loader — only injected when a publisher ID is set */}
-                  {adSettings.adsEnabled && adSettings.publisherId && (
-                    <Script
-                      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSettings.publisherId}`}
-                      strategy="afterInteractive"
-                      crossOrigin="anonymous"
-                    />
-                  )}
-                  {/* Custom ad script (e.g. Google Tag Manager, Ad Manager) */}
-                  {adSettings.adsEnabled && adSettings.customScript && (
-                    <Script
-                      id="custom-ad-script"
-                      strategy="afterInteractive"
-                      dangerouslySetInnerHTML={{ __html: adSettings.customScript }}
-                    />
-                  )}
-                  <Header />
-                  <main>{children}</main>
-                  <ConditionalFooter />
-                  <CartDrawer />
-                  <CookieConsent />
-                  <GlobalAuthModal />
-                  <PWAInstallPrompt />
-                </AdsProvider>
-              </CartProvider>
+              {children}
             </LanguageProvider>
           </CurrencyProvider>
         </SessionProvider>

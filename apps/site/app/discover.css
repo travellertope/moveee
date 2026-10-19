@@ -1,0 +1,366 @@
+.disc-page-bg {
+  background: var(--paper, #fff);
+  min-height: 100vh;
+}
+
+.disc-wrap {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.disc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 0 12px;
+}
+
+.disc-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── Hero — see the "was entirely missing" comment at its JSX call site.
+   Contained within .disc-wrap's max-width rather than full-bleed (see that
+   comment for why); no photo collage behind the copy for the same reason. */
+.disc-hero {
+  position: relative;
+  padding: 32px 0 8px;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(197,73,31,.14), transparent 45%),
+    radial-gradient(circle at 85% 0%, rgba(179,130,56,.16), transparent 50%),
+    radial-gradient(circle at 60% 90%, rgba(107,72,168,.12), transparent 45%);
+}
+.disc-hero-eyebrow {
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.disc-hero-title {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: .98;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.disc-hero-title em { font-style: italic; color: var(--ochre); }
+.disc-hero-sub {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--mute);
+  max-width: 480px;
+  margin: 0;
+}
+
+/* Same "opens the shared SearchModal" pill button as .evt-search-btn
+   (apps/connect/app/events.css) — kept visually identical across every
+   surface that uses this pattern (feed rail, /events, /discover). */
+.disc-search-btn {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 4px 0 4px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+  background: var(--paper-deep);
+  color: var(--mute);
+  font-family: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.disc-search-btn:hover { border-color: var(--ochre); color: var(--ink-soft); }
+.disc-search-btn svg { flex-shrink: 0; }
+
+/* Active-filter chips — the only on-page trace of Type/Region once applied
+   via SearchModal (both moved off on-page tabs and into the modal, July
+   2026 — see the People Near Me rebuild for the identical pattern). */
+.disc-active-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.disc-active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+}
+.disc-active-filter-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.disc-active-filter-clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper) 16%, transparent);
+  border: none;
+  color: var(--paper);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.disc-active-filter-clear:hover { background: color-mix(in srgb, var(--paper) 30%, transparent); }
+
+/* Dead since Type moved into SearchModal (July 2026, see above) — kept in
+   case anything else ever needs an underline-tab treatment again. */
+.disc-type-tabs {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 14px 0 0;
+  border-bottom: 1px solid var(--rule);
+  scrollbar-width: none;
+}
+.disc-type-tabs::-webkit-scrollbar { display: none; }
+.disc-type-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 0 10px;
+  margin-bottom: -1px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+  white-space: nowrap;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.disc-type-tab:hover { color: var(--ink); }
+.disc-type-tab.active {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom-color: var(--tab-color, var(--ochre));
+}
+.disc-type-tab-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.disc-rail-heading,
+.disc-grid-heading {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 18px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.disc-spark {
+  color: var(--ochre);
+  font-size: 20px;
+}
+
+.disc-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.disc-rail::-webkit-scrollbar { display: none; }
+
+/* Photo-forward cards — real directory-entry photography with an overlay
+   scrim, replacing the old text-only tile. Same visual language as the
+   approved mockup's rail-card/m-card. */
+.disc-card {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-lg, 6px);
+  overflow: hidden;
+  text-decoration: none;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(20,17,13,.06), 0 8px 24px -12px rgba(20,17,13,.18);
+  transition: transform 0.2s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s ease;
+}
+.disc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -16px rgba(20,17,13,.3);
+}
+
+.disc-card--rail {
+  flex: 0 0 230px;
+  width: 230px;
+  height: 290px;
+}
+
+.disc-card-art {
+  position: absolute;
+  inset: 0;
+}
+.disc-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.disc-card-art-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  opacity: 0.4;
+}
+.disc-card-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.15) 45%, transparent 68%);
+}
+
+.disc-card-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px;
+}
+
+.disc-card-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,.92);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.disc-card-new {
+  display: inline-block;
+  margin-bottom: 4px;
+  background: var(--ochre);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+.disc-card-title {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.2;
+  margin-bottom: 3px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.5);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.disc-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  opacity: 0.95;
+  text-shadow: 0 1px 4px rgba(0,0,0,.5);
+}
+
+.disc-card-rating { letter-spacing: 1px; color: #ffd77a; }
+
+.disc-card-subtype-pill {
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* Explore More — masonry via CSS columns, same technique the approved
+   mockup used (per-card height cycled from a small preset list — the API
+   has no real image-dimension data to derive true masonry from). */
+.disc-masonry {
+  columns: 2 160px;
+  column-gap: 12px;
+  margin-bottom: 24px;
+}
+.disc-masonry .disc-card {
+  break-inside: avoid;
+  width: 100%;
+  margin-bottom: 12px;
+}
+@media (min-width: 720px) {
+  /* column-width only (no fixed count) — the wrapper here is much wider
+     (1680px) than the approved mockup's own 1160px frame, so a hardcoded
+     column count would look chunky; this lets the browser add columns
+     as the viewport grows instead of stretching a fixed few very wide. */
+  .disc-masonry { columns: 200px; }
+}
+
+.disc-loading {
+  text-align: center;
+  color: var(--mute);
+  padding: 40px 0;
+}
+
+.disc-empty {
+  text-align: center;
+  color: var(--mute);
+  padding: 48px 24px;
+  border: 2px dashed var(--ghost, var(--rule));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper-deep) 50%, transparent);
+}
+
+.disc-empty-icon {
+  font-size: 32px;
+  filter: grayscale(1);
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+
+.disc-load-more {
+  display: block;
+  margin: 0 auto 32px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.disc-count {
+  text-align: center;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--mute);
+  margin: 8px 0 24px;
+}
+

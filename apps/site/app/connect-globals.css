@@ -1,0 +1,204 @@
+/*
+ * connect-globals.css — CSS for the (connect) route group.
+ *
+ * This file is intentionally NOT a straight copy of apps/connect/app/globals.css.
+ * It omits @import "tailwindcss" (already in site's globals.css) and scopes
+ * anything that would conflict with the magazine's palette/fonts to .cw-shell,
+ * so magazine pages are never affected.
+ */
+
+/* ── Variables that are safe at :root (connect-only tokens, additive) ── */
+:root {
+  --topbar-height: 60px;
+
+  /* Connect uses a pure-white paper (magazine uses warm #faf7f2) — scoped to
+     cw-shell below so magazine pages keep their warm tones. */
+  --bg-page-connect: #f8fafc;
+
+  /* Feed card type-badge accents — not defined by magazine globals.css */
+  --cat-pulse-bg: #fef3e2;
+  --cat-pulse-fg: #b38238;
+  --cat-editorial-bg: #fff0eb;
+  --cat-editorial-fg: #7a241c;
+  --cat-happening-bg: #eeedfe;
+  --cat-happening-fg: #3c3489;
+  --cat-directory-bg: #e8f5ee;
+  --cat-directory-fg: #085041;
+  --cat-quote-bg: #f3eef8;
+  --cat-quote-fg: #7a4da0;
+  --cat-community-bg: #edf7ed;
+  --cat-community-fg: #2e7d32;
+  --cat-blue-fg: #1976d2;
+  --cat-blue-bg: rgba(25, 118, 210, 0.08);
+  --cat-rust-fg: #a8351f;
+  --cat-rust-bg: rgba(168, 53, 31, 0.08);
+  --cat-purple-fg: #6b48a8;
+  --cat-purple-bg: rgba(107, 72, 168, 0.08);
+
+  /* Shadow presets used by connect components */
+  --shadow-card: 0 1px 3px rgba(20, 17, 13, 0.08);
+  --shadow-modal: 0 20px 60px rgba(20, 17, 13, 0.18);
+  --shadow-fab: 0 4px 12px rgba(197, 73, 31, 0.35);
+
+  /* Gold glow ring */
+  --glow-gold: 0 0 0 2px var(--gold), 0 0 10px 2px rgba(179, 130, 56, 0.55);
+
+  /* rule-dark token (connect-only) */
+  --rule-dark: rgba(20, 17, 13, 0.15);
+  --paper-header: #faf8f5;
+}
+
+/* ── Connect shell: overrides that apply only within the connect app shell ── */
+.cw-shell {
+  /* Font stack: Inter for all connect pages */
+  --font-serif: var(--font-inter), "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-dm-sans: var(--font-inter), "Inter", sans-serif;
+  --font-fraunces: var(--font-inter), "Inter", sans-serif;
+
+  /* Connect-specific background (pure white, not warm paper) */
+  --bg-page: #f8fafc;
+  --paper: #ffffff;
+  --paper-warm: #ffffff;
+  --paper-deep: #f2f2f2;
+  --paper-header: #faf8f5;
+  --rule: rgba(20, 17, 13, 0.10);
+  --rule-dark: rgba(20, 17, 13, 0.15);
+
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg-page, #f8fafc);
+  color: var(--ink);
+}
+
+/* ── Dark mode — scoped to cw-shell so magazine pages keep light theme ── */
+[data-theme="dark"] .cw-shell {
+  --bg-page: #1a1714;
+  --paper: #242018;
+  --paper-warm: #1a1612;
+  --paper-deep: #2d2820;
+  --paper-header: #2d2820;
+  --ink: #f3ece0;
+  --ink-soft: #d4c9b8;
+  --mute: #9e9288;
+  --rule: rgba(61, 53, 48, 0.6);
+  --rule-dark: #3d3530;
+  --ochre: #954f49;
+  --ochre-deep: #7d4944;
+  --gold: #c9963f;
+  --moss: #3d4a2a;
+  --success: #4a9b76;
+  --error: #e05d5d;
+  --warning: #f5a623;
+  --warning-dark: #d4a657;
+
+  /* Tailwind --color-* mirrors so bg-paper / text-ink utilities respond to theme */
+  --color-paper: #242018;
+  --color-paper-warm: #1a1612;
+  --color-paper-deep: #2d2820;
+  --color-ink: #f3ece0;
+  --color-ink-soft: #d4c9b8;
+  --color-mute: #9e9288;
+  --color-rule: rgba(61, 53, 48, 0.6);
+  --color-rule-dark: #3d3530;
+  --color-ochre: #954f49;
+  --color-ochre-deep: #7d4944;
+  --color-moss: #3d4a2a;
+  --color-gold: #c9963f;
+
+  --cat-pulse-bg: rgba(201, 150, 63, 0.18);
+  --cat-pulse-fg: #c9963f;
+  --cat-editorial-bg: rgba(212, 96, 58, 0.18);
+  --cat-editorial-fg: #954f49;
+  --cat-happening-bg: rgba(139, 133, 214, 0.18);
+  --cat-happening-fg: #a39ee8;
+  --cat-directory-bg: rgba(79, 174, 143, 0.18);
+  --cat-directory-fg: #6fc4a8;
+  --cat-quote-bg: rgba(184, 155, 217, 0.18);
+  --cat-quote-fg: #c4a8e0;
+  --cat-community-bg: rgba(111, 207, 115, 0.18);
+  --cat-community-fg: #81d885;
+  --cat-blue-fg: #6ab0f0;
+  --cat-blue-bg: rgba(106, 176, 240, 0.14);
+  --cat-rust-fg: #e0775a;
+  --cat-rust-bg: rgba(224, 119, 90, 0.14);
+  --cat-purple-fg: #b89bd9;
+  --cat-purple-bg: rgba(184, 155, 217, 0.18);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --shadow-fab: 0 4px 12px rgba(212, 96, 58, 0.4);
+  --glow-gold: 0 0 0 2px var(--gold), 0 0 10px 2px rgba(201, 150, 63, 0.45);
+}
+
+/* ── Headings inside connect shell use Inter ── */
+.cw-shell h1,
+.cw-shell h2,
+.cw-shell h3,
+.cw-shell h4 {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  overflow: hidden;
+  border-bottom: 1px solid var(--rule);
+  background: var(--ink);
+  padding: 13px 0;
+  position: relative;
+  z-index: 2;
+  display: block;
+}
+.ticker-track {
+  display: flex;
+  animation: ticker-scroll 28s linear infinite;
+  white-space: nowrap;
+  width: max-content;
+}
+.ticker-track span {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 224, .55);
+  padding-right: 48px;
+}
+.ticker-track span.a { color: var(--ochre); opacity: 1; }
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── App shell layout ── */
+.cw-shell { display: block; }
+.cw-shell-content { min-width: 0; }
+@media (min-width: 860px) {
+  .cw-shell {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .cw-shell-content { flex: 1; min-width: 0; }
+}
+
+/* ── Utility: hide scrollbar on carousels ── */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
