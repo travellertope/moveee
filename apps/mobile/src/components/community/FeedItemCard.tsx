@@ -1741,9 +1741,15 @@ function BookReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
           </View>
         ) : null}
 
-        {/* Review body */}
-        {item.title ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+        {/* Review body — strip leading book title if present (mirrors web FeedCard strip) */}
+        {item.title && item.title !== item.bookTitle ? (
+          (() => {
+            let body = item.title;
+            if (item.bookTitle && body.toLowerCase().startsWith(item.bookTitle.toLowerCase())) {
+              body = body.slice(item.bookTitle.length).replace(/^[\n\r\s]+/, "");
+            }
+            return body ? <HashtagText text={body} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} /> : null;
+          })()
         ) : null}
 
         {/* Favourite quote */}
@@ -1903,9 +1909,15 @@ function FilmReviewCard({ item, onPress, onAuthorPress, forYouBadge, onMentionPr
           </View>
         ) : null}
 
-        {/* Review body */}
-        {item.title ? (
-          <HashtagText text={item.title} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} />
+        {/* Review body — strip leading film title if present (mirrors web FeedCard strip) */}
+        {item.title && item.title !== item.filmTitle ? (
+          (() => {
+            let body = item.title;
+            if (item.filmTitle && body.toLowerCase().startsWith(item.filmTitle.toLowerCase())) {
+              body = body.slice(item.filmTitle.length).replace(/^[\n\r\s]+/, "");
+            }
+            return body ? <HashtagText text={body} style={[styles.cardBody, { marginTop: 10 }]} numberOfLines={3} onMentionPress={handleMentionPress} /> : null;
+          })()
         ) : null}
 
         {/* Favourite line */}
