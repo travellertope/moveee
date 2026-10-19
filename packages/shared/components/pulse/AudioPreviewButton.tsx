@@ -55,40 +55,7 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
         />
       )}
       {src && (
-        <button
-          type="button"
-          onClick={toggle}
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: btnSize,
-            height: btnSize,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.92)",
-            border: "none",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.75)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.92)")}
-          aria-label={playing ? "Pause preview" : "Play preview"}
-        >
-          {playing ? (
-            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" aria-hidden="true">
-              <rect x="5" y="4" width="4" height="16" rx="1"/>
-              <rect x="15" y="4" width="4" height="16" rx="1"/>
-            </svg>
-          ) : (
-            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" style={{ marginLeft: "2px" }} aria-hidden="true">
-              <polygon points="6,4 20,12 6,20"/>
-            </svg>
-          )}
+        <>
           <audio
             ref={audioRef}
             src={src}
@@ -97,7 +64,42 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
             onEnded={() => setPlaying(false)}
             style={{ display: "none" }}
           />
-        </button>
+          <button
+            type="button"
+            onClick={toggle}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: btnSize,
+              height: btnSize,
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.92)",
+              border: "none",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.18)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.75)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.92)")}
+            aria-label={playing ? "Pause preview" : "Play preview"}
+          >
+            {playing ? (
+              <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" aria-hidden="true">
+                <rect x="5" y="4" width="4" height="16" rx="1"/>
+                <rect x="15" y="4" width="4" height="16" rx="1"/>
+              </svg>
+            ) : (
+              <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="#14110d" style={{ marginLeft: "2px" }} aria-hidden="true">
+                <polygon points="6,4 20,12 6,20"/>
+              </svg>
+            )}
+          </button>
+        </>
       )}
     </div>
   );

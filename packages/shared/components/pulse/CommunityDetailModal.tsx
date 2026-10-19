@@ -533,10 +533,12 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
               const urlToStrip = ytFromInline ? ytUrl! : (item.sourceUrl && !item.image ? item.sourceUrl : undefined);
               const fullText = stripTrailingUrl(item.title, urlToStrip);
               // For review types the first paragraph is just the item title, already shown in the card below
-              const isReviewType = ["music-review", "book-review", "film-review"].includes(item.templateType ?? "");
+              const isReviewType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
               if (isReviewType) {
-                const nlIdx = fullText.indexOf("\n\n");
-                const bodyText = nlIdx !== -1 ? fullText.slice(nlIdx + 2).trim() : fullText;
+                const dblNl = fullText.indexOf("\n\n");
+                const singleNl = fullText.indexOf("\n");
+                const sepIdx = dblNl !== -1 ? dblNl : singleNl;
+                const bodyText = sepIdx !== -1 ? fullText.slice(sepIdx + (dblNl !== -1 ? 2 : 1)).trim() : "";
                 return bodyText ? <HashtagText text={bodyText} onMentionClick={onMentionClick} /> : null;
               }
               const nlIdx = fullText.indexOf("\n\n");

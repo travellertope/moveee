@@ -429,10 +429,12 @@ export default function CommunityPostClient({
 
       {/* Post text — review types skip the first paragraph (item title, shown in card) */}
       {(() => {
-        const isReviewType = ["music-review", "book-review", "film-review"].includes(templateType ?? "");
+        const isReviewType = ["music-review", "book-review", "film-review", "food-review"].includes(templateType ?? "");
         if (isReviewType) {
-          const nlIdx = displayText.indexOf("\n\n");
-          const bodyText = nlIdx !== -1 ? displayText.slice(nlIdx + 2).trim() : displayText;
+          const dblNl = displayText.indexOf("\n\n");
+          const singleNl = displayText.indexOf("\n");
+          const sepIdx = dblNl !== -1 ? dblNl : singleNl;
+          const bodyText = sepIdx !== -1 ? displayText.slice(sepIdx + (dblNl !== -1 ? 2 : 1)).trim() : "";
           return bodyText ? (
             <p style={{ color: "#14110d", fontFamily: "var(--font-inter), 'Inter', sans-serif", fontSize: "1rem", lineHeight: 1.75, margin: "0 0 1.25rem", whiteSpace: "pre-wrap" }}>
               <HashtagText text={bodyText} onMentionClick={handleMentionClick} />

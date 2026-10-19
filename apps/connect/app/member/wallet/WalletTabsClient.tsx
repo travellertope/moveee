@@ -31,6 +31,7 @@ interface Perk {
   perk_type?: string;
   airtime_country?: string;
   airtime_amount_local?: number;
+  data_bundle_code?: string;
 }
 
 interface Props {

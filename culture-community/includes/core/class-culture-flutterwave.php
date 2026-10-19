@@ -48,6 +48,82 @@ class Culture_Flutterwave {
     /* ── Airtime ────────────────────────────────────────────────── */
 
     /**
+     * Send a mobile data bundle via the Flutterwave Bills API.
+     *
+     * @param string $phone       Phone number in E.164 format.
+     * @param string $bundle_type Flutterwave bill type for the data plan
+     *                            (e.g. "MTNDATA", "AIRTELDATA", "GLODATA", "9MOBILEDATA").
+     *                            This is the value stored as data_bundle_code on the perk.
+     * @param float  $amount      Amount in local currency units (e.g. 500 for ₦500).
+     * @param string $country     ISO-2 country code (e.g. "NG").
+     * @param string $reference   Unique idempotency reference for this transaction.
+     * @return array|WP_Error     Flutterwave response `data` on success, WP_Error on failure.
+     */
+    public static function send_data_bundle(
+        string $phone,
+        string $bundle_type,
+        float  $amount,
+        string $country,
+        string $reference
+    ): array|WP_Error {
+        if ( ! self::is_configured() ) {
+            return new WP_Error(
+                'flutterwave_unconfigured',
+                'Flutterwave is not configured. Please add your secret key in Settings.',
+                [ 'status' => 503 ]
+            );
+        }
+
+        if ( empty( trim( $bundle_type ) ) ) {
+            return new WP_Error(
+                'data_bundle_code_missing',
+                'Data bundle type is not configured for this perk.',
+                [ 'status' => 500 ]
+            );
+        }
+
+        $payload = [
+            'country'    => strtoupper( $country ),
+            'customer'   => $phone,
+            'amount'     => (float) $amount,
+            'recurrence' => 'ONCE',
+            'type'       => strtoupper( $bundle_type ),
+            'reference'  => $reference,
+        ];
+
+        $response = wp_remote_post( self::API_BASE . '/bills', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . self::secret_key(),
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode( $payload ),
+            'timeout' => 30,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error(
+                'flutterwave_network',
+                'Could not reach Flutterwave: ' . $response->get_error_message(),
+                [ 'status' => 502 ]
+            );
+        }
+
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
+
+        if ( $code >= 400 || ( $body['status'] ?? '' ) !== 'success' ) {
+            $msg = $body['message'] ?? "Flutterwave returned HTTP {$code}";
+            return new WP_Error(
+                'flutterwave_api',
+                $msg,
+                [ 'status' => $code >= 500 ? 502 : 422 ]
+            );
+        }
+
+        return $body['data'] ?? $body;
+    }
+
+    /**
      * Send airtime to a phone number via the Flutterwave Bills API.
      *
      * @param string $phone      Phone number in E.164 format (e.g. "+2348012345678")

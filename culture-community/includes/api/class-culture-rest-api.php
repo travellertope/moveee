@@ -160,6 +160,28 @@ class Culture_REST_API {
             }
         }
 
+        // ── Review cover URL: fill from directory entry if missing ───────
+        // Covers cases where the client didn't send a cover URL (e.g. a film
+        // already in the directory without an external cover, or an older app
+        // version that didn't include the field). Runs for both web and mobile
+        // submit paths — idempotent, skipped if the meta is already set.
+        $cover_meta_map = array(
+            'film-review'  => '_film_cover_url',
+            'music-review' => '_music_cover_url',
+            'book-review'  => '_book_cover_url',
+        );
+        if ( $directory_id > 0 && isset( $cover_meta_map[ $template ] ) ) {
+            $cover_meta_key = $cover_meta_map[ $template ];
+            $existing_cover = get_post_meta( $post_id, $cover_meta_key, true );
+            if ( ! $existing_cover ) {
+                $cover = get_the_post_thumbnail_url( $directory_id, 'thumbnail' )
+                       ?: get_post_meta( $directory_id, '_external_cover_url', true );
+                if ( $cover ) {
+                    update_post_meta( $post_id, $cover_meta_key, esc_url_raw( $cover ) );
+                }
+            }
+        }
+
         // ── Portfolio: auto-pin project posts ─────────────────────────────
         if ( 'project' === $template ) {
             $raw = get_user_meta( $author_id, '_portfolio_pinned_posts', true );
@@ -6745,6 +6767,8 @@ class Culture_REST_API {
         $allowed = array( 'active', 'paused', 'expired' );
         $status  = sanitize_key( $request->get_param( 'status' ) ?: 'active' );
         if ( ! in_array( $status, $allowed, true ) ) $status = 'active';
+        $perk_type = in_array( $request->get_param( 'perk_type' ), array( 'partner', 'airtime', 'data_bundle' ), true )
+            ? $request->get_param( 'perk_type' ) : 'partner';
         return array(
             'values'  => array(
                 'title'                => $title,
@@ -6760,8 +6784,12 @@ class Culture_REST_API {
                 'partner_vendor_id'    => max( 0, (int) $request->get_param( 'partner_vendor_id' ) ),
                 'min_rep_tier'         => in_array( $request->get_param( 'min_rep_tier' ), array( 'member', 'culture-contributor', 'taste-maker', 'culture-authority', 'culture-icon' ), true )
                                           ? $request->get_param( 'min_rep_tier' ) : 'member',
+                'perk_type'            => $perk_type,
+                'airtime_country'      => strtoupper( substr( sanitize_text_field( $request->get_param( 'airtime_country' ) ?: 'NG' ), 0, 3 ) ),
+                'airtime_amount_local' => max( 0, (int) $request->get_param( 'airtime_amount_local' ) ),
+                'data_bundle_code'     => sanitize_text_field( $request->get_param( 'data_bundle_code' ) ?: '' ),
             ),
-            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s' ),
+            'formats' => array( '%s', '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%s' ),
         );
     }
 

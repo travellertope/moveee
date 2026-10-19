@@ -92,8 +92,9 @@ class Culture_Perks_Admin {
                 <input type="hidden" name="page" value="culture-perks">
                 <select name="perk_type">
                     <option value=""><?php esc_html_e( 'All types', 'culture-community' ); ?></option>
-                    <option value="partner"  <?php selected( $type, 'partner' ); ?>><?php esc_html_e( 'Partner (QR code)', 'culture-community' ); ?></option>
-                    <option value="airtime"  <?php selected( $type, 'airtime' ); ?>><?php esc_html_e( 'Airtime Reward', 'culture-community' ); ?></option>
+                    <option value="partner"     <?php selected( $type, 'partner' ); ?>><?php esc_html_e( 'Partner (QR code)', 'culture-community' ); ?></option>
+                    <option value="airtime"     <?php selected( $type, 'airtime' ); ?>><?php esc_html_e( 'Airtime Reward', 'culture-community' ); ?></option>
+                    <option value="data_bundle" <?php selected( $type, 'data_bundle' ); ?>><?php esc_html_e( 'Data Bundle', 'culture-community' ); ?></option>
                 </select>
                 <?php submit_button( __( 'Filter', 'culture-community' ), 'secondary', '', false ); ?>
             </form>
@@ -123,7 +124,9 @@ class Culture_Perks_Admin {
                                 admin_url( 'admin-post.php?action=culture_delete_perk&perk_id=' . (int) $perk['id'] ),
                                 'culture_delete_perk_' . (int) $perk['id']
                             );
-                            $is_airtime = 'airtime' === ( $perk['perk_type'] ?? 'partner' );
+                            $is_airtime      = 'airtime'      === ( $perk['perk_type'] ?? 'partner' );
+                            $is_data_bundle  = 'data_bundle'  === ( $perk['perk_type'] ?? 'partner' );
+                            $is_delivery     = $is_airtime || $is_data_bundle;
                             ?>
                             <tr>
                                 <td><?php echo (int) $perk['id']; ?></td>
@@ -131,18 +134,27 @@ class Culture_Perks_Admin {
                                 <td>
                                     <?php if ( $is_airtime ) : ?>
                                         <span style="background:#e6f0ff;color:#1a5ab5;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;">📱 Airtime</span>
+                                    <?php elseif ( $is_data_bundle ) : ?>
+                                        <span style="background:#e8f5e9;color:#1b6b2a;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;">📶 Data</span>
                                     <?php else : ?>
                                         <span style="background:#f0f0f0;color:#555;padding:2px 8px;border-radius:3px;font-size:12px;">Partner</span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo (int) $perk['credit_cost']; ?></td>
                                 <td>
-                                    <?php if ( $is_airtime ) :
+                                    <?php
+                                    if ( $is_delivery ) {
                                         $sym = 'NG' === ( $perk['airtime_country'] ?: 'NG' ) ? '₦' : '';
                                         echo esc_html( $sym . number_format( (int) $perk['airtime_amount_local'] ) );
-                                    else : ?>—<?php endif; ?>
+                                        if ( $is_data_bundle && ! empty( $perk['data_bundle_code'] ) ) {
+                                            echo ' <small style="color:#666;">(' . esc_html( $perk['data_bundle_code'] ) . ')</small>';
+                                        }
+                                    } else {
+                                        echo '—';
+                                    }
+                                    ?>
                                 </td>
-                                <td><?php echo $is_airtime ? esc_html( $perk['airtime_country'] ?: 'NG' ) : '—'; ?></td>
+                                <td><?php echo $is_delivery ? esc_html( $perk['airtime_country'] ?: 'NG' ) : '—'; ?></td>
                                 <td>
                                     <?php echo (int) $perk['redeemed_count']; ?>
                                     <?php if ( (int) $perk['max_total'] > 0 ) : ?>
@@ -219,6 +231,7 @@ class Culture_Perks_Admin {
             'perk_type'            => 'partner',
             'airtime_country'      => 'NG',
             'airtime_amount_local' => 0,
+            'data_bundle_code'     => '',
         ];
 
         $perk = $defaults;
@@ -234,9 +247,11 @@ class Culture_Perks_Admin {
             $perk = array_merge( $defaults, $row );
         }
 
-        $form_action = esc_url( admin_url( 'admin-post.php' ) );
-        $cancel_url  = esc_url( admin_url( 'admin.php?page=culture-perks' ) );
-        $is_airtime  = 'airtime' === $perk['perk_type'];
+        $form_action     = esc_url( admin_url( 'admin-post.php' ) );
+        $cancel_url      = esc_url( admin_url( 'admin.php?page=culture-perks' ) );
+        $is_airtime      = 'airtime'      === $perk['perk_type'];
+        $is_data_bundle  = 'data_bundle'  === $perk['perk_type'];
+        $is_delivery     = $is_airtime || $is_data_bundle;
         ?>
         <div class="wrap">
             <h1><?php echo $is_edit ? esc_html__( 'Edit Perk', 'culture-community' ) : esc_html__( 'Add New Perk', 'culture-community' ); ?></h1>
@@ -244,8 +259,9 @@ class Culture_Perks_Admin {
 
             <style>
                 #perks-form .form-table th { width: 220px; }
-                #airtime-fields { display: <?php echo $is_airtime ? 'table-row-group' : 'none'; ?>; }
-                #partner-fields { display: <?php echo $is_airtime ? 'none' : 'table-row-group'; ?>; }
+                #airtime-fields      { display: <?php echo $is_delivery     ? 'table-row-group' : 'none'; ?>; }
+                #data-bundle-fields  { display: <?php echo $is_data_bundle  ? 'table-row-group' : 'none'; ?>; }
+                #partner-fields      { display: <?php echo $is_delivery     ? 'none' : 'table-row-group'; ?>; }
             </style>
 
             <form id="perks-form" method="post" action="<?php echo $form_action; ?>">
@@ -262,9 +278,13 @@ class Culture_Perks_Admin {
                                 <input type="radio" name="perk_type" value="partner" <?php checked( $perk['perk_type'], 'partner' ); ?>>
                                 <?php esc_html_e( 'Partner (QR code coupon)', 'culture-community' ); ?>
                             </label>
-                            <label>
+                            <label style="margin-right:20px;">
                                 <input type="radio" name="perk_type" value="airtime" <?php checked( $perk['perk_type'], 'airtime' ); ?>>
                                 📱 <?php esc_html_e( 'Airtime Reward (Flutterwave, auto-delivered)', 'culture-community' ); ?>
+                            </label>
+                            <label>
+                                <input type="radio" name="perk_type" value="data_bundle" <?php checked( $perk['perk_type'], 'data_bundle' ); ?>>
+                                📶 <?php esc_html_e( 'Data Bundle (Flutterwave, auto-delivered)', 'culture-community' ); ?>
                             </label>
                         </td>
                     </tr>
@@ -318,9 +338,9 @@ class Culture_Perks_Admin {
                     </tr>
                 </table>
 
-                <!-- ── Airtime-specific fields ─────────────────────────────────── -->
-                <h2 class="title" id="airtime-heading" style="display:<?php echo $is_airtime ? 'block' : 'none'; ?>;">
-                    📱 <?php esc_html_e( 'Airtime delivery settings', 'culture-community' ); ?>
+                <!-- ── Airtime / Data bundle shared fields ──────────────────────── -->
+                <h2 class="title" id="airtime-heading" style="display:<?php echo $is_delivery ? 'block' : 'none'; ?>;">
+                    <?php esc_html_e( 'Delivery settings (Flutterwave)', 'culture-community' ); ?>
                 </h2>
                 <table class="form-table">
                     <tbody id="airtime-fields">
@@ -339,10 +359,22 @@ class Culture_Perks_Admin {
                             </td>
                         </tr>
                         <tr>
-                            <th><label for="airtime_amount_local"><?php esc_html_e( 'Airtime amount (local currency)', 'culture-community' ); ?></label></th>
+                            <th><label for="airtime_amount_local"><?php esc_html_e( 'Amount (local currency)', 'culture-community' ); ?></label></th>
                             <td>
                                 <input type="number" id="airtime_amount_local" name="airtime_amount_local" value="<?php echo (int) $perk['airtime_amount_local']; ?>" min="0" class="small-text">
-                                <p class="description"><?php esc_html_e( 'e.g. 500 for ₦500. This is the face value sent to the recipient\'s phone.', 'culture-community' ); ?></p>
+                                <p class="description"><?php esc_html_e( 'e.g. 500 for ₦500. Face value sent to the recipient\'s phone.', 'culture-community' ); ?></p>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <!-- ── Data bundle only ─────────────────────────────────────── -->
+                    <tbody id="data-bundle-fields">
+                        <tr>
+                            <th><label for="data_bundle_code"><?php esc_html_e( 'Bundle type (Flutterwave type code)', 'culture-community' ); ?></label></th>
+                            <td>
+                                <input type="text" id="data_bundle_code" name="data_bundle_code" value="<?php echo esc_attr( $perk['data_bundle_code'] ); ?>" class="regular-text" placeholder="e.g. MTNDATA">
+                                <p class="description">
+                                    <?php esc_html_e( 'The Flutterwave bill type for this data bundle, e.g. MTNDATA, AIRTELDATA, GLODATA, 9MOBILEDATA. Get the exact value from your Flutterwave dashboard → Bills → Categories.', 'culture-community' ); ?>
+                                </p>
                             </td>
                         </tr>
                     </tbody>
@@ -381,7 +413,7 @@ class Culture_Perks_Admin {
                     </tbody>
                 </table>
 
-                <?php if ( $is_edit && class_exists( 'Culture_Flutterwave' ) && 'airtime' === $perk['perk_type'] ) : ?>
+                <?php if ( $is_edit && class_exists( 'Culture_Flutterwave' ) && $is_delivery ) : ?>
                     <p style="color:<?php echo Culture_Flutterwave::is_configured() ? '#0f7928' : '#a00'; ?>;">
                         <?php if ( Culture_Flutterwave::is_configured() ) : ?>
                             ✅ <?php esc_html_e( 'Flutterwave is configured — airtime delivery is live.', 'culture-community' ); ?>
@@ -405,11 +437,15 @@ class Culture_Perks_Admin {
             (function() {
                 var radios = document.querySelectorAll('input[name="perk_type"]');
                 function toggle() {
-                    var isAirtime = document.querySelector('input[name="perk_type"]:checked').value === 'airtime';
-                    document.getElementById('airtime-fields').style.display  = isAirtime ? 'table-row-group' : 'none';
-                    document.getElementById('partner-fields').style.display  = isAirtime ? 'none' : 'table-row-group';
-                    document.getElementById('airtime-heading').style.display = isAirtime ? '' : 'none';
-                    document.getElementById('partner-heading').style.display = isAirtime ? 'none' : '';
+                    var val        = document.querySelector('input[name="perk_type"]:checked').value;
+                    var isAirtime  = val === 'airtime';
+                    var isData     = val === 'data_bundle';
+                    var isDelivery = isAirtime || isData;
+                    document.getElementById('airtime-fields').style.display      = isDelivery ? 'table-row-group' : 'none';
+                    document.getElementById('data-bundle-fields').style.display  = isData     ? 'table-row-group' : 'none';
+                    document.getElementById('partner-fields').style.display      = isDelivery ? 'none' : 'table-row-group';
+                    document.getElementById('airtime-heading').style.display     = isDelivery ? '' : 'none';
+                    document.getElementById('partner-heading').style.display     = isDelivery ? 'none' : '';
                 }
                 radios.forEach(function(r) { r.addEventListener('change', toggle); });
             })();
@@ -430,7 +466,7 @@ class Culture_Perks_Admin {
         $table   = $wpdb->prefix . 'culture_partner_perks';
         $perk_id = (int) ( $_POST['perk_id'] ?? 0 );
 
-        $perk_type = in_array( $_POST['perk_type'] ?? '', [ 'partner', 'airtime' ], true )
+        $perk_type = in_array( $_POST['perk_type'] ?? '', [ 'partner', 'airtime', 'data_bundle' ], true )
             ? sanitize_key( $_POST['perk_type'] )
             : 'partner';
 
@@ -445,8 +481,9 @@ class Culture_Perks_Admin {
             'max_total'            => max( 0, (int) ( $_POST['max_total'] ?? 0 ) ),
             'min_rep_tier'         => sanitize_key( $_POST['min_rep_tier'] ?? 'member' ),
             'perk_type'            => $perk_type,
-            'airtime_country'      => sanitize_text_field( $_POST['airtime_country'] ?? 'NG' ),
+            'airtime_country'      => strtoupper( sanitize_text_field( $_POST['airtime_country'] ?? 'NG' ) ),
             'airtime_amount_local' => max( 0, (int) ( $_POST['airtime_amount_local'] ?? 0 ) ),
+            'data_bundle_code'     => sanitize_text_field( $_POST['data_bundle_code'] ?? '' ),
             'expiry_days'          => max( 1, (int) ( $_POST['expiry_days'] ?? 30 ) ),
             'min_spend'            => max( 0, (int) ( $_POST['min_spend'] ?? 0 ) ),
             'min_spend_currency'   => in_array( $_POST['min_spend_currency'] ?? '', [ 'GBP', 'USD', 'NGN' ], true )
@@ -455,7 +492,7 @@ class Culture_Perks_Admin {
             'partner_directory_id' => max( 0, (int) ( $_POST['partner_directory_id'] ?? 0 ) ),
         ];
 
-        $formats = [ '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%d' ];
+        $formats = [ '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%s', '%d' ];
 
         if ( $perk_id > 0 ) {
             $wpdb->update( $table, $data, [ 'id' => $perk_id ], $formats, [ '%d' ] );

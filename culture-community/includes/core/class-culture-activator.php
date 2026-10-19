@@ -103,6 +103,7 @@ class Culture_Activator {
             perk_type varchar(20) NOT NULL DEFAULT 'partner',
             airtime_country varchar(3) NOT NULL DEFAULT '',
             airtime_amount_local int(11) NOT NULL DEFAULT 0,
+            data_bundle_code varchar(100) NOT NULL DEFAULT '',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY partner_dir (partner_directory_id),

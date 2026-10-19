@@ -20,6 +20,7 @@ interface Perk {
   perk_type?: string;
   airtime_country?: string;
   airtime_amount_local?: number;
+  data_bundle_code?: string;
 }
 
 function currencySymbol(code: string) {
@@ -61,6 +62,7 @@ export default function PerksClient({
     phone?: string;
     airtime_amount?: number;
     airtime_country?: string;
+    data_bundle_code?: string;
   } | null>(null);
   const [error, setError] = useState("");
   const [balance, setBalance] = useState(credits);
@@ -106,8 +108,9 @@ export default function PerksClient({
       }
 
       const isAirtime = perk.perk_type === "airtime";
+      const isDataBundle = perk.perk_type === "data_bundle";
       const payload: Record<string, unknown> = { perk_id: perk.id, step_up_token: stepUpToken };
-      if (isAirtime && phoneInput) payload.phone = phoneInput;
+      if ((isAirtime || isDataBundle) && phoneInput) payload.phone = phoneInput;
 
       const res = await fetch("/api/perks/redeem", {
         method: "POST",
@@ -197,6 +200,17 @@ export default function PerksClient({
                 </p>
                 <p className="perk-success-balance">New balance: {result.new_balance} credits</p>
               </>
+            ) : result.perk_type === "data_bundle" ? (
+              <>
+                <h2 className="perk-success-title">Data bundle sent!</h2>
+                <p className="perk-success-desc" style={{ fontSize: "2rem", margin: "0.5rem 0" }}>📶</p>
+                <p className="perk-success-desc">
+                  <strong>
+                    {result.airtime_country === "NG" ? "₦" : ""}{result.airtime_amount?.toLocaleString()} data bundle
+                  </strong>{" "}has been sent to <strong>{result.phone}</strong>.
+                </p>
+                <p className="perk-success-balance">New balance: {result.new_balance} credits</p>
+              </>
             ) : (
               <>
                 <h2 className="perk-success-title">Perk redeemed!</h2>
@@ -230,6 +244,7 @@ export default function PerksClient({
               const canAfford = balance >= perk.credit_cost;
               const soldOut = perk.max_total > 0 && perk.redeemed_count >= perk.max_total;
               const isAirtime = perk.perk_type === "airtime";
+              const isDataBundle = perk.perk_type === "data_bundle";
               return (
                 <div key={perk.id} className="perk-card">
                   <div className="perk-card-body">
@@ -239,12 +254,17 @@ export default function PerksClient({
                         📱 Airtime Reward
                       </div>
                     )}
+                    {isDataBundle && (
+                      <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--ochre)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.25rem" }}>
+                        📶 Data Bundle
+                      </div>
+                    )}
                     <h3 className="perk-card-title">{perk.title}</h3>
                     {perk.description && <p className="perk-card-desc">{perk.description}</p>}
-                    {isAirtime && perk.airtime_amount_local ? (
+                    {(isAirtime || isDataBundle) && perk.airtime_amount_local ? (
                       <div className="perk-card-meta">
                         <span style={{ fontWeight: 600 }}>
-                          {perk.airtime_country === "NG" ? "₦" : ""}{perk.airtime_amount_local.toLocaleString()} airtime
+                          {perk.airtime_country === "NG" ? "₦" : ""}{perk.airtime_amount_local.toLocaleString()} {isDataBundle ? "data" : "airtime"}
                         </span>
                         <span>Instant delivery</span>
                       </div>
@@ -289,15 +309,15 @@ export default function PerksClient({
             <button type="button" className="perk-modal-close" onClick={() => setConfirmPerk(null)}>✕</button>
             <div className="perk-modal-body">
               <h3 className="perk-modal-title">
-                {confirmPerk.perk_type === "airtime" ? "Confirm airtime" : "Confirm redemption"}
+                {confirmPerk.perk_type === "airtime" ? "Confirm airtime" : confirmPerk.perk_type === "data_bundle" ? "Confirm data bundle" : "Confirm redemption"}
               </h3>
               <p className="perk-modal-desc">
                 Spend <strong>{confirmPerk.credit_cost} credits</strong> for &ldquo;{confirmPerk.title}&rdquo;?
               </p>
-              {confirmPerk.perk_type === "airtime" ? (
+              {(confirmPerk.perk_type === "airtime" || confirmPerk.perk_type === "data_bundle") ? (
                 <div style={{ margin: "0.75rem 0" }}>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--ink)", marginBottom: "0.4rem" }}>
-                    Phone number (airtime will be sent here)
+                    Phone number ({confirmPerk.perk_type === "data_bundle" ? "data bundle" : "airtime"} will be sent here)
                   </label>
                   <input
                     type="tel"
@@ -313,7 +333,7 @@ export default function PerksClient({
                     }}
                   />
                   <p style={{ fontSize: "0.72rem", color: "var(--mute)", margin: "0.35rem 0 0" }}>
-                    Airtime is sent instantly. Your balance after: <strong>{balance - confirmPerk.credit_cost} credits</strong>.
+                    Sent instantly. Your balance after: <strong>{balance - confirmPerk.credit_cost} credits</strong>.
                   </p>
                 </div>
               ) : (
@@ -328,9 +348,9 @@ export default function PerksClient({
                   type="button"
                   className="perk-card-btn"
                   onClick={() => handleRedeem(confirmPerk)}
-                  disabled={!!redeeming || (confirmPerk.perk_type === "airtime" && !phoneInput.trim())}
+                  disabled={!!redeeming || ((confirmPerk.perk_type === "airtime" || confirmPerk.perk_type === "data_bundle") && !phoneInput.trim())}
                 >
-                  {redeeming ? "Processing…" : confirmPerk.perk_type === "airtime" ? "Send airtime" : "Confirm"}
+                  {redeeming ? "Processing…" : confirmPerk.perk_type === "airtime" ? "Send airtime" : confirmPerk.perk_type === "data_bundle" ? "Send data bundle" : "Confirm"}
                 </button>
                 <button type="button" className="perk-card-btn perk-card-btn--outline" onClick={() => setConfirmPerk(null)}>
                   Cancel

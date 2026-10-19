@@ -215,7 +215,7 @@ function averageRating(ratings: Record<string, number>): number {
   return Math.round(rated.reduce((a, b) => a + b, 0) / rated.length);
 }
 
-interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string; previewUrl?: string | null }
+interface DirectoryEntry { id: number; title: string; type: string; city?: string; about?: string; thumbnail?: string | null; previewUrl?: string | null }
 
 const fmtDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
