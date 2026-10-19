@@ -7,6 +7,7 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import PullToRefresh from "@/components/PullToRefresh";
 import NavigationLoader from "@/components/NavigationLoader";
 import QuoteShareProvider from "@/components/QuoteShareProvider";
+import "../connect-globals.css";
 import "../connect-member.css";
 
 export default function ConnectLayout({
