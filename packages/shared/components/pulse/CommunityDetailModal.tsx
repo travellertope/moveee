@@ -534,8 +534,13 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
               const fullText = stripTrailingUrl(item.title, urlToStrip);
               const isReviewType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
               if (isReviewType) {
-                // item.title = post_content (the user's review text) — no title prefix to strip
-                return fullText ? <HashtagText text={fullText} onMentionClick={onMentionClick} /> : null;
+                // Strip any leading title the user typed (it duplicates the info card)
+                const reviewTitle = item.musicTitle || item.bookTitle || item.filmTitle || item.foodDishName;
+                let body = fullText;
+                if (reviewTitle && body.toLowerCase().startsWith(reviewTitle.toLowerCase())) {
+                  body = body.slice(reviewTitle.length).replace(/^[\n\r\s]+/, "");
+                }
+                return body ? <HashtagText text={body} onMentionClick={onMentionClick} /> : null;
               }
               const dblNl = fullText.indexOf("\n\n");
               const singleNl = fullText.indexOf("\n");
