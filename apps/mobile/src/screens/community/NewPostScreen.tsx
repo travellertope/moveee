@@ -624,7 +624,7 @@ const uploadImages = async (): Promise<string[]> => {
       if (bookOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
     } else if (template === "music-review") {
-      if (!musicEntry) { Alert.alert("Album required", "Search and select an album."); return; }
+      if (!musicEntry) { Alert.alert("Song / album required", "Search and select a song or album."); return; }
       if (musicOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
     } else if (template === "film-review") {
@@ -1411,7 +1411,8 @@ const uploadImages = async (): Promise<string[]> => {
           <DirectorySearch
             selected={musicEntry}
             onSelect={setMusicEntry}
-            label="Album *"
+            label="Song / Album *"
+            placeholder="Search for a song or album…"
             typeFilter="album"
             aboutFieldLabel="Artist"
             externalSource="spotify"
