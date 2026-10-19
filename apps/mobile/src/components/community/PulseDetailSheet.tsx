@@ -164,7 +164,7 @@ export default function PulseDetailSheet({ visible, item, onClose }: Props) {
         <View style={styles.divider} />
 
         {/* Comments section — shared component, see CommentSection.tsx */}
-        <CommentSection postId={postId} />
+        <CommentSection postId={postId} heading="" />
       </View>
     </BottomSheet>
   );
