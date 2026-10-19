@@ -321,30 +321,6 @@ export const authOptions: NextAuthOptions = {
         token.creditsEscrowed = u.creditsEscrowed ?? 0;
       }
 
-      // Refresh display_name, avatar, tier and credits from WordPress once per hour
-      // so that changes made via the mobile app or WP admin are reflected site-wide
-      // without the user having to sign out and back in.
-      const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-      const now = Date.now();
-      if (
-        token.id &&
-        trigger !== "update" &&
-        !user &&
-        (!(token as any).profileRefreshedAt || now - (token as any).profileRefreshedAt > REFRESH_INTERVAL_MS)
-      ) {
-        const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
-        try {
-          const res = await fetch(
-            `${WP_URL}/wp-json/culture/v1/user/profile?user_id=${token.id}`,
-            { headers: { Authorization: `Bearer ${API_SECRET}` }, cache: "no-store" }
-          );
-          if (res.ok) {
-            applyCultureProfile(token, await res.json());
-          }
-        } catch { /* keep existing token on error */ }
-        (token as any).profileRefreshedAt = now;
-      }
-
       if (trigger === "update" && updatePayload) {
         if (updatePayload.name                 !== undefined) token.name                 = updatePayload.name;
         if (updatePayload.isVendor             !== undefined) token.isVendor             = updatePayload.isVendor;
