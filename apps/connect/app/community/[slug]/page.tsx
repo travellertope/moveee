@@ -88,6 +88,7 @@ export default async function CommunityPostPage({
   const rawText  = decodeEntities(post.content.rendered.replace(/<[^>]+>/g, "").trim());
   const author   = post.meta.community_author_name ?? "Community Member";
   const authorUsername = (post.meta.community_author_username as string | undefined) ?? "";
+  const authorAvatarUrl = (post.meta.community_author_avatar as string | undefined) ?? "";
   const tag      = post.meta.community_tag ?? "";
   const image    = post.meta.community_image_url ?? null;
   const initials = author.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
@@ -212,19 +213,56 @@ export default async function CommunityPostPage({
             }}>
               {/* Author header — avatar left-aligned, content alongside */}
               <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                <div style={{
-                  width: "40px", height: "40px", borderRadius: "50%",
-                  background: "#edf7ed", border: "1px solid #c8e6c9",
-                  color: "#2e7d32", fontSize: "0.68rem", fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}>
-                  {initials}
-                </div>
+                {authorUsername ? (
+                  <Link href={`/${authorUsername}`} style={{ flexShrink: 0, textDecoration: "none" }}>
+                    {authorAvatarUrl ? (
+                      <img
+                        src={authorAvatarUrl}
+                        alt={author}
+                        style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: "40px", height: "40px", borderRadius: "50%",
+                        background: "#edf7ed", border: "1px solid #c8e6c9",
+                        color: "#2e7d32", fontSize: "0.68rem", fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        {initials}
+                      </div>
+                    )}
+                  </Link>
+                ) : (
+                  authorAvatarUrl ? (
+                    <img
+                      src={authorAvatarUrl}
+                      alt={author}
+                      style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover", display: "block", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: "40px", height: "40px", borderRadius: "50%",
+                      background: "#edf7ed", border: "1px solid #c8e6c9",
+                      color: "#2e7d32", fontSize: "0.68rem", fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      {initials}
+                    </div>
+                  )
+                )}
                 <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                    <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 700 }}>{author}</span>
+                    {authorUsername ? (
+                      <Link href={`/${authorUsername}`} style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 700, textDecoration: "none" }}>
+                        {author}
+                      </Link>
+                    ) : (
+                      <span style={{ color: "#14110d", fontSize: "0.88rem", fontWeight: 700 }}>{author}</span>
+                    )}
                     {authorUsername && (
-                      <span style={{ color: "#7a6f5c", fontSize: "0.7rem" }}>@{authorUsername}</span>
+                      <Link href={`/${authorUsername}`} style={{ color: "#7a6f5c", fontSize: "0.7rem", textDecoration: "none" }}>
+                        @{authorUsername}
+                      </Link>
                     )}
                     <span style={{ color: "#7a6f5c", fontSize: "0.72rem" }}>{formatDate(post.date)}</span>
                   </div>

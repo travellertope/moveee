@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, Image, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { useColors } from "../../hooks/useColors";
@@ -23,6 +23,7 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
   const playerRef = useRef<AudioPlayer | null>(null);
   const subRef = useRef<{ remove: () => void } | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [buffering, setBuffering] = useState(false);
 
   useEffect(() => {
     // Allow playback through the speaker when the iOS silent switch is on
@@ -36,6 +37,7 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
       subRef.current = null;
       playerRef.current = null;
       setPlaying(false);
+      setBuffering(false);
     };
   }, [uri]);
 
@@ -48,20 +50,23 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
         subRef.current = player.addListener("playbackStatusUpdate", (status: AudioStatus) => {
           if (!status.isLoaded) return;
           setPlaying(status.playing);
+          if (status.playing) setBuffering(false);
         });
         player.play();
-        setPlaying(true);
+        setBuffering(true);
         return;
       }
       if (playerRef.current.playing) {
         playerRef.current.pause();
         setPlaying(false);
+        setBuffering(false);
       } else {
         playerRef.current.play();
-        setPlaying(true);
+        setBuffering(true);
       }
     } catch {
       setPlaying(false);
+      setBuffering(false);
     }
   }
 
@@ -125,12 +130,16 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
             justifyContent: "center",
           })}
         >
-          <Ionicons
-            name={playing ? "pause" : "play"}
-            size={iconSize}
-            color="#14110d"
-            style={{ marginLeft: playing ? 0 : 2 }}
-          />
+          {buffering ? (
+            <ActivityIndicator size="small" color="#14110d" />
+          ) : (
+            <Ionicons
+              name={playing ? "pause" : "play"}
+              size={iconSize}
+              color="#14110d"
+              style={{ marginLeft: playing ? 0 : 2 }}
+            />
+          )}
         </Pressable>
       ) : null}
     </View>
