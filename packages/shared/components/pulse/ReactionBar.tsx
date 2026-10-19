@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Heart, Bookmark, Share2 } from "lucide-react";
 
@@ -53,6 +53,9 @@ export default function ReactionBar({
   const [copied, setCopied] = useState(false);
   const [reactPending, setReactPending] = useState(false);
   const [bookmarkPending, setBookmarkPending] = useState(false);
+  // Tracks whether any user action is in flight so the background GET
+  // reconciliation does not clobber an optimistic update.
+  const actionInFlight = useRef(false);
 
   const storageKey = `${itemType}-${itemId}`;
 
@@ -69,7 +72,7 @@ export default function ReactionBar({
     fetch(`/api/community/react?postId=${encodeURIComponent(itemId)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (cancelled || !data) return;
+        if (cancelled || !data || actionInFlight.current) return;
         const serverReaction = (data.userReaction ?? null) as ReactionKey | null;
         setMyReaction(serverReaction);
         const next = getStoredReactions();
@@ -96,6 +99,7 @@ export default function ReactionBar({
     setStoredReactions(stored);
 
     setReactPending(true);
+    actionInFlight.current = true;
     try {
       const res = await fetch("/api/community/react", {
         method: "POST",
@@ -119,6 +123,7 @@ export default function ReactionBar({
       setMyReaction(prevReaction);
     } finally {
       setReactPending(false);
+      actionInFlight.current = false;
     }
   }
 
@@ -140,6 +145,7 @@ export default function ReactionBar({
     };
 
     setBookmarkPending(true);
+    actionInFlight.current = true;
     try {
       const res = await fetch("/api/community/bookmark", {
         method: "POST",
@@ -163,6 +169,7 @@ export default function ReactionBar({
       setBookmarked(prevBookmarked);
     } finally {
       setBookmarkPending(false);
+      actionInFlight.current = false;
     }
   }
 
