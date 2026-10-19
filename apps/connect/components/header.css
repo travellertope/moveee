@@ -137,6 +137,10 @@
 
 /* Nav list */
 .ch-rail-nav { padding: 2px 10px; display: flex; flex-direction: column; gap: 1px; }
+/* Inside the bottom strip ch-rail-bottom already adds 10px side padding, so
+   the extra nav side padding would offset icons 10px further right than
+   the dark-mode toggle and profile row that are direct children of the strip. */
+.ch-rail-bottom .ch-rail-nav { padding-left: 0; padding-right: 0; }
 
 .ch-rail-link {
   display: flex;
