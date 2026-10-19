@@ -805,16 +805,16 @@ export default function FeedCard({
                   const fullText = stripTrailingUrl(item.title, stripBy);
                   const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
                   if (isInfoCardType) {
-                    const dblNl = fullText.indexOf("\n\n");
-                    const singleNl = fullText.indexOf("\n");
-                    const sepIdx = dblNl !== -1 ? dblNl : singleNl;
-                    const bodyText = sepIdx !== -1 ? fullText.slice(sepIdx + (dblNl !== -1 ? 2 : 1)).trim() : "";
-                    return bodyText ? <HashtagText text={bodyText} onMentionClick={handleMentionClick} clamp={6} /> : null;
+                    // item.title = post_content (the user's review text) — no title prefix to strip
+                    return fullText ? <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} /> : null;
                   }
-                  const nlIdx = fullText.indexOf("\n\n");
+                  const dblNl = fullText.indexOf("\n\n");
+                  const singleNl = fullText.indexOf("\n");
+                  const nlIdx = dblNl !== -1 ? dblNl : singleNl;
+                  const sepLen = dblNl !== -1 ? 2 : 1;
                   if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
                   const titlePart = fullText.slice(0, nlIdx).trim();
-                  const bodyPart = fullText.slice(nlIdx + 2).trim();
+                  const bodyPart = fullText.slice(nlIdx + sepLen).trim();
                   return (
                     <>
                       <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>

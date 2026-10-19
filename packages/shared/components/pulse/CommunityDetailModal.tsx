@@ -532,19 +532,18 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
               const ytFromInline = !item.videoUrl && !(item.sourceUrl?.includes("youtu.be") || item.sourceUrl?.includes("youtube.com/watch")) && ytUrl !== null;
               const urlToStrip = ytFromInline ? ytUrl! : (item.sourceUrl && !item.image ? item.sourceUrl : undefined);
               const fullText = stripTrailingUrl(item.title, urlToStrip);
-              // For review types the first paragraph is just the item title, already shown in the card below
               const isReviewType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
               if (isReviewType) {
-                const dblNl = fullText.indexOf("\n\n");
-                const singleNl = fullText.indexOf("\n");
-                const sepIdx = dblNl !== -1 ? dblNl : singleNl;
-                const bodyText = sepIdx !== -1 ? fullText.slice(sepIdx + (dblNl !== -1 ? 2 : 1)).trim() : "";
-                return bodyText ? <HashtagText text={bodyText} onMentionClick={onMentionClick} /> : null;
+                // item.title = post_content (the user's review text) — no title prefix to strip
+                return fullText ? <HashtagText text={fullText} onMentionClick={onMentionClick} /> : null;
               }
-              const nlIdx = fullText.indexOf("\n\n");
+              const dblNl = fullText.indexOf("\n\n");
+              const singleNl = fullText.indexOf("\n");
+              const nlIdx = dblNl !== -1 ? dblNl : singleNl;
+              const sepLen = dblNl !== -1 ? 2 : 1;
               if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={onMentionClick} />;
               const titlePart = fullText.slice(0, nlIdx).trim();
-              const bodyPart = fullText.slice(nlIdx + 2).trim();
+              const bodyPart = fullText.slice(nlIdx + sepLen).trim();
               return (
                 <>
                   <div style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--ink)", marginBottom: "0.45rem", lineHeight: 1.4 }}>

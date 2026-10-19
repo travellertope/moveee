@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { createAudioPlayer, type AudioPlayer, type AudioStatus } from "expo-audio";
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from "expo-audio";
 import { useColors } from "../../hooks/useColors";
 import { radius } from "../../theme";
 
@@ -25,6 +25,11 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
+    // Allow playback through the speaker when the iOS silent switch is on
+    setAudioModeAsync({ playsInSilentModeIOS: true }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     return () => {
       subRef.current?.remove();
       playerRef.current?.remove();
@@ -42,7 +47,7 @@ export default function AudioPreviewButton({ uri, coverUri, width = 48, height =
         playerRef.current = player;
         subRef.current = player.addListener("playbackStatusUpdate", (status: AudioStatus) => {
           if (!status.isLoaded) return;
-          if (status.didJustFinish) setPlaying(false);
+          setPlaying(status.playing);
         });
         player.play();
         setPlaying(true);

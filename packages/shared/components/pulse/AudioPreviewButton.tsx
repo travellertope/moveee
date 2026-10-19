@@ -24,8 +24,10 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
     if (!audio) return;
     if (playing) {
       audio.pause();
+      setPlaying(false);
     } else {
-      audio.play().catch(() => {});
+      setPlaying(true);
+      audio.play().catch(() => setPlaying(false));
     }
   }
 
