@@ -792,10 +792,44 @@ export default function FeedCard({
                 </div>
               )}
 
+              {/* Post text — review types strip the title paragraph (shown in info card below) */}
+              <div style={{
+                color: "var(--ink)",
+                fontSize: "0.97rem",
+                lineHeight: 1.6,
+                marginBottom: item.image ? "0.65rem" : "0.5rem",
+              }}>
+                {(() => {
+                  const inlineYt = ytUrl && !item.videoUrl && !(item.sourceUrl?.includes("youtu")) ? ytUrl : undefined;
+                  const stripBy = item.sourceUrl && !item.image ? item.sourceUrl : (inlineYt ?? undefined);
+                  const fullText = stripTrailingUrl(item.title, stripBy);
+                  const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
+                  if (isInfoCardType) {
+                    const nlIdx = fullText.indexOf("\n\n");
+                    const bodyText = nlIdx !== -1 ? fullText.slice(nlIdx + 2).trim() : fullText;
+                    return bodyText ? <HashtagText text={bodyText} onMentionClick={handleMentionClick} clamp={6} /> : null;
+                  }
+                  const nlIdx = fullText.indexOf("\n\n");
+                  if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
+                  const titlePart = fullText.slice(0, nlIdx).trim();
+                  const bodyPart = fullText.slice(nlIdx + 2).trim();
+                  return (
+                    <>
+                      <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>
+                        <HashtagText text={titlePart} onMentionClick={handleMentionClick} />
+                      </div>
+                      {bodyPart && <HashtagText text={bodyPart} onMentionClick={handleMentionClick} clamp={4} />}
+                    </>
+                  );
+                })()}
+              </div>
+
               {/* Info card — music review */}
               {item.templateType === "music-review" && (item.musicTitle || item.musicCoverUrl) && (
                 <div style={{ display: "flex", gap: "12px", marginBottom: "0.75rem", backgroundColor: "var(--paper-deep)", borderRadius: "var(--radius-lg)", padding: "10px", alignItems: "flex-start" }}>
-                  <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
+                  <div onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                    <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {item.musicTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.musicTitle}</div>}
                     {item.musicArtist && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "6px" }}>{item.musicArtist}</div>}
@@ -895,38 +929,6 @@ export default function FeedCard({
                   </div>
                 </div>
               )}
-
-              <div style={{
-                color: "var(--ink)",
-                fontSize: "0.97rem",
-                lineHeight: 1.6,
-                marginBottom: item.image ? "0.65rem" : "0.5rem",
-              }}>
-                {(() => {
-                  // Strip sourceUrl from text (existing logic); also strip an inline YouTube URL
-                  // that we'll embed separately so it doesn't appear as raw text.
-                  const inlineYt = ytUrl && !item.videoUrl && !(item.sourceUrl?.includes("youtu")) ? ytUrl : undefined;
-                  const stripBy = item.sourceUrl && !item.image ? item.sourceUrl : (inlineYt ?? undefined);
-                  const fullText = stripTrailingUrl(item.title, stripBy);
-                  // For review types with an info card, skip the bold-heading split — the title
-                  // is already shown in the card above, so just render the body flat.
-                  const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
-                  if (isInfoCardType) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
-                  const nlIdx = fullText.indexOf("\n\n");
-                  if (nlIdx === -1) return <HashtagText text={fullText} onMentionClick={handleMentionClick} clamp={6} />;
-                  const titlePart = fullText.slice(0, nlIdx).trim();
-                  const bodyPart = fullText.slice(nlIdx + 2).trim();
-                  return (
-                    <>
-                      <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>
-                        <HashtagText text={titlePart} onMentionClick={handleMentionClick} />
-                      </div>
-                      {bodyPart && <HashtagText text={bodyPart} onMentionClick={handleMentionClick} clamp={4} />}
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
 
             {/* Poll inline */}
             {item.templateType === "poll" && item.pollOptions && (
