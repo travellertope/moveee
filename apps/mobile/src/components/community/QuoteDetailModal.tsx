@@ -156,7 +156,7 @@ export default function QuoteDetailModal({ visible, item, onClose }: Props) {
 
         {/* Comments */}
         {item.wpId ? (
-          <CommentSection postId={String(item.wpId)} />
+          <CommentSection postId={String(item.wpId)} heading="" />
         ) : null}
       </View>
     </BottomSheet>

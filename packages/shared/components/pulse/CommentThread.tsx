@@ -193,10 +193,6 @@ export default function CommentThread({ postId, initialComments }: CommentThread
         <form onSubmit={handleSubmit} style={{
           flex: 1,
           minWidth: 0,
-          background: "var(--paper, #fff)",
-          border: "1px solid rgba(20,17,13,0.1)",
-          borderRadius: "12px",
-          padding: "1rem",
           display: "flex",
           flexDirection: "column",
           gap: "0.65rem",

@@ -712,9 +712,7 @@ export default function CommunityPostClient({
         )}
 
         {loggedIn ? (
-          <form onSubmit={handleSubmit} style={{
-            background: "#fff", border: "1px solid rgba(20,17,13,0.1)", borderRadius: "12px", padding: "1rem",
-          }}>
+          <form onSubmit={handleSubmit} style={{ paddingTop: "0.25rem" }}>
             {replyTo && (
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.65rem" }}>
                 <span style={{ color: "#7a6f5c", fontSize: "0.75rem" }}>

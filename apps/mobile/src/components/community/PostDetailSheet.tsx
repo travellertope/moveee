@@ -1151,7 +1151,7 @@ export default function PostDetailSheet({ item, visible, onClose, onMentionPress
 
       {/* Comments */}
       <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
-        <CommentSection ref={commentRef} postId={postId} />
+        <CommentSection ref={commentRef} postId={postId} heading="" />
       </View>
     </BottomSheet>
 

@@ -116,9 +116,11 @@ const CommentSection = forwardRef<CommentSectionHandle, CommentSectionProps>(fun
 
   return (
     <View>
-      <Text style={styles.heading}>
-        {heading} {comments.length > 0 ? `(${comments.length})` : ""}
-      </Text>
+      {heading ? (
+        <Text style={styles.heading}>
+          {heading} {comments.length > 0 ? `(${comments.length})` : ""}
+        </Text>
+      ) : null}
 
       {loading && <ActivityIndicator color={c.gold} style={{ marginVertical: 12 }} />}
 
