@@ -394,21 +394,6 @@ export default function CommunityPostClient({
               Food Review{foodDishName ? ` · ${foodDishName}` : ""}
             </span>
           )}
-          {templateType === "music-review" && (
-            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(122,36,28,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
-              Music Review{musicTitle ? ` · ${musicTitle}` : ""}
-            </span>
-          )}
-          {templateType === "book-review" && (
-            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(122,36,28,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
-              Book Review{bookTitle ? ` · ${bookTitle}` : ""}
-            </span>
-          )}
-          {templateType === "film-review" && (
-            <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7a241c", background: "rgba(122,36,28,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
-              Film Review{filmTitle ? ` · ${filmTitle}` : ""}
-            </span>
-          )}
           {templateType === "project" && (
             <span style={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#1976d2", background: "rgba(25,118,210,0.08)", padding: "3px 8px", borderRadius: "2px" }}>
               Project
@@ -490,7 +475,9 @@ export default function CommunityPostClient({
         <CardLink slug={linkedDirectorySlug}>
         <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
-            <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={100} />
+            <div onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+              <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={100} />
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#14110d" }}>{musicTitle}</div>
               {musicArtist && <div style={{ fontSize: "0.82rem", color: "#7a6f5c" }}>{musicArtist}</div>}
@@ -702,16 +689,7 @@ export default function CommunityPostClient({
 
       {/* Comments */}
       <div style={{ marginTop: "2rem" }}>
-        <h2 style={{
-          fontFamily: "var(--font-inter), 'Inter', sans-serif",
-          fontSize: "0.88rem", fontWeight: 700, color: "#14110d",
-          marginBottom: "1rem", paddingBottom: "0.65rem", borderBottom: "1px solid rgba(20,17,13,0.08)",
-          display: "flex", alignItems: "center", gap: "0.4rem",
-          letterSpacing: "0.01em",
-        }}>
-          <span style={{ fontSize: "1rem", lineHeight: 1 }}>💬</span>
-          {count === 0 ? "Discussion Replies" : `Discussion Replies (${count})`}
-        </h2>
+        <div style={{ borderBottom: "1px solid rgba(20,17,13,0.08)", marginBottom: "1rem" }} />
 
         {topLevel.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1.5rem" }}>

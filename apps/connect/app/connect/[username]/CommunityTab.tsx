@@ -20,6 +20,44 @@ interface Post {
   food_dish_name: string;
   reactions: { love: number; fire: number; clap: number };
   comment_count: number;
+  // Music review
+  music_title?: string;
+  music_artist?: string;
+  music_overall_rating?: number;
+  music_cover_url?: string;
+  music_preview_url?: string;
+  music_genres?: string[];
+  music_fav_lyric?: string;
+  music_recommend?: boolean;
+  music_rating_production?: number;
+  music_rating_lyrics?: number;
+  music_rating_replay?: number;
+  music_rating_vibe?: number;
+  // Book review
+  book_title?: string;
+  book_author?: string;
+  book_status?: string;
+  book_overall_rating?: number;
+  book_cover_url?: string;
+  book_genres?: string[];
+  book_fav_quote?: string;
+  book_recommend?: boolean;
+  book_rating_writing?: number;
+  book_rating_story?: number;
+  book_rating_characters?: number;
+  book_rating_pacing?: number;
+  // Film review
+  film_title?: string;
+  film_director?: string;
+  film_overall_rating?: number;
+  film_cover_url?: string;
+  film_genres?: string[];
+  film_fav_line?: string;
+  film_recommend?: boolean;
+  film_rating_story?: number;
+  film_rating_acting?: number;
+  film_rating_visuals?: number;
+  film_rating_pacing?: number;
 }
 
 const TEMPLATE_FILTERS = [
@@ -45,7 +83,7 @@ function toFeedItem(post: Post, username: string, displayName: string, avatarUrl
     id: String(post.id),
     wpId: String(post.id),
     type: "community",
-    title: decodeHtml(post.text?.slice(0, 120) ?? ""),
+    title: decodeHtml(post.text ?? ""),
     slug: post.slug,
     date: post.date,
     excerpt: decodeHtml(post.text ?? ""),
@@ -64,6 +102,44 @@ function toFeedItem(post: Post, username: string, displayName: string, avatarUrl
     foodDishName: post.food_dish_name,
     reactions: post.reactions,
     commentCount: post.comment_count,
+    // Music review
+    musicTitle: post.music_title || undefined,
+    musicArtist: post.music_artist || undefined,
+    musicOverallRating: post.music_overall_rating || undefined,
+    musicCoverUrl: post.music_cover_url || undefined,
+    musicPreviewUrl: post.music_preview_url || undefined,
+    musicGenres: post.music_genres || undefined,
+    musicFavLyric: post.music_fav_lyric || undefined,
+    musicRecommend: post.music_recommend,
+    musicRatingProduction: post.music_rating_production || undefined,
+    musicRatingLyrics: post.music_rating_lyrics || undefined,
+    musicRatingReplay: post.music_rating_replay || undefined,
+    musicRatingVibe: post.music_rating_vibe || undefined,
+    // Book review
+    bookTitle: post.book_title || undefined,
+    bookAuthor: post.book_author || undefined,
+    bookStatus: post.book_status || undefined,
+    bookOverallRating: post.book_overall_rating || undefined,
+    bookCoverUrl: post.book_cover_url || undefined,
+    bookGenres: post.book_genres || undefined,
+    bookFavQuote: post.book_fav_quote || undefined,
+    bookRecommend: post.book_recommend,
+    bookRatingWriting: post.book_rating_writing || undefined,
+    bookRatingStory: post.book_rating_story || undefined,
+    bookRatingCharacters: post.book_rating_characters || undefined,
+    bookRatingPacing: post.book_rating_pacing || undefined,
+    // Film review
+    filmTitle: post.film_title || undefined,
+    filmDirector: post.film_director || undefined,
+    filmOverallRating: post.film_overall_rating || undefined,
+    filmCoverUrl: post.film_cover_url || undefined,
+    filmGenres: post.film_genres || undefined,
+    filmFavLine: post.film_fav_line || undefined,
+    filmRecommend: post.film_recommend,
+    filmRatingStory: post.film_rating_story || undefined,
+    filmRatingActing: post.film_rating_acting || undefined,
+    filmRatingVisuals: post.film_rating_visuals || undefined,
+    filmRatingPacing: post.film_rating_pacing || undefined,
   };
 }
 

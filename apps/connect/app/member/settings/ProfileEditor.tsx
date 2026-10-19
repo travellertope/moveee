@@ -149,6 +149,7 @@ function EditableField({
   onSaved?: (v: string) => void;
   countryContext?: string;
 }) {
+  const { update } = useSession();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(field.value);
   const [current, setCurrent] = useState(field.value);
@@ -166,6 +167,8 @@ function EditableField({
       if (!res.ok) throw new Error();
       setCurrent(draft);
       onSaved?.(draft);
+      // Keep the session JWT in sync for fields that are reflected there.
+      if (field.key === "display_name") await update({ name: draft });
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 2000);
       setEditing(false);

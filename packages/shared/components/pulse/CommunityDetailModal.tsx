@@ -614,7 +614,9 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
             <CardLink slug={item.linkedDirectorySlug}>
             <div style={{ background: "var(--paper-deep)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl)", padding: "14px", marginBottom: "0.75rem", cursor: item.linkedDirectorySlug ? "pointer" : undefined }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
+                <div onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                  <AudioPreviewButton src={item.musicPreviewUrl} coverUrl={item.musicCoverUrl} size={100} />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {item.musicTitle && <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "2px" }}>{item.musicTitle}</div>}
                   {item.musicArtist && <div style={{ fontSize: "0.8rem", color: "var(--mute)", marginBottom: "4px" }}>{item.musicArtist}</div>}
