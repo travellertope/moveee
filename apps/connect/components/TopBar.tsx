@@ -6,12 +6,14 @@ import { useState, useEffect, useRef } from "react";
 import { onOpenSearchModal } from "@/lib/searchModalBus";
 import SearchModal from "@/components/SearchModal";
 import NotificationBell from "@/components/NotificationBell";
+import ComposerModal from "@/components/pulse/ComposerModal";
 import "./top-bar.css";
 
 export default function TopBar() {
   const { data: session, status } = useSession();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const user = session?.user as any;
 
@@ -95,12 +97,12 @@ export default function TopBar() {
             <NotificationBell />
 
             {status === "authenticated" && (
-              <Link href="/post/new" className="tb-new-post-btn">
+              <button type="button" className="tb-new-post-btn" onClick={() => setComposerOpen(true)}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
                 New Post
-              </Link>
+              </button>
             )}
 
             {status === "authenticated" && user ? (
@@ -154,6 +156,7 @@ export default function TopBar() {
       {/* Single, globally-mounted SearchModal — receives opens from TopBar search button,
           ⌘K shortcut, and any page that calls openSearchModal() via the bus */}
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} />
     </>
   );
 }

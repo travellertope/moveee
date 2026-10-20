@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import ComposerModal from "@/components/pulse/ComposerModal";
 
 interface CommunityPost {
   id: number;
@@ -22,6 +23,7 @@ export default function PortfolioManager({ reputation, username }: Props) {
   const [pinnedPosts, setPinnedPosts] = useState<PinnedPost[]>([]);
   const [myPosts, setMyPosts] = useState<CommunityPost[]>([]);
   const [showPicker, setShowPicker] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [pinning, setPinning] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -81,9 +83,10 @@ export default function PortfolioManager({ reputation, username }: Props) {
           You currently have <strong>{reputation}</strong> points.
           Keep contributing to the community to unlock it.
         </p>
-        <Link href="/post/new?template=project" className="pf-btn pf-add-btn" style={{ display: "inline-block", marginTop: 12 }}>
+        <button type="button" className="pf-btn pf-add-btn" style={{ display: "inline-block", marginTop: 12 }} onClick={() => setComposerOpen(true)}>
           🎨 Post a Project
-        </Link>
+        </button>
+        <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} initialTab="art" />
       </section>
     );
   }
@@ -92,9 +95,9 @@ export default function PortfolioManager({ reputation, username }: Props) {
     <section className="acct-card">
       <div className="acct-card-header">
         <span className="acct-card-title">Portfolio</span>
-        <Link href="/post/new?template=project" className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }}>
+        <button type="button" className="pf-btn pf-add-btn" style={{ marginLeft: "auto" }} onClick={() => setComposerOpen(true)}>
           🎨 Post a Project
-        </Link>
+        </button>
       </div>
 
       {username && (
@@ -156,6 +159,7 @@ export default function PortfolioManager({ reputation, username }: Props) {
           )}
         </>
       )}
+      <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} initialTab="art" />
     </section>
   );
 }
