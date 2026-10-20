@@ -186,7 +186,7 @@ export default async function PublicProfilePage(
                     fontSize: "clamp(1.35rem, 3vw, 1.85rem)",
                     fontFamily: "var(--font-fraunces), serif",
                     fontWeight: 700, letterSpacing: "-0.02em",
-                    color: "#14110d", margin: 0, lineHeight: 1.15,
+                    color: "var(--ink)", margin: 0, lineHeight: 1.15,
                   }}>
                     {profile.display_name}
                     {isPatron && (
@@ -305,7 +305,7 @@ export default async function PublicProfilePage(
                       </p>
                       <p style={{
                         margin: 0, fontSize: "1rem", fontWeight: 800,
-                        color: "#14110d", lineHeight: 1.1,
+                        color: "var(--ink)", lineHeight: 1.1,
                         fontFamily: "var(--font-inter), 'Inter', sans-serif",
                       }}>
                         {stat.value}

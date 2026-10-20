@@ -6,17 +6,33 @@
 /* ── Shared tokens ─────────────────────────────────────── */
 :root {
   --dir-ink: #14110d;
-  --dir-paper: #ffffff;
+  --dir-paper: var(--paper, #f3ece0);
   --dir-ochre: #b38238;
-  --dir-muted: rgba(20, 17, 13, 0.55);
-  --dir-border: rgba(20, 17, 13, 0.12);
+  /* Derived from --dir-ink via color-mix rather than a separate literal, so
+     both automatically flip with it under [data-theme="dark"] below instead
+     of needing their own dark-mode override entries. */
+  --dir-muted: color-mix(in srgb, var(--dir-ink) 55%, transparent);
+  --dir-border: color-mix(in srgb, var(--dir-ink) 12%, transparent);
+  /* --dir-dark-bg/--dir-dark-ink are the page's permanently-dark "Improve
+     this entry" section (named from that section's own perspective, see
+     CLAUDE.md's "Directory Entry Detail page" entry) — intentionally NOT
+     theme-driven, left untouched by the dark-mode override below. */
   --dir-dark-bg: #14110d;
   --dir-dark-ink: #f5f0e8;
 }
 
+/* ── Dark mode — mirrors globals.css's global --ink/--paper/--gold dark
+   values (this page keeps its own --dir-* namespace, see file header, but
+   should still track the site theme the same way). ── */
+[data-theme="dark"] {
+  --dir-ink: #f3ece0;
+  --dir-paper: #242018;
+  --dir-ochre: #c9963f;
+}
+
 /* ── Eyebrow label ─────────────────────────────────────── */
 .dir-eyebrow {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -27,7 +43,7 @@
 /* ── Back link ─────────────────────────────────────────── */
 .dir-back {
   display: inline-block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -60,7 +76,7 @@
 }
 
 .dir-heading {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(36px, 6vw, 64px);
   font-weight: 300;
   color: var(--dir-dark-ink);
@@ -81,7 +97,7 @@
   padding: 12px 26px;
   background: var(--dir-ochre);
   color: var(--dir-dark-bg);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -112,7 +128,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 14px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -142,7 +158,7 @@
 .dir-filter-summary {
   margin-top: -40px;
   margin-bottom: 24px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.08em;
   color: var(--dir-muted);
@@ -170,7 +186,7 @@
 .dir-card {
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--dir-paper, #fff);
   border: 1px solid var(--dir-border);
   border-radius: 4px;
   overflow: hidden;
@@ -204,7 +220,7 @@
 }
 
 .dir-card-type {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -212,7 +228,7 @@
 }
 
 .dir-card-title {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 1.25;
@@ -236,7 +252,7 @@
 }
 
 .dir-tag {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -266,7 +282,7 @@
 .dir-submit-link {
   display: inline-block;
   margin-top: 10px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -281,11 +297,18 @@
    ═══════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════
-   SINGLE ENTRY — WIKIPEDIA STYLE (triple column)
+   SINGLE ENTRY — WIKIPEDIA STYLE (main + right rail)
+
+   Was a 3-in-page-column layout (related-entries sidebar + article +
+   infobox sidebar) — on top of the global left-nav rail (.ch-rail,
+   Header.tsx) that made 4 visible columns at >=860px. Related Entries
+   + the Improve CTA now live inside .dir-wiki-right, stacked below the
+   infobox, so the page itself is just main + one right rail (matching
+   every other content page's column count with the global rail).
    ═══════════════════════════════════════════════════════ */
 
 .dir-wiki-page {
-  background: var(--dir-bg);
+  background: var(--dir-paper);
   min-height: 100vh;
   padding-bottom: 80px;
 }
@@ -298,7 +321,7 @@
 
 .dir-wiki-layout {
   display: grid;
-  grid-template-columns: 220px 1fr 260px;
+  grid-template-columns: 1fr 280px;
   gap: 36px;
   max-width: 1360px;
   margin: 0 auto;
@@ -306,21 +329,16 @@
   align-items: start;
 }
 
-/* ── Left sidebar ── */
-.dir-wiki-left {
-  position: sticky;
-  top: 80px;
-}
-
 .dir-wiki-sidebar-card {
-  background: #faf7f2;
-  border: 1px solid var(--dir-border);
-  padding: 18px 16px;
+  background: var(--paper, #f3ece0);
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-2xl, 20px);
+  padding: 20px;
   margin-bottom: 16px;
 }
 
 .dir-wiki-sidebar-heading {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -331,9 +349,15 @@
 }
 
 .dir-wiki-sidebar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
+  font-style: italic;
   color: var(--dir-muted);
   margin: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--dir-border);
 }
 
 .dir-wiki-related-list {
@@ -363,7 +387,7 @@
   height: 36px;
   flex-shrink: 0;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 6px;
   background: var(--dir-border);
 }
 
@@ -381,7 +405,7 @@
 }
 
 .dir-wiki-see-all {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -391,10 +415,11 @@
 
 .dir-wiki-improve {
   background: var(--dir-dark-bg);
+  border-radius: 8px;
   padding: 16px;
 }
 .dir-wiki-improve-label {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -414,7 +439,7 @@
 }
 
 .dir-wiki-title {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(28px, 4vw, 46px);
   font-weight: 300;
   color: var(--dir-ink);
@@ -430,7 +455,7 @@
 }
 
 .dir-wiki-date {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   color: rgba(20, 17, 13, 0.3);
@@ -451,7 +476,7 @@
 }
 
 .dir-wiki-section-heading {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 400;
   color: var(--dir-ink);
@@ -473,7 +498,7 @@
 .dir-wiki-work-card {
   border: 1px solid var(--dir-border);
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 8px;
 }
 
 .dir-wiki-work-img {
@@ -496,10 +521,12 @@
 }
 
 .dir-wiki-infobox {
-  border: 1px solid var(--dir-border);
-  background: #faf7f2;
+  border: 1px solid var(--rule, #e8e2d8);
+  border-radius: var(--radius-2xl, 20px);
+  background: var(--paper, #f3ece0);
   font-size: 13px;
   overflow: hidden;
+  margin-bottom: 12px;
 }
 
 .dir-wiki-infobox-img {
@@ -510,14 +537,14 @@
 }
 
 .dir-wiki-infobox-name {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 500;
   color: var(--dir-ink);
   text-align: center;
   padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--dir-border);
-  background: #f3ede0;
+  border-bottom: 1px solid var(--rule, #e8e2d8);
+  background: var(--paper, #f3ece0);
 }
 
 .dir-wiki-infobox-row {
@@ -531,7 +558,7 @@
 .dir-wiki-infobox-row:last-child { border-bottom: none; }
 
 .dir-wiki-infobox-label {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -558,10 +585,312 @@
   margin: 0;
 }
 
+/* ── Mood/pace (books only, Phase 3 — docs/reading-tracker-plan.md §1.3/§3.4) ── */
+.dir-mood-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.dir-mood-chip {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  background: rgba(179, 130, 56, 0.12);
+  border-radius: 999px;
+  color: var(--dir-ochre);
+}
+.dir-mood-vote-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-top: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--dir-ochre);
+  cursor: pointer;
+}
+.dir-mood-vote-link:hover { text-decoration: underline; }
+
+.dir-mood-form {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dir-border);
+}
+.dir-mood-form-label {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dir-muted);
+  margin: 8px 0 6px;
+}
+.dir-mood-form-label:first-child { margin-top: 0; }
+.dir-mood-form-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dir-mood-form-chip {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper, #fff);
+  color: var(--dir-muted);
+  cursor: pointer;
+}
+.dir-mood-form-chip--active {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper);
+}
+.dir-mood-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: center;
+}
+.dir-mood-form-submit {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--dir-ochre);
+  color: #fff;
+  cursor: pointer;
+}
+.dir-mood-form-submit:disabled { opacity: 0.5; cursor: default; }
+.dir-mood-form-cancel {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--dir-muted);
+  cursor: pointer;
+}
+
+/* ── Follow this person/place ("Log-First" pass, September 2026) ── */
+.dir-follow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.dir-follow-btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper);
+  color: var(--dir-ink);
+  cursor: pointer;
+}
+.dir-follow-btn--active {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper);
+}
+.dir-follow-btn:disabled { opacity: 0.6; cursor: default; }
+.dir-follow-count {
+  font-size: 12px;
+  color: var(--dir-muted);
+}
+
+/* ── Add to your log + social proof ("Log-First" pass) ── */
+.dir-log {
+  margin-top: 12px;
+}
+.dir-log-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dir-log-btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper);
+  color: var(--dir-ink);
+  cursor: pointer;
+}
+.dir-log-btn--active {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper);
+}
+.dir-log-btn:disabled { opacity: 0.6; cursor: default; }
+.dir-log-proof {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--dir-muted);
+  line-height: 1.5;
+}
+.dir-log-proof strong { color: var(--dir-ink); }
+
+/* ── Stoop proximity banner (places only, "Log-First" pass) ── */
+.dir-proximity {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--dir-border);
+  border-radius: 8px;
+}
+.dir-proximity-prompt,
+.dir-proximity-text {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--dir-muted);
+  line-height: 1.5;
+}
+.dir-proximity-text strong { color: var(--dir-ink); }
+.dir-proximity-enable,
+.dir-proximity-cta {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--dir-ink);
+  color: var(--dir-paper);
+  cursor: pointer;
+  text-decoration: none;
+}
+.dir-proximity-enable:disabled { opacity: 0.6; cursor: default; }
+.dir-proximity-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--dir-muted);
+}
+.dir-proximity-turn-off {
+  display: block;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--dir-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Lines saved from this ("Log-First" pass) ── */
+.dir-lines-empty {
+  font-size: 13px;
+  color: var(--dir-muted);
+  font-style: italic;
+  margin-top: 10px;
+}
+.dir-lines-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dir-lines-item {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--dir-border);
+}
+.dir-lines-item:last-child { border-bottom: none; padding-bottom: 0; }
+.dir-lines-text {
+  margin: 0;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--dir-ink);
+  line-height: 1.5;
+}
+.dir-lines-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.dir-lines-author {
+  font-size: 12px;
+  color: var(--dir-muted);
+}
+.dir-lines-delete {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  color: var(--dir-ochre);
+  cursor: pointer;
+}
+.dir-lines-add {
+  display: block;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--dir-ochre);
+  cursor: pointer;
+  text-align: left;
+}
+.dir-lines-add:hover { text-decoration: underline; }
+.dir-lines-form { margin-top: 12px; }
+.dir-lines-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--dir-ink);
+  background: var(--dir-paper);
+  border: 1px solid var(--dir-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.dir-lines-form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+.dir-lines-submit {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--dir-ink);
+  color: var(--dir-paper);
+  cursor: pointer;
+}
+.dir-lines-submit:disabled { opacity: 0.5; cursor: default; }
+.dir-lines-cancel {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--dir-muted);
+  cursor: pointer;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .dir-wiki-layout {
-    grid-template-columns: 200px 1fr 240px;
+    grid-template-columns: 1fr 240px;
     gap: 24px;
     padding: 20px 24px 0;
   }
@@ -572,12 +901,10 @@
     grid-template-columns: 1fr;
     padding: 16px 20px 0;
   }
-  .dir-wiki-left,
   .dir-wiki-right { position: static; }
-  /* Show infobox first on mobile, then article, then related */
+  /* Show infobox + related entries first on mobile, article after */
   .dir-wiki-right  { order: -1; }
   .dir-wiki-main   { order: 0; }
-  .dir-wiki-left   { order: 1; }
   .dir-wiki-infobox-img { aspect-ratio: 16 / 7; }
 }
 
@@ -620,7 +947,7 @@
 
 .dir-single-type {
   display: inline-block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -629,7 +956,7 @@
 }
 
 .dir-single-title {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(28px, 5vw, 48px);
   font-weight: 300;
   color: var(--dir-ink);
@@ -646,7 +973,7 @@
 }
 
 .dir-single-date {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   color: rgba(20, 17, 13, 0.35);
@@ -657,13 +984,11 @@
   font-size: 16px;
   line-height: 1.75;
   color: var(--dir-ink);
-  border-top: 1px solid var(--dir-border);
-  padding-top: 36px;
   margin-bottom: 40px;
 }
 
 .dir-single-body h2 {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 400;
   margin: 36px 0 14px;
@@ -674,19 +999,14 @@
   margin: 0 0 20px;
 }
 
-/* Tailwind's Preflight resets list-style to none globally — directory entry
-   body copy from WordPress needs real markers restored explicitly. */
-.dir-single-body ul, .dir-single-body ol {
+.dir-single-body ul {
   padding-left: 20px;
   margin: 0 0 20px;
 }
-.dir-single-body ul { list-style: disc outside; }
-.dir-single-body ol { list-style: decimal outside; }
 
 .dir-single-body li {
   margin-bottom: 6px;
 }
-.dir-single-body li::marker { color: var(--dir-ochre); }
 
 /* Tags section */
 .dir-single-tags {
@@ -696,7 +1016,7 @@
 }
 
 .dir-tags-label {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -719,7 +1039,7 @@
 }
 
 .dir-improve-label {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -735,16 +1055,18 @@
 }
 
 .dir-improve-btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background: var(--dir-ochre);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--dir-dark-ink);
   color: var(--dir-dark-bg);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   text-decoration: none;
-  border-radius: 2px;
+  border-radius: 999px;
+  transition: opacity 0.15s ease;
 }
 .dir-improve-btn:hover {
   opacity: 0.9;
@@ -765,7 +1087,7 @@
 }
 
 .dir-submit-heading {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: clamp(26px, 4vw, 38px);
   font-weight: 300;
   color: var(--dir-ink);
@@ -786,7 +1108,7 @@
   padding: 48px 0;
 }
 .dir-submit-auth-gate h2 {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 26px;
   font-weight: 300;
   margin: 0 0 12px;
@@ -805,7 +1127,7 @@
 
 .dir-field-label {
   display: block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -826,7 +1148,7 @@
   border-radius: 2px;
   font-size: 15px;
   color: var(--dir-ink);
-  background: #fff;
+  background: var(--dir-paper, #fff);
   outline: none;
   font-family: inherit;
 }
@@ -841,7 +1163,7 @@
   padding: 12px 22px;
   background: var(--dir-ink);
   color: #f5f0e8;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -860,7 +1182,7 @@
 }
 
 .dir-generate-note {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 9px;
   letter-spacing: 0.1em;
   color: rgba(20, 17, 13, 0.35);
@@ -894,7 +1216,7 @@
   border-radius: 2px;
   font-size: 15px;
   color: var(--dir-ink);
-  background: #fff;
+  background: var(--dir-paper, #fff);
   outline: none;
   font-family: inherit;
   box-sizing: border-box;
@@ -910,9 +1232,9 @@
   border-radius: 2px;
   font-size: 14px;
   color: var(--dir-ink);
-  background: #fff;
+  background: var(--dir-paper, #fff);
   outline: none;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   resize: vertical;
   line-height: 1.6;
   box-sizing: border-box;
@@ -939,7 +1261,7 @@
   padding: 12px 24px;
   background: var(--dir-ink);
   color: #f5f0e8;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -962,7 +1284,7 @@
   padding: 12px 20px;
   background: transparent;
   color: var(--dir-ink);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1011,7 +1333,7 @@
 }
 
 .dir-success h2 {
-  font-family: "Fraunces", serif;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 300;
   color: var(--dir-ink);
@@ -1028,7 +1350,7 @@
 
 .dir-success-points {
   display: inline-block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1095,16 +1417,58 @@
   gap: 6px;
   font-size: 13px;
 }
-.dir-community-stars { color: var(--ochre); letter-spacing: 1px; }
+.dir-community-stars { color: var(--dir-ochre); letter-spacing: 1px; }
 .dir-community-rating-num { font-weight: 700; color: var(--ink); }
 .dir-community-rating-count { color: var(--mute); }
 
 .dir-community-posts { display: flex; flex-direction: column; gap: 16px; }
 
+/* Saved lines on a directory entry. Deliberately lighter than
+   .dir-community-card — a quote is the line itself, so the chrome around it
+   stays out of the way; the serif italic is what marks it as quoted, the
+   same treatment the sitewide pull-quote rule uses. */
+.dir-quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 1rem;
+}
+.dir-quote-card {
+  margin: 0;
+  padding: 16px 18px;
+  background: var(--dir-paper);
+  border: 1px solid var(--dir-border);
+  border-radius: 8px;
+}
+.dir-quote-text {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--dir-ink);
+}
+.dir-quote-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--dir-muted);
+}
+.dir-quote-source {
+  font-weight: 600;
+  color: var(--dir-ink);
+}
+.dir-quote-saved {
+  flex-grow: 1;
+}
+
 .dir-community-card {
-  background: var(--paper-deep, #ede8df);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  background: var(--dir-paper);
+  border: 1px solid var(--dir-border);
+  border-radius: 8px;
   padding: 16px;
 }
 
@@ -1125,17 +1489,17 @@
 .dir-community-author { font-weight: 600; color: var(--ink); margin-right: 4px; }
 .dir-community-pro-badge {
   display: inline-block;
-  font-size: 9px;
+  font-size: 7px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--ochre);
+  background: var(--dir-ochre);
   color: #fff;
-  padding: 1px 5px;
+  padding: 2px 4px;
   border-radius: 2px;
   margin-right: 4px;
 }
-.dir-community-star-rating { color: var(--ochre); letter-spacing: 1px; font-size: 13px; margin-left: auto; }
+.dir-community-star-rating { color: var(--dir-ochre); letter-spacing: 1px; font-size: 13px; margin-left: auto; }
 
 .dir-community-content {
   font-size: 14px;
@@ -1155,7 +1519,7 @@
 .dir-community-reaction { font-size: 13px; color: var(--mute); }
 .dir-community-read-more {
   font-size: 0.72rem;
-  color: var(--ochre, #b38238);
+  color: var(--dir-ochre);
   text-decoration: none;
   white-space: nowrap;
   font-weight: 600;
@@ -1178,4 +1542,113 @@
   .dir-hero {
     padding: 48px 20px 40px;
   }
+}
+
+/* ── Entry log control (EntryLogControl.tsx) ──────────────────────────────
+   Shelve and rate an entry from the entry's own page. Uses this page's own
+   --dir-* namespace, not the global --ink/--ochre pair, per the rule in
+   CLAUDE.md — don't mix the two systems in this file. */
+.dir-log {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--dir-border);
+  border-radius: 12px;
+  background: var(--dir-paper, #fff);
+}
+.dir-log-label {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dir-muted);
+  margin-bottom: 10px;
+}
+.dir-log-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dir-log-status {
+  flex: 1 1 auto;
+  min-width: 110px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--dir-border);
+  background: var(--dir-paper, #fff);
+  color: var(--dir-ink);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dir-log-status:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+.dir-log-status--active,
+.dir-log-status--active:disabled {
+  background: var(--dir-ink);
+  border-color: var(--dir-ink);
+  color: var(--dir-paper, #fff);
+  opacity: 1;
+}
+.dir-log-rate {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dir-border);
+}
+.dir-log-rate-line {
+  font-size: 13px;
+  color: var(--dir-muted);
+  margin-bottom: 8px;
+}
+.dir-log-stars {
+  display: flex;
+  gap: 6px;
+}
+.dir-log-star {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--dir-border);
+  border-radius: 10px;
+  background: var(--dir-paper, #fff);
+  color: var(--dir-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.dir-log-star--on {
+  color: var(--dir-ochre);
+  border-color: color-mix(in srgb, var(--dir-ochre) 45%, transparent);
+}
+.dir-log-signin,
+.dir-log-remove {
+  display: inline-block;
+  margin-top: 10px;
+  border: 0;
+  padding: 0;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dir-ochre);
+  text-decoration: none;
+  cursor: pointer;
+}
+.dir-quotes-empty {
+  margin: 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--dir-muted);
+}
+.dir-save-line {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dir-ochre);
+  text-decoration: none;
 }

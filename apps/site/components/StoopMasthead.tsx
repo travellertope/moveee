@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 // Fixed nav bar for the /stoop marketing page — brand + in-page anchor
 // links (About/How it works/Hosting/FAQ, matching the section ids in

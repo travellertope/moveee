@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 // The Moveee Lifestyle's own standalone footer — rebuilt verbatim from the
 // approved identity mockup (moveee-lifestyle-identity.html). Mounted once

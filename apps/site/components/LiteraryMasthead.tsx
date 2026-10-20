@@ -8,7 +8,7 @@ import LiteraryLogo from "./LiteraryLogo";
 import SearchOverlay from "./SearchOverlay";
 import { LITERARY_GENRES } from "@/lib/wp";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 // The Moveee Literary's own standalone masthead — replaces the sitewide
 // floating pill entirely on every /literary route (see Header.tsx's

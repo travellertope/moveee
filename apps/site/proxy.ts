@@ -62,7 +62,7 @@ async function getWPRedirects() {
 
 // Routes that exist (or will exist) in the Next.js app.
 // Add to this set as you create new pages.
-// Site A routes only — community/auth routes live on web.themoveee.com
+// Site A routes only — community/auth routes live on themoveee.com
 const APP_ROUTES = new Set([
   'app',
   'magazine',
@@ -78,7 +78,7 @@ const APP_ROUTES = new Set([
   'vendor',
   // Marketing landing page for Stoop (app/stoop/page.tsx). Note /stoop is
   // deliberately NOT in connectPrefixes above — this is Site A's own page;
-  // its CTAs link out to web.themoveee.com rather than the path redirecting.
+  // its CTAs link out to themoveee.com rather than the path redirecting.
   'stoop',
   'about',
   'contact',
@@ -200,8 +200,8 @@ export async function proxy(request: NextRequest) {
   //   }
   // }
 
-  // ── Site B redirects — moved to web.themoveee.com ───────────
-  const CONNECT = 'https://web.themoveee.com'
+  // ── Site B redirects — moved to themoveee.com ───────────
+  const CONNECT = 'https://themoveee.com'
   const connectPrefixes = [
     '/connect', '/feed', '/events', '/community', '/pulse', '/directory',
     '/quotes', '/games', '/member', '/vendor',

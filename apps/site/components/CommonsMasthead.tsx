@@ -8,7 +8,7 @@ import CommonsLogo from "./CommonsLogo";
 import SearchOverlay from "./SearchOverlay";
 import { COMMONS_SECTIONS } from "@/lib/wp";
 
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 // The Moveee Commons' own standalone masthead — replaces the sitewide
 // floating pill entirely on every /commons route (see Header.tsx's
