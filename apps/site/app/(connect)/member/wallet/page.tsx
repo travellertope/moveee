@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import WalletTabsClient from "./WalletTabsClient";
 import "../../../connect-member.css";
-import "../../../connect/perks/perks.css";
+import "../../connect/perks/perks.css";
 
 export const dynamic = "force-dynamic";
 

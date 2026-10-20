@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import ArticleComments from "@/components/ArticleComments";
 import { getAccessLevel } from "@/lib/access";
-import "../../newsletter.css";
+import "../../../newsletter.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { NL_META, isNewsletterListId, NewsletterListId } from "@/lib/newsletter-lists";
 import IssueReaderClient, { ArchiveIssue } from "./IssueReaderClient";

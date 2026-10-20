@@ -17,7 +17,7 @@ import Link from "next/link";
 import SeriesLandingPage from "@/components/SeriesLandingPage";
 import MagazineHub from "@/components/MagazineHub";
 import ArchiveCardGrid from "@/components/ArchiveCardGrid";
-import "../magazine.css";
+import "../../magazine.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { type EditionSlug } from "@/lib/editions";
 

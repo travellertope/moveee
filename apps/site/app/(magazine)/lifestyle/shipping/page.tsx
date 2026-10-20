@@ -1,6 +1,6 @@
 import Link from "next/link";
-import "../../sections.css";
-import "../../legal.css";
+import "../../../sections.css";
+import "../../../legal.css";
 
 export const metadata = {
   title: { absolute: "Shipping & Returns | The Moveee Lifestyle" },
