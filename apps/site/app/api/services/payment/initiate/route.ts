@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveSectionPayment, resolvePartnershipPayment, type PaymentKind } from "@/app/services/payment-lookup";
+import { resolveSectionPayment, resolvePartnershipPayment, type PaymentKind } from "../../../../(magazine)/services/payment-lookup";
 
 const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const API_SECRET = process.env.CULTURE_API_SECRET;

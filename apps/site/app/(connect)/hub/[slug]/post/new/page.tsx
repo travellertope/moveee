@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import HubPostNewClient from "./HubPostNewClient";
-import "@/app/post/new/post-new.css";
+import "../../../../post/new/post-new.css";
 
 export const dynamic = "force-dynamic";
 

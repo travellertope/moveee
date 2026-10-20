@@ -3,8 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import NlhCardGrid from "@/components/NlhCardGrid";
 import type { NlhCard } from "@/components/NlhCardGrid";
-import "../newsletter.css";
-import "../newsletter-hub.css";
+import "../../newsletter.css";
+import "../../newsletter-hub.css";
 import { geoSegment, deduplicateEditions, issueNumbersByList } from "@/lib/newsletter-editions";
 import type { Metadata } from "next";
 
