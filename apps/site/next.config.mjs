@@ -8,6 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const tempRedirects = JSON.parse(readFileSync("./redirects.json", "utf-8"));
 
 const nextConfig = {
+  // Turbopack is the default in Next.js 16. withSerwist adds a webpack config,
+  // which triggers a hard error unless we declare a turbopack config too.
+  // An empty object is enough to satisfy the check; Serwist handles the
+  // service-worker injection separately via its own build step.
+  turbopack: {},
   transpilePackages: ["@moveee/shared", "@moveee/utils"],
   outputFileTracingRoot: path.join(__dirname, "../../"),
   images: {
