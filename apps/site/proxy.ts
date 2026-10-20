@@ -62,8 +62,8 @@ async function getWPRedirects() {
 
 // Routes that exist (or will exist) in the Next.js app.
 // Add to this set as you create new pages.
-// Site A routes only — community/auth routes live on themoveee.com
 const APP_ROUTES = new Set([
+  // Magazine (Site A)
   'app',
   'magazine',
   'literary',
@@ -75,10 +75,6 @@ const APP_ROUTES = new Set([
   'makers',
   'author',
   'services',
-  'vendor',
-  // Marketing landing page for Stoop (app/stoop/page.tsx). Note /stoop is
-  // deliberately NOT in connectPrefixes above — this is Site A's own page;
-  // its CTAs link out to themoveee.com rather than the path redirecting.
   'stoop',
   'about',
   'contact',
@@ -93,6 +89,29 @@ const APP_ROUTES = new Set([
   'uk',
   'us',
   'africa',
+  // Connect (Site B) — now merged onto themoveee.com
+  'feed',
+  'connect',
+  'events',
+  'community',
+  'pulse',
+  'directory',
+  'quotes',
+  'games',
+  'member',
+  'vendor',
+  'login',
+  'register',
+  'forgot-password',
+  'reset-password',
+  'account',
+  'membership',
+  'discover',
+  'hub',
+  'cluster',
+  'log',
+  'post',
+  'r',
 ])
 
 // Alias redirects — old or alternative slugs that should map
@@ -200,20 +219,6 @@ export async function proxy(request: NextRequest) {
   //   }
   // }
 
-  // ── Site B redirects — moved to themoveee.com ───────────
-  const CONNECT = 'https://themoveee.com'
-  const connectPrefixes = [
-    '/connect', '/feed', '/events', '/community', '/pulse', '/directory',
-    '/quotes', '/games', '/member', '/vendor',
-    '/login', '/register', '/forgot-password', '/reset-password',
-    '/account', '/membership',
-  ]
-  for (const prefix of connectPrefixes) {
-    if (pathname === prefix || pathname.startsWith(prefix + '/')) {
-      return NextResponse.redirect(`${CONNECT}${pathname}`, 308)
-    }
-  }
-
   // ── WP Admin redirect manager (checked first, highest priority) ──
   const wpRedirects = await getWPRedirects()
   const wpMatch = wpRedirects.find((r) => r.from === pathname)
@@ -301,11 +306,6 @@ export async function proxy(request: NextRequest) {
       new URL('/wp-login.php', 'https://cms.themoveee.com'),
       302
     )
-  }
-
-  // ── WordPress feed → magazine ────────────────────────────────
-  if (pathname === '/feed' || pathname.startsWith('/feed/')) {
-    return NextResponse.redirect(new URL('/magazine', request.url), 301)
   }
 
   // ── The Moveee Lifestyle renamed from /shop to /lifestyle (Sept 2026) —
