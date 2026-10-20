@@ -900,7 +900,7 @@ export const GET_STORY_GUEST_BYLINE = `
 
 export const GET_STORIES = `
   query GetStories($first: Int, $categoryName: String, $tag: String) {
-    posts(first: $first, where: { categoryName: $categoryName, tag: $tag }) {
+    posts(first: $first, where: { categoryName: $categoryName, tag: $tag, orderby: [{ field: DATE, order: DESC }] }) {
       nodes {
         ...StoryFields
       }
