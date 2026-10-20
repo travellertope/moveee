@@ -90,10 +90,12 @@ const EMPTY_SECTIONS: HomeSections = {
 // field shape, etc.) that neither of those anticipates.
 async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
   try {
-    const regionalEdition = edition === "global" ? undefined : edition;
+    // Homepage always fetches global (unscoped) content — no edition/geo filtering.
+    // Edition cookies only ever affected which posts appeared in the stories pool;
+    // now the homepage is one global feed for all visitors.
     const [homepageData, sections, newsletters] = await Promise.all([
-      fetchHomepageData(regionalEdition),
-      getMagazineSections(edition),
+      fetchHomepageData(),
+      getMagazineSections("global"),
       getNewslettersWithFallback(10).catch(() => []),
     ]);
 
