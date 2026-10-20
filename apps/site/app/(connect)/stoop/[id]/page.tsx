@@ -22,7 +22,7 @@ export default async function StoopPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+    <div style={{ background: "var(--feed-bg, #f7f8fb)" }}>
       <div className="pulse-layout pulse-layout--feed">
 
         {/* Center — Stoop Detail */}

@@ -36,7 +36,7 @@ export default async function NotificationsPage() {
   const notifications = await fetchNotifications(Number(user.id));
 
   return (
-    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+    <div style={{ background: "var(--feed-bg, #f7f8fb)" }}>
       <div className="pulse-layout pulse-layout--feed">
         <main className="pulse-timeline">
           <div className="pulse-timeline-inner" style={{ padding: "20px 20px 40px" }}>

@@ -1843,7 +1843,7 @@ select.mem-field-input { cursor: pointer; }
    ═══════════════════════════════════════════════════ */
 
 .acct-page {
-  background: #f8fafc;
+  background: #f7f8fb;
   min-height: 100vh;
 }
 
@@ -2202,7 +2202,7 @@ select.mem-field-input { cursor: pointer; }
   margin-top: 6px;
 }
 .acct-stat-sub--pill {
-  background: #f8fafc;
+  background: #f7f8fb;
   border-radius: var(--radius-md);
   padding: 3px 8px;
   display: inline-block;
@@ -2234,7 +2234,7 @@ select.mem-field-input { cursor: pointer; }
   justify-content: space-between;
   margin: -24px -24px 20px;
   padding: 16px 24px;
-  background: #f8fafc;
+  background: #f7f8fb;
   border-bottom: 1px solid #e2e8f0;
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }

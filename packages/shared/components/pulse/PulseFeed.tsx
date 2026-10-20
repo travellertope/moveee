@@ -335,7 +335,7 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   }, []);
 
   return (
-    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+    <div style={{ background: "var(--feed-bg, #f7f8fb)" }}>
       <div className="pulse-layout pulse-layout--feed">
 
         {/* ── Center Timeline ── */}

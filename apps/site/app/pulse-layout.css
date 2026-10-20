@@ -1,7 +1,7 @@
 /* ── Shared Pulse/Connect feed layout ─────────────────────────────── */
 
 /* Feed background token — slate-50 in light mode */
-:root { --feed-bg: #f8fafc; }
+:root { --feed-bg: #f7f8fb; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --feed-bg: var(--paper, #1a1714); }
 }
