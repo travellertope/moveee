@@ -6391,24 +6391,37 @@ class Culture_REST_API {
     }
 
     /**
-     * Return the stored community_author_avatar for a post, with a lazy
-     * backfill from _culture_avatar_url the first time it is missing.
-     * Older posts were created before the avatar was snapshotted at save time.
+     * Resolve the current display name for a post's author.
+     * Always reads from the live user record so renames are reflected immediately.
+     * get_userdata() is cached in WP's object cache, so repeated calls within
+     * a single feed request for the same user_id are free.
+     */
+    private static function resolve_author_name( int $pid ): string {
+        $author_id = (int) get_post_meta( $pid, 'community_author_id', true );
+        if ( $author_id ) {
+            $user = get_userdata( $author_id );
+            if ( $user ) {
+                return $user->display_name ?: $user->user_login;
+            }
+        }
+        // Fallback for posts missing community_author_id (very old posts)
+        return get_post_meta( $pid, 'community_author_name', true ) ?: '';
+    }
+
+    /**
+     * Resolve the current avatar for a post's author.
+     * Always reads from the live user meta so avatar changes are reflected immediately.
      */
     private static function resolve_author_avatar( int $pid ): string {
-        $avatar = get_post_meta( $pid, 'community_author_avatar', true ) ?: '';
-        if ( $avatar ) {
-            return $avatar;
-        }
         $author_id = (int) get_post_meta( $pid, 'community_author_id', true );
-        if ( ! $author_id ) {
-            return '';
+        if ( $author_id ) {
+            $avatar = get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '';
+            if ( $avatar ) {
+                return $avatar;
+            }
         }
-        $avatar = get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '';
-        if ( $avatar ) {
-            update_post_meta( $pid, 'community_author_avatar', $avatar );
-        }
-        return $avatar;
+        // Fallback for posts missing community_author_id (very old posts)
+        return get_post_meta( $pid, 'community_author_avatar', true ) ?: '';
     }
 
     private static function format_community_post_row( WP_Post $post ): array {
@@ -6421,7 +6434,7 @@ class Culture_REST_API {
             'image_url'      => get_post_meta( $pid, 'community_image_url', true ) ?: '',
             'tag'            => get_post_meta( $pid, 'community_tag', true ) ?: '',
             'region'         => get_post_meta( $pid, 'community_region', true ) ?: '',
-            'author_name'    => get_post_meta( $pid, 'community_author_name', true ) ?: '',
+            'author_name'    => self::resolve_author_name( $pid ),
             'author_username' => get_post_meta( $pid, 'community_author_username', true ) ?: '',
             'author_tier'    => get_post_meta( $pid, 'community_author_tier', true ) ?: '',
             'author_avatar'  => self::resolve_author_avatar( $pid ),
