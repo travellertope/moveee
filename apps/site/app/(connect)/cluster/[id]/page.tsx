@@ -207,7 +207,7 @@ export default async function ClusterPage({
   const spotsLeft = cluster.capacity > 0 ? Math.max(0, cluster.capacity - cluster.memberCount) : null;
 
   return (
-    <div style={{ background: "var(--feed-bg, #f8fafc)" }}>
+    <div style={{ background: "var(--feed-bg, #f7f8fb)" }}>
       <div className="pulse-layout pulse-layout--feed">
 
         {/* Center — management content */}

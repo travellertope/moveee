@@ -13,7 +13,7 @@
 
   /* Connect uses a pure-white paper (magazine uses warm #faf7f2) — scoped to
      cw-shell below so magazine pages keep their warm tones. */
-  --bg-page-connect: #f8fafc;
+  --bg-page-connect: #f7f8fb;
 
   /* Feed card type-badge accents — not defined by magazine globals.css */
   --cat-pulse-bg: #fef3e2;
@@ -58,7 +58,7 @@
   --font-fraunces: var(--font-inter), "Inter", sans-serif;
 
   /* Connect-specific background (pure white, not warm paper) */
-  --bg-page: #f8fafc;
+  --bg-page: #f7f8fb;
   --paper: #ffffff;
   --paper-warm: #ffffff;
   --paper-deep: #f2f2f2;
@@ -71,7 +71,7 @@
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  background: var(--bg-page, #f8fafc);
+  background: var(--bg-page, #f7f8fb);
   color: var(--ink);
 }
 
