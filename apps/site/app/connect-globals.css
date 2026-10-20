@@ -48,6 +48,18 @@
   --paper-header: #faf8f5;
 }
 
+/* ── Body reset for connect pages — clears the magazine's warm radial-gradient ── */
+/* The magazine globals.css sets body { background-image: radial-gradient(...) } which
+   bleeds into the outer left/right gutters outside the .cw-shell layout grid. */
+body:has(.cw-shell) {
+  background: var(--bg-page-connect, #f7f8fb);
+  background-image: none;
+}
+[data-theme="dark"] body:has(.cw-shell) {
+  background: #1a1714;
+  background-image: none;
+}
+
 /* ── Connect shell: overrides that apply only within the connect app shell ── */
 .cw-shell {
   /* Font stack: Inter for all connect pages */
