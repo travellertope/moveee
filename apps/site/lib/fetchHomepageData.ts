@@ -83,18 +83,10 @@ export async function fetchHomepageData(edition?: RegionalSlug) {
 
       const pool = [...editionPosts, ...universalPosts];
 
-      // Prefer a featured post scoped to this edition's countries, then any
-      // featured post with no country tag at all (universal), then any
-      // featured post regardless of edition — only falling back to the
-      // general pool if literally nothing has been tagged "Featured" yet
-      // (so the hero degrades to the old behaviour rather than going blank
-      // on a brand-new/unconfigured edition).
-      const editionCountrySlugs = new Set(countrySlugs as unknown as string[]);
-      const featuredForEdition = featuredPool.find((p: any) =>
-        (p.countries?.nodes ?? []).some((c: any) => editionCountrySlugs.has(c.slug))
-      );
-      const featuredUniversal = featuredPool.find((p: any) => !(p.countries?.nodes?.length));
-      coverStory = featuredForEdition || featuredUniversal || featuredPool[0] || pool[0] || null;
+      // Hero always uses the newest "featured"-tagged post regardless of edition —
+      // country-based hero filtering was causing older posts to be preferred over
+      // newer featured posts tagged with different country slugs.
+      coverStory = featuredPool[0] || pool[0] || null;
       stories = pool.filter((s: any) => s.slug !== coverStory?.slug).slice(0, 13);
     } else {
       const data = await getWPData(GET_STORIES, { first: 14 }, OPT);

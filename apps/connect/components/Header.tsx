@@ -162,6 +162,9 @@ export default function ConnectHeader() {
               <RailIcon name={item.icon} /> {item.label}
             </Link>
           ))}
+          <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="ch-rail-link ch-rail-link--ext">
+            <RailIcon name="magazine" /> Magazine <ExternalArrow />
+          </a>
         </nav>
 
         <div className="ch-rail-hubs-scroll">

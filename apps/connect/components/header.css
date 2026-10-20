@@ -162,7 +162,7 @@
   color: var(--ochre, #7a241c);
   font-weight: 600;
 }
-.ch-rail-link--ext { color: var(--mute); font-size: 13px; }
+.ch-rail-link--ext { color: var(--mute); }
 .ch-rail-theme-toggle {
   background: none;
   border: none;
