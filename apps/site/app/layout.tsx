@@ -85,6 +85,8 @@ export const metadata: Metadata = {
 };
 
 import { getWPData, GET_SITE_SETTINGS } from "@/lib/wp";
+import NavigationLoader from "@/components/NavigationLoader";
+import PwaSplash from "@/components/PwaSplash";
 
 export default async function RootLayout({
   children,
@@ -155,6 +157,8 @@ export default async function RootLayout({
           </CurrencyProvider>
         </SessionProvider>
         <PwaInstallPrompt />
+        <NavigationLoader />
+        <PwaSplash />
       </body>
     </html>
   );

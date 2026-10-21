@@ -50,16 +50,29 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
 // Escape special regex characters in a keyword string
 function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
-function inferCategory(text: string): string {
-  if (!text.trim()) return "";
+function inferCategories(text: string): string[] {
+  if (!text.trim()) return [];
   const lower = text.toLowerCase();
-  let best = "";
-  let bestScore = 0;
-  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    const score = keywords.filter(kw => new RegExp(`\\b${escapeRe(kw)}\\b`).test(lower)).length;
-    if (score > bestScore) { bestScore = score; best = cat; }
+  // Extract #hashtags that match known category names
+  const hashtagCats: string[] = [];
+  const hpat = /#(\w+)/g;
+  let hm: RegExpExecArray | null;
+  while ((hm = hpat.exec(lower)) !== null) {
+    const found = CATEGORIES.find(c => c.toLowerCase() === hm![1]);
+    if (found && !hashtagCats.includes(found)) hashtagCats.push(found);
   }
-  return bestScore > 0 ? best : "";
+  // Keyword scoring
+  const scored: { cat: string; score: number }[] = [];
+  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS)) {
+    const score = kws.filter(kw => new RegExp(`\\b${escapeRe(kw)}\\b`).test(lower)).length;
+    if (score > 0) scored.push({ cat, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  const result = [...hashtagCats];
+  for (const { cat } of scored) {
+    if (!result.includes(cat)) result.push(cat);
+  }
+  return result.slice(0, 3);
 }
 
 const TABS: { key: ComposerTab; label: string; icon: string }[] = [
@@ -254,8 +267,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [openingHours, setOpeningHours] = useState("");
 
   // Shared
-  const [category, setCategory]           = useState("");
-  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
+  const [categories, setCategories]       = useState<string[]>([]);
   const [galleryUrls, setGalleryUrls]     = useState<string[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [submitting, setSubmitting]       = useState(false);
@@ -271,22 +283,24 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     }
   }, [open, initialTab, initialQuote]);
 
-  // Auto-infer hub/category from content unless user has manually picked one
+  // Auto-infer hubs from content + #hashtags (all in background)
   useEffect(() => {
-    if (categoryManuallySet) return;
-    // Direct tab-to-category mappings
-    if (activeTab === "art")       { setCategory("Art");      return; }
-    if (activeTab === "itinerary") { setCategory("Travel");   return; }
-    if (activeTab === "review") {
-      const map: Record<ReviewSubtype, string> = { food: "Food", music: "Music", book: "Literature", film: "Film", place: "" };
-      const direct = map[revSubtype];
-      if (direct) { setCategory(direct); return; }
-    }
-    // Keyword inference from text
     const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
-    const inferred = inferCategory(combined);
-    if (inferred) setCategory(inferred);
-  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
+    const inferred = inferCategories(combined);
+    // Tab-specific primary category takes the first slot
+    let primary: string | null = null;
+    if (activeTab === "art") primary = "Art";
+    else if (activeTab === "itinerary") primary = "Travel";
+    else if (activeTab === "review") {
+      const map: Record<ReviewSubtype, string> = { food: "Food", music: "Music", book: "Literature", film: "Film", place: "" };
+      primary = map[revSubtype] || null;
+    }
+    if (primary) {
+      setCategories([primary, ...inferred.filter(c => c !== primary)].slice(0, 3));
+    } else {
+      setCategories(inferred);
+    }
+  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc]);
 
   // Auto-compute overall star rating from breakdown when set
   useEffect(() => {
@@ -325,7 +339,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
     setGalleryUrls([]); setError("");
-    setCategory(""); setCategoryManuallySet(false);
+    setCategories([]);
   }, []);
 
   const MAX_GALLERY = 4;
@@ -390,7 +404,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         if (!res.ok) throw new Error(data.error || "Failed to post quote");
       } else {
         let template_type = "";
-        const payload: Record<string, unknown> = { tag: category };
+        const payload: Record<string, unknown> = { tag: categories[0] ?? "", tags: categories };
 
         if (activeTab === "update") {
           template_type = "post";
@@ -1327,18 +1341,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         {/* Footer */}
         <div className="cm-footer">
           <div className="cm-footer-left">
-            <span className="cm-footer-label">Hub</span>
-            <select
-              className="cm-category-select"
-              value={category}
-              onChange={e => { setCategory(e.target.value); setCategoryManuallySet(true); }}
-              aria-label="Hub"
-            >
-              <option value="">— Select Hub —</option>
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>#{c}</option>
-              ))}
-            </select>
+            {categories.length > 0 && (
+              <div className="cm-hub-chips" aria-label="Auto-tagged hubs">
+                {categories.map(c => (
+                  <span key={c} className="cm-hub-chip">#{c}</span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="cm-footer-right">
             <button type="button" className="cm-cancel" onClick={handleClose}>Cancel</button>
