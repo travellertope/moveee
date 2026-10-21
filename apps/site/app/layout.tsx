@@ -5,6 +5,7 @@ import "./connect-globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import SessionProvider from "@/components/SessionProvider";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -52,9 +53,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Moveee",
-    startupImage: [{ url: "/icons/apple-touch-icon.png" }],
   },
   formatDetection: { telephone: false },
   alternates: {
@@ -129,7 +129,9 @@ export default async function RootLayout({
         />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3ece0" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14110d" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
@@ -152,6 +154,7 @@ export default async function RootLayout({
             </LanguageProvider>
           </CurrencyProvider>
         </SessionProvider>
+        <PwaInstallPrompt />
       </body>
     </html>
   );
