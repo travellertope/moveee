@@ -749,14 +749,14 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
           {/* Gallery */}
           {item.galleryImages && item.galleryImages.length >= 1 && (
             <div style={{ borderRadius: "var(--radius-xl, 12px)", overflow: "hidden", border: "1px solid var(--rule)", marginBottom: "0.75rem" }}>
-              <div className="hide-scrollbar" style={{ display: "flex", gap: "2px", overflowX: "auto" }}>
+              <div style={{ display: "flex", gap: "2px" }}>
                 {item.galleryImages.map((img: string, i: number) => (
                   <img
                     key={i}
                     src={img}
                     alt=""
                     onClick={() => setLightbox({ images: item.galleryImages!, index: i })}
-                    style={{ height: "220px", objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }}
+                    style={{ flex: "1 1 0", minWidth: 0, maxWidth: "300px", aspectRatio: "1", height: "auto", objectFit: "cover", cursor: "zoom-in" }}
                     loading="lazy"
                   />
                 ))}
