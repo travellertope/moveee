@@ -34,18 +34,21 @@ const BOOK_STATUSES = ["Want to Read", "Reading", "Finished"];
 const POLL_DURATIONS = [{ label: "1 day", value: "1" }, { label: "3 days", value: "3" }, { label: "7 days", value: "7" }];
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  Music:      ["music", "album", "song", "track", "beat", "artist", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape"],
-  Fashion:    ["fashion", "style", "outfit", "clothes", "clothing", "wear", "dress", "brand", "designer", "sneaker", "shoe", "vintage", "thrift", "streetwear", "wardrobe"],
-  Art:        ["art", "artwork", "gallery", "painting", "drawing", "illustration", "sketch", "mural", "exhibit", "canvas", "sculpture", "aesthetic"],
-  Film:       ["film", "movie", "cinema", "director", "actor", "actress", "scene", "documentary", "series", "episode", "netflix", "sequel", "trailer", "tv show"],
-  Food:       ["food", "eat", "restaurant", "meal", "dish", "recipe", "cook", "taste", "flavor", "drink", "cafe", "bar", "brunch", "dinner", "lunch", "breakfast", "jollof", "suya", "chef"],
-  Sport:      ["sport", "football", "soccer", "basketball", "tennis", "cricket", "running", "gym", "fitness", "match", "league", "tournament", "athlete"],
-  Travel:     ["travel", "trip", "city", "country", "visit", "destination", "hotel", "flight", "abroad", "explore", "vacation", "holiday", "road trip", "itinerary"],
-  Ideas:      ["idea", "thought", "opinion", "perspective", "debate", "discuss", "theory", "philosophy", "curious", "reflection", "wonder", "think about"],
-  Literature: ["book", "read", "novel", "author", "poetry", "poem", "prose", "fiction", "nonfiction", "writing", "chapter", "story", "narrative", "literature"],
-  Design:     ["design", "ux", "ui", "typography", "visual", "layout", "architecture", "interior", "logo", "graphic", "branding"],
-  Tech:       ["tech", "technology", "code", "app", "software", "ai", "data", "startup", "digital", "developer", "crypto", "algorithm", "programming"],
+  Music:      ["music", "album", "song", "track", "beat", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape", "afrobeats", "amapiano", "drill", "hook", "verse", "chorus", "bpm", "dj", "producer"],
+  Fashion:    ["fashion", "style", "outfit", "clothes", "clothing", "dress", "designer", "sneaker", "shoe", "vintage", "thrift", "streetwear", "wardrobe", "runway", "catwalk", "couture", "lookbook", "collection", "latex", "gown", "blazer", "heels", "boots", "model", "supermodel", "vogue", "editorial", "campaign", "womenswear", "menswear", "ss25", "ss26", "fw25", "fw26", "aw25", "aw26", "saint laurent", "gucci", "prada", "chanel", "louis vuitton", "balenciaga", "valentino", "versace", "fendi", "dior", "givenchy", "burberry", "hermes", "hermès", "jacquemus", "bottega", "loewe", "zara", "h&m", "victoria's secret", "vs angel", "angel"],
+  Art:        ["artwork", "gallery", "painting", "drawing", "illustration", "sketch", "mural", "exhibit", "canvas", "sculpture", "aesthetic", "ceramics", "photography"],
+  Film:       ["film", "movie", "cinema", "director", "actor", "actress", "scene", "documentary", "series", "episode", "netflix", "sequel", "trailer", "tv show", "hbo", "amazon prime", "box office", "screenplay"],
+  Food:       ["food", "eat", "restaurant", "meal", "dish", "recipe", "cook", "taste", "flavor", "drink", "cafe", "bar", "brunch", "dinner", "lunch", "breakfast", "jollof", "suya", "chef", "menu", "cuisine", "snack", "bake", "coffee", "cocktail"],
+  Sport:      ["sport", "football", "soccer", "basketball", "tennis", "cricket", "running", "gym", "fitness", "match", "league", "tournament", "athlete", "premier league", "nba", "nfl", "champions league", "transfer", "goal", "referee"],
+  Travel:     ["travel", "trip", "visit", "destination", "hotel", "flight", "abroad", "explore", "vacation", "holiday", "road trip", "itinerary", "airport", "passport", "backpack", "beach", "safari", "cruise", "hostel", "airbnb"],
+  Ideas:      ["opinion", "perspective", "debate", "discuss", "theory", "philosophy", "curious", "reflection", "wonder", "think about", "hot take", "unpopular opinion", "controversial", "question", "answer"],
+  Literature: ["book", "novel", "author", "poetry", "poem", "prose", "fiction", "nonfiction", "writing", "chapter", "narrative", "literature", "bookclub", "reading list", "short story", "essay", "publish", "manuscript"],
+  Design:     ["typography", "layout", "interior", "logo", "graphic", "branding", "ui design", "ux design", "product design", "motion design", "figma", "adobe", "mockup", "wireframe", "prototype"],
+  Tech:       ["technology", "software", "startup", "digital", "developer", "crypto", "algorithm", "programming", "artificial intelligence", "machine learning", "blockchain", "saas", "open source", "github", "python", "javascript", "chatgpt", "openai", "cloud computing", "cybersecurity"],
 };
+
+// Escape special regex characters in a keyword string
+function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
 function inferCategory(text: string): string {
   if (!text.trim()) return "";
@@ -53,7 +56,7 @@ function inferCategory(text: string): string {
   let best = "";
   let bestScore = 0;
   for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    const score = keywords.filter(kw => lower.includes(kw)).length;
+    const score = keywords.filter(kw => new RegExp(`\\b${escapeRe(kw)}\\b`).test(lower)).length;
     if (score > bestScore) { bestScore = score; best = cat; }
   }
   return bestScore > 0 ? best : "";
