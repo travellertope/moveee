@@ -4,9 +4,9 @@
    Both apps/site and apps/connect share this file — keep identical.
    ────────────────────────────────────────────────────────────────────────── */
 
-/* ── Page wrapper ── */
+/* ── Page wrapper — same warm paper as the left sidebar ── */
 .disc-page-bg {
-  background: var(--paper, #fdfbf9);
+  background: var(--paper, #f3ece0);
   min-height: 100vh;
 }
 
@@ -348,17 +348,18 @@
   background: color-mix(in srgb, var(--ochre) 8%, transparent);
 }
 
-/* ── Two-column layout ── */
+/* ── Two-column layout — wraps everything top-to-bottom ── */
 .disc-body {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 32px;
+  gap: 0 32px;
   align-items: start;
+  background: var(--paper, #fdfbf9);
 }
 @media (min-width: 1100px) {
   .disc-body { grid-template-columns: 1fr 300px; }
 }
-.disc-main { min-width: 0; }
+.disc-main { min-width: 0; background: var(--paper, #fdfbf9); padding-top: 24px; }
 
 /* ── Masonry grid ── */
 .disc-masonry {
@@ -420,6 +421,7 @@
 .disc-sidebar {
   position: sticky;
   top: 80px;
+  background: var(--paper, #fdfbf9);
 }
 
 .disc-sidebar-section { margin-bottom: 28px; }

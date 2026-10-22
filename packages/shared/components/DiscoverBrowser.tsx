@@ -123,7 +123,7 @@ function DiscoverCard({
             type="button"
             className="disc-bookmark-btn"
             aria-label="Bookmark"
-            onClick={(e) => e.preventDefault()}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
@@ -309,81 +309,80 @@ export default function DiscoverBrowser({
   const trendingList = trending.slice(1, 6);
 
   return (
-    <div>
-      {/* Hero — warm gradient section */}
-      <section className="disc-hero">
-        <div className="disc-hero-blob disc-hero-blob--1" />
-        <div className="disc-hero-blob disc-hero-blob--2" />
-        <div className="disc-hero-inner">
-          <h1 className="disc-hero-title">
-            Every corner of the culture,{" "}
-            <span className="disc-hero-accent">in one place.</span>
-          </h1>
-          <p className="disc-hero-sub">
-            Search the growing encyclopedia of people, places, films, books, and sounds
-            curated by the Moveee community.
-          </p>
-          <div className="disc-search-wrap" role="button" tabIndex={0} onClick={() => openSearchModal()} onKeyDown={(e) => e.key === "Enter" && openSearchModal()}>
-            <svg className="disc-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="11" cy="11" r="7" />
-              <path d="M21 21l-4.3-4.3" />
-            </svg>
-            <span className="disc-search-placeholder">Search the archive…</span>
-            <kbd className="disc-search-kbd">⌘K</kbd>
+    /* Two-column layout wraps everything so sidebar spans full height alongside hero/rails */
+    <div className="disc-body">
+      <div className="disc-main">
+        {/* Hero — warm gradient section */}
+        <section className="disc-hero">
+          <div className="disc-hero-blob disc-hero-blob--1" />
+          <div className="disc-hero-blob disc-hero-blob--2" />
+          <div className="disc-hero-inner">
+            <h1 className="disc-hero-title">
+              Every corner of the culture,{" "}
+              <span className="disc-hero-accent">in one place.</span>
+            </h1>
+            <p className="disc-hero-sub">
+              Search the growing database of people, places, films, books, and sounds
+              curated by the Moveee community.
+            </p>
+            <div className="disc-search-wrap" role="button" tabIndex={0} onClick={() => openSearchModal()} onKeyDown={(e) => e.key === "Enter" && openSearchModal()}>
+              <svg className="disc-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <span className="disc-search-placeholder">Search the archive…</span>
+              <kbd className="disc-search-kbd">⌘K</kbd>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {(type || region) && (
-        <div className="disc-active-filters">
-          {type && (
-            <span className="disc-active-filter">
-              <span className="disc-active-filter-dot" style={{ background: (TYPE_BADGE[type] ?? { color: "#7a6f5c" }).color }} />
-              {(TYPE_BADGE[type] ?? { label: type }).label}
-              <button
-                type="button"
-                className="disc-active-filter-clear"
-                onClick={() => { setType(null); emitDiscoverFilters({ type: null, region, sort }); }}
-                aria-label="Clear type filter"
-              >✕</button>
-            </span>
-          )}
-          {region && (
-            <span className="disc-active-filter">
-              📍 {REGION_LABELS[region] ?? region}
-              <button
-                type="button"
-                className="disc-active-filter-clear"
-                onClick={() => { setRegion(null); emitDiscoverFilters({ type, region: null, sort }); }}
-                aria-label="Clear region filter"
-              >✕</button>
-            </span>
-          )}
-        </div>
-      )}
-
-      {recommended.length > 0 && (
-        <>
-          <div className="disc-section-heading"><span className="disc-spark">✦</span> Picked for You</div>
-          <div className="disc-rail">
-            {recommended.map((e) => <DiscoverCard key={`rec-${e.id}`} entry={e} rail />)}
+        {(type || region) && (
+          <div className="disc-active-filters">
+            {type && (
+              <span className="disc-active-filter">
+                <span className="disc-active-filter-dot" style={{ background: (TYPE_BADGE[type] ?? { color: "#7a6f5c" }).color }} />
+                {(TYPE_BADGE[type] ?? { label: type }).label}
+                <button
+                  type="button"
+                  className="disc-active-filter-clear"
+                  onClick={() => { setType(null); emitDiscoverFilters({ type: null, region, sort }); }}
+                  aria-label="Clear type filter"
+                >✕</button>
+              </span>
+            )}
+            {region && (
+              <span className="disc-active-filter">
+                📍 {REGION_LABELS[region] ?? region}
+                <button
+                  type="button"
+                  className="disc-active-filter-clear"
+                  onClick={() => { setRegion(null); emitDiscoverFilters({ type, region: null, sort }); }}
+                  aria-label="Clear region filter"
+                >✕</button>
+              </span>
+            )}
           </div>
-        </>
-      )}
+        )}
 
-      {recent.length > 0 && (
-        <>
-          <div className="disc-section-heading"><span className="disc-spark">✦</span> Recently Added</div>
-          <div className="disc-rail">
-            {recent.map((e) => <DiscoverCard key={`recent-${e.id}`} entry={e} rail />)}
-          </div>
-        </>
-      )}
+        {recommended.length > 0 && (
+          <>
+            <div className="disc-section-heading">Picked for You</div>
+            <div className="disc-rail">
+              {recommended.map((e) => <DiscoverCard key={`rec-${e.id}`} entry={e} rail />)}
+            </div>
+          </>
+        )}
 
-      {/* Two-column layout: main masonry + right sidebar */}
-      <div className="disc-body">
-        <div className="disc-main">
-          <div className="disc-section-heading"><span className="disc-spark">✦</span> Explore More</div>
+        {recent.length > 0 && (
+          <>
+            <div className="disc-section-heading">Recently Added</div>
+            <div className="disc-rail">
+              {recent.map((e) => <DiscoverCard key={`recent-${e.id}`} entry={e} rail />)}
+            </div>
+          </>
+        )}
+
+        <div className="disc-section-heading">Explore More</div>
 
           {loading ? (
             <div className="disc-loading">Loading…</div>
@@ -481,7 +480,6 @@ export default function DiscoverBrowser({
             </div>
           </div>
         </aside>
-      </div>
     </div>
   );
 }
