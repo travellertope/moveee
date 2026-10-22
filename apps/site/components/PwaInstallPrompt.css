@@ -7,10 +7,10 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--paper, #f3ece0);
+  border: 1px solid var(--rule, rgba(20,17,13,0.12));
   border-radius: var(--radius-2xl, 20px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
   animation: pwa-slide-up 0.22s ease;
 
   /* mobile: full-width bottom sheet */
@@ -38,7 +38,7 @@
   height: 48px;
   border-radius: var(--radius-xl, 12px);
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--rule, rgba(20,17,13,0.1));
 }
 .pwa-prompt-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
@@ -53,14 +53,14 @@
   font-family: var(--font-inter, 'Inter', sans-serif);
   font-size: 0.82rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink, #14110d);
   margin: 0;
   line-height: 1.3;
 }
 .pwa-prompt-sub {
   font-family: var(--font-inter, 'Inter', sans-serif);
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.6);
+  color: var(--mute, #7a7068);
   margin: 0;
   line-height: 1.4;
 }
@@ -70,8 +70,8 @@
   font-family: var(--font-inter, 'Inter', sans-serif);
   font-size: 0.8rem;
   font-weight: 700;
-  color: #000;
-  background: #fff;
+  color: var(--paper, #f3ece0);
+  background: var(--ink, #14110d);
   border: none;
   border-radius: var(--radius-lg, 6px);
   padding: 8px 16px;
@@ -79,7 +79,7 @@
   white-space: nowrap;
   transition: opacity 0.15s;
 }
-.pwa-prompt-cta:hover { opacity: 0.88; }
+.pwa-prompt-cta:hover { opacity: 0.82; }
 
 .pwa-prompt-close {
   position: absolute;
@@ -90,7 +90,7 @@
   background: none;
   border: none;
   font-size: 0.6rem;
-  color: rgba(255,255,255,0.5);
+  color: var(--mute, #7a7068);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -99,4 +99,16 @@
   border-radius: var(--radius-full, 9999px);
   transition: background 0.12s;
 }
-.pwa-prompt-close:hover { background: rgba(255,255,255,0.1); }
+.pwa-prompt-close:hover { background: var(--paper-deep, #ece6d8); }
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pwa-prompt {
+    background: #1e1b17;
+    border-color: rgba(255,255,255,0.1);
+  }
+}
+:root[data-theme="dark"] .pwa-prompt {
+  background: #1e1b17;
+  border-color: rgba(255,255,255,0.1);
+}
