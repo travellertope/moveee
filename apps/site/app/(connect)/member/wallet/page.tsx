@@ -62,8 +62,6 @@ export default async function WalletPage() {
 
   const user = session.user;
   const userId = Number(user.id);
-  const displayName = user.displayName || user.name || user.username || "Member";
-  const initial = displayName.charAt(0).toUpperCase();
   const isPatron = user.tier === "patron";
 
   const [balance, history, perks] = await Promise.all([
@@ -78,23 +76,6 @@ export default async function WalletPage() {
   return (
     <div className="acct-page">
       <div className="acct-wrap">
-        <div className="acct-profile">
-          <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-            ) : initial}
-          </div>
-          <div className="acct-profile-body">
-            <h1 className="acct-name">{displayName}</h1>
-            <div className="acct-meta">
-              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
-                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
-              </span>
-              <span className="acct-meta-text">≈ £{((balance?.credit_value_gbp ?? 0) / 100).toFixed(2)} available</span>
-            </div>
-          </div>
-        </div>
-
         <div className="acct-page-head">
           <p className="acct-page-eyebrow">Culture Credits</p>
           <h2 className="acct-page-title">Wallet &amp; Perks</h2>
@@ -102,9 +83,9 @@ export default async function WalletPage() {
         </div>
 
         <WalletTabsClient
-          credits={balance?.credits ?? 0}
-          creditsPerGbp={balance?.credits_per_gbp ?? 10}
-          entries={history.entries ?? []}
+          credits={Number(balance?.credits ?? 0)}
+          creditsPerGbp={Number(balance?.credits_per_gbp ?? 10)}
+          entries={(history.entries ?? []).map((e: any) => ({ ...e, amount: Number(e.amount) }))}
           isPro={isPatron}
           userEmail={user.email ?? ""}
           perks={perks}

@@ -3,7 +3,7 @@ import ConnectHeader from "@/components/ConnectHeader";
 import TopBar from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import PullToRefresh from "@/components/PullToRefresh";
 import NavigationLoader from "@/components/NavigationLoader";
 import QuoteShareProvider from "@/components/QuoteShareProvider";
@@ -27,7 +27,7 @@ export default function ConnectLayout({
         </div>
         <BottomNav />
         <GlobalAuthModal />
-        <PWAInstallPrompt />
+        <PwaInstallPrompt />
         <PullToRefresh />
         <NavigationLoader />
       </QuoteShareProvider>

@@ -978,16 +978,16 @@
 /* Multi-image gallery grid */
 .cm-gallery-grid {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
 }
 .cm-gallery-thumb {
   position: relative;
-  width: 88px;
-  height: 88px;
+  flex: 1 1 0;
+  aspect-ratio: 1;
+  min-width: 0;
+  max-width: 120px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  flex-shrink: 0;
 }
 .cm-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cm-gallery-remove {
@@ -1011,8 +1011,10 @@
 }
 .cm-gallery-remove:hover { background: rgba(0,0,0,0.9); }
 .cm-gallery-add {
-  width: 88px;
-  height: 88px;
+  flex: 1 1 0;
+  aspect-ratio: 1;
+  min-width: 0;
+  max-width: 120px;
   border-radius: var(--radius-lg);
   border: 2px dashed var(--rule, rgba(20,17,13,0.15));
   background: var(--paper-deep, #ece6d8);
@@ -1024,7 +1026,6 @@
   cursor: pointer;
   color: var(--mute);
   transition: border-color 0.15s, background 0.15s;
-  flex-shrink: 0;
   position: relative;
 }
 .cm-gallery-add:hover:not(:disabled) { border-color: var(--ochre, #7a241c); }
@@ -1066,25 +1067,16 @@
 }
 @media (min-width: 600px) { .cm-footer { padding: 11px 24px; } }
 .cm-footer-left { display: flex; align-items: center; gap: 6px; }
-.cm-footer-label {
+.cm-hub-chips { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.cm-hub-chip {
   font-family: var(--font-inter, 'Inter', sans-serif);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--mute);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.cm-category-select {
-  background: var(--paper);
-  border: 1px solid var(--rule, rgba(20,17,13,0.1));
-  border-radius: var(--radius-lg);
-  padding: 5px 10px;
-  font-family: var(--font-inter, 'Inter', sans-serif);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ink);
-  outline: none;
-  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ochre, #7a241c);
+  background: color-mix(in srgb, var(--ochre, #7a241c) 8%, transparent);
+  border-radius: var(--radius-full, 9999px);
+  padding: 2px 8px;
+  letter-spacing: 0.01em;
 }
 .cm-footer-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .cm-cancel {

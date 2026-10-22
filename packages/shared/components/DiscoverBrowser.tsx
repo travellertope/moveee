@@ -20,6 +20,7 @@ export interface DiscoverEntry {
   reviewCount: number;
   dateAdded: string;
   isNew: boolean;
+  addedBy?: { username: string; displayName: string } | null;
 }
 
 interface BrowseResponse {
@@ -94,8 +95,11 @@ function DiscoverCard({ entry, rail, height }: { entry: DiscoverEntry; rail?: bo
       <div className="disc-card-content">
         <span className="disc-card-badge" style={{ color: badge.color }}>{badge.emoji} {badge.label}</span>
         <div>
-          {rail && entry.isNew && <span className="disc-card-new">🆕 Added today</span>}
+          {rail && entry.isNew && <span className="disc-card-new">🆕 New</span>}
           <div className="disc-card-title">{entry.title}</div>
+          {!rail && entry.excerpt && (
+            <div className="disc-card-excerpt">{entry.excerpt}</div>
+          )}
           <div className="disc-card-meta">
             {entry.city && <span>📍 {entry.city}</span>}
             {entry.city && (rail ? true : entry.averageRating || entry.subtype) && <span>·</span>}
@@ -111,6 +115,12 @@ function DiscoverCard({ entry, rail, height }: { entry: DiscoverEntry; rail?: bo
               <span className="disc-card-subtype-pill">{entry.subtype}</span>
             ) : null}
           </div>
+          {!rail && entry.addedBy && (
+            <div className="disc-card-added-by">
+              <span className="disc-card-added-by-dot" />
+              Added by <Link href={`/connect/${entry.addedBy.username}`} className="disc-card-added-by-link" onClick={e => e.stopPropagation()}>@{entry.addedBy.username}</Link>
+            </div>
+          )}
         </div>
       </div>
     </Link>
@@ -241,18 +251,7 @@ export default function DiscoverBrowser({
 
   return (
     <div>
-      {/* Hero — was entirely missing (only the flat "Discover" title below
-          survived); rebuilt to match the approved mockup's eyebrow/title/sub.
-          Rendered inside the constrained .disc-wrap rather than full-bleed
-          edge-to-edge like the mockup, since making it full-bleed would need
-          restructuring app/discover/page.tsx's wrapper — a deliberate scope
-          reduction, not an oversight. The mockup's decorative photo collage
-          behind the hero copy (real entry photography, base64 in the mockup)
-          was also left out for the same reason — no plumbing exists yet to
-          source a handful of real entry images for a background collage.
-          Copy note: the mockup's subhead read "...living archive of African
-          & diaspora culture..." — rewritten to plain "culture" per this
-          repo's brand-language rule (public copy stays universal). */}
+      {/* Hero */}
       <div className="disc-hero">
         <p className="disc-hero-eyebrow">✦ Discover</p>
         <h1 className="disc-hero-title">Every corner of<br /><em>the culture</em>, in one place.</h1>
@@ -262,18 +261,11 @@ export default function DiscoverBrowser({
         </p>
       </div>
 
-      {/* Same "opens the shared SearchModal" pattern as /events — this
-          finds a specific entry by typing, and (in Directory context) is
-          also where Type/Region/Sort now all live, wired back to this page
-          via discoverFiltersBus. Type moved off the on-page underline tabs
-          and into the modal (July 2026) — same treatment as Region/Sort. */}
       <button type="button" className="disc-search-btn" onClick={() => openSearchModal()}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
         Search people, places, books, films…
       </button>
 
-      {/* Active-filter chips — the only on-page trace of Type/Region once
-          applied via the modal (same pattern People Near Me uses). */}
       {(type || region) && (
         <div className="disc-active-filters">
           {type && (
@@ -317,17 +309,6 @@ export default function DiscoverBrowser({
         </>
       )}
 
-      {trending.length > 0 && (
-        <>
-          <div className="disc-rail-heading"><span className="disc-spark">✦</span> Trending in Community</div>
-          <div className="disc-rail">
-            {trending.map((e) => (
-              <DiscoverCard key={`trending-${e.id}`} entry={e} rail />
-            ))}
-          </div>
-        </>
-      )}
-
       {recent.length > 0 && (
         <>
           <div className="disc-rail-heading"><span className="disc-spark">✦</span> Recently Added</div>
@@ -339,33 +320,87 @@ export default function DiscoverBrowser({
         </>
       )}
 
-      <div className="disc-grid-heading"><span className="disc-spark">✦</span> Explore More</div>
+      {/* Two-column layout: main grid + sidebar */}
+      <div className="disc-body">
+        <div className="disc-main">
+          <div className="disc-grid-heading"><span className="disc-spark">✦</span> Explore More</div>
 
-      {loading ? (
-        <div className="disc-loading">Loading…</div>
-      ) : entries.length === 0 ? (
-        <div className="disc-empty">
-          <div className="disc-empty-icon">🔍</div>
-          No entries match these filters.
-        </div>
-      ) : (
-        <>
-          <div className="disc-masonry">
-            {entries.map((e, i) => (
-              <DiscoverCard key={e.id} entry={e} height={MASONRY_HEIGHTS[i % MASONRY_HEIGHTS.length]} />
-            ))}
-          </div>
-          {entries.length < total ? (
-            <button type="button" className="disc-load-more" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "Loading…" : "Load more"}
-            </button>
-          ) : (
-            <div className="disc-count">
-              Showing {entries.length} of {total} {total === 1 ? "entry" : "entries"}
+          {loading ? (
+            <div className="disc-loading">Loading…</div>
+          ) : entries.length === 0 ? (
+            <div className="disc-empty">
+              <div className="disc-empty-icon">🔍</div>
+              No entries match these filters.
             </div>
+          ) : (
+            <>
+              <div className="disc-masonry">
+                {entries.map((e, i) => (
+                  <DiscoverCard key={e.id} entry={e} height={MASONRY_HEIGHTS[i % MASONRY_HEIGHTS.length]} />
+                ))}
+              </div>
+              {entries.length < total ? (
+                <button type="button" className="disc-load-more" onClick={loadMore} disabled={loadingMore}>
+                  {loadingMore ? "Loading…" : "Load more"}
+                </button>
+              ) : (
+                <div className="disc-count">
+                  Showing {entries.length} of {total} {total === 1 ? "entry" : "entries"}
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+
+        {/* Right sidebar — Trending in Community as a list */}
+        {trending.length > 0 && (
+          <aside className="disc-sidebar">
+            <div className="disc-sidebar-heading">
+              <span className="disc-spark">✦</span> Trending Now
+            </div>
+            <div className="disc-trending-list">
+              {trending.slice(0, 8).map((e, i) => {
+                const badge = TYPE_BADGE[e.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
+                return (
+                  <Link key={e.id} href={`/directory/${e.slug}`} className="disc-trending-item">
+                    <span className="disc-trending-rank">{i + 1}</span>
+                    <div className="disc-trending-info">
+                      <div className="disc-trending-title">{e.title}</div>
+                      <div className="disc-trending-meta">
+                        <span className="disc-trending-type" style={{ color: badge.color }}>{badge.emoji} {badge.label}</span>
+                        {e.addedBy && (
+                          <span className="disc-trending-by">· @{e.addedBy.username}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="disc-sidebar-heading" style={{ marginTop: 24 }}>
+              Browse by Type
+            </div>
+            <div className="disc-type-pills">
+              {Object.entries(TYPE_BADGE).map(([slug, info]) => (
+                <button
+                  key={slug}
+                  type="button"
+                  className={`disc-type-pill${type === slug ? " disc-type-pill--active" : ""}`}
+                  style={type === slug ? { background: info.color, borderColor: info.color } : {}}
+                  onClick={() => {
+                    const next = type === slug ? null : slug;
+                    setType(next);
+                    emitDiscoverFilters({ type: next, region, sort });
+                  }}
+                >
+                  {info.emoji} {info.label}
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

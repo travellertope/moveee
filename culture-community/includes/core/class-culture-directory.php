@@ -698,6 +698,26 @@ class Culture_Directory {
             }
         }
 
+        // Batch-load post authors in one query to avoid N+1 lookups.
+        $author_ids = array_unique( array_filter( wp_list_pluck( $query->posts, 'post_author' ) ) );
+        $author_map = array();
+        if ( $author_ids ) {
+            $placeholder = implode( ',', array_fill( 0, count( $author_ids ), '%d' ) );
+            $author_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT ID, user_login, display_name FROM {$wpdb->users} WHERE ID IN ($placeholder)",
+                    $author_ids
+                ),
+                OBJECT_K
+            );
+            foreach ( $author_rows as $uid => $urow ) {
+                $author_map[ $uid ] = array(
+                    'username'    => $urow->user_login,
+                    'displayName' => $urow->display_name ?: $urow->user_login,
+                );
+            }
+        }
+
         $today = current_time( 'Y-m-d' );
         $entries = array();
 
@@ -724,6 +744,7 @@ class Culture_Directory {
                 'reviewCount'   => (int) get_post_meta( $post->ID, '_community_review_count', true ),
                 'dateAdded'     => $post->post_date,
                 'isNew'         => substr( $post->post_date, 0, 10 ) === $today,
+                'addedBy'       => isset( $author_map[ $post->post_author ] ) ? $author_map[ $post->post_author ] : null,
             );
         }
 

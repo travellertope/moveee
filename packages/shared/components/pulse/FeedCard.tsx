@@ -308,18 +308,13 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (index: n
     );
   }
 
-  // Multi-image strip — fixed-size square thumbnails, several visible at once
-  // (mirrors apps/mobile's GalleryStrip rather than a one-slide-per-view carousel).
-  // Tapping any thumbnail opens the shared ImageLightbox, which then supports
-  // swipe/arrow-key/button navigation across the full `images` array.
+  // Multi-image strip — images fill the available card width evenly so 2 photos
+  // take 50% each, 3 take 33%, 4 take 25%, rather than leaving empty space.
   return (
     <div
-      className="hide-scrollbar"
       style={{
         display: "flex",
         gap: "6px",
-        overflowX: "auto",
-        WebkitOverflowScrolling: "touch",
         marginBottom: "0.6rem",
       }}
     >
@@ -330,11 +325,13 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (index: n
           alt=""
           onClick={() => onTap(i)}
           style={{
-            height: "200px",
-            width: "200px",
+            flex: "1 1 0",
+            minWidth: 0,
+            maxWidth: "220px",
+            aspectRatio: "1",
+            height: "auto",
             objectFit: "cover",
             display: "block",
-            flexShrink: 0,
             borderRadius: "8px",
             border: "1px solid var(--rule)",
             cursor: "zoom-in",

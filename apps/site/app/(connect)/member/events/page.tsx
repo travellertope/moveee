@@ -34,32 +34,11 @@ export default async function MemberEventsPage() {
 
   const user = session.user;
   const isPatron = user.tier === "patron";
-  const displayName = user.displayName || user.name || user.username || "Member";
-  const initial = displayName.charAt(0).toUpperCase();
-
-  const profileStrip = (
-    <div className="acct-profile">
-      <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
-        {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-        ) : initial}
-      </div>
-      <div className="acct-profile-body">
-        <h1 className="acct-name">My Events</h1>
-        <div className="acct-meta">
-          <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
-            {isPatron ? "Moveee Pro" : "Moveee Citizen"}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
 
   if (!isPatron) {
     return (
       <div className="acct-page">
         <div className="acct-wrap">
-          {profileStrip}
           <div className="evt-upsell">
             <span className="evt-upsell-badge">Moveee Pro</span>
             <h3 className="evt-upsell-title">RSVP management is a Moveee Pro feature</h3>
@@ -79,8 +58,6 @@ export default async function MemberEventsPage() {
   return (
     <div className="acct-page">
       <div className="acct-wrap">
-        {profileStrip}
-
         <EventsClient events={events} />
 
         <div className="acct-card">

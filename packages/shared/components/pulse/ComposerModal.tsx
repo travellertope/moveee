@@ -34,29 +34,45 @@ const BOOK_STATUSES = ["Want to Read", "Reading", "Finished"];
 const POLL_DURATIONS = [{ label: "1 day", value: "1" }, { label: "3 days", value: "3" }, { label: "7 days", value: "7" }];
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  Music:      ["music", "album", "song", "track", "beat", "artist", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape"],
-  Fashion:    ["fashion", "style", "outfit", "clothes", "clothing", "wear", "dress", "brand", "designer", "sneaker", "shoe", "vintage", "thrift", "streetwear", "wardrobe"],
-  Art:        ["art", "artwork", "gallery", "painting", "drawing", "illustration", "sketch", "mural", "exhibit", "canvas", "sculpture", "aesthetic"],
-  Film:       ["film", "movie", "cinema", "director", "actor", "actress", "scene", "documentary", "series", "episode", "netflix", "sequel", "trailer", "tv show"],
-  Food:       ["food", "eat", "restaurant", "meal", "dish", "recipe", "cook", "taste", "flavor", "drink", "cafe", "bar", "brunch", "dinner", "lunch", "breakfast", "jollof", "suya", "chef"],
-  Sport:      ["sport", "football", "soccer", "basketball", "tennis", "cricket", "running", "gym", "fitness", "match", "league", "tournament", "athlete"],
-  Travel:     ["travel", "trip", "city", "country", "visit", "destination", "hotel", "flight", "abroad", "explore", "vacation", "holiday", "road trip", "itinerary"],
-  Ideas:      ["idea", "thought", "opinion", "perspective", "debate", "discuss", "theory", "philosophy", "curious", "reflection", "wonder", "think about"],
-  Literature: ["book", "read", "novel", "author", "poetry", "poem", "prose", "fiction", "nonfiction", "writing", "chapter", "story", "narrative", "literature"],
-  Design:     ["design", "ux", "ui", "typography", "visual", "layout", "architecture", "interior", "logo", "graphic", "branding"],
-  Tech:       ["tech", "technology", "code", "app", "software", "ai", "data", "startup", "digital", "developer", "crypto", "algorithm", "programming"],
+  Music:      ["music", "album", "song", "track", "beat", "rapper", "singer", "concert", "gig", "playlist", "spotify", "soundcloud", "lyrics", "band", "vinyl", "mixtape", "afrobeats", "amapiano", "drill", "hook", "verse", "chorus", "bpm", "dj", "producer"],
+  Fashion:    ["fashion", "style", "outfit", "clothes", "clothing", "dress", "designer", "sneaker", "shoe", "vintage", "thrift", "streetwear", "wardrobe", "runway", "catwalk", "couture", "lookbook", "collection", "latex", "gown", "blazer", "heels", "boots", "model", "supermodel", "vogue", "editorial", "campaign", "womenswear", "menswear", "ss25", "ss26", "fw25", "fw26", "aw25", "aw26", "saint laurent", "gucci", "prada", "chanel", "louis vuitton", "balenciaga", "valentino", "versace", "fendi", "dior", "givenchy", "burberry", "hermes", "hermès", "jacquemus", "bottega", "loewe", "zara", "h&m", "victoria's secret", "vs angel", "angel"],
+  Art:        ["artwork", "gallery", "painting", "drawing", "illustration", "sketch", "mural", "exhibit", "canvas", "sculpture", "aesthetic", "ceramics", "photography"],
+  Film:       ["film", "movie", "cinema", "director", "actor", "actress", "scene", "documentary", "series", "episode", "netflix", "sequel", "trailer", "tv show", "hbo", "amazon prime", "box office", "screenplay"],
+  Food:       ["food", "eat", "restaurant", "meal", "dish", "recipe", "cook", "taste", "flavor", "drink", "cafe", "bar", "brunch", "dinner", "lunch", "breakfast", "jollof", "suya", "chef", "menu", "cuisine", "snack", "bake", "coffee", "cocktail"],
+  Sport:      ["sport", "football", "soccer", "basketball", "tennis", "cricket", "running", "gym", "fitness", "match", "league", "tournament", "athlete", "premier league", "nba", "nfl", "champions league", "transfer", "goal", "referee"],
+  Travel:     ["travel", "trip", "visit", "destination", "hotel", "flight", "abroad", "explore", "vacation", "holiday", "road trip", "itinerary", "airport", "passport", "backpack", "beach", "safari", "cruise", "hostel", "airbnb"],
+  Ideas:      ["opinion", "perspective", "debate", "discuss", "theory", "philosophy", "curious", "reflection", "wonder", "think about", "hot take", "unpopular opinion", "controversial", "question", "answer"],
+  Literature: ["book", "novel", "author", "poetry", "poem", "prose", "fiction", "nonfiction", "writing", "chapter", "narrative", "literature", "bookclub", "reading list", "short story", "essay", "publish", "manuscript"],
+  Design:     ["typography", "layout", "interior", "logo", "graphic", "branding", "ui design", "ux design", "product design", "motion design", "figma", "adobe", "mockup", "wireframe", "prototype"],
+  Tech:       ["technology", "software", "startup", "digital", "developer", "crypto", "algorithm", "programming", "artificial intelligence", "machine learning", "blockchain", "saas", "open source", "github", "python", "javascript", "chatgpt", "openai", "cloud computing", "cybersecurity"],
 };
 
-function inferCategory(text: string): string {
-  if (!text.trim()) return "";
+// Escape special regex characters in a keyword string
+function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+function inferCategories(text: string): string[] {
+  if (!text.trim()) return [];
   const lower = text.toLowerCase();
-  let best = "";
-  let bestScore = 0;
-  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    const score = keywords.filter(kw => lower.includes(kw)).length;
-    if (score > bestScore) { bestScore = score; best = cat; }
+  // Extract #hashtags that match known category names
+  const hashtagCats: string[] = [];
+  const hpat = /#(\w+)/g;
+  let hm: RegExpExecArray | null;
+  while ((hm = hpat.exec(lower)) !== null) {
+    const found = CATEGORIES.find(c => c.toLowerCase() === hm![1]);
+    if (found && !hashtagCats.includes(found)) hashtagCats.push(found);
   }
-  return bestScore > 0 ? best : "";
+  // Keyword scoring
+  const scored: { cat: string; score: number }[] = [];
+  for (const [cat, kws] of Object.entries(CATEGORY_KEYWORDS)) {
+    const score = kws.filter(kw => new RegExp(`\\b${escapeRe(kw)}\\b`).test(lower)).length;
+    if (score > 0) scored.push({ cat, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  const result = [...hashtagCats];
+  for (const { cat } of scored) {
+    if (!result.includes(cat)) result.push(cat);
+  }
+  return result.slice(0, 3);
 }
 
 const TABS: { key: ComposerTab; label: string; icon: string }[] = [
@@ -144,8 +160,15 @@ function MultiImageUpload({ urls, onUpload, onRemove, uploading, max = 4 }: {
             ref={inputRef}
             type="file"
             accept="image/*"
+            multiple
             style={{ display: "none" }}
-            onChange={e => { if (e.target.files?.[0]) { onUpload(e.target.files[0]); e.target.value = ""; } }}
+            onChange={e => {
+              if (e.target.files?.length) {
+                const remaining = max - urls.length;
+                Array.from(e.target.files).slice(0, remaining).forEach(f => onUpload(f));
+                e.target.value = "";
+              }
+            }}
           />
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
           <span className="cm-gallery-add-label">{uploading ? "Uploading…" : urls.length === 0 ? "Add photos" : "Add more"}</span>
@@ -244,8 +267,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [openingHours, setOpeningHours] = useState("");
 
   // Shared
-  const [category, setCategory]           = useState("");
-  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
+  const [categories, setCategories]       = useState<string[]>([]);
   const [galleryUrls, setGalleryUrls]     = useState<string[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [submitting, setSubmitting]       = useState(false);
@@ -261,22 +283,24 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     }
   }, [open, initialTab, initialQuote]);
 
-  // Auto-infer hub/category from content unless user has manually picked one
+  // Auto-infer hubs from content + #hashtags (all in background)
   useEffect(() => {
-    if (categoryManuallySet) return;
-    // Direct tab-to-category mappings
-    if (activeTab === "art")       { setCategory("Art");      return; }
-    if (activeTab === "itinerary") { setCategory("Travel");   return; }
-    if (activeTab === "review") {
-      const map: Record<ReviewSubtype, string> = { food: "Food", music: "Music", book: "Literature", film: "Film", place: "" };
-      const direct = map[revSubtype];
-      if (direct) { setCategory(direct); return; }
-    }
-    // Keyword inference from text
     const combined = [updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
-    const inferred = inferCategory(combined);
-    if (inferred) setCategory(inferred);
-  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc, categoryManuallySet]);
+    const inferred = inferCategories(combined);
+    // Tab-specific primary category takes the first slot
+    let primary: string | null = null;
+    if (activeTab === "art") primary = "Art";
+    else if (activeTab === "itinerary") primary = "Travel";
+    else if (activeTab === "review") {
+      const map: Record<ReviewSubtype, string> = { food: "Food", music: "Music", book: "Literature", film: "Film", place: "" };
+      primary = map[revSubtype] || null;
+    }
+    if (primary) {
+      setCategories([primary, ...inferred.filter(c => c !== primary)].slice(0, 3));
+    } else {
+      setCategories(inferred);
+    }
+  }, [activeTab, revSubtype, updTitle, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc]);
 
   // Auto-compute overall star rating from breakdown when set
   useEffect(() => {
@@ -315,7 +339,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
     setGalleryUrls([]); setError("");
-    setCategory(""); setCategoryManuallySet(false);
+    setCategories([]);
   }, []);
 
   const MAX_GALLERY = 4;
@@ -380,7 +404,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         if (!res.ok) throw new Error(data.error || "Failed to post quote");
       } else {
         let template_type = "";
-        const payload: Record<string, unknown> = { tag: category };
+        const payload: Record<string, unknown> = { tag: categories[0] ?? "", tags: categories };
 
         if (activeTab === "update") {
           template_type = "post";
@@ -1317,18 +1341,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         {/* Footer */}
         <div className="cm-footer">
           <div className="cm-footer-left">
-            <span className="cm-footer-label">Hub</span>
-            <select
-              className="cm-category-select"
-              value={category}
-              onChange={e => { setCategory(e.target.value); setCategoryManuallySet(true); }}
-              aria-label="Hub"
-            >
-              <option value="">— Select Hub —</option>
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>#{c}</option>
-              ))}
-            </select>
+            {categories.length > 0 && (
+              <div className="cm-hub-chips" aria-label="Auto-tagged hubs">
+                {categories.map(c => (
+                  <span key={c} className="cm-hub-chip">#{c}</span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="cm-footer-right">
             <button type="button" className="cm-cancel" onClick={handleClose}>Cancel</button>
