@@ -1,5 +1,12 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Discover / Encyclopedia — full redesign (October 2026)
+   White-card design with warm-gradient hero + featured sidebar.
+   Both apps/site and apps/connect share this file — keep identical.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Page wrapper ── */
 .disc-page-bg {
-  background: var(--paper, #fff);
+  background: var(--paper, #fdfbf9);
   min-height: 100vh;
 }
 
@@ -9,88 +16,114 @@
   padding: 0 24px 40px;
 }
 
-.disc-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px 0 12px;
-}
-
-.disc-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-/* ── Hero — see the "was entirely missing" comment at its JSX call site.
-   Contained within .disc-wrap's max-width rather than full-bleed (see that
-   comment for why); no photo collage behind the copy for the same reason. */
+/* ── Hero — warm gradient rounded section ── */
 .disc-hero {
   position: relative;
-  padding: 32px 0 8px;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(197,73,31,.14), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(179,130,56,.16), transparent 50%),
-    radial-gradient(circle at 60% 90%, rgba(107,72,168,.12), transparent 45%);
+  background: linear-gradient(135deg, #fff0e8, #fce3df);
+  border-radius: var(--radius-2xl, 20px);
+  padding: 40px 48px 44px;
+  margin-bottom: 28px;
+  overflow: hidden;
 }
-.disc-hero-eyebrow {
-  font-size: 11px;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--ochre);
-  font-weight: 700;
-  margin: 0 0 10px;
+
+@media (max-width: 600px) {
+  .disc-hero { padding: 28px 24px 32px; }
 }
+
+.disc-hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+}
+.disc-hero-blob--1 {
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.45);
+  top: -80px;
+  right: -80px;
+}
+.disc-hero-blob--2 {
+  width: 280px;
+  height: 280px;
+  background: rgba(122, 36, 28, 0.08);
+  bottom: -80px;
+  left: -60px;
+}
+
+.disc-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 620px;
+}
+
 .disc-hero-title {
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: clamp(32px, 5vw, 56px);
-  line-height: .98;
-  margin: 0 0 14px;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.disc-hero-title em { font-style: italic; color: var(--ochre); }
-.disc-hero-sub {
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--mute);
-  max-width: 480px;
-  margin: 0;
+  font-weight: 800;
+  font-size: clamp(26px, 4vw, 46px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink, #1f1a19);
+  margin: 0 0 12px;
 }
 
-/* Same "opens the shared SearchModal" pill button as .evt-search-btn
-   (apps/connect/app/events.css) — kept visually identical across every
-   surface that uses this pattern (feed rail, /events, /discover). */
-.disc-search-btn {
-  width: 100%;
-  max-width: 460px;
+.disc-hero-accent { color: var(--ochre, #7a241c); }
+
+.disc-hero-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mute, #7a7270);
+  margin: 0 0 24px;
+}
+
+/* Clickable search-bar replica (opens SearchModal on click) */
+.disc-search-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  margin: 4px 0 4px;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border: none;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
-  background: var(--paper-deep);
-  color: var(--mute);
-  font-family: inherit;
-  font-size: 13.5px;
-  text-align: left;
+  padding: 14px 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
   cursor: pointer;
+  transition: box-shadow 0.2s;
 }
-.disc-search-btn:hover { border-color: var(--ochre); color: var(--ink-soft); }
-.disc-search-btn svg { flex-shrink: 0; }
+.disc-search-wrap:hover { box-shadow: 0 12px 36px rgba(0, 0, 0, 0.1); }
 
-/* Active-filter chips — the only on-page trace of Type/Region once applied
-   via SearchModal (both moved off on-page tabs and into the modal, July
-   2026 — see the People Near Me rebuild for the identical pattern). */
+.disc-search-icon {
+  flex-shrink: 0;
+  color: var(--mute, #7a7270);
+}
+
+.disc-search-placeholder {
+  flex: 1;
+  font-size: 14px;
+  color: var(--mute, #9e9994);
+  font-weight: 500;
+  user-select: none;
+}
+
+.disc-search-kbd {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--mute, #7a7270);
+  background: var(--paper, #f5f0ea);
+  border: 1px solid var(--rule, #e8e3dd);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+/* ── Active-filter chips ── */
 .disc-active-filters {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-bottom: 16px;
 }
 .disc-active-filter {
   display: inline-flex;
@@ -108,7 +141,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--paper) 16%, transparent);
+  background: rgba(255, 255, 255, 0.16);
   border: none;
   color: var(--paper);
   font-size: 11px;
@@ -119,137 +152,115 @@
   justify-content: center;
   padding: 0;
 }
-.disc-active-filter-clear:hover { background: color-mix(in srgb, var(--paper) 30%, transparent); }
+.disc-active-filter-clear:hover { background: rgba(255, 255, 255, 0.28); }
 
-/* Dead since Type moved into SearchModal (July 2026, see above) — kept in
-   case anything else ever needs an underline-tab treatment again. */
-.disc-type-tabs {
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  padding: 14px 0 0;
-  border-bottom: 1px solid var(--rule);
-  scrollbar-width: none;
-}
-.disc-type-tabs::-webkit-scrollbar { display: none; }
-.disc-type-tab {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 0 10px;
-  margin-bottom: -1px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mute);
-  white-space: nowrap;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  font-family: inherit;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.disc-type-tab:hover { color: var(--ink); }
-.disc-type-tab.active {
-  color: var(--ink);
-  font-weight: 700;
-  border-bottom-color: var(--tab-color, var(--ochre));
-}
-.disc-type-tab-dot { width: 6px; height: 6px; border-radius: 50%; }
-
-.disc-rail-heading,
-.disc-grid-heading {
+/* ── Section headings ── */
+.disc-section-heading {
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--ink);
-  margin: 18px 0 10px;
+  margin: 24px 0 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
+.disc-spark { color: var(--ochre); font-size: 16px; }
 
-.disc-spark {
-  color: var(--ochre);
-  font-size: 20px;
-}
-
+/* ── Horizontal rails ── */
 .disc-rail {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   scrollbar-width: none;
+  margin-bottom: 8px;
 }
 .disc-rail::-webkit-scrollbar { display: none; }
 
-/* Photo-forward cards — real directory-entry photography with an overlay
-   scrim, replacing the old text-only tile. Same visual language as the
-   approved mockup's rail-card/m-card. */
+/* ── Entry card — white, image on top ── */
 .disc-card {
-  position: relative;
   display: block;
-  border-radius: var(--radius-lg, 6px);
-  overflow: hidden;
   text-decoration: none;
-  color: #fff;
-  box-shadow: 0 1px 2px rgba(20,17,13,.06), 0 8px 24px -12px rgba(20,17,13,.18);
-  transition: transform 0.2s cubic-bezier(.2,.8,.2,1), box-shadow 0.2s ease;
+  background: #fff;
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--rule, #f0ece9);
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
 }
 .disc-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 20px 40px -16px rgba(20,17,13,.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
 }
 
 .disc-card--rail {
-  flex: 0 0 230px;
-  width: 230px;
-  height: 290px;
+  flex: 0 0 220px;
+  width: 220px;
 }
 
-.disc-card-art {
-  position: absolute;
-  inset: 0;
+/* Image area */
+.disc-card-img-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.disc-card-img-wrap--rail {
+  height: 160px;
 }
 .disc-card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.5s ease;
 }
-.disc-card-art-fallback {
+.disc-card:hover .disc-card-img { transform: scale(1.04); }
+
+.disc-card-img-fallback {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  opacity: 0.4;
+  opacity: 0.35;
 }
-.disc-card-scrim {
+
+/* Glassmorphism type pill over image */
+.disc-pill {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.15) 45%, transparent 68%);
-}
-
-.disc-card-content {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 14px;
-}
-
-.disc-card-badge {
-  align-self: flex-start;
+  top: 14px;
+  left: 14px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(255,255,255,.92);
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 999px;
+  padding: 5px 10px 5px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.disc-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.disc-pill-label {
   font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1f1a19;
+}
+
+.disc-new-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -257,104 +268,145 @@
   border-radius: 999px;
 }
 
-.disc-card-new {
-  display: inline-block;
-  margin-bottom: 4px;
-  background: var(--ochre);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 3px 7px;
-  border-radius: 999px;
+/* Card body text */
+.disc-card-body {
+  padding: 18px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .disc-card-title {
   font-family: var(--font-inter), 'Inter', sans-serif;
   font-weight: 700;
-  font-size: 19px;
-  line-height: 1.2;
-  margin-bottom: 3px;
-  text-shadow: 0 2px 8px rgba(0,0,0,.5);
+  font-size: 16px;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.15s;
+}
+.disc-card:hover .disc-card-title { color: var(--ochre, #7a241c); }
+
+.disc-card-excerpt {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mute);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.disc-card-meta {
+.disc-card-footer {
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  margin-top: 6px;
+  border-top: 1px solid var(--rule, #f0ece9);
+}
+
+.disc-card-attribution {
   font-size: 10.5px;
-  font-weight: 600;
-  opacity: 0.95;
-  text-shadow: 0 1px 4px rgba(0,0,0,.5);
+  font-weight: 700;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.disc-card-attribution-link {
+  color: var(--mute);
+  text-decoration: none;
+}
+.disc-card-attribution-link:hover { color: var(--ochre); }
+
+.disc-bookmark-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--mute);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md, 4px);
+  transition: color 0.15s, background 0.15s;
+  padding: 0;
+}
+.disc-bookmark-btn:hover {
+  color: var(--ochre);
+  background: color-mix(in srgb, var(--ochre) 8%, transparent);
 }
 
-.disc-card-rating { letter-spacing: 1px; color: #ffd77a; }
-
-.disc-card-subtype-pill {
-  border: 1px solid rgba(255,255,255,.5);
-  border-radius: 999px;
-  padding: 1px 7px;
+/* ── Two-column layout ── */
+.disc-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: start;
 }
+@media (min-width: 1100px) {
+  .disc-body { grid-template-columns: 1fr 300px; }
+}
+.disc-main { min-width: 0; }
 
-/* Explore More — masonry via CSS columns, same technique the approved
-   mockup used (per-card height cycled from a small preset list — the API
-   has no real image-dimension data to derive true masonry from). */
+/* ── Masonry grid ── */
 .disc-masonry {
-  columns: 2 160px;
-  column-gap: 12px;
+  columns: 2 180px;
+  column-gap: 14px;
   margin-bottom: 24px;
 }
 .disc-masonry .disc-card {
   break-inside: avoid;
   width: 100%;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 @media (min-width: 720px) {
-  /* column-width only (no fixed count) — the wrapper here is much wider
-     (1680px) than the approved mockup's own 1160px frame, so a hardcoded
-     column count would look chunky; this lets the browser add columns
-     as the viewport grows instead of stretching a fixed few very wide. */
   .disc-masonry { columns: 200px; }
 }
 
+/* ── Loading / empty / load-more ── */
 .disc-loading {
   text-align: center;
   color: var(--mute);
-  padding: 40px 0;
+  padding: 48px 0;
+  font-size: 14px;
 }
 
 .disc-empty {
   text-align: center;
   color: var(--mute);
   padding: 48px 24px;
-  border: 2px dashed var(--ghost, var(--rule));
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--paper-deep) 50%, transparent);
+  border: 2px dashed var(--rule, #e8e3dd);
+  border-radius: var(--radius-xl, 12px);
 }
-
-.disc-empty-icon {
-  font-size: 32px;
-  filter: grayscale(1);
-  opacity: 0.5;
-  margin-bottom: 8px;
-}
+.disc-empty-icon { font-size: 32px; filter: grayscale(1); opacity: 0.5; margin-bottom: 8px; }
 
 .disc-load-more {
   display: block;
   margin: 0 auto 32px;
-  border: 1px solid var(--rule);
+  background: #fff;
+  border: 2px solid var(--rule, #e8e3dd);
   border-radius: 999px;
-  padding: 10px 20px;
-  background: var(--paper);
+  padding: 11px 28px;
   color: var(--ink);
   font-weight: 700;
+  font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
 }
+.disc-load-more:hover { border-color: var(--ochre); color: var(--ochre); }
 
 .disc-count {
   text-align: center;
@@ -364,71 +416,19 @@
   margin: 8px 0 24px;
 }
 
-/* ── "Added by @username" attribution on masonry cards ── */
-.disc-card-excerpt {
-  font-size: 11px;
-  line-height: 1.45;
-  color: rgba(255,255,255,.72);
-  margin: 4px 0 5px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.disc-card-added-by {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255,255,255,.65);
-  letter-spacing: 0.01em;
-}
-
-.disc-card-added-by-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ochre, #7a241c);
-  flex-shrink: 0;
-}
-
-.disc-card-added-by-link {
-  color: rgba(255,255,255,.85);
-  text-decoration: none;
-  font-weight: 700;
-}
-.disc-card-added-by-link:hover { text-decoration: underline; }
-
-/* ── Two-column body layout (main grid + sidebar) ── */
-.disc-body {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 32px;
-  align-items: start;
-}
-
-@media (min-width: 1100px) {
-  .disc-body {
-    grid-template-columns: 1fr 280px;
-  }
-}
-
-.disc-main { min-width: 0; }
-
 /* ── Right sidebar ── */
 .disc-sidebar {
   position: sticky;
   top: 80px;
 }
 
+.disc-sidebar-section { margin-bottom: 28px; }
+
 .disc-sidebar-heading {
   font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink);
   margin: 0 0 12px;
@@ -437,71 +437,216 @@
   gap: 6px;
 }
 
-.disc-trending-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg, 6px);
+/* Featured card */
+.disc-featured {
+  display: block;
+  text-decoration: none;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  border: 1px solid var(--rule, #f0ece9);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.disc-featured:hover { transform: translateY(-3px); }
+
+.disc-featured-img {
+  position: relative;
+  aspect-ratio: 4/5;
   overflow: hidden;
 }
-
-.disc-trending-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  text-decoration: none;
-  color: var(--ink);
-  border-bottom: 1px solid var(--rule);
-  transition: background 0.12s;
+.disc-featured-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
 }
-.disc-trending-item:last-child { border-bottom: none; }
-.disc-trending-item:hover { background: color-mix(in srgb, var(--ochre) 5%, transparent); }
-
-.disc-trending-rank {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--paper-deep, #e8e0d0);
+.disc-featured:hover .disc-featured-img img { transform: scale(1.04); }
+.disc-featured-fallback {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9.5px;
-  font-weight: 800;
-  color: var(--mute);
+  font-size: 3rem;
+  opacity: 0.35;
 }
 
-.disc-trending-info { min-width: 0; flex: 1; }
+.disc-featured-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.3) 40%, transparent 65%);
+}
 
-.disc-trending-title {
-  font-size: 12.5px;
+.disc-featured-arrow {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.15s;
+}
+.disc-featured:hover .disc-featured-arrow { background: rgba(255, 255, 255, 0.35); }
+
+.disc-featured-content {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  right: 18px;
+  color: #fff;
+}
+
+.disc-featured-pick {
+  display: inline-block;
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.disc-featured-title {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.disc-featured-excerpt {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Trending Now — thumbnail list */
+.disc-trending-thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.disc-trending-thumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+.disc-trending-thumb:hover .disc-trending-thumb-title { color: var(--ochre); }
+
+.disc-trending-thumb-img {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  border: 1px solid var(--rule, #f0ece9);
+}
+.disc-trending-thumb-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+.disc-trending-thumb:hover .disc-trending-thumb-img img { transform: scale(1.1); }
+.disc-trending-thumb-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  opacity: 0.4;
+}
+
+.disc-trending-thumb-info { flex: 1; min-width: 0; }
+
+.disc-trending-thumb-title {
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.3;
+  transition: color 0.15s;
 }
 
-.disc-trending-meta {
+.disc-trending-thumb-meta {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-  font-size: 10px;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.disc-trending-thumb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.disc-trending-type { font-weight: 700; }
+/* ── A-Z Index ── */
+.disc-az-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
 
-.disc-trending-by {
+.disc-az-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg, 6px);
+  border: 1px solid var(--rule, #f0ece9);
+  background: var(--paper, #fdfbf9);
   color: var(--mute);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  padding: 0;
+  line-height: 1;
+}
+/* The 0–9 button is a bit wider */
+.disc-az-btn:last-child { width: auto; padding: 0 10px; }
+.disc-az-btn:hover:not(:disabled) {
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border-color: var(--ochre, #7a241c);
+}
+.disc-az-btn--active {
+  background: var(--ochre, #7a241c);
+  color: #fff;
+  border-color: var(--ochre, #7a241c);
+}
+.disc-az-btn--dim {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ── Browse by Type pills (sidebar) ── */
@@ -510,15 +655,14 @@
   flex-wrap: wrap;
   gap: 6px;
 }
-
 .disc-type-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: var(--radius-full, 9999px);
-  border: 1px solid var(--rule);
-  background: var(--paper-deep, transparent);
+  border: 1px solid var(--rule, #e8e3dd);
+  background: #fff;
   color: var(--ink);
   font-size: 10.5px;
   font-weight: 700;
@@ -530,3 +674,5 @@
 .disc-type-pill:hover { border-color: var(--ochre); color: var(--ochre); }
 .disc-type-pill--active { color: #fff !important; }
 
+/* ── Dead code kept for safety (tabs moved into SearchModal) ── */
+.disc-type-tabs { display: none; }

@@ -46,27 +46,21 @@ export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: s
   "tv-series": { emoji: "📺", label: "TV SERIES", color: "#00695C" },
 };
 
-// Mirrors DISCOVER_REGIONS in SearchModal.tsx (label for the active-filter
-// chip) — no shared source of truth, same caveat as TYPE_BADGE above.
 const REGION_LABELS: Record<string, string> = {
   nigeria: "Nigeria", ghana: "Ghana", uk: "UK", usa: "USA", "pan-african": "Pan-African",
 };
 
 const PER_PAGE = 20;
 
-// Purely decorative height cycle for the Explore More masonry — same
-// technique the approved mockup used (manually varied heights, not derived
-// from real image aspect ratios, since the API doesn't expose those).
-const MASONRY_HEIGHTS = [280, 190, 230, 340, 210, 260, 220, 300];
+const MASONRY_RATIOS = ["4/3", "1/1", "4/5", "16/9", "3/4", "4/3", "1/1", "16/9"];
+
+const AZ_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat(["0–9"]);
 
 function daysAgo(dateStr: string): number {
   const diffMs = Date.now() - new Date(dateStr).getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-// Loose substring match against an entry's type/subtype — same approach as
-// the feed's matchesInterests(), since Discover entries have no canonical
-// interest-slug field, only a freeform subtype name.
 function matchesInterestTags(entry: DiscoverEntry, tagSet: Set<string>): boolean {
   if (tagSet.size === 0) return false;
   const haystack = `${entry.type} ${entry.subtype ?? ""}`.toLowerCase();
@@ -76,51 +70,113 @@ function matchesInterestTags(entry: DiscoverEntry, tagSet: Set<string>): boolean
   return false;
 }
 
-function DiscoverCard({ entry, rail, height }: { entry: DiscoverEntry; rail?: boolean; height?: number }) {
+function DiscoverCard({
+  entry,
+  rail,
+  aspectRatio = "4/3",
+}: {
+  entry: DiscoverEntry;
+  rail?: boolean;
+  aspectRatio?: string;
+}) {
   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
   return (
     <Link
       href={`/directory/${entry.slug}`}
       className={`disc-card${rail ? " disc-card--rail" : ""}`}
-      style={height ? { height } : undefined}
     >
-      <div className="disc-card-art">
+      <div
+        className={`disc-card-img-wrap${rail ? " disc-card-img-wrap--rail" : ""}`}
+        style={!rail ? { aspectRatio } : undefined}
+      >
         {entry.thumbnail ? (
           <img src={entry.thumbnail} alt="" className="disc-card-img" loading="lazy" />
         ) : (
-          <div className="disc-card-art-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
+          <div className="disc-card-img-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
         )}
-        <div className="disc-card-scrim" />
+        <div className="disc-pill">
+          <span className="disc-pill-dot" style={{ background: badge.color }} />
+          <span className="disc-pill-label">{badge.label}</span>
+        </div>
+        {entry.isNew && <span className="disc-new-badge">New</span>}
       </div>
-      <div className="disc-card-content">
-        <span className="disc-card-badge" style={{ color: badge.color }}>{badge.emoji} {badge.label}</span>
-        <div>
-          {rail && entry.isNew && <span className="disc-card-new">🆕 New</span>}
-          <div className="disc-card-title">{entry.title}</div>
-          {!rail && entry.excerpt && (
-            <div className="disc-card-excerpt">{entry.excerpt}</div>
-          )}
-          <div className="disc-card-meta">
-            {entry.city && <span>📍 {entry.city}</span>}
-            {entry.city && (rail ? true : entry.averageRating || entry.subtype) && <span>·</span>}
-            {rail ? (
-              !entry.isNew && <span>Added {daysAgo(entry.dateAdded)}d ago</span>
-            ) : entry.averageRating ? (
-              <span className="disc-card-rating">
-                {"★".repeat(Math.round(entry.averageRating))}
-                <span style={{ opacity: 0.4 }}>{"☆".repeat(5 - Math.round(entry.averageRating))}</span>{" "}
-                {entry.averageRating.toFixed(1)}
-              </span>
-            ) : entry.subtype ? (
-              <span className="disc-card-subtype-pill">{entry.subtype}</span>
-            ) : null}
-          </div>
-          {!rail && entry.addedBy && (
-            <div className="disc-card-added-by">
-              <span className="disc-card-added-by-dot" />
-              Added by <Link href={`/connect/${entry.addedBy.username}`} className="disc-card-added-by-link" onClick={e => e.stopPropagation()}>@{entry.addedBy.username}</Link>
-            </div>
-          )}
+      <div className="disc-card-body">
+        <h2 className="disc-card-title">{entry.title}</h2>
+        {entry.excerpt && <p className="disc-card-excerpt">{entry.excerpt}</p>}
+        <div className="disc-card-footer">
+          <span className="disc-card-attribution">
+            {entry.addedBy ? (
+              <>Added by{" "}
+                <Link
+                  href={`/connect/${entry.addedBy.username}`}
+                  className="disc-card-attribution-link"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  @{entry.addedBy.username}
+                </Link>
+              </>
+            ) : (
+              <>Added {daysAgo(entry.dateAdded)}d ago</>
+            )}
+          </span>
+          <button
+            type="button"
+            className="disc-bookmark-btn"
+            aria-label="Bookmark"
+            onClick={(e) => e.preventDefault()}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function FeaturedCard({ entry }: { entry: DiscoverEntry }) {
+  const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
+  return (
+    <Link href={`/directory/${entry.slug}`} className="disc-featured">
+      <div className="disc-featured-img">
+        {entry.thumbnail ? (
+          <img src={entry.thumbnail} alt="" loading="lazy" />
+        ) : (
+          <div className="disc-featured-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
+        )}
+        <div className="disc-featured-scrim" />
+        <div className="disc-featured-arrow">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M7 17L17 7M7 7h10v10" />
+          </svg>
+        </div>
+        <div className="disc-featured-content">
+          <span className="disc-featured-pick">Editor's Pick</span>
+          <div className="disc-featured-title">{entry.title}</div>
+          {entry.excerpt && <p className="disc-featured-excerpt">{entry.excerpt}</p>}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function TrendingThumb({ entry }: { entry: DiscoverEntry }) {
+  const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
+  return (
+    <Link href={`/directory/${entry.slug}`} className="disc-trending-thumb">
+      <div className="disc-trending-thumb-img">
+        {entry.thumbnail ? (
+          <img src={entry.thumbnail} alt="" loading="lazy" />
+        ) : (
+          <div className="disc-trending-thumb-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
+        )}
+      </div>
+      <div className="disc-trending-thumb-info">
+        <div className="disc-trending-thumb-title">{entry.title}</div>
+        <div className="disc-trending-thumb-meta">
+          <span className="disc-trending-thumb-dot" style={{ background: badge.color }} />
+          <span>{badge.label}</span>
         </div>
       </div>
     </Link>
@@ -140,6 +196,7 @@ export default function DiscoverBrowser({
   const [type, setType] = useState<string | null>(initialType);
   const [region, setRegion] = useState<string | null>(initialRegion);
   const [sort, setSort] = useState<SortOption>("relevant");
+  const [letterFilter, setLetterFilter] = useState<string | null>(null);
 
   const [recent, setRecent] = useState<DiscoverEntry[]>([]);
   const [trending, setTrending] = useState<DiscoverEntry[]>([]);
@@ -150,15 +207,9 @@ export default function DiscoverBrowser({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Stable per-visit random seed so "Load more" pagination doesn't reshuffle
-  // already-seen entries — regenerated only on a fresh page load.
   const seedRef = useRef(Math.floor(Math.random() * 1_000_000_000) + 1);
-
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Type/Region/Sort now live inside SearchModal (Directory context)
-  // instead of on-page tabs/a "Filters" panel — see discoverFiltersBus.ts
-  // for why this needs an event bus rather than a normal prop/callback.
   useEffect(() => {
     return onDiscoverFilters(({ type: t, region: r, sort: s }) => {
       setType(t);
@@ -167,7 +218,6 @@ export default function DiscoverBrowser({
     });
   }, []);
 
-  // Recently Added rail
   useEffect(() => {
     const params = new URLSearchParams();
     if (type) params.set("type", type);
@@ -180,7 +230,6 @@ export default function DiscoverBrowser({
       .catch(() => setRecent([]));
   }, [type, region]);
 
-  // Trending in Community rail — entries most referenced by community posts
   useEffect(() => {
     const params = new URLSearchParams();
     if (type) params.set("type", type);
@@ -193,9 +242,6 @@ export default function DiscoverBrowser({
       .catch(() => setTrending([]));
   }, [type, region]);
 
-  // Picked for You rail — no filter UI, just a quiet personalization layer:
-  // sample a larger recent batch and keep only entries matching the
-  // viewer's interest tags. Hidden entirely when there's no real match.
   useEffect(() => {
     if (interestTags.size === 0) { setRecommended([]); return; }
     const params = new URLSearchParams();
@@ -217,8 +263,6 @@ export default function DiscoverBrowser({
     const params = new URLSearchParams();
     if (type) params.set("type", type);
     if (region) params.set("region", region);
-    // Default browsing (no explicit sort choice) shows a fresh random mix
-    // every visit rather than the same "most relevant" order.
     const effectiveSort = sort === "relevant" ? "random" : sort;
     params.set("sort", effectiveSort);
     if (effectiveSort === "random") params.set("seed", String(seedRef.current));
@@ -249,22 +293,46 @@ export default function DiscoverBrowser({
     setLoadingMore(false);
   }
 
+  const filteredEntries = !letterFilter
+    ? entries
+    : letterFilter === "0–9"
+    ? entries.filter((e) => /^\d/.test(e.title))
+    : entries.filter((e) => e.title.toUpperCase().startsWith(letterFilter));
+
+  const availableLetters = new Set(
+    entries
+      .map((e) => (/^\d/.test(e.title) ? "0–9" : e.title[0]?.toUpperCase()))
+      .filter(Boolean)
+  );
+
+  const featured = trending[0] ?? null;
+  const trendingList = trending.slice(1, 6);
+
   return (
     <div>
-      {/* Hero */}
-      <div className="disc-hero">
-        <p className="disc-hero-eyebrow">✦ Discover</p>
-        <h1 className="disc-hero-title">Every corner of<br /><em>the culture</em>, in one place.</h1>
-        <p className="disc-hero-sub">
-          People, places, dishes, books, films, sounds — the whole living archive of
-          culture, added by the community, one entry at a time.
-        </p>
-      </div>
-
-      <button type="button" className="disc-search-btn" onClick={() => openSearchModal()}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-        Search people, places, books, films…
-      </button>
+      {/* Hero — warm gradient section */}
+      <section className="disc-hero">
+        <div className="disc-hero-blob disc-hero-blob--1" />
+        <div className="disc-hero-blob disc-hero-blob--2" />
+        <div className="disc-hero-inner">
+          <h1 className="disc-hero-title">
+            Every corner of the culture,{" "}
+            <span className="disc-hero-accent">in one place.</span>
+          </h1>
+          <p className="disc-hero-sub">
+            Search the growing encyclopedia of people, places, films, books, and sounds
+            curated by the Moveee community.
+          </p>
+          <div className="disc-search-wrap" role="button" tabIndex={0} onClick={() => openSearchModal()} onKeyDown={(e) => e.key === "Enter" && openSearchModal()}>
+            <svg className="disc-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M21 21l-4.3-4.3" />
+            </svg>
+            <span className="disc-search-placeholder">Search the archive…</span>
+            <kbd className="disc-search-kbd">⌘K</kbd>
+          </div>
+        </div>
+      </section>
 
       {(type || region) && (
         <div className="disc-active-filters">
@@ -277,9 +345,7 @@ export default function DiscoverBrowser({
                 className="disc-active-filter-clear"
                 onClick={() => { setType(null); emitDiscoverFilters({ type: null, region, sort }); }}
                 aria-label="Clear type filter"
-              >
-                ✕
-              </button>
+              >✕</button>
             </span>
           )}
           {region && (
@@ -290,9 +356,7 @@ export default function DiscoverBrowser({
                 className="disc-active-filter-clear"
                 onClick={() => { setRegion(null); emitDiscoverFilters({ type, region: null, sort }); }}
                 aria-label="Clear region filter"
-              >
-                ✕
-              </button>
+              >✕</button>
             </span>
           )}
         </div>
@@ -300,34 +364,30 @@ export default function DiscoverBrowser({
 
       {recommended.length > 0 && (
         <>
-          <div className="disc-rail-heading"><span className="disc-spark">✦</span> Picked for You</div>
+          <div className="disc-section-heading"><span className="disc-spark">✦</span> Picked for You</div>
           <div className="disc-rail">
-            {recommended.map((e) => (
-              <DiscoverCard key={`recommended-${e.id}`} entry={e} rail />
-            ))}
+            {recommended.map((e) => <DiscoverCard key={`rec-${e.id}`} entry={e} rail />)}
           </div>
         </>
       )}
 
       {recent.length > 0 && (
         <>
-          <div className="disc-rail-heading"><span className="disc-spark">✦</span> Recently Added</div>
+          <div className="disc-section-heading"><span className="disc-spark">✦</span> Recently Added</div>
           <div className="disc-rail">
-            {recent.map((e) => (
-              <DiscoverCard key={`recent-${e.id}`} entry={e} rail />
-            ))}
+            {recent.map((e) => <DiscoverCard key={`recent-${e.id}`} entry={e} rail />)}
           </div>
         </>
       )}
 
-      {/* Two-column layout: main grid + sidebar */}
+      {/* Two-column layout: main masonry + right sidebar */}
       <div className="disc-body">
         <div className="disc-main">
-          <div className="disc-grid-heading"><span className="disc-spark">✦</span> Explore More</div>
+          <div className="disc-section-heading"><span className="disc-spark">✦</span> Explore More</div>
 
           {loading ? (
             <div className="disc-loading">Loading…</div>
-          ) : entries.length === 0 ? (
+          ) : filteredEntries.length === 0 ? (
             <div className="disc-empty">
               <div className="disc-empty-icon">🔍</div>
               No entries match these filters.
@@ -335,52 +395,73 @@ export default function DiscoverBrowser({
           ) : (
             <>
               <div className="disc-masonry">
-                {entries.map((e, i) => (
-                  <DiscoverCard key={e.id} entry={e} height={MASONRY_HEIGHTS[i % MASONRY_HEIGHTS.length]} />
+                {filteredEntries.map((e, i) => (
+                  <DiscoverCard
+                    key={e.id}
+                    entry={e}
+                    aspectRatio={MASONRY_RATIOS[i % MASONRY_RATIOS.length]}
+                  />
                 ))}
               </div>
-              {entries.length < total ? (
+              {filteredEntries.length < total && !letterFilter ? (
                 <button type="button" className="disc-load-more" onClick={loadMore} disabled={loadingMore}>
-                  {loadingMore ? "Loading…" : "Load more"}
+                  {loadingMore ? "Loading…" : "Load more entries"}
                 </button>
               ) : (
                 <div className="disc-count">
-                  Showing {entries.length} of {total} {total === 1 ? "entry" : "entries"}
+                  Showing {filteredEntries.length} of {total} {total === 1 ? "entry" : "entries"}
                 </div>
               )}
             </>
           )}
         </div>
 
-        {/* Right sidebar — Trending in Community as a list */}
-        {trending.length > 0 && (
-          <aside className="disc-sidebar">
-            <div className="disc-sidebar-heading">
-              <span className="disc-spark">✦</span> Trending Now
+        {/* Right sidebar */}
+        <aside className="disc-sidebar">
+          {featured && (
+            <div className="disc-sidebar-section">
+              <div className="disc-sidebar-heading">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#B38238">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                Featured
+              </div>
+              <FeaturedCard entry={featured} />
             </div>
-            <div className="disc-trending-list">
-              {trending.slice(0, 8).map((e, i) => {
-                const badge = TYPE_BADGE[e.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
+          )}
+
+          {trendingList.length > 0 && (
+            <div className="disc-sidebar-section">
+              <div className="disc-sidebar-heading">Trending Now</div>
+              <div className="disc-trending-thumbs">
+                {trendingList.map((e) => <TrendingThumb key={e.id} entry={e} />)}
+              </div>
+            </div>
+          )}
+
+          <div className="disc-sidebar-section">
+            <div className="disc-sidebar-heading">A–Z Index</div>
+            <div className="disc-az-grid">
+              {AZ_LETTERS.map((letter) => {
+                const available = entries.length === 0 || availableLetters.has(letter);
+                const active = letterFilter === letter;
                 return (
-                  <Link key={e.id} href={`/directory/${e.slug}`} className="disc-trending-item">
-                    <span className="disc-trending-rank">{i + 1}</span>
-                    <div className="disc-trending-info">
-                      <div className="disc-trending-title">{e.title}</div>
-                      <div className="disc-trending-meta">
-                        <span className="disc-trending-type" style={{ color: badge.color }}>{badge.emoji} {badge.label}</span>
-                        {e.addedBy && (
-                          <span className="disc-trending-by">· @{e.addedBy.username}</span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
+                  <button
+                    key={letter}
+                    type="button"
+                    className={`disc-az-btn${active ? " disc-az-btn--active" : ""}${!available && entries.length > 0 ? " disc-az-btn--dim" : ""}`}
+                    onClick={() => setLetterFilter(active ? null : letter)}
+                    disabled={!available && entries.length > 0}
+                  >
+                    {letter}
+                  </button>
                 );
               })}
             </div>
+          </div>
 
-            <div className="disc-sidebar-heading" style={{ marginTop: 24 }}>
-              Browse by Type
-            </div>
+          <div className="disc-sidebar-section">
+            <div className="disc-sidebar-heading">Browse by Type</div>
             <div className="disc-type-pills">
               {Object.entries(TYPE_BADGE).map(([slug, info]) => (
                 <button
@@ -398,8 +479,8 @@ export default function DiscoverBrowser({
                 </button>
               ))}
             </div>
-          </aside>
-        )}
+          </div>
+        </aside>
       </div>
     </div>
   );
