@@ -5,7 +5,7 @@ import CartDrawer from "@/components/CartDrawer";
 import { CartProvider } from "@/context/CartContext";
 import { AdsProvider, type AdSettings } from "@/context/AdsContext";
 import GlobalAuthModal from "@/components/GlobalAuthModal";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import Script from "next/script";
 import { getWPData, GET_SITE_SETTINGS } from "@/lib/wp";
 import "../homepage.css";
@@ -61,7 +61,7 @@ export default async function MagazineLayout({
         <CartDrawer />
         <CookieConsent />
         <GlobalAuthModal />
-        <PWAInstallPrompt />
+        <PwaInstallPrompt />
       </AdsProvider>
     </CartProvider>
   );
