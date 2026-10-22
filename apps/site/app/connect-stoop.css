@@ -834,6 +834,8 @@
 }
 .stoop-hero-btn--ghost:hover { background: color-mix(in srgb, var(--paper) 18%, transparent); }
 .stoop-hero-btn:disabled { opacity: 0.6; cursor: default; }
+.stoop-hero-geo-wrap { display: flex; flex-direction: column; gap: 6px; }
+.stoop-geo-error { margin: 0; font-size: 11px; color: color-mix(in srgb, var(--paper) 75%, transparent); line-height: 1.4; max-width: 260px; }
 
 /* Decorative right-side panel */
 .stoop-hero-art {

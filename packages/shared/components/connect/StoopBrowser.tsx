@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { openSearchModal } from "@/lib/searchModalBus";
 import { onStoopFilters } from "@/lib/stoopFiltersBus";
 import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 import StoopDetailPanel from "@/components/connect/StoopDetailPanel";
@@ -112,6 +111,31 @@ function coverGrad(id: number): string {
   return COVER_GRADS[id % COVER_GRADS.length];
 }
 
+async function fetchWithFallback(
+  terms: string[],
+  countryFallback: string,
+  extraParams: Record<string, string>
+): Promise<{ clusters: Cluster[]; winner: string | null; winnerType: "city" | "country" | null }> {
+  for (const term of terms) {
+    const p = new URLSearchParams({ ...extraParams, city: term });
+    const res = await fetch(`/api/cluster/discover?${p}`);
+    if (!res.ok) continue;
+    const data = await res.json().catch(() => ({ clusters: [] }));
+    const clusters: Cluster[] = data.clusters ?? [];
+    if (clusters.length > 0) return { clusters, winner: term, winnerType: "city" };
+  }
+  if (countryFallback) {
+    const p = new URLSearchParams({ ...extraParams, country: countryFallback });
+    const res = await fetch(`/api/cluster/discover?${p}`);
+    if (res.ok) {
+      const data = await res.json().catch(() => ({ clusters: [] }));
+      const clusters: Cluster[] = data.clusters ?? [];
+      if (clusters.length > 0) return { clusters, winner: countryFallback, winnerType: "country" };
+    }
+  }
+  return { clusters: [], winner: null, winnerType: null };
+}
+
 const PER_PAGE = 12;
 const RAIL_PER_PAGE = 6;
 
@@ -129,6 +153,9 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
   /* Geolocation */
   const [geoCity, setGeoCity] = useState<string | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [geoLocHierarchy, setGeoLocHierarchy] = useState<string[]>([]);
+  const resolvedLocRef = useRef<{ type: "city" | "country"; value: string } | null>(null);
 
   /* Category filter */
   const [category, setCategory] = useState<StCategory>("all");
@@ -212,7 +239,11 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
   /* ── Geolocation → reverse geocode via Nominatim ──────────── */
   function detectCity() {
     if (geoLoading) return;
-    if (!navigator.geolocation) { openSearchModal(); return; }
+    setGeoError(null);
+    if (!navigator.geolocation) {
+      setGeoError("Geolocation is not supported by your browser.");
+      return;
+    }
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -223,21 +254,31 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
             { headers: { Accept: "application/json" } }
           );
           const data = await res.json().catch(() => ({}));
-          const detected =
-            data?.address?.city ||
-            data?.address?.town ||
-            data?.address?.village ||
-            data?.address?.county ||
-            null;
-          if (detected) setGeoCity(detected);
-          else openSearchModal();
+          const addr = data?.address ?? {};
+          const hierarchy = [
+            addr.road || addr.pedestrian || addr.footway,
+            addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district,
+            addr.city || addr.town || addr.village,
+            addr.county,
+            addr.state,
+            addr.country,
+          ].filter(Boolean) as string[];
+          if (hierarchy.length > 0) {
+            setGeoCity(hierarchy[0]);
+            setGeoLocHierarchy(hierarchy);
+          } else {
+            setGeoError("Couldn't pinpoint your location — try searching by city.");
+          }
         } catch {
-          openSearchModal();
+          setGeoError("Location lookup failed — try searching by city.");
         } finally {
           setGeoLoading(false);
         }
       },
-      () => { setGeoLoading(false); openSearchModal(); },
+      () => {
+        setGeoLoading(false);
+        setGeoError("Location access denied — search by city instead.");
+      },
       { timeout: 8000 }
     );
   }
@@ -368,54 +409,80 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
     if (loadingInitial || myCluster) { setNearYou([]); return; }
     if (!primaryLocation) { setNearYou([]); return; }
     let cancelled = false;
-    const params = new URLSearchParams({ per_page: String(RAIL_PER_PAGE) });
-    if (city) params.set("city", city);
-    else if (geoCity) params.set("city", geoCity);
-    else if (viewerCity) params.set("city", viewerCity);
-    else if (viewerCountry) params.set("country", viewerCountry);
-    fetch(`/api/cluster/discover?${params}`)
-      .then((r) => (r.ok ? r.json() : { clusters: [] }))
-      .then((d) => { if (!cancelled) setNearYou(d.clusters ?? []); })
+    const terms = city
+      ? [city]
+      : geoLocHierarchy.length > 0
+      ? geoLocHierarchy
+      : viewerCity
+      ? [viewerCity]
+      : [];
+    fetchWithFallback(terms, viewerCountry, { per_page: String(RAIL_PER_PAGE) })
+      .then(({ clusters }) => { if (!cancelled) setNearYou(clusters); })
       .catch(() => { if (!cancelled) setNearYou([]); });
     return () => { cancelled = true; };
-  }, [loadingInitial, myCluster, city, geoCity, viewerCity, viewerCountry, primaryLocation]);
+  }, [loadingInitial, myCluster, city, geoCity, geoLocHierarchy, viewerCity, viewerCountry, primaryLocation]);
 
   /* ── Overflow rail ─────────────────────────────────────────── */
   useEffect(() => {
     if (loadingInitial || !myCluster) { setOverflow([]); return; }
     let cancelled = false;
-    const params = new URLSearchParams({ per_page: String(RAIL_PER_PAGE) });
-    const loc = city || geoCity || myCluster.city || viewerCity;
-    if (loc) params.set("city", loc);
-    else if (viewerCountry) params.set("country", viewerCountry);
-    fetch(`/api/cluster/discover?${params}`)
-      .then((r) => (r.ok ? r.json() : { clusters: [] }))
-      .then((d) => {
+    const clusterCity = myCluster.city;
+    const terms = city
+      ? [city]
+      : geoLocHierarchy.length > 0
+      ? geoLocHierarchy
+      : (clusterCity || viewerCity)
+      ? [clusterCity || viewerCity]
+      : [];
+    fetchWithFallback(terms, viewerCountry, { per_page: String(RAIL_PER_PAGE) })
+      .then(({ clusters }) => {
         if (cancelled) return;
-        const list: Cluster[] = (d.clusters ?? []).filter((c: Cluster) => c.id !== myCluster!.id);
-        setOverflow(list);
+        setOverflow(clusters.filter((c: Cluster) => c.id !== myCluster!.id));
       })
       .catch(() => { if (!cancelled) setOverflow([]); });
     return () => { cancelled = true; };
-  }, [loadingInitial, myCluster, city, geoCity, viewerCity, viewerCountry]);
+  }, [loadingInitial, myCluster, city, geoCity, geoLocHierarchy, viewerCity, viewerCountry]);
 
   /* ── Explore grid ──────────────────────────────────────────── */
   const fetchPage = useCallback(async (off: number, replace: boolean) => {
-    const params = new URLSearchParams({
+    const baseParams: Record<string, string> = {
       per_page: String(PER_PAGE),
       page: String(Math.floor(off / PER_PAGE) + 1),
-    });
-    if (city) params.set("city", city);
-    else if (geoCity) params.set("city", geoCity);
-    else if (viewerCity) params.set("city", viewerCity);
-    else if (viewerCountry) params.set("country", viewerCountry);
-    const res = await fetch(`/api/cluster/discover?${params}`);
-    const data = res.ok ? await res.json() : { clusters: [] };
-    const clusters: Cluster[] = data.clusters ?? [];
+    };
+    let clusters: Cluster[] = [];
+    if (replace) {
+      resolvedLocRef.current = null;
+      const terms = city
+        ? [city]
+        : geoLocHierarchy.length > 0
+        ? geoLocHierarchy
+        : viewerCity
+        ? [viewerCity]
+        : [];
+      const result = await fetchWithFallback(terms, viewerCountry, baseParams);
+      clusters = result.clusters;
+      if (result.winner && result.winnerType) {
+        resolvedLocRef.current = { type: result.winnerType, value: result.winner };
+      }
+    } else {
+      const p = new URLSearchParams(baseParams);
+      if (resolvedLocRef.current) {
+        p.set(resolvedLocRef.current.type, resolvedLocRef.current.value);
+      } else if (city) {
+        p.set("city", city);
+      } else if (viewerCity) {
+        p.set("city", viewerCity);
+      } else if (viewerCountry) {
+        p.set("country", viewerCountry);
+      }
+      const res = await fetch(`/api/cluster/discover?${p}`);
+      const data = res.ok ? await res.json() : { clusters: [] };
+      clusters = data.clusters ?? [];
+    }
     setEntries((prev) => (replace ? clusters : [...prev, ...clusters]));
     setHasMore(clusters.length >= PER_PAGE);
     setOffset(off + clusters.length);
-  }, [city, geoCity, viewerCity, viewerCountry]);
+  }, [city, geoLocHierarchy, viewerCity, viewerCountry]);
 
   useEffect(() => {
     if (loadingInitial) return;
@@ -476,17 +543,20 @@ export default function StoopBrowser({ viewerCity = "", viewerCountry = "" }: Pr
             >
               + Start a Stoop
             </button>
-            <button
-              type="button"
-              className="stoop-hero-btn stoop-hero-btn--ghost"
-              onClick={detectCity}
-              disabled={geoLoading}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 22s8-7.58 8-13A8 8 0 1 0 4 9c0 5.42 8 13 8 13Z"/><circle cx="12" cy="9" r="2.5"/>
-              </svg>
-              {geoLoading ? "Detecting…" : cityDisplay ? `Change City: ${cityDisplay}` : "Detect Location"}
-            </button>
+            <div className="stoop-hero-geo-wrap">
+              <button
+                type="button"
+                className="stoop-hero-btn stoop-hero-btn--ghost"
+                onClick={detectCity}
+                disabled={geoLoading}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 22s8-7.58 8-13A8 8 0 1 0 4 9c0 5.42 8 13 8 13Z"/><circle cx="12" cy="9" r="2.5"/>
+                </svg>
+                {geoLoading ? "Detecting…" : cityDisplay ? `Change City: ${cityDisplay}` : "Use current location"}
+              </button>
+              {geoError && <p className="stoop-geo-error">{geoError}</p>}
+            </div>
           </div>
         </div>
         <div className="stoop-hero-art" aria-hidden="true" />
