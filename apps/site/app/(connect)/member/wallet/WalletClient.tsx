@@ -96,8 +96,8 @@ export default function WalletClient({
   const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
   const cutoff = Date.now() - THIRTY_DAYS_MS;
   const recent = entries.filter(e => new Date(e.created_at).getTime() >= cutoff);
-  const earned30d = recent.filter(e => e.amount > 0).reduce((sum, e) => sum + e.amount, 0);
-  const spent30d  = recent.filter(e => e.amount < 0).reduce((sum, e) => sum + e.amount, 0);
+  const earned30d = recent.filter(e => Number(e.amount) > 0).reduce((sum, e) => sum + Number(e.amount), 0);
+  const spent30d  = recent.filter(e => Number(e.amount) < 0).reduce((sum, e) => sum + Number(e.amount), 0);
 
   // Per-currency validation
   const gbpValid  = currency !== "GBP"  || (sortCode.trim().length > 0 && accountNumber.trim().length > 0);

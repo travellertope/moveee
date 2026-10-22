@@ -102,9 +102,9 @@ export default async function WalletPage() {
         </div>
 
         <WalletTabsClient
-          credits={balance?.credits ?? 0}
-          creditsPerGbp={balance?.credits_per_gbp ?? 10}
-          entries={history.entries ?? []}
+          credits={Number(balance?.credits ?? 0)}
+          creditsPerGbp={Number(balance?.credits_per_gbp ?? 10)}
+          entries={(history.entries ?? []).map((e: any) => ({ ...e, amount: Number(e.amount) }))}
           isPro={isPatron}
           userEmail={user.email ?? ""}
           perks={perks}
