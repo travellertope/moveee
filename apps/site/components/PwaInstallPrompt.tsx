@@ -57,7 +57,7 @@ export default function PwaInstallPrompt() {
   if (!visible || dismissed) return null;
 
   return (
-    <div className="pwa-prompt" role="dialog" aria-label="Add Moveee to your home screen">
+    <div className="pwa-prompt" role="dialog" aria-label="Install the Moveee app">
       <button
         type="button"
         className="pwa-prompt-close"
@@ -70,8 +70,8 @@ export default function PwaInstallPrompt() {
         <img src="/icons/icon-96x96.png" alt="" width={48} height={48} />
       </div>
       <div className="pwa-prompt-body">
-        <p className="pwa-prompt-title">Add Moveee to your home screen</p>
-        <p className="pwa-prompt-sub">Get the full app experience — no app store needed.</p>
+        <p className="pwa-prompt-title">Install the Moveee app</p>
+        <p className="pwa-prompt-sub">Discover and Engage with Culture — and Earn Real Rewards.</p>
       </div>
       <button
         type="button"
