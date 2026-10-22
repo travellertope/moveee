@@ -47,8 +47,6 @@ export default async function MemberPage() {
   const liveReputationTier      = live?.reputation_tier       ?? user.reputationTier        ?? "member";
   const liveDailyCreditsRemaining = live?.daily_credits_remaining ?? user.dailyCreditsRemaining ?? 50;
   const liveBadges: string[]    = Array.isArray(live?.badges) ? live.badges : (user.badges ?? []);
-  const displayName = user.displayName || user.name || user.username || "Member";
-  const initial = displayName.charAt(0).toUpperCase();
   const referralUrl = user.referralCode
     ? `https://themoveee.com/register?ref=${user.referralCode}`
     : null;
@@ -56,29 +54,6 @@ export default async function MemberPage() {
   return (
     <div className="acct-page">
       <div className="acct-wrap">
-        {/* ── Profile strip ── */}
-        <div className="acct-profile">
-          <div className="acct-avatar-wrap">
-            <div className="acct-avatar" style={user.avatarUrl ? { padding: 0, overflow: "hidden" } : undefined}>
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-              ) : initial}
-            </div>
-            <div className="acct-avatar-check" aria-hidden="true">✓</div>
-          </div>
-          <div className="acct-profile-body">
-            <h1 className="acct-name">{displayName}</h1>
-            <div className="acct-meta">
-              <span className={`acct-tier-pill ${isPatron ? "acct-tier-pill--patron" : "acct-tier-pill--citizen"}`}>
-                {isPatron ? "Moveee Pro" : "Moveee Citizen"}
-              </span>
-              {user.city && <span className="acct-meta-text">📍 {user.city}</span>}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Account nav — carries across Wallet/Perks/Notifications/etc. ── */}
-
         {!user.hasPasskey && <PasskeyBanner creditsEscrowed={user.creditsEscrowed ?? 0} />}
 
         {/* ── Stats ── */}
