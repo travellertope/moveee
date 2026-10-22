@@ -65,11 +65,13 @@ const Header = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [isSolid, setIsSolid] = useState(true);
   const [onDark, setOnDark] = useState(false);
   const [featuredProduct, setFeaturedProduct] = useState<FeaturedProduct | null>(null);
   const [featuredLoading, setFeaturedLoading] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user as any;
 
@@ -234,16 +236,29 @@ const Header = () => {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") { setMenuOpen(false); setProfileOpen(false); }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  // Close the menu on route change (client-side nav within a Link).
+  // Close the menu and profile popover on route change.
   useEffect(() => {
     setMenuOpen(false);
+    setProfileOpen(false);
   }, [pathname]);
+
+  // Close profile popover on click-outside.
+  useEffect(() => {
+    if (!profileOpen) return;
+    function onClickOut(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOut);
+    return () => document.removeEventListener("mousedown", onClickOut);
+  }, [profileOpen]);
 
   const toolbarClass = [
     "site-toolbar",
@@ -286,6 +301,73 @@ const Header = () => {
                 <CartIcon />
                 {itemCount > 0 && <span className="toolbar-cart-badge">{itemCount > 9 ? "9+" : itemCount}</span>}
               </button>
+
+              {/* Profile button + popover */}
+              <div ref={profileRef} className="toolbar-profile-wrap">
+                <button
+                  className="toolbar-icon toolbar-icon--profile"
+                  aria-label="Account"
+                  aria-expanded={profileOpen}
+                  onClick={() => setProfileOpen((v) => !v)}
+                >
+                  {status === "authenticated" && user ? (
+                    user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name ?? "avatar"} className="toolbar-avatar-img" />
+                    ) : (
+                      <span className="toolbar-avatar-initial">
+                        {(user.name || user.username || "M").charAt(0).toUpperCase()}
+                      </span>
+                    )
+                  ) : (
+                    <PersonIcon />
+                  )}
+                </button>
+
+                {profileOpen && status !== "loading" && (
+                  <div className="toolbar-profile-popover" role="dialog" aria-label="Account menu">
+                    {status === "authenticated" && user ? (
+                      <div className="tpp-logged">
+                        <div className="tpp-id">
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt="" className="tpp-avatar" />
+                          ) : (
+                            <span className="tpp-avatar tpp-avatar--initial">
+                              {(user.name || user.username || "M").charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                          <div>
+                            <div className="tpp-name">{user.displayName || user.name}</div>
+                            <div className="tpp-tier">{user.tier === "patron" ? "Moveee Pro" : "Moveee Citizen"}</div>
+                          </div>
+                        </div>
+                        <div className="tpp-links">
+                          <a href={`${CONNECT_URL}/member`}>My Dashboard</a>
+                          <a href={`${CONNECT_URL}/feed`}>Feed</a>
+                          <a href={`${CONNECT_URL}/member/wallet`}>Wallet</a>
+                          <a href={`${CONNECT_URL}/member/settings`}>Settings</a>
+                          <button className="tpp-signout" onClick={() => { setProfileOpen(false); handleSignOut(); }}>Sign Out</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="tpp-guest">
+                        <p className="tpp-guest-copy">Join Moveee to post, earn Culture Credits, and unlock Pro perks.</p>
+                        <a
+                          href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                          className="tpp-btn tpp-btn--primary"
+                        >
+                          Join →
+                        </a>
+                        <a
+                          href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                          className="tpp-btn"
+                        >
+                          Sign in
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <button
                 className="toolbar-icon toolbar-icon--menu"
@@ -414,6 +496,15 @@ const Header = () => {
     </>
   );
 };
+
+function PersonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="5.5" r="2.75" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2.5 14c0-2.76 2.46-5 5.5-5s5.5 2.24 5.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function SearchIcon() {
   return (
