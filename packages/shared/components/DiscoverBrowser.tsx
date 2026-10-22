@@ -198,7 +198,6 @@ export default function DiscoverBrowser({
   const [sort, setSort] = useState<SortOption>("relevant");
   const [letterFilter, setLetterFilter] = useState<string | null>(null);
 
-  const [recent, setRecent] = useState<DiscoverEntry[]>([]);
   const [trending, setTrending] = useState<DiscoverEntry[]>([]);
   const [recommended, setRecommended] = useState<DiscoverEntry[]>([]);
   const [entries, setEntries] = useState<DiscoverEntry[]>([]);
@@ -217,18 +216,6 @@ export default function DiscoverBrowser({
       setSort(s);
     });
   }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (type) params.set("type", type);
-    if (region) params.set("region", region);
-    params.set("sort", "recent");
-    params.set("per_page", "10");
-    fetch(`/api/directory/browse?${params.toString()}`)
-      .then((r) => r.json())
-      .then((d: BrowseResponse) => setRecent(d?.entries ?? []))
-      .catch(() => setRecent([]));
-  }, [type, region]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -373,15 +360,6 @@ export default function DiscoverBrowser({
           </>
         )}
 
-        {recent.length > 0 && (
-          <>
-            <div className="disc-section-heading">Recently Added</div>
-            <div className="disc-rail">
-              {recent.map((e) => <DiscoverCard key={`recent-${e.id}`} entry={e} rail />)}
-            </div>
-          </>
-        )}
-
         <div className="disc-section-heading">Explore More</div>
 
           {loading ? (
@@ -419,12 +397,7 @@ export default function DiscoverBrowser({
         <aside className="disc-sidebar">
           {featured && (
             <div className="disc-sidebar-section">
-              <div className="disc-sidebar-heading">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#B38238">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                Featured
-              </div>
+              <div className="disc-sidebar-heading">Featured</div>
               <FeaturedCard entry={featured} />
             </div>
           )}
