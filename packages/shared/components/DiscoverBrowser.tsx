@@ -322,7 +322,7 @@ export default function DiscoverBrowser({
               <span className="disc-hero-accent">in one place.</span>
             </h1>
             <p className="disc-hero-sub">
-              Search the growing encyclopedia of people, places, films, books, and sounds
+              Search the growing database of people, places, films, books, and sounds
               curated by the Moveee community.
             </p>
             <div className="disc-search-wrap" role="button" tabIndex={0} onClick={() => openSearchModal()} onKeyDown={(e) => e.key === "Enter" && openSearchModal()}>
@@ -366,7 +366,7 @@ export default function DiscoverBrowser({
 
         {recommended.length > 0 && (
           <>
-            <div className="disc-section-heading"><span className="disc-spark">✦</span> Picked for You</div>
+            <div className="disc-section-heading">Picked for You</div>
             <div className="disc-rail">
               {recommended.map((e) => <DiscoverCard key={`rec-${e.id}`} entry={e} rail />)}
             </div>
@@ -375,14 +375,14 @@ export default function DiscoverBrowser({
 
         {recent.length > 0 && (
           <>
-            <div className="disc-section-heading"><span className="disc-spark">✦</span> Recently Added</div>
+            <div className="disc-section-heading">Recently Added</div>
             <div className="disc-rail">
               {recent.map((e) => <DiscoverCard key={`recent-${e.id}`} entry={e} rail />)}
             </div>
           </>
         )}
 
-        <div className="disc-section-heading"><span className="disc-spark">✦</span> Explore More</div>
+        <div className="disc-section-heading">Explore More</div>
 
           {loading ? (
             <div className="disc-loading">Loading…</div>
