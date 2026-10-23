@@ -280,14 +280,15 @@ class Culture_Newsletter_Queue {
                       . '&token=' . rawurlencode( $unsub_token )
                       . '&c='    . $post_id;
 
-        $nl_list    = self::resolve_nl_list( $post_id, 'getmelit' );
-        $list_label = self::list_label( $nl_list );
-        $content    = self::render_content( $post ) . self::render_edition_appendix( $post, $edition );
-        $body       = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $list_label, $email );
+        $nl_list       = self::resolve_nl_list( $post_id, 'getmelit' );
+        $list_label    = self::list_label( $nl_list );
+        $email_subject = $list_label . ': ' . $title;
+        $content       = self::render_content( $post ) . self::render_edition_appendix( $post, $edition );
+        $body          = self::build_email( $title, $content, $permalink, $unsub_url, false, $post_id, $tracking_token, $list_label, $email );
 
         wp_mail(
             $email,
-            $title,
+            $email_subject,
             $body,
             array( 'Content-Type: text/html; charset=UTF-8' )
         );
@@ -312,19 +313,22 @@ class Culture_Newsletter_Queue {
             return false;
         }
 
-        $frontend_url = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
-        $title        = '[TEST] ' . get_the_title( $post_id );
+        $frontend_url    = rtrim( get_option( 'culture_frontend_url', home_url( '/' ) ), '/' );
+        $raw_title       = get_the_title( $post_id );
+        $body_title      = '[TEST] ' . $raw_title;
         if ( $edition && isset( self::EDITIONS[ $edition ] ) ) {
-            $title .= ' (' . self::EDITIONS[ $edition ] . ' edition)';
+            $body_title .= ' (' . self::EDITIONS[ $edition ] . ' edition)';
         }
-        $permalink    = $frontend_url . '/newsletter/' . $post->post_name;
-        $nl_list_test = self::resolve_nl_list( $post_id, 'getmelit' );
-        $content      = self::render_content( $post ) . self::render_edition_appendix( $post, $edition );
-        $body         = self::build_email( $title, $content, $permalink, '#', true, 0, '', self::list_label( $nl_list_test ) );
+        $permalink       = $frontend_url . '/newsletter/' . $post->post_name;
+        $nl_list_test    = self::resolve_nl_list( $post_id, 'getmelit' );
+        $list_label_test = self::list_label( $nl_list_test );
+        $email_subject   = '[TEST] ' . $list_label_test . ': ' . $raw_title;
+        $content         = self::render_content( $post ) . self::render_edition_appendix( $post, $edition );
+        $body            = self::build_email( $body_title, $content, $permalink, '#', true, 0, '', $list_label_test );
 
         return wp_mail(
             $test_email,
-            $title,
+            $email_subject,
             $body,
             array( 'Content-Type: text/html; charset=UTF-8' )
         );

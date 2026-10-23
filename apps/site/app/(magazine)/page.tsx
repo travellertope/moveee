@@ -193,16 +193,6 @@ export default async function Home() {
 
       <section className="masthead" id="mainMasthead">
         <div className="wrap">
-          <h1>
-            Culture, <em>curated</em>.<br />Movers, platformed.
-          </h1>
-          <p className="sub">
-            An independent magazine for people who live for culture — reported from the
-            cities, kitchens, and studios where it&rsquo;s actually made.
-          </p>
-        </div>
-        <div className="wrap">
-          <div className="arc-hdr" />
           <HeroCarousel stories={carouselStories} />
         </div>
       </section>

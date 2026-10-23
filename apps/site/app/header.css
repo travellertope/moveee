@@ -39,7 +39,6 @@
 .toolbar-shell {
   width: min(100%, 620px);
   border-radius: var(--radius-2xl);
-  overflow: hidden;
   background: transparent;
   box-shadow: none;
   transition: background 0.3s ease, box-shadow 0.3s ease;
