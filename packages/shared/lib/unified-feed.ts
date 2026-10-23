@@ -1,8 +1,6 @@
 import {
-  getWPData,
   getEventsForFeed,
   getWPQuotes,
-  GET_STORIES,
 } from "./wp";
 import { getPulseStories } from "./pulse-wordpress";
 import { decodeHtml } from "@/lib/decode-html";
@@ -175,10 +173,6 @@ function parseCommunityData(
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_BASE = `${WP_URL}/wp-json/wp/v2`;
-// Magazine/editorial content only lives on Site A (apps/site) — this feed mapper is shared
-// with apps/connect (Site B, web.themoveee.com), which has no local /magazine route, so
-// editorial hrefs must always be absolute rather than resolving against the current app's origin.
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
 
 /** Fetch the latest community posts from the culture_post CPT. */
 export async function getCommunityPosts(): Promise<FeedItem[]> {
@@ -317,13 +311,11 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
 export async function getUnifiedFeed(): Promise<FeedItem[]> {
   const [
     pulseResult,
-    storiesResult,
     eventsResult,
     quotesResult,
     communityResult,
   ] = await Promise.allSettled([
     getPulseStories({ perPage: 40 }),
-    getWPData(GET_STORIES, { first: 30 }, { revalidate: 300 }),
     getEventsForFeed(30, { revalidate: 300 }),
     getWPQuotes({ first: 50 }),
     getCommunityPosts(),
@@ -360,23 +352,6 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
           clap: Number((story.meta as any)?.reaction_clap ?? 0),
         },
         wpId: String(story.id),
-      });
-    }
-  }
-
-  // Magazine editorials
-  if (storiesResult.status === "fulfilled" && storiesResult.value?.posts?.nodes) {
-    for (const post of storiesResult.value.posts.nodes) {
-      items.push({
-        id: `editorial-${post.slug}`,
-        type: "editorial",
-        title: decodeHtml(post.title ?? ""),
-        slug: post.slug,
-        date: post.date,
-        excerpt: stripHtml(post.excerpt ?? ""),
-        image: post.featuredImage?.node?.sourceUrl,
-        href: `${SITE_URL}/magazine/${post.slug}`,
-        category: post.categories?.nodes?.[0]?.name ?? "",
       });
     }
   }
