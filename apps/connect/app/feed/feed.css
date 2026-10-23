@@ -79,7 +79,7 @@
 
 /* ── Pulse Feed section ── */
 .mco-feed-section {
-  background: #ffffff;
+  background: var(--paper);
 }
 .mco-feed-loading {
   text-align: center;
