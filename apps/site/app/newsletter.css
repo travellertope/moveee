@@ -4760,6 +4760,12 @@
   max-width: 500px;
 }
 .irc-subscribe-form .gml-cta-form { margin: 0; }
+.irc-subscribe-form .gml-cta-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.irc-subscribe-form .gml-cta-form input[type="text"] { display: none; }
 .irc-subscribe-form .gml-cta-form form {
   display: flex;
   gap: 8px;

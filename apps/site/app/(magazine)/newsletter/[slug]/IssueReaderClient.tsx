@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import GmlCTAForm from "@/components/GmlCTAForm";
 import NewsletterSubscribeWidget from "@/components/NewsletterSubscribeWidget";
 import HideIfSubscribed from "@/components/HideIfSubscribed";
@@ -57,6 +58,7 @@ export default function IssueReaderClient({
   callbackUrl,
   contentSlot,
 }: Props) {
+  const { status: authStatus } = useSession();
   const meta = NL_META[listId];
   const isGml = listId === "getmelit";
   const articleRef = useRef<HTMLDivElement>(null);
@@ -91,10 +93,15 @@ export default function IssueReaderClient({
   }, []);
 
   const toggleBookmark = useCallback(() => {
+    if (authStatus !== "authenticated") {
+      const returnTo = encodeURIComponent(window.location.href);
+      window.location.href = `/login?callbackUrl=${returnTo}`;
+      return;
+    }
     const next = !bookmarked;
     setBookmarked(next);
     try { localStorage.setItem(`irc-bm-${currentSlug}`, next ? "1" : "0"); } catch {}
-  }, [bookmarked, currentSlug]);
+  }, [authStatus, bookmarked, currentSlug]);
 
   useEffect(() => {
     const handleScroll = () => {
