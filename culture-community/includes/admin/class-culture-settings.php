@@ -258,27 +258,9 @@ class Culture_Settings {
         $int     = array( 'sanitize_callback' => 'absint' );
         $color   = array( 'sanitize_callback' => 'sanitize_hex_color' );
 
-        // Payment.
+        // Payment — Paystack (legacy, keys kept for webhook signature verification only).
         register_setting( 'culture_settings_payment', 'culture_paystack_public_key', $text );
         register_setting( 'culture_settings_payment', 'culture_paystack_secret_key', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_ngn', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_ngn', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_usd', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_usd', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_ngn', $int );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_ngn', $int );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_usd', $int );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_usd', $int );
-
-        // Payment (Moveee Lit tier).
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_ngn_lit', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_ngn_lit', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_monthly_usd_lit', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_plan_yearly_usd_lit', $text );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_ngn_lit', $int );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_ngn_lit', $int );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_monthly_usd_lit', $int );
-        register_setting( 'culture_settings_payment', 'culture_paystack_amount_yearly_usd_lit', $int );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd_lit', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd_lit', $text );
 
@@ -540,95 +522,32 @@ class Culture_Settings {
 
     private static function render_payment_tab() {
         ?>
-        <h2><?php esc_html_e( 'Paystack Payment Gateway', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Configure your Paystack API keys for processing Patron subscription payments.', 'culture-community' ); ?></p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="culture_paystack_public_key"><?php esc_html_e( 'Public Key', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_public_key" name="culture_paystack_public_key"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_public_key' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'Your Paystack public/test key (starts with pk_).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_secret_key"><?php esc_html_e( 'Secret Key', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_paystack_secret_key" name="culture_paystack_secret_key"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_secret_key' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'Your Paystack secret/test key (starts with sk_). Keep this private.', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-        </table>
-
-        <h3><?php esc_html_e( 'Nigeria (NGN) Plans', 'culture-community' ); ?></h3>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="culture_paystack_plan_monthly_ngn"><?php esc_html_e( 'Monthly Plan Code (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_plan_monthly_ngn" name="culture_paystack_plan_monthly_ngn"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_monthly_ngn' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'Paystack plan code for NGN Monthly (PLN_...).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_amount_monthly_ngn"><?php esc_html_e( 'Monthly Price (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="number" id="culture_paystack_amount_monthly_ngn" name="culture_paystack_amount_monthly_ngn"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_monthly_ngn' ) ); ?>" class="small-text" />
-                    <p class="description"><?php esc_html_e( 'Price in Naira (e.g. 4500). Used for display and as fallback.', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_plan_yearly_ngn"><?php esc_html_e( 'Yearly Plan Code (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_plan_yearly_ngn" name="culture_paystack_plan_yearly_ngn"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_yearly_ngn' ) ); ?>" class="regular-text" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_amount_yearly_ngn"><?php esc_html_e( 'Yearly Price (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="number" id="culture_paystack_amount_yearly_ngn" name="culture_paystack_amount_yearly_ngn"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_yearly_ngn' ) ); ?>" class="small-text" />
-                </td>
-            </tr>
-        </table>
-
-        <hr />
-        <h3><?php esc_html_e( 'Moveee Lit — Nigeria (NGN) Plans', 'culture-community' ); ?></h3>
-        <p class="description"><?php esc_html_e( 'Moveee Lit grants full access to The Moveee Literary only (see CLAUDE.md\'s "Three-tier membership" section) — a separate, cheaper tier from Moveee Pro above. Leave blank to fall back to roughly a third of the matching Patron price.', 'culture-community' ); ?></p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="culture_paystack_plan_monthly_ngn_lit"><?php esc_html_e( 'Monthly Plan Code (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_plan_monthly_ngn_lit" name="culture_paystack_plan_monthly_ngn_lit"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_monthly_ngn_lit' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'Paystack plan code for Moveee Lit NGN Monthly (PLN_...).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_amount_monthly_ngn_lit"><?php esc_html_e( 'Monthly Price (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="number" id="culture_paystack_amount_monthly_ngn_lit" name="culture_paystack_amount_monthly_ngn_lit"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_monthly_ngn_lit' ) ); ?>" class="small-text" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_plan_yearly_ngn_lit"><?php esc_html_e( 'Yearly Plan Code (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_paystack_plan_yearly_ngn_lit" name="culture_paystack_plan_yearly_ngn_lit"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_plan_yearly_ngn_lit' ) ); ?>" class="regular-text" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_paystack_amount_yearly_ngn_lit"><?php esc_html_e( 'Yearly Price (NGN)', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="number" id="culture_paystack_amount_yearly_ngn_lit" name="culture_paystack_amount_yearly_ngn_lit"
-                           value="<?php echo esc_attr( self::get( 'culture_paystack_amount_yearly_ngn_lit' ) ); ?>" class="small-text" />
-                </td>
-            </tr>
-        </table>
+        <details style="margin-bottom:24px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#555;">
+                <?php esc_html_e( 'Paystack (Legacy — retired)', 'culture-community' ); ?>
+            </summary>
+            <p class="description" style="margin-top:10px;">
+                <?php esc_html_e( 'Paystack subscriptions are disabled. These keys are kept solely to verify webhook signatures from any lingering legacy Paystack subscribers. No new NGN subscriptions go through Paystack — use Flutterwave below.', 'culture-community' ); ?>
+            </p>
+            <table class="form-table" style="margin-top:8px;">
+                <tr>
+                    <th scope="row"><label for="culture_paystack_public_key"><?php esc_html_e( 'Public Key', 'culture-community' ); ?></label></th>
+                    <td>
+                        <input type="text" id="culture_paystack_public_key" name="culture_paystack_public_key"
+                               value="<?php echo esc_attr( self::get( 'culture_paystack_public_key' ) ); ?>" class="regular-text" />
+                        <p class="description"><?php esc_html_e( 'Starts with pk_.', 'culture-community' ); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="culture_paystack_secret_key"><?php esc_html_e( 'Secret Key', 'culture-community' ); ?></label></th>
+                    <td>
+                        <input type="password" id="culture_paystack_secret_key" name="culture_paystack_secret_key"
+                               value="<?php echo esc_attr( self::get( 'culture_paystack_secret_key' ) ); ?>" class="regular-text" />
+                        <p class="description"><?php esc_html_e( 'Starts with sk_. Keep private.', 'culture-community' ); ?></p>
+                    </td>
+                </tr>
+            </table>
+        </details>
 
         <hr />
         <h3><?php esc_html_e( 'Stripe Configuration (International Gateway)', 'culture-community' ); ?></h3>
