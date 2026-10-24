@@ -165,6 +165,14 @@ class Culture_Flutterwave {
             ],
         ];
 
+        if ( ! empty( $args['payment_plan'] ) ) {
+            $payload['payment_plan'] = (int) $args['payment_plan'];
+        }
+
+        if ( ! empty( $args['meta'] ) && is_array( $args['meta'] ) ) {
+            $payload['meta'] = $args['meta'];
+        }
+
         $response = wp_remote_post( self::API_BASE . '/payments', [
             'headers' => [
                 'Authorization' => 'Bearer ' . self::secret_key(),
@@ -247,6 +255,56 @@ class Culture_Flutterwave {
             return new WP_Error( 'flutterwave_api', $body['message'] ?? "Flutterwave returned HTTP {$code}", [ 'status' => $code >= 500 ? 502 : 422 ] );
         }
         return $body;
+    }
+
+    /**
+     * Initiate a bank transfer via Flutterwave Transfers API.
+     *
+     * @param array $args {
+     *   @type string $account_bank    Bank code (e.g. "044" for Access Bank NG).
+     *   @type string $account_number  Recipient account number.
+     *   @type float  $amount          Amount in major currency units.
+     *   @type string $currency        ISO-4217 currency code (e.g. "NGN").
+     *   @type string $narration       Transfer description shown to recipient.
+     *   @type string $reference       Unique idempotency reference.
+     * }
+     * @return array|WP_Error  Flutterwave transfer data on success, WP_Error on failure.
+     */
+    public static function initiate_transfer( array $args ): array|WP_Error {
+        if ( ! self::is_configured() ) {
+            return new WP_Error( 'flutterwave_unconfigured', 'Flutterwave is not configured.', [ 'status' => 503 ] );
+        }
+
+        $payload = [
+            'account_bank'   => $args['account_bank'],
+            'account_number' => $args['account_number'],
+            'amount'         => (float) $args['amount'],
+            'currency'       => strtoupper( $args['currency'] ),
+            'narration'      => $args['narration'] ?? '',
+            'reference'      => $args['reference'],
+        ];
+
+        $response = wp_remote_post( self::API_BASE . '/transfers', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . self::secret_key(),
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode( $payload ),
+            'timeout' => 30,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'flutterwave_network', 'Could not reach Flutterwave: ' . $response->get_error_message(), [ 'status' => 502 ] );
+        }
+
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
+
+        if ( $code >= 400 || ( $body['status'] ?? '' ) !== 'success' ) {
+            return new WP_Error( 'flutterwave_api', $body['message'] ?? "Flutterwave returned HTTP {$code}", [ 'status' => $code >= 500 ? 502 : 422 ] );
+        }
+
+        return $body['data'] ?? $body;
     }
 
     /**

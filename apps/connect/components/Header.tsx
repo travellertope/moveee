@@ -142,6 +142,9 @@ export default function ConnectHeader() {
       {user?.tier === "patron" && (
         <Link href="/member/events" className="ch-user-item" role="menuitem" onClick={closeMenu}>My Events</Link>
       )}
+      {user?.tier === "patron" && (
+        <Link href="/member/earnings" className="ch-user-item" role="menuitem" onClick={closeMenu}>Creator Earnings</Link>
+      )}
       <Link href="/member/settings" className="ch-user-item" role="menuitem" onClick={closeMenu}>Settings</Link>
       {user?.isVendor && (
         <Link href="/vendor/dashboard" className="ch-user-item" role="menuitem" onClick={closeMenu}>Vendor Dashboard</Link>

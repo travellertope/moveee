@@ -212,6 +212,20 @@ class Culture_REST_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Flutterwave membership subscription webhook endpoint (public, verified by hash).
+        register_rest_route( 'culture/v1', '/flutterwave-member-webhook', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Flutterwave_Subscriptions', 'handle_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+
+        // Unified Flutterwave webhook — single URL for all Flutterwave events (RSVPs, services, subscriptions).
+        register_rest_route( 'culture/v1', '/flutterwave-webhook', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_flutterwave_unified_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         // Newsletter subscribe endpoint (public).
         register_rest_route( 'culture/v1', '/newsletter-subscribe', array(
             'methods'             => 'POST',
@@ -1598,6 +1612,48 @@ class Culture_REST_API {
             'args'                => array(
                 'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
             ),
+        ) );
+
+        // Creator earnings ledger — event creators viewing their balance + history.
+        register_rest_route( 'culture/v1', '/creator/earnings', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_creator_earnings' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'page'    => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 1 ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/creator/payout-request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_creator_payout_request' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'        => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'amount'         => array( 'required' => true, 'type' => 'number' ),
+                'currency'       => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'bank_code'      => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'account_number' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'account_name'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        // Admin: list and process creator payout requests.
+        register_rest_route( 'culture/v1', '/admin/creator-payouts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_admin_creator_payouts' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'status'  => array( 'required' => false, 'type' => 'string', 'default' => '' ),
+                'page'    => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 1 ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/creator-payouts/(?P<id>\d+)/process', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_admin_process_payout' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
         ) );
 
         // Reading Tracker shelves (web — API key, explicit user_id param).
@@ -3606,6 +3662,131 @@ class Culture_REST_API {
      * type lists are accepted here; 'region' rows are what `segment` picks
      * from instead.
      */
+    /**
+     * Unified Flutterwave webhook dispatcher.
+     *
+     * Flutterwave supports only one webhook URL per account. This endpoint
+     * verifies the hash once and routes each event to the correct payment class
+     * based on the tx_ref prefix:
+     *
+     *   CRSVP* / CRSVPG*  → Culture_Community_RSVP_Payment
+     *   flw-svc-*          → Culture_Services_Payment
+     *   flw-sub-*          → Culture_Flutterwave_Subscriptions
+     *   subscription.*     → Culture_Flutterwave_Subscriptions (no tx_ref to check)
+     *
+     * Set this URL in the Flutterwave dashboard:
+     *   {cms}/wp-json/culture/v1/flutterwave-webhook
+     */
+    public static function handle_flutterwave_unified_webhook( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        $hash_secret = get_option( 'culture_flutterwave_webhook_hash', '' );
+        if ( $hash_secret ) {
+            $verif_hash = $request->get_header( 'verif-hash' ) ?: '';
+            if ( ! hash_equals( $hash_secret, $verif_hash ) ) {
+                return new WP_Error( 'invalid_hash', 'Invalid webhook hash.', array( 'status' => 403 ) );
+            }
+        }
+
+        $payload = json_decode( $request->get_body(), true ) ?? array();
+        $event   = $payload['event'] ?? '';
+        $data    = $payload['data'] ?? array();
+        $tx_ref  = $data['tx_ref'] ?? '';
+
+        if ( str_starts_with( $tx_ref, 'CRSVP' ) ) {
+            if ( class_exists( 'Culture_Community_RSVP_Payment' ) ) {
+                Culture_Community_RSVP_Payment::dispatch_flutterwave_event( $payload );
+            }
+        } elseif ( str_starts_with( $tx_ref, 'flw-svc-' ) ) {
+            if ( class_exists( 'Culture_Services_Payment' ) ) {
+                Culture_Services_Payment::dispatch_flutterwave_event( $payload );
+            }
+        } elseif ( str_starts_with( $tx_ref, 'flw-sub-' ) || str_starts_with( $event, 'subscription.' ) ) {
+            if ( class_exists( 'Culture_Flutterwave_Subscriptions' ) ) {
+                Culture_Flutterwave_Subscriptions::dispatch_flutterwave_event( $payload );
+            }
+        }
+
+        return rest_ensure_response( array( 'status' => 'ok' ) );
+    }
+
+    /* ── Creator earnings ─────────────────────────────────────────────── */
+
+    public static function handle_creator_earnings( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $balance  = Culture_Creator_Earnings::get_balance( $user_id );
+        $history  = Culture_Creator_Earnings::get_history( $user_id, $page );
+        $fee_rate = Culture_Creator_Earnings::platform_fee_rate();
+
+        return rest_ensure_response( [
+            'balance'      => $balance,
+            'fee_rate'     => $fee_rate,
+            'history'      => $history,
+        ] );
+    }
+
+    public static function handle_creator_payout_request( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $user_id        = (int) $request->get_param( 'user_id' );
+        $amount         = (float) $request->get_param( 'amount' );
+        $currency       = strtoupper( (string) $request->get_param( 'currency' ) );
+        $bank_code      = (string) $request->get_param( 'bank_code' );
+        $account_number = (string) $request->get_param( 'account_number' );
+        $account_name   = (string) $request->get_param( 'account_name' );
+
+        $result = Culture_Creator_Earnings::request_payout(
+            $user_id, $amount, $currency, $bank_code, $account_number, $account_name
+        );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( [
+            'request_id' => $result,
+            'message'    => 'Payout request submitted. You will be notified when it is processed.',
+        ] );
+    }
+
+    public static function handle_admin_creator_payouts( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $status = sanitize_text_field( $request->get_param( 'status' ) ?: '' );
+        $page   = max( 1, (int) $request->get_param( 'page' ) );
+
+        return rest_ensure_response(
+            Culture_Creator_Earnings::get_payout_requests( $status, $page )
+        );
+    }
+
+    public static function handle_admin_process_payout( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $id     = (int) $request->get_param( 'id' );
+        $result = Culture_Creator_Earnings::process_payout( $id );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( [
+            'success'  => true,
+            'transfer' => $result,
+        ] );
+    }
+
+    /* ── Newsletters ──────────────────────────────────────────────────── */
+
     public static function handle_newsletter_subscribe( $request ) {
         $email   = $request->get_param( 'email' );
         $name    = $request->get_param( 'name' ) ?: '';
@@ -4045,8 +4226,8 @@ class Culture_REST_API {
         // Paid tier (Lit or Patron) — return payment checkout URL.
         if ( in_array( $tier, array( 'lit', 'patron' ), true ) ) {
             $checkout_url = '';
-            if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key, $tier );
+            if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Flutterwave_Subscriptions' ) ) {
+                $checkout_url = Culture_Flutterwave_Subscriptions::get_checkout_url( $user_id, $plan_key, $tier );
             } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
                 $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier );
             }
@@ -5512,10 +5693,9 @@ class Culture_REST_API {
 
         $checkout_url = '';
 
-        // If Paystack.
-        if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-            // We'll call a new method that returns the direct authorization URL.
-            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key, $tier, $return_path );
+        // NGN → Flutterwave subscriptions.
+        if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Flutterwave_Subscriptions' ) ) {
+            $checkout_url = Culture_Flutterwave_Subscriptions::init_checkout_session( $user_id, $plan_key, $tier, $return_path );
         }
         // If Stripe.
         elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {

@@ -15,7 +15,11 @@ import { Bricolage_Grotesque } from "next/font/google";
 // it from here rather than adding a third duplicate call.
 export const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["500", "700", "800"],
+  // weight array omitted — Bricolage_Grotesque is a variable-weight font and
+  // Turbopack (Next.js 16) only allows exactly one Google Fonts query per font
+  // call; multiple static weights each become a separate query and trigger
+  // "next/font/google queries have exactly one entry". Omitting weight loads the
+  // variable font file which supports all weights (100–800) via CSS font-weight.
   variable: "--font-lfs-display",
   display: "swap",
 });

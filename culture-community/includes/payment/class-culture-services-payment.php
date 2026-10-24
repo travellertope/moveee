@@ -3,7 +3,7 @@
  * /services payment collection — one-time and subscription charges for
  * Media Services packages (Sponsored Content, Content Amplification, Media
  * Partnership, Happenings, Lifestyle & Commerce, Community Sponsorship),
- * via Paystack (NGN) and Stripe (GBP/USD). Mirrors Culture_Ticket_Payment's
+ * via Flutterwave (NGN) and Stripe (GBP/USD). Mirrors Culture_Ticket_Payment's
  * shape closely — same gateway routing, same reference-prefix-then-metadata
  * pattern, same idempotent confirm — with two differences: the `/initiate`
  * route requires the Culture_REST_API API-key/bearer secret (not public)
@@ -15,18 +15,24 @@
  * from re-validating the number; and it supports a recurring `subscription`
  * kind alongside the one-time `one_time` kind ticketing never needed.
  *
+ * VAT: 7.5% is applied server-side on all transactions.  The `price_amount`
+ * field in the request (and DB) is the base price before VAT; `vat_amount`
+ * stores the computed VAT; the gateway is charged price_amount + vat_amount.
+ *
  * Table: {prefix}culture_services_payments
  *
  * REST endpoints (all under /wp-json/culture/v1/):
- *   POST services/payment/initiate         — create pending payment + start gateway session (bearer-gated)
- *   GET  services/payment/callback         — Paystack post-payment browser redirect
- *   POST services/payment/webhook/paystack — Paystack charge.success webhook
- *   POST services/payment/webhook/stripe   — Stripe checkout.session.completed webhook
- *   GET  services/payment/status           — read-only status poll by code (Stripe pending state)
+ *   POST services/payment/initiate               — create pending payment + start gateway session (bearer-gated)
+ *   GET  services/payment/callback               — Paystack post-payment browser redirect (legacy, kept for compat)
+ *   GET  services/payment/callback/flutterwave   — Flutterwave post-payment browser redirect
+ *   POST services/payment/webhook/paystack       — Paystack charge.success webhook (legacy, kept)
+ *   POST services/payment/webhook/stripe         — Stripe checkout.session.completed webhook
+ *   POST services/payment/webhook/flutterwave    — Flutterwave charge.completed webhook
+ *   GET  services/payment/status                 — read-only status poll by code (Stripe pending state)
  *
  * Webhook URLs to configure in payment dashboards:
- *   Paystack: {site}/wp-json/culture/v1/services/payment/webhook/paystack
- *   Stripe:   {site}/wp-json/culture/v1/services/payment/webhook/stripe
+ *   Flutterwave: {site}/wp-json/culture/v1/services/payment/webhook/flutterwave
+ *   Stripe:      {site}/wp-json/culture/v1/services/payment/webhook/stripe
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -34,6 +40,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Culture_Services_Payment {
 
     const TABLE = 'culture_services_payments';
+    const VAT_RATE = 0.075; // 7.5%
 
     // ── Bootstrap ─────────────────────────────────────────────────────────────
 
@@ -61,6 +68,7 @@ class Culture_Services_Payment {
             item_name         varchar(200) NOT NULL DEFAULT '',
             item_kind         varchar(20)  NOT NULL DEFAULT 'one_time',
             price_amount      int(11)      NOT NULL DEFAULT 0,
+            vat_amount        int(11)      NOT NULL DEFAULT 0,
             price_currency    varchar(10)  NOT NULL DEFAULT 'GBP',
             buyer_name        varchar(200) NOT NULL DEFAULT '',
             buyer_email       varchar(200) NOT NULL DEFAULT '',
@@ -97,9 +105,23 @@ class Culture_Services_Payment {
             ],
         ] );
 
+        // Flutterwave post-payment browser redirect.
+        register_rest_route( 'culture/v1', '/services/payment/callback/flutterwave', [
+            'methods'             => 'GET',
+            'callback'            => [ __CLASS__, 'handle_flutterwave_callback' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        // Legacy Paystack callback (kept for any in-flight transactions).
         register_rest_route( 'culture/v1', '/services/payment/callback', [
             'methods'             => 'GET',
             'callback'            => [ __CLASS__, 'handle_paystack_callback' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'culture/v1', '/services/payment/webhook/flutterwave', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_flutterwave_webhook' ],
             'permission_callback' => '__return_true',
         ] );
 
@@ -137,7 +159,7 @@ class Culture_Services_Payment {
         $section_id     = $req->get_param( 'section_id' );
         $item_name      = $req->get_param( 'item_name' );
         $item_kind      = 'subscription' === $req->get_param( 'item_kind' ) ? 'subscription' : 'one_time';
-        $price_amount   = (int) $req->get_param( 'price_amount' );
+        $price_amount   = (int) $req->get_param( 'price_amount' ); // base price, before VAT
         $price_currency = strtoupper( $req->get_param( 'price_currency' ) ?? 'GBP' );
         $ip             = sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' );
 
@@ -145,8 +167,12 @@ class Culture_Services_Payment {
             return new WP_REST_Response( [ 'error' => 'invalid_currency', 'message' => 'Unsupported currency.' ], 400 );
         }
 
-        // Route: NGN → Paystack, everything else → Stripe
-        $gateway = ( 'NGN' === $price_currency ) ? 'paystack' : 'stripe';
+        // Apply 7.5% VAT.
+        $vat_amount   = (int) round( $price_amount * self::VAT_RATE );
+        $total_amount = $price_amount + $vat_amount;
+
+        // Route: NGN → Flutterwave, everything else → Stripe.
+        $gateway = ( 'NGN' === $price_currency ) ? 'flutterwave' : 'stripe';
 
         $payment_code = 'SVC-' . strtoupper( bin2hex( random_bytes( 8 ) ) );
 
@@ -157,6 +183,7 @@ class Culture_Services_Payment {
             'item_name'      => $item_name,
             'item_kind'      => $item_kind,
             'price_amount'   => $price_amount,
+            'vat_amount'     => $vat_amount,
             'price_currency' => $price_currency,
             'buyer_name'     => $name,
             'buyer_email'    => $email,
@@ -164,17 +191,18 @@ class Culture_Services_Payment {
             'status'         => 'pending',
             'payment_status' => 'pending',
             'ip_address'     => $ip,
-        ], [ '%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s','%s' ] );
+        ], [ '%s','%s','%s','%s','%s','%d','%d','%s','%s','%s','%s','%s','%s','%s' ] );
 
         if ( ! $ok ) {
             return new WP_REST_Response( [ 'error' => 'db_error', 'message' => 'Could not start checkout. Please try again.' ], 500 );
         }
 
-        $amount_minor = $price_amount * 100; // major → lowest unit (kobo / cents / pence)
+        // total_amount in major units → minor units for the gateway.
+        $amount_minor = $total_amount * 100;
 
-        $result = ( 'paystack' === $gateway )
-            ? self::init_paystack( $payment_code, $name, $email, $amount_minor, $price_currency, $item_name, $item_kind )
-            : self::init_stripe(   $payment_code, $name, $email, $amount_minor, $price_currency, $item_name, $item_kind );
+        $result = ( 'flutterwave' === $gateway )
+            ? self::init_flutterwave( $payment_code, $name, $email, $total_amount, $price_currency, $item_name, $item_kind )
+            : self::init_stripe(      $payment_code, $name, $email, $amount_minor, $price_currency, $item_name, $item_kind );
 
         if ( is_wp_error( $result ) ) {
             $wpdb->delete( $t, [ 'payment_code' => $payment_code ], [ '%s' ] );
@@ -186,88 +214,68 @@ class Culture_Services_Payment {
         return new WP_REST_Response( [
             'payment_url'  => $result['url'],
             'payment_code' => $payment_code,
+            'vat_amount'   => $vat_amount,
+            'total_amount' => $total_amount,
         ], 200 );
     }
 
-    // ── Paystack — one-time charge or plan-backed subscription charge ──────
+    // ── Flutterwave — one-time charge or plan-backed subscription ─────────────
 
-    private static function init_paystack(
+    private static function init_flutterwave(
         string $code, string $name, string $email,
-        int $amount, string $currency, string $item_name, string $item_kind
+        int $total_amount, string $currency, string $item_name, string $item_kind
     ): array|\WP_Error {
 
-        $callback_url = add_query_arg( [ 'gateway' => 'paystack', 'code' => $code ], rest_url( 'culture/v1/services/payment/callback' ) );
+        if ( ! class_exists( 'Culture_Flutterwave' ) || ! Culture_Flutterwave::is_configured() ) {
+            return new \WP_Error( 'flutterwave_unconfigured', 'Flutterwave is not configured.' );
+        }
 
-        $params = [
-            'email'        => $email,
-            'amount'       => $amount,
+        $tx_ref       = 'flw-svc-' . $code;
+        $callback_url = rest_url( 'culture/v1/services/payment/callback/flutterwave' );
+
+        $args = [
+            'tx_ref'       => $tx_ref,
+            'amount'       => (float) $total_amount,
             'currency'     => $currency,
-            'reference'    => 'SVC-' . $code,
-            'callback_url' => $callback_url,
-            'metadata'     => [
-                'payment_code' => $code,
-                'buyer_name'   => $name,
-                'custom_fields' => [ [
-                    'display_name'  => 'Service',
-                    'variable_name' => 'service',
-                    'value'         => $item_name,
-                ] ],
-            ],
+            'redirect_url' => $callback_url,
+            'email'        => $email,
+            'name'         => $name,
+            'description'  => $item_name,
+            'title'        => 'The Moveee Services',
         ];
 
         if ( 'subscription' === $item_kind ) {
-            $plan_code = self::get_or_create_paystack_plan( $item_name, $amount, $currency );
-            if ( is_wp_error( $plan_code ) ) return $plan_code;
-            $params['plan'] = $plan_code;
+            $plan_id = self::get_or_create_flutterwave_plan( $item_name, $total_amount, $currency );
+            if ( is_wp_error( $plan_id ) ) return $plan_id;
+            $args['payment_plan'] = $plan_id;
         }
 
-        $response = Culture_Paystack::charge_initiate( $params );
-
-        if ( is_wp_error( $response ) ) return $response;
-        if ( empty( $response['data']['authorization_url'] ) ) {
-            return new \WP_Error( 'paystack_error', 'Could not initialize Paystack payment.' );
-        }
+        $result = Culture_Flutterwave::payment_initiate( $args );
+        if ( is_wp_error( $result ) ) return $result;
 
         return [
-            'url'       => $response['data']['authorization_url'],
-            'reference' => $response['data']['reference'],
+            'url'       => $result['url'],
+            'reference' => $tx_ref,
         ];
     }
 
     /**
-     * Paystack subscriptions are billed against a pre-created Plan, not a
-     * bare amount — create one on first use for a given (name, amount,
-     * currency) combination and cache its plan_code so repeat checkouts for
-     * the same package reuse it instead of littering the Paystack dashboard
-     * with a fresh plan per click.
+     * Auto-create a Flutterwave payment plan for a subscription service package
+     * (monthly recurring).  Plan IDs are cached in wp_options so the same
+     * package reuses the same plan across checkouts.
      */
-    private static function get_or_create_paystack_plan( string $item_name, int $amount, string $currency ): string|\WP_Error {
-        $key    = 'culture_svc_plan_' . md5( $item_name . '|' . $amount . '|' . $currency );
-        $cached = get_option( $key, '' );
-        if ( $cached ) return $cached;
+    private static function get_or_create_flutterwave_plan( string $item_name, int $amount, string $currency ): int|\WP_Error {
+        $key    = 'culture_flw_svc_plan_' . md5( $item_name . '|' . $amount . '|' . $currency );
+        $cached = (int) get_option( $key, 0 );
+        if ( $cached > 0 ) return $cached;
 
-        $response = self::paystack_create_plan( $item_name, $amount, $currency );
-        if ( is_wp_error( $response ) ) return $response;
-
-        $plan_code = $response['data']['plan_code'] ?? '';
-        if ( ! $plan_code ) {
-            return new \WP_Error( 'paystack_error', 'Could not create Paystack subscription plan.' );
-        }
-
-        update_option( $key, $plan_code, false );
-        return $plan_code;
-    }
-
-    private static function paystack_create_plan( string $item_name, int $amount, string $currency ): array|\WP_Error {
-        // Culture_Paystack has no generic POST helper beyond charge_initiate
-        // (which always hits /transaction/initialize), so /plan is called
-        // directly via the same secret-key + Bearer-auth convention.
-        $secret = get_option( 'culture_paystack_secret_key', '' );
+        $secret = getenv( 'FLUTTERWAVE_SECRET_KEY' )
+            ?: (string) get_option( 'culture_flutterwave_secret_key', '' );
         if ( empty( $secret ) ) {
-            return new \WP_Error( 'missing_api_key', 'Paystack Secret Key is not configured.' );
+            return new \WP_Error( 'flutterwave_unconfigured', 'Flutterwave secret key is not configured.' );
         }
 
-        $response = wp_remote_post( 'https://api.paystack.co/plan', [
+        $response = wp_remote_post( Culture_Flutterwave::API_BASE . '/payment-plans', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $secret,
                 'Content-Type'  => 'application/json',
@@ -283,14 +291,20 @@ class Culture_Services_Payment {
 
         if ( is_wp_error( $response ) ) return $response;
 
-        $code = wp_remote_retrieve_response_code( $response );
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
 
-        if ( $code >= 400 ) {
-            return new \WP_Error( 'paystack_error', $body['message'] ?? 'Paystack API error.', [ 'status' => $code ] );
+        if ( $code >= 400 || ( $body['status'] ?? '' ) !== 'success' ) {
+            return new \WP_Error( 'flutterwave_api', $body['message'] ?? "Flutterwave returned HTTP {$code}" );
         }
 
-        return $body;
+        $plan_id = (int) ( $body['data']['id'] ?? 0 );
+        if ( ! $plan_id ) {
+            return new \WP_Error( 'flutterwave_no_plan', 'Flutterwave did not return a plan ID.' );
+        }
+
+        update_option( $key, $plan_id, false );
+        return $plan_id;
     }
 
     // ── Stripe — one-time or subscription Checkout Session ─────────────────
@@ -342,7 +356,46 @@ class Culture_Services_Payment {
         ];
     }
 
-    // ── Paystack callback (browser redirect after payment) ────────────────
+    // ── Flutterwave callback (browser redirect after payment) ─────────────────
+
+    public static function handle_flutterwave_callback( WP_REST_Request $req ) {
+        $transaction_id = (int) ( $req->get_param( 'transaction_id' ) ?: 0 );
+        $status         = sanitize_key( $req->get_param( 'status' ) ?: '' );
+        $tx_ref         = sanitize_text_field( $req->get_param( 'tx_ref' ) ?: '' );
+
+        $frontend = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
+        $base     = $frontend . '/services/checkout';
+        $fail_url = $base . '?service_failed=1';
+
+        if ( 'successful' !== $status || ! $transaction_id ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        // Verify with Flutterwave.
+        if ( ! class_exists( 'Culture_Flutterwave' ) ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+        $data = Culture_Flutterwave::verify_transaction( $transaction_id );
+        if ( is_wp_error( $data ) || ( $data['status'] ?? '' ) !== 'successful' ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        // Resolve payment_code from tx_ref (format: flw-svc-{payment_code}).
+        $resolved_tx = $data['tx_ref'] ?? $tx_ref;
+        $code        = '';
+        if ( preg_match( '/^flw-svc-(.+)$/', $resolved_tx, $m ) ) {
+            $code = $m[1];
+        }
+
+        if ( ! $code || ! self::confirm_payment( $code, $resolved_tx, 'flutterwave' ) ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        wp_safe_redirect( $base . '?service_confirmed=' . urlencode( $code ) );
+        exit;
+    }
+
+    // ── Legacy Paystack callback (browser redirect after payment) ─────────────
 
     public static function handle_paystack_callback( WP_REST_Request $req ) {
         $reference = sanitize_text_field( $req->get_param( 'reference' ) ?: $req->get_param( 'trxref' ) ?: '' );
@@ -372,7 +425,38 @@ class Culture_Services_Payment {
         exit;
     }
 
-    // ── Paystack webhook ──────────────────────────────────────────────────
+    // ── Flutterwave webhook ───────────────────────────────────────────────────
+
+    public static function handle_flutterwave_webhook( WP_REST_Request $req ): WP_REST_Response {
+        $hash   = $req->get_header( 'verif-hash' ) ?: $req->get_header( 'verif_hash' ) ?: '';
+        $secret = get_option( 'culture_flutterwave_webhook_hash', '' );
+
+        if ( $secret && ! hash_equals( $secret, $hash ) ) {
+            return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
+        }
+
+        self::dispatch_flutterwave_event( $req->get_json_params() ?? [] );
+        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+    }
+
+    /**
+     * Process a pre-verified Flutterwave payload (called by unified webhook dispatcher).
+     */
+    public static function dispatch_flutterwave_event( array $payload ): void {
+        $event = $payload['event'] ?? '';
+        $data  = $payload['data'] ?? [];
+
+        if ( 'charge.completed' !== $event || ( $data['status'] ?? '' ) !== 'successful' ) {
+            return;
+        }
+
+        $tx_ref = $data['tx_ref'] ?? '';
+        if ( preg_match( '/^flw-svc-(.+)$/', $tx_ref, $m ) ) {
+            self::confirm_payment( $m[1], $tx_ref, 'flutterwave' );
+        }
+    }
+
+    // ── Legacy Paystack webhook ───────────────────────────────────────────────
 
     public static function handle_paystack_webhook( WP_REST_Request $req ): WP_REST_Response {
         $payload   = $req->get_body();
@@ -392,7 +476,6 @@ class Culture_Services_Payment {
             $meta      = $d['metadata'] ?? [];
             $code      = $meta['payment_code'] ?? '';
 
-            // Only handle service-payment charges (reference prefixed with SVC-)
             if ( $code && str_starts_with( $reference, 'SVC-' ) ) {
                 self::confirm_payment( $code, $reference, 'paystack' );
             }
@@ -401,7 +484,7 @@ class Culture_Services_Payment {
         return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
     }
 
-    // ── Stripe webhook ────────────────────────────────────────────────────
+    // ── Stripe webhook ────────────────────────────────────────────────────────
 
     public static function handle_stripe_webhook( WP_REST_Request $req ): WP_REST_Response {
         $payload = $req->get_body();
@@ -433,7 +516,7 @@ class Culture_Services_Payment {
         return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
     }
 
-    // ── Status (frontend polling) ─────────────────────────────────────────
+    // ── Status (frontend polling) ─────────────────────────────────────────────
 
     public static function handle_status( WP_REST_Request $req ): WP_REST_Response {
         global $wpdb;
@@ -452,7 +535,7 @@ class Culture_Services_Payment {
         ], 200 );
     }
 
-    // ── Internal: confirm payment ──────────────────────────────────────────
+    // ── Internal: confirm payment ─────────────────────────────────────────────
 
     private static function confirm_payment( string $code, string $reference, string $gateway ): bool {
         global $wpdb;
@@ -461,8 +544,6 @@ class Culture_Services_Payment {
         $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t} WHERE payment_code = %s LIMIT 1", $code ) );
         if ( ! $payment ) return false;
 
-        // Idempotent — either the Paystack browser callback or the webhook
-        // (whichever fires first) wins; the other is a no-op.
         if ( 'confirmed' === $payment->status ) return true;
 
         $updated = $wpdb->update( $t, [
@@ -480,7 +561,7 @@ class Culture_Services_Payment {
         return true;
     }
 
-    // ── Confirmation emails ──────────────────────────────────────────────
+    // ── Confirmation emails ───────────────────────────────────────────────────
 
     private static function send_confirmation_emails( object $payment ): void {
         $first   = explode( ' ', trim( $payment->buyer_name ) )[0] ?: $payment->buyer_name;
@@ -489,9 +570,12 @@ class Culture_Services_Payment {
             'NGN'   => '₦',
             default => '£',
         };
-        $amount_display = $symbol . number_format( (float) $payment->price_amount );
-        $cadence        = 'subscription' === $payment->item_kind ? ' / month' : '';
-        $subject        = "Payment received — {$payment->item_name} · The Moveee";
+
+        $vat_amount   = (int) ( $payment->vat_amount ?? 0 );
+        $base_amount  = (int) $payment->price_amount;
+        $total_amount = $base_amount + $vat_amount;
+        $cadence      = 'subscription' === $payment->item_kind ? ' / month' : '';
+        $subject      = "Payment received — {$payment->item_name} · The Moveee";
 
         $html  = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f3ece0;font-family:Georgia,serif;">';
         $html .= '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3ece0;padding:48px 20px;"><tr><td align="center">';
@@ -506,16 +590,21 @@ class Culture_Services_Payment {
         $html .= '<p style="margin:16px 0 32px;font-size:16px;font-style:italic;color:rgba(243,236,224,0.65);">' . esc_html( $payment->item_name ) . '</p>';
 
         $rows = [
-            [ 'Amount', $amount_display . $cadence ],
-            [ 'Reference', $payment->payment_code ],
-            [ 'Name', $payment->buyer_name ],
-            [ 'Email', $payment->buyer_email ],
+            [ 'Sub-total',   $symbol . number_format( $base_amount ) . $cadence ],
+            [ 'VAT (7.5%)',  $symbol . number_format( $vat_amount ) ],
+            [ 'Total',       $symbol . number_format( $total_amount ) . $cadence ],
+            [ 'Reference',   $payment->payment_code ],
+            [ 'Name',        $payment->buyer_name ],
+            [ 'Email',       $payment->buyer_email ],
         ];
         $html .= '<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(243,236,224,0.15);margin-bottom:28px;">';
         foreach ( $rows as [ $label, $value ] ) {
-            $html .= '<tr>';
+            $is_total = 'Total' === $label;
+            $row_style = $is_total ? 'border-top:1px solid rgba(243,236,224,0.3);' : '';
+            $val_style = $is_total ? 'font-weight:700;color:#f3ece0;' : 'color:#f3ece0;';
+            $html .= '<tr style="' . $row_style . '">';
             $html .= '<td style="padding:11px 16px;font-family:monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.15em;color:rgba(243,236,224,0.4);border-bottom:1px solid rgba(243,236,224,0.08);">' . esc_html( $label ) . '</td>';
-            $html .= '<td style="padding:11px 16px;font-size:14px;color:#f3ece0;text-align:right;border-bottom:1px solid rgba(243,236,224,0.08);">' . esc_html( $value ) . '</td>';
+            $html .= '<td style="padding:11px 16px;font-size:14px;' . $val_style . 'text-align:right;border-bottom:1px solid rgba(243,236,224,0.08);">' . esc_html( $value ) . '</td>';
             $html .= '</tr>';
         }
         $html .= '</table>';
@@ -535,10 +624,11 @@ class Culture_Services_Payment {
             [ 'Content-Type: text/html; charset=UTF-8', 'From: The Moveee Services <services@themoveee.com>' ]
         );
 
+        $total_display = $symbol . number_format( $total_amount ) . $cadence;
         wp_mail(
             get_option( 'admin_email' ),
             "[SERVICES PAYMENT] {$payment->item_name} — {$payment->buyer_name}",
-            "New paid service:\n\nName: {$payment->buyer_name}\nEmail: {$payment->buyer_email}\nMarket: {$payment->market}\nSection: {$payment->section_id}\nItem: {$payment->item_name}\nKind: {$payment->item_kind}\nAmount: {$amount_display}{$cadence}\nRef: {$payment->payment_code}\nGateway: {$payment->payment_gateway}",
+            "New paid service:\n\nName: {$payment->buyer_name}\nEmail: {$payment->buyer_email}\nMarket: {$payment->market}\nSection: {$payment->section_id}\nItem: {$payment->item_name}\nKind: {$payment->item_kind}\nBase: {$symbol}" . number_format( $base_amount ) . "\nVAT: {$symbol}" . number_format( $vat_amount ) . "\nTotal: {$total_display}\nRef: {$payment->payment_code}\nGateway: {$payment->payment_gateway}",
             [ 'From: The Moveee Services <services@themoveee.com>' ]
         );
     }
@@ -546,11 +636,15 @@ class Culture_Services_Payment {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static function payment_summary( object $payment ): array {
+        $vat_amount   = (int) ( $payment->vat_amount ?? 0 );
+        $base_amount  = (int) $payment->price_amount;
         return [
             'payment_code'   => $payment->payment_code,
             'item_name'      => $payment->item_name,
             'item_kind'      => $payment->item_kind,
-            'price_amount'   => $payment->price_amount,
+            'price_amount'   => $base_amount,
+            'vat_amount'     => $vat_amount,
+            'total_amount'   => $base_amount + $vat_amount,
             'price_currency' => $payment->price_currency,
             'status'         => $payment->status,
             'created_at'     => $payment->created_at,

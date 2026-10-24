@@ -10,6 +10,7 @@ const EXPLORE_LINKS = [
   { href: "/discover", label: "Discover Members" },
   { href: "/member/wallet", label: "My Wallet" },
   { href: "/member/perks", label: "Perks & Rewards" },
+  { href: "/member/earnings", label: "Creator Earnings" },
 ];
 
 export default function DashboardSidebar({ profileUrl }: { profileUrl: string }) {

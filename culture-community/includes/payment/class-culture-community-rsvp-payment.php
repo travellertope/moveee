@@ -431,7 +431,6 @@ class Culture_Community_RSVP_Payment {
     // ── Flutterwave webhook ───────────────────────────────────────────────────
 
     public static function handle_flutterwave_webhook( WP_REST_Request $req ): WP_REST_Response {
-        $payload     = $req->get_body();
         $verif_hash  = $req->get_header( 'verif-hash' ) ?? '';
         $secret_hash = get_option( 'culture_flutterwave_webhook_hash', '' );
 
@@ -439,33 +438,40 @@ class Culture_Community_RSVP_Payment {
             return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
         }
 
-        $data  = json_decode( $payload, true );
+        self::dispatch_flutterwave_event( json_decode( $req->get_body(), true ) ?? [] );
+        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+    }
+
+    /**
+     * Process a pre-verified Flutterwave payload (called by unified webhook dispatcher).
+     */
+    public static function dispatch_flutterwave_event( array $data ): void {
         $event = $data['event'] ?? '';
 
-        if ( 'charge.completed' === $event ) {
-            $d      = $data['data'] ?? [];
-            $tx_ref = $d['tx_ref'] ?? '';
-            $status = $d['status'] ?? '';
-
-            if ( 'successful' === $status ) {
-                if ( str_starts_with( $tx_ref, 'CRSVPG-' ) ) {
-                    // Guest paid RSVP — pending data in wp_options
-                    self::confirm_guest_rsvp_payment( $tx_ref );
-                } elseif ( str_starts_with( $tx_ref, 'CRSVP-' ) ) {
-                    // Authenticated paid RSVP
-                    global $wpdb;
-                    $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
-                        "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
-                        $tx_ref
-                    ) );
-                    if ( $rsvp_id ) {
-                        self::confirm_rsvp_payment( $rsvp_id, $tx_ref, 'flutterwave' );
-                    }
-                }
-            }
+        if ( 'charge.completed' !== $event ) {
+            return;
         }
 
-        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+        $d      = $data['data'] ?? [];
+        $tx_ref = $d['tx_ref'] ?? '';
+        $status = $d['status'] ?? '';
+
+        if ( 'successful' !== $status ) {
+            return;
+        }
+
+        if ( str_starts_with( $tx_ref, 'CRSVPG-' ) ) {
+            self::confirm_guest_rsvp_payment( $tx_ref );
+        } elseif ( str_starts_with( $tx_ref, 'CRSVP-' ) ) {
+            global $wpdb;
+            $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
+                $tx_ref
+            ) );
+            if ( $rsvp_id ) {
+                self::confirm_rsvp_payment( $rsvp_id, $tx_ref, 'flutterwave' );
+            }
+        }
     }
 
     // ── Stripe webhook ────────────────────────────────────────────────────────
@@ -592,6 +598,19 @@ class Culture_Community_RSVP_Payment {
                 '/member/events',
                 [ 'post_id' => $post_id, 'user_id' => $user_id, 'paid' => true ]
             );
+
+            // Creator earnings ledger.
+            if ( class_exists( 'Culture_Creator_Earnings' ) ) {
+                Culture_Creator_Earnings::record_rsvp_earning(
+                    $rsvp_id,
+                    $post_id,
+                    $organiser_id,
+                    (float) $row['amount_paid'],
+                    (string) $row['currency'],
+                    $gateway,
+                    $reference
+                );
+            }
         }
 
         // Gamification
@@ -659,6 +678,7 @@ class Culture_Community_RSVP_Payment {
         if ( ! $locked ) return false;
 
         $inserted = false;
+        $rsvp_id  = 0;
         try {
             $capacity = Culture_Community_RSVP::get_capacity( $post_id );
             if ( $capacity > 0 && Culture_Community_RSVP::get_count( $post_id ) >= $capacity ) {
@@ -674,6 +694,7 @@ class Culture_Community_RSVP_Payment {
             ), ARRAY_A );
 
             if ( $existing ) {
+                $rsvp_id = (int) $existing['id'];
                 $wpdb->update(
                     $table,
                     [
@@ -686,7 +707,7 @@ class Culture_Community_RSVP_Payment {
                         'payment_gateway'   => 'flutterwave',
                         'guest_email'       => $email,
                     ],
-                    [ 'id' => (int) $existing['id'] ],
+                    [ 'id' => $rsvp_id ],
                     [ '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ],
                     [ '%d' ]
                 );
@@ -704,6 +725,7 @@ class Culture_Community_RSVP_Payment {
                     'payment_reference' => $tx_ref,
                     'created_at'        => current_time( 'mysql' ),
                 ], [ '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ] );
+                $rsvp_id = (int) $wpdb->insert_id;
             }
             $inserted = true;
         } finally {
@@ -718,14 +740,28 @@ class Culture_Community_RSVP_Payment {
         // Notify the organiser.
         $post = get_post( $post_id );
         if ( $post ) {
+            $organiser_id = (int) $post->post_author;
             Culture_Notifications::add(
-                (int) $post->post_author,
+                $organiser_id,
                 'event_rsvp',
                 'New paid RSVP',
                 $email . ' RSVPed to "' . wp_trim_words( $post->post_title, 8, '…' ) . '"',
                 '/member/events',
                 [ 'post_id' => $post_id, 'user_id' => $user->ID, 'paid' => true ]
             );
+
+            // Creator earnings ledger.
+            if ( $rsvp_id && class_exists( 'Culture_Creator_Earnings' ) ) {
+                Culture_Creator_Earnings::record_rsvp_earning(
+                    $rsvp_id,
+                    $post_id,
+                    $organiser_id,
+                    (float) $price,
+                    $currency,
+                    'flutterwave',
+                    $tx_ref
+                );
+            }
         }
 
         // Gamification.
