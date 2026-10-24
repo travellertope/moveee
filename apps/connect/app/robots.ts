@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         "/connect/perks",
       ],
     },
-    sitemap: "https://web.themoveee.com/sitemap.xml",
+    sitemap: "https://themoveee.com/sitemap.xml",
   };
 }

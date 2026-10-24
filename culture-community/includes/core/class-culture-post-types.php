@@ -201,9 +201,11 @@ class Culture_Post_Types {
             '_event_ticket_url'        => 'string',
             '_event_category'          => 'string',
             '_culture_event_organiser_id' => 'integer',
-            '_culture_rsvp_enabled'    => 'boolean',
-            '_culture_rsvp_capacity'   => 'integer',
-            '_culture_is_featured'     => 'boolean',
+            '_culture_rsvp_enabled'        => 'boolean',
+            '_culture_rsvp_capacity'       => 'integer',
+            '_culture_rsvp_price'          => 'integer',
+            '_culture_rsvp_price_currency' => 'string',
+            '_culture_is_featured'         => 'boolean',
             // Hub linkage (docs/hubs-plan.md, Phase 2) — null/absent = ordinary community post
             '_hub_id'                  => 'integer',
         );
@@ -234,10 +236,12 @@ class Culture_Post_Types {
                     'organiser_slug' => $organiser_id ? get_post_field( 'post_name', $organiser_id ) : null,
                     'rsvp_enabled'   => $rsvp_enabled,
                     'rsvp_capacity'  => (int) get_post_meta( $id, '_culture_rsvp_capacity', true ),
-                    'rsvp_count'     => $rsvp_enabled && class_exists( 'Culture_Community_RSVP' )
+                    'rsvp_count'          => $rsvp_enabled && class_exists( 'Culture_Community_RSVP' )
                         ? Culture_Community_RSVP::get_count( $id )
                         : 0,
-                    'is_featured'    => (bool) get_post_meta( $id, '_culture_is_featured', true ),
+                    'rsvp_price'          => class_exists( 'Culture_Community_RSVP' ) ? Culture_Community_RSVP::get_price( $id ) : 0,
+                    'rsvp_price_currency' => class_exists( 'Culture_Community_RSVP' ) ? Culture_Community_RSVP::get_price_currency( $id ) : 'NGN',
+                    'is_featured'         => (bool) get_post_meta( $id, '_culture_is_featured', true ),
                 );
             },
             'schema' => null,
@@ -1824,7 +1828,7 @@ class Culture_Post_Types {
         }
         $token = bin2hex( random_bytes( 16 ) );
         update_post_meta( $event_id, '_event_checkin_token_hash', hash( 'sha256', $token ) );
-        $url = "https://web.themoveee.com/events/checkin?id={$event_id}&t={$token}";
+        $url = "https://themoveee.com/events/checkin?id={$event_id}&t={$token}";
         wp_send_json_success( array( 'checkin_url' => $url ) );
     }
 

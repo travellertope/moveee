@@ -479,7 +479,7 @@ export default function DirectoryDetailScreen() {
 
   const handleShare = () => {
     const title = entry?.title ?? routeTitle ?? "Directory entry";
-    const url = `https://web.themoveee.com/directory/${entry?.slug ?? slug ?? ""}`;
+    const url = `https://themoveee.com/directory/${entry?.slug ?? slug ?? ""}`;
     Share.share({ message: `${title} on Moveee: ${url}`, url });
   };
 
@@ -523,7 +523,7 @@ export default function DirectoryDetailScreen() {
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
           {!!slug && (
-            <TouchableOpacity style={[styles.retryBtn, { marginTop: 10 }]} onPress={() => openInApp(`https://web.themoveee.com/directory/${slug ?? ""}`)}>
+            <TouchableOpacity style={[styles.retryBtn, { marginTop: 10 }]} onPress={() => openInApp(`https://themoveee.com/directory/${slug ?? ""}`)}>
               <Text style={styles.retryText}>Open in browser →</Text>
             </TouchableOpacity>
           )}

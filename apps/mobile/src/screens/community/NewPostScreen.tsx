@@ -1120,6 +1120,7 @@ const uploadImages = async (): Promise<string[]> => {
               selected={linkedEntry}
               onSelect={setLinkedEntry}
               label="Link this place in the Directory"
+              externalSource="google_places"
             />
           </View>
         </>

@@ -225,12 +225,14 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [evCity, setEvCity]         = useState("");
   const [evDesc, setEvDesc]         = useState("");
   const [evAdmission, setEvAdmission] = useState("");
+  const [evCurrency, setEvCurrency] = useState("NGN");
   const [evTicketUrl, setEvTicketUrl] = useState("");
   const [evAddress, setEvAddress] = useState("");
   const [evCategory, setEvCategory] = useState("");
   const [evOrganiser, setEvOrganiser] = useState<any>(null);
   const [evRsvpEnabled, setEvRsvpEnabled] = useState(false);
   const [evCapacity, setEvCapacity] = useState("");
+  const [evRsvpPrice, setEvRsvpPrice] = useState("");
 
   // Poll additions
   const [pollDuration, setPollDuration] = useState("3");
@@ -528,12 +530,19 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           payload.event_venue = evVenue.trim();
           payload.event_city = evCity.trim();
           payload.event_address = evAddress.trim() || evVenue.trim();
-          payload.event_admission = evAdmission.trim() || "Free";
+          const admissionNum = evAdmission.trim();
+          payload.event_admission = admissionNum
+            ? `${evCurrency} ${admissionNum}`
+            : "Free";
           if (evTicketUrl.trim()) payload.ticket_url = evTicketUrl.trim();
           if (evCategory) payload.event_category = evCategory;
           if (evOrganiser?.id) payload.organiser_directory_id = evOrganiser.id;
           payload.rsvp_enabled = evRsvpEnabled;
           if (evRsvpEnabled && evCapacity.trim()) payload.rsvp_capacity = parseInt(evCapacity);
+          if (evRsvpEnabled && evRsvpPrice.trim()) {
+            const p = parseInt(evRsvpPrice, 10);
+            if (p > 0) { payload.rsvp_price = p; payload.rsvp_price_currency = evCurrency; }
+          }
           if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         }
 
@@ -1284,12 +1293,28 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               <div className="cm-grid-2">
                 <div className="cm-field">
                   <label className="cm-label">Admission <span className="cm-label-opt">(optional)</span></label>
-                  <input
-                    className="cm-input"
-                    placeholder="e.g. Free, £10, $15"
-                    value={evAdmission}
-                    onChange={e => setEvAdmission(e.target.value)}
-                  />
+                  <div className="cm-currency-row">
+                    <select
+                      className="cm-currency-select"
+                      value={evCurrency}
+                      onChange={e => setEvCurrency(e.target.value)}
+                      aria-label="Currency"
+                    >
+                      <option value="NGN">₦ NGN</option>
+                      <option value="USD">$ USD</option>
+                      <option value="GBP">£ GBP</option>
+                      <option value="EUR">€ EUR</option>
+                    </select>
+                    <input
+                      className="cm-input cm-currency-amount"
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Amount (leave blank if free)"
+                      value={evAdmission}
+                      onChange={e => setEvAdmission(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div className="cm-field">
                   <label className="cm-label">Ticket / RSVP link <span className="cm-label-opt">(optional)</span></label>
@@ -1313,7 +1338,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   <button
                     type="button"
                     className={`cm-pill${!evRsvpEnabled ? " cm-pill--active" : ""}`}
-                    onClick={() => { setEvRsvpEnabled(false); setEvCapacity(""); }}
+                    onClick={() => { setEvRsvpEnabled(false); setEvCapacity(""); setEvRsvpPrice(""); }}
                   >No</button>
                 </div>
               </div>
@@ -1328,6 +1353,34 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     value={evCapacity}
                     onChange={e => setEvCapacity(e.target.value)}
                   />
+                </div>
+              )}
+              {evRsvpEnabled && (session?.user as any)?.tier === "patron" && (
+                <div className="cm-field">
+                  <label className="cm-label">RSVP price <span className="cm-label-opt">(optional — leave blank for free)</span></label>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <select
+                      className="cm-input"
+                      style={{ width: "90px", flexShrink: 0 }}
+                      value={evCurrency}
+                      onChange={e => setEvCurrency(e.target.value)}
+                    >
+                      <option value="NGN">₦ NGN</option>
+                      <option value="USD">$ USD</option>
+                      <option value="GBP">£ GBP</option>
+                      <option value="EUR">€ EUR</option>
+                    </select>
+                    <input
+                      className="cm-input"
+                      type="number"
+                      min="1"
+                      placeholder="Amount…"
+                      value={evRsvpPrice}
+                      onChange={e => setEvRsvpPrice(e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <p className="cm-label-opt" style={{ marginTop: "4px" }}>Platform takes 20% commission. Payouts processed manually.</p>
                 </div>
               )}
               <div className="cm-field">

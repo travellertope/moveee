@@ -155,7 +155,7 @@ export default function ReferralScreen() {
         if (user?.referralCode) {
           setData({
             referralCode: user.referralCode,
-            referralUrl: `https://web.themoveee.com/register?ref=${user.referralCode}`,
+            referralUrl: `https://themoveee.com/register?ref=${user.referralCode}`,
             referralCount: user.referralCount ?? 0,
             repPerReferral: 30,
             creditsPerReferral: 5,
@@ -259,7 +259,7 @@ export default function ReferralScreen() {
               <Text style={styles.copyBtnText}>{copied ? "✓" : "Copy"}</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.shortUrl}>Short link: web.themoveee.com/r/{referralCode}</Text>
+          <Text style={styles.shortUrl}>Short link: themoveee.com/r/{referralCode}</Text>
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.8}>
             <Ionicons name="share-outline" size={18} color={c.ochre} />
             <Text style={styles.shareBtnText}>Share via WhatsApp / DMs</Text>
@@ -341,7 +341,7 @@ export default function ReferralScreen() {
           <Text style={styles.cardHeader}>How it works</Text>
           {[
             { n: "1", text: `Share your link via WhatsApp, Instagram DMs, or text.` },
-            { n: "2", text: `Your friend signs up at web.themoveee.com using your link.` },
+            { n: "2", text: `Your friend signs up at themoveee.com using your link.` },
             { n: "3", text: `You earn +${repPerReferral} points and +${creditsPerReferral} credits — instantly.` },
             { n: "4", text: `Refer ${connectorThreshold} friends → Connector badge. Refer ${superConnectorThreshold} → Super Connector.` },
           ].map(({ n, text }) => (

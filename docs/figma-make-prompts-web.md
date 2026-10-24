@@ -1,5 +1,5 @@
 # Figma Make Prompts — Moveee Webapp (Site A + Site B)
-## Web-only Screen Prompts for themoveee.com and web.themoveee.com
+## Web-only Screen Prompts for themoveee.com and themoveee.com
 
 > **Important — Read First:**
 > Figma Make generates **interactive React/TypeScript prototypes** (running code), not static Figma frames.
@@ -13,7 +13,7 @@
 >
 > **This file is the webapp counterpart to `docs/figma-make-prompts.md`** (mobile-only, §0–17 +
 > Appendix). Every prompt in this file targets `apps/site` (themoveee.com, Site A — Editorial +
-> Shop, no auth) or `apps/connect` (web.themoveee.com, Site B — Community + Auth). Sections here
+> Shop, no auth) or `apps/connect` (themoveee.com, Site B — Community + Auth). Sections here
 > are numbered independently of the mobile file — start at §1, not §18 — since webapp screens will
 > keep growing as their own catalog separate from the mobile design system.
 
@@ -64,7 +64,7 @@ They follow Figma's recommended TC-EBC framework: **Task · Context · Elements 
 | Desktop frame width | 1440px | Standard desktop |
 | Mobile companion width | 390px | Responsive companion frame |
 
-**Site B (web.themoveee.com, Connect) uses a separate warm palette** — paper-warm `#F3ECE0` bg,
+**Site B (themoveee.com, Connect) uses a separate warm palette** — paper-warm `#F3ECE0` bg,
 ghost `#C8BFB0`, success `#2D6A4F` — used only where a prompt explicitly bridges into Site B's
 visual language (e.g. §1's Moveee marketing zone below). Default to the Site A tokens above
 unless a prompt says otherwise.
@@ -938,7 +938,7 @@ Companion (full stack).
 
 ---
 
-## 4. PULSE FEED — WEB (Site B, web.themoveee.com/feed)
+## 4. PULSE FEED — WEB (Site B, themoveee.com/feed)
 
 > Note on scope: this is the web counterpart to the mobile catalog's
 > `docs/figma-make-prompts.md` §3 "CONNECT FEED (Main Home Screen)" + §3B "Happenings
@@ -953,7 +953,7 @@ Companion (full stack).
 > re-drawing it.
 
 ### Brand architecture
-Site B (`apps/connect`, web.themoveee.com) — Moveee, no sub-brand qualifier. This is the
+Site B (`apps/connect`, themoveee.com) — Moveee, no sub-brand qualifier. This is the
 Pulse/Connect feed at `/feed` (renamed from the bare `/connect` path, June 2026 — see
 CLAUDE.md "Connect app feed route"). Tier badges read "Moveee Citizen" / "Moveee Pro" —
 never "Connect Citizen/Pro".
@@ -1066,7 +1066,7 @@ relevant element — do not group them at the top of the file.
 ### PROMPT 4 — Pulse Feed (Desktop 1440px + Mobile Companion 390px)
 
 ```
-Senior web UX/UI designer — Moveee (Site B, web.themoveee.com/feed). Desktop frame
+Senior web UX/UI designer — Moveee (Site B, themoveee.com/feed). Desktop frame
 1440px wide, content column capped at 1080px and centred; mobile-companion frame
 390×844px.
 Brand: paper bg #FFFFFF, paper-warm #F3ECE0 (hero only), ochre #C5491F, gold #B38238,
@@ -1168,7 +1168,7 @@ active), Frame 3 (Mobile Companion).
 
 ---
 
-## 5. POST COMPOSER — WEB (Site B, web.themoveee.com/feed)
+## 5. POST COMPOSER — WEB (Site B, themoveee.com/feed)
 
 > Note on scope: web counterpart to the mobile catalog's §4A "Template Picker Sheet" +
 > §4B "Post Composer (All 10 Templates)". Read `packages/shared/components/pulse/
@@ -1269,7 +1269,7 @@ section tag from keyword matching, shown as a brief tag-bar state change, no toa
 ### PROMPT 5 — Post Composer (Desktop 1440px, inline card)
 
 ```
-Senior web UX/UI designer — Moveee (Site B, web.themoveee.com/feed). Desktop frame
+Senior web UX/UI designer — Moveee (Site B, themoveee.com/feed). Desktop frame
 1440px, composer card constrained to the center-timeline column width (~660px, matching
 PulseFeed's center rail).
 Brand: white card bg, paper-warm #F3ECE0 (quote avatar accent), ochre #C5491F, purple
@@ -1659,7 +1659,7 @@ scroll).
 
 ---
 
-## 7. EVENTS / HAPPENINGS — WEB (Site B, web.themoveee.com/events)
+## 7. EVENTS / HAPPENINGS — WEB (Site B, themoveee.com/events)
 
 ### Note on scope
 
@@ -1820,7 +1820,7 @@ When generating, insert these as `<!-- DEV: ... -->` comments at the indicated f
 
 ```
 TASK: Design the Happenings (Events) list page, an individual event detail page, and
-the RSVP form component for Moveee's web community app (web.themoveee.com/events).
+the RSVP form component for Moveee's web community app (themoveee.com/events).
 
 CONTEXT: This is Site B — Moveee's community + auth surface, editorial-magazine
 visual register (paper background, ink text, ochre accents, serif display type +
@@ -1951,7 +1951,7 @@ Companion, full scroll).
 
 ---
 
-## 8. CULTURE GAMES — WEB (Site B, web.themoveee.com/games)
+## 8. CULTURE GAMES — WEB (Site B, themoveee.com/games)
 
 ### Note on scope
 
@@ -2076,7 +2076,7 @@ Mobile 390px)
 ```
 TASK: Design the Culture Games hub, the Culture Trivia gameplay flow, and the
 shared GameDoneScreen result screen for Moveee's web community app
-(web.themoveee.com/games).
+(themoveee.com/games).
 
 CONTEXT: Site B — Moveee's community + auth surface. Paper-warm background, white
 cards, ochre/gold/ink palette, DM Sans + Fraunces + JetBrains Mono. All four games
@@ -2160,7 +2160,7 @@ full scroll).
 
 ---
 
-## 9. MEMBER DASHBOARD — WEB (Site B, web.themoveee.com/member)
+## 9. MEMBER DASHBOARD — WEB (Site B, themoveee.com/member)
 
 ### Note on scope
 
@@ -2307,7 +2307,7 @@ When generating, insert these as `<!-- DEV: ... -->` comments at the indicated f
 
 ```
 TASK: Design the Member Dashboard page for Moveee's web community app
-(web.themoveee.com/member), in both Moveee Pro and Moveee Citizen variants.
+(themoveee.com/member), in both Moveee Pro and Moveee Citizen variants.
 
 CONTEXT: Site B — Moveee's community + auth surface. Paper-warm background, white
 cards, ochre/gold/ink palette, generous 2-column desktop grid (not a single
@@ -2382,7 +2382,7 @@ component close-up), Frame 4 (Mobile Companion, Pro variant, full scroll).
 ---
 
 
-## 10. MEMBER SETTINGS — WEB (Site B, web.themoveee.com/member/settings)
+## 10. MEMBER SETTINGS — WEB (Site B, themoveee.com/member/settings)
 
 ### Note on scope
 Mobile's Member Settings is a single screen (`MemberSettingsScreen.tsx`) with 5
@@ -2397,7 +2397,7 @@ changes" button anywhere in this section. A 6th tab, **Notifications**, exists
 on web with no equivalent anywhere in the mobile catalog at all.
 
 ### Brand architecture
-Site B (`apps/connect`, web.themoveee.com — Community + Auth). Tier copy is
+Site B (`apps/connect`, themoveee.com — Community + Auth). Tier copy is
 "Moveee Pro" / "Moveee Citizen" — never "Connect Pro"/"Connect Citizen".
 
 ### Why this section exists
@@ -2581,7 +2581,7 @@ Output 5 frames: Frame 1 (Settings Shell + Profile, Desktop), Frame 2
 
 ---
 
-## 11. WALLET, PERKS & COUPONS — WEB (Site B, web.themoveee.com/member/wallet, /connect/perks, /member/coupons)
+## 11. WALLET, PERKS & COUPONS — WEB (Site B, themoveee.com/member/wallet, /connect/perks, /member/coupons)
 
 ### Note on scope
 Three separate routes, not three tabs/screens in one flow: `/member/wallet`
@@ -2742,7 +2742,7 @@ full scroll).
 
 ---
 
-## 12. MEMBER DIRECTORY & PUBLIC PROFILES — WEB (Site B, web.themoveee.com/connect/people, /connect/[username])
+## 12. MEMBER DIRECTORY & PUBLIC PROFILES — WEB (Site B, themoveee.com/connect/people, /connect/[username])
 
 ### Note on scope
 Mobile's "Member Directory" is a generic global directory with name/discipline/
@@ -2889,7 +2889,7 @@ unlocked, Desktop), Frame 4 (Mobile Companion, full scroll).
 
 ---
 
-## 13. NOTIFICATIONS & ANALYTICS — WEB (Site B, web.themoveee.com/member/notifications, /member/analytics)
+## 13. NOTIFICATIONS & ANALYTICS — WEB (Site B, themoveee.com/member/notifications, /member/analytics)
 
 > **Note on scope.** Web notifications exist on **two** surfaces, and the
 > dropdown is the one members actually use day to day —
@@ -2907,7 +2907,7 @@ unlocked, Desktop), Frame 4 (Mobile Companion, full scroll).
 
 ### Brand architecture
 
-Site B (`web.themoveee.com`), member-only, behind `getServerSession()`
+Site B (`themoveee.com`), member-only, behind `getServerSession()`
 redirect guards on both routes. "Moveee Pro"/"Moveee Citizen" tier badge
 shown on the Analytics hero only (`mem-tier-badge`) — Notifications has no
 tier-gated content. Internally "credits"/"reputation" — user-facing copy on
@@ -3080,7 +3080,7 @@ Desktop, full scroll), Frame 4 (Mobile Companion, full scroll).
 > bearing ways — this section is grounded in the actual `apps/site/app/shop/**`
 > tree, not a 1:1 port of the mobile spec:
 > - **The shop lives only on Site A** (`themoveee.com`), not Site B
->   (`web.themoveee.com`/`apps/connect`) — there is no shop surface in
+>   (`themoveee.com`/`apps/connect`) — there is no shop surface in
 >   `apps/connect` at all; Connect's `proxy.ts` doesn't even need a shop
 >   redirect because the shop was never built there.
 > - **No hero banner on shop home** — `ShopArchiveWrapper.tsx` goes straight
@@ -3505,7 +3505,7 @@ Desktop, full scroll), Frame 6 (Mobile Companion, full scroll).
 
 ---
 
-## 15. FEED CARD DETAIL DRAWERS — WEB (Site B, web.themoveee.com — `/feed`, `/connect/people`)
+## 15. FEED CARD DETAIL DRAWERS — WEB (Site B, themoveee.com — `/feed`, `/connect/people`)
 
 > **Note on scope.** Mobile's §17 designs these as bottom sheets (`BottomSheet.tsx`
 > peek/full/dismiss states, drag handle, elastic overscroll, keyboard-aware compose
@@ -3532,7 +3532,7 @@ Desktop, full scroll), Frame 6 (Mobile Companion, full scroll).
 
 ### Brand architecture
 
-Connect to Culture — Site B (`apps/connect`, web.themoveee.com). These drawers
+Connect to Culture — Site B (`apps/connect`, themoveee.com). These drawers
 render wherever the unified feed renders cards: `/feed` (Pulse Feed) and any other
 surface using `packages/shared/components/pulse/FeedCard.tsx`.
 
@@ -3615,7 +3615,7 @@ insertion points:
 ### PROMPT 15 — Feed Card Detail Drawers (Desktop 1440px + Mobile 390px)
 
 ```
-Senior product designer — Moveee (web.themoveee.com) feed card detail drawers.
+Senior product designer — Moveee (themoveee.com) feed card detail drawers.
 Brand: paper #F3ECE0, white, ochre #C5491F, gold #B38238, ink #14110D,
 Fraunces (serif headings) + DM Sans (body) + JetBrains Mono (labels/dates).
 
@@ -3851,7 +3851,7 @@ callouts).
 ### Brand architecture
 
 Spans both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
-web.themoveee.com) — this is the shared visual foundation both surfaces draw
+themoveee.com) — this is the shared visual foundation both surfaces draw
 from, plus where they diverge.
 
 ### Why this section exists
@@ -3921,7 +3921,7 @@ indicated insertion points:
 ```
 Senior product designer — Moveee web design system reference sheet, covering
 both Site A (Moveee Magazine, themoveee.com) and Site B (Moveee,
-web.themoveee.com). Desktop frame 1440px wide, scrollable.
+themoveee.com). Desktop frame 1440px wide, scrollable.
 
 <!-- DEV: Site A (apps/site) and Site B (apps/connect) do NOT share an
 identical token set. Site B has --paper-warm (#f3ece0),
@@ -4097,7 +4097,7 @@ SITE B HEADER (apps/connect/components/Header.tsx): logo left; nav links
   "Join" buttons (.ch-btn-ghost / .ch-btn-solid) when logged out.
 
 SITE A HEADER (apps/site/components/Header.tsx): logo left; nav links "Feed"
-  · "Discover" (both external, deep-link to web.themoveee.com) + "Editorials"
+  · "Discover" (both external, deep-link to themoveee.com) + "Editorials"
   (local, the only in-app link) — active state via data-active="true"
   attribute, not a class; right side: search icon, cart icon with numeric
   badge (.cart-badge), "Sign in" link, "Join →" button. No theme toggle, no
@@ -4124,11 +4124,11 @@ Output 6 frames: Frame 1 (Color Tokens), Frame 2 (Typography), Frame 3
 
 ---
 
-## 17. AUTHENTICATION FLOW — WEB (Site B, web.themoveee.com)
+## 17. AUTHENTICATION FLOW — WEB (Site B, themoveee.com)
 
 ### Brand architecture
 Auth lives entirely on Site B (`apps/connect`) — Site A never shows login/register UI; it
-redirects auth paths to web.themoveee.com via `proxy.ts`. Per the brand table, this surface is
+redirects auth paths to themoveee.com via `proxy.ts`. Per the brand table, this surface is
 just **Moveee** (no "Connect" qualifier) — but note the live copy in code still reads
 `"The Moveee — Culture Community"`, not the simpler current brand line; flag this as a DEV note
 rather than silently correcting it, since the prompt must match what's actually deployed.
@@ -4232,7 +4232,7 @@ actually appear on web" callout. -->
 
 ```
 You are a senior web UX/UI designer recreating the REAL, currently-deployed Moveee Connect
-(web.themoveee.com, Site B) authentication flow — not a redesign. These pages have no shared
+(themoveee.com, Site B) authentication flow — not a redesign. These pages have no shared
 header/footer chrome, no external stylesheet, and no brand-token CSS variables (--ink/--ochre/
 --paper etc. are NOT used here) — every value below is a literal inline style pulled directly
 from the live code. Recreate this fragmented, Georgia-serif, white-and-cream aesthetic exactly;
@@ -4346,7 +4346,7 @@ Frame 7 (Reset Password), Frame 8 (Passkey Banner callout).
 
 ---
 
-## 18. OVERLAYS & MICRO-INTERACTIONS — WEB (Site B, web.themoveee.com)
+## 18. OVERLAYS & MICRO-INTERACTIONS — WEB (Site B, themoveee.com)
 
 ### Brand architecture
 All real components are in `packages/shared/components/pulse/` (FeedCard.tsx) and
@@ -4439,7 +4439,7 @@ draw a grouped floating menu. -->
 
 ```
 You are a senior web UX/UI designer documenting the REAL overlay and micro-interaction patterns
-in the Moveee Connect web app (web.themoveee.com) — not redesigning them. Unlike a typical
+in the Moveee Connect web app (themoveee.com) — not redesigning them. Unlike a typical
 design system, this app has no toast primitive, no context menu, and no confirm-before-sign-out
 step; most "overlay" moments are inline state swaps inside the triggering component. Show each
 pattern as it actually renders today, on a 1440px canvas with the real PulseFeed background
@@ -4519,7 +4519,7 @@ Output 8 frames, each containing its labeled sub-states as described above.
 
 ---
 
-## 19. DARK MODE & LOADING STATES — WEB (Site B, web.themoveee.com)
+## 19. DARK MODE & LOADING STATES — WEB (Site B, themoveee.com)
 
 ### Brand architecture
 Dark mode is Site B-only — `apps/site/app/globals.css` (Site A) has no `[data-theme="dark"]`
@@ -4595,7 +4595,7 @@ app/loading.tsx, but it carries no dark-mode pairing and is out of scope here. -
 
 ```
 You are a senior web UX/UI designer documenting the REAL dark-mode and loading-state behavior of
-Moveee Connect (web.themoveee.com) — including its real gaps, not an idealized fully-polished
+Moveee Connect (themoveee.com) — including its real gaps, not an idealized fully-polished
 version. Canvas: 1440px desktop frames.
 
 ═══════════════════════════════════════
@@ -4661,10 +4661,10 @@ splash screen — negative-space callout).
 
 ---
 
-## 20. DIRECTORY ENTRY DETAIL PAGE — WEB (Site B, web.themoveee.com/directory/[slug])
+## 20. DIRECTORY ENTRY DETAIL PAGE — WEB (Site B, themoveee.com/directory/[slug])
 
 ### Brand architecture
-Site B (web.themoveee.com). Real route: `apps/connect/app/directory/[slug]/page.tsx`, styled by
+Site B (themoveee.com). Real route: `apps/connect/app/directory/[slug]/page.tsx`, styled by
 `apps/connect/app/directory.css` (shared with the `/directory` listing page and `/directory/submit`).
 
 ### Why this section exists
@@ -4773,7 +4773,7 @@ separate "edit" form. -->
 
 ```
 You are a senior web UX/UI designer documenting the REAL `/directory/[slug]` page on Moveee
-Connect (web.themoveee.com) — a sticky three-column Wikipedia-style layout, NOT a card-stack
+Connect (themoveee.com) — a sticky three-column Wikipedia-style layout, NOT a card-stack
 app shell. Ground every measurement and color in the spec below; do not invent a hero image or
 per-type badge colors, neither exists on this page.
 
@@ -5166,7 +5166,7 @@ Frame 3 (Redesigned compact mobile).
 
 ---
 
-## 23. DISCOVER (DIRECTORY BROWSE) — WEB (Site B, web.themoveee.com/discover)
+## 23. DISCOVER (DIRECTORY BROWSE) — WEB (Site B, themoveee.com/discover)
 
 ### Note on scope
 

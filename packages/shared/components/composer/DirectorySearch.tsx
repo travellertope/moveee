@@ -53,6 +53,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
   // quick-create city/about step
   const [showCityInput, setShowCityInput] = useState(false);
   const [cityInput, setCityInput] = useState("");
@@ -107,6 +108,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   async function quickCreate() {
     if (!query.trim()) return;
     setCreating(true);
+    setCreateError("");
     try {
       const res = await fetch("/api/directory/quick-create", {
         method: "POST",
@@ -136,8 +138,12 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: data.id, title: data.title, entry_type: typeFilter || "place" }),
         }).catch(() => {});
+      } else {
+        setCreateError("Couldn't create entry. Please try again.");
       }
-    } catch {}
+    } catch {
+      setCreateError("Couldn't create entry. Please try again.");
+    }
     setCreating(false);
   }
 
@@ -220,12 +226,12 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); setAboutInput(""); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); setAboutInput(""); setCreateError(""); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder ?? "Search the directory..."}
         className="composer-dir-input"
       />
-      {open && query.length >= 2 && (
+      {open && query.length >= 2 && !showCityInput && (
         <div className="composer-dir-dropdown">
           {loading && <div className="composer-dir-loading">Searching...</div>}
 
@@ -269,67 +275,68 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
 
           {!loading && !externalLoading && (
             <div className="composer-dir-empty">
-              {!showCityInput ? (
-                <>
-                  {results.length === 0 && externalResults.length === 0 && <span>No matches for &ldquo;{query}&rdquo;.</span>}
-                  <button
-                    type="button"
-                    onClick={() => setShowCityInput(true)}
-                    className="composer-dir-create-btn"
-                  >
-                    + Add &ldquo;{query}&rdquo; manually
-                  </button>
-                </>
-              ) : (
-                <div className="composer-dir-city-form">
-                  {aboutFieldLabel ? (
-                    <>
-                      <label className="composer-dir-city-label">{aboutFieldLabel} <span>(optional)</span></label>
-                      <input
-                        type="text"
-                        value={aboutInput}
-                        onChange={e => setAboutInput(e.target.value)}
-                        placeholder={aboutFieldLabel}
-                        className="composer-dir-city-input"
-                        autoFocus
-                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <label className="composer-dir-city-label">City or neighbourhood <span>(optional)</span></label>
-                      <input
-                        type="text"
-                        value={cityInput}
-                        onChange={e => setCityInput(e.target.value)}
-                        placeholder="e.g. London, Lagos, Brixton"
-                        className="composer-dir-city-input"
-                        autoFocus
-                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
-                      />
-                    </>
-                  )}
-                  <div className="composer-dir-city-actions">
-                    <button
-                      type="button"
-                      onClick={quickCreate}
-                      disabled={creating}
-                      className="composer-dir-create-btn"
-                    >
-                      {creating ? "Creating..." : "Create entry"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowCityInput(false); setCityInput(""); setAboutInput(""); }}
-                      className="composer-dir-cancel-btn"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
+              {results.length === 0 && externalResults.length === 0 && <span>No matches for &ldquo;{query}&rdquo;.</span>}
+              <button
+                type="button"
+                onClick={() => setShowCityInput(true)}
+                className="composer-dir-create-btn"
+              >
+                + Add &ldquo;{query}&rdquo; manually
+              </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Create form renders inline (not inside the absolute dropdown) so it is
+          never clipped by a parent overflow:hidden or overflow-y:auto container. */}
+      {showCityInput && (
+        <div className="composer-dir-city-form">
+          {aboutFieldLabel ? (
+            <>
+              <label className="composer-dir-city-label">{aboutFieldLabel} <span>(optional)</span></label>
+              <input
+                type="text"
+                value={aboutInput}
+                onChange={e => setAboutInput(e.target.value)}
+                placeholder={aboutFieldLabel}
+                className="composer-dir-city-input"
+                autoFocus
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
+              />
+            </>
+          ) : (
+            <>
+              <label className="composer-dir-city-label">City or neighbourhood <span>(optional)</span></label>
+              <input
+                type="text"
+                value={cityInput}
+                onChange={e => setCityInput(e.target.value)}
+                placeholder="e.g. London, Lagos, Brixton"
+                className="composer-dir-city-input"
+                autoFocus
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); quickCreate(); } }}
+              />
+            </>
+          )}
+          {createError && <div className="composer-dir-create-error">{createError}</div>}
+          <div className="composer-dir-city-actions">
+            <button
+              type="button"
+              onClick={quickCreate}
+              disabled={creating}
+              className="composer-dir-create-btn"
+            >
+              {creating ? "Creating..." : "Create entry"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowCityInput(false); setCityInput(""); setAboutInput(""); setCreateError(""); }}
+              className="composer-dir-cancel-btn"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>

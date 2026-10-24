@@ -196,7 +196,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
                 initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
                 shareUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/quotes/${item.wpId}-${item.slug}`}
                 onShare={() => {
-                  const quoteUrl = `${typeof window !== "undefined" ? window.location.origin : "https://web.themoveee.com"}/quotes/${item.wpId}-${item.slug}`;
+                  const quoteUrl = `${typeof window !== "undefined" ? window.location.origin : "https://themoveee.com"}/quotes/${item.wpId}-${item.slug}`;
                   return shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, quoteUrl);
                 }}
               />

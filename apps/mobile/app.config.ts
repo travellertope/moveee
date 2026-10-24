@@ -56,7 +56,7 @@ export default {
       // option or WP Admin UI to override it, so nothing has ever set it to
       // anything else). This MUST match whatever rp.id the server actually
       // returns from GET /culture/v1/auth/passkey/register-options — if
-      // that's ever pointed at web.themoveee.com specifically instead,
+      // that's ever pointed at themoveee.com specifically instead,
       // change this to match. Also requires an apple-app-site-association
       // file hosted at https://themoveee.com/.well-known/
       // apple-app-site-association — see apps/site/app/.well-known/.

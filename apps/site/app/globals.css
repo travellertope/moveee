@@ -1621,6 +1621,11 @@ h1, h2, h3, h4 {
   cursor: pointer;
   font-family: inherit;
 }
+.composer-dir-create-error {
+  font-size: 0.72rem;
+  color: #c0392b;
+  padding: 2px 0;
+}
 
 .composer-dir-selected {
   display: flex;

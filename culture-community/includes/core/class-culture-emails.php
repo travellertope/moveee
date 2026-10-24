@@ -214,6 +214,25 @@ class Culture_Emails {
     }
 
     /**
+     * Send a magic link to a guest so they can complete a free-event RSVP.
+     *
+     * @param string $email       Recipient email address.
+     * @param string $magic_url   The one-time magic link URL.
+     * @param string $event_title Human-readable event title.
+     */
+    public static function send_guest_rsvp_email( string $email, string $magic_url, string $event_title ): void {
+        $subject = 'Your RSVP link for: ' . $event_title;
+
+        $body  = self::get_header( 'You\'re almost in!' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 12px;">Click the button below to confirm your spot at <strong>' . esc_html( $event_title ) . '</strong>. The link also creates (or signs in to) your free Moveee account.</p>';
+        $body .= self::get_button( $magic_url, 'Confirm my RSVP' );
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:20px 0 0;">This link expires in 24 hours and can only be used once. If you didn\'t request this, you can safely ignore this email.</p>';
+        $body .= self::get_footer();
+
+        self::send( $email, $subject, $body );
+    }
+
+    /**
      * Notify a contributor to The Moveee Literary that their emailed submission has
      * been accepted or rejected. Fired by Culture_Literary_Submissions on a
      * status transition into 'accepted'/'rejected' — never on every save, and
@@ -501,6 +520,25 @@ class Culture_Emails {
      */
     public static function set_html_content_type() {
         return 'text/html';
+    }
+
+    /**
+     * Confirm a paid RSVP to a guest — lets them know their spot is secured
+     * and includes a magic sign-in link to access their new Moveee account.
+     */
+    public static function send_paid_rsvp_confirmation_email( string $email, string $event_title, int $amount, string $currency, string $magic_url ): void {
+        $sym = [ 'NGN' => '₦', 'USD' => '$', 'GBP' => '£', 'EUR' => '€' ];
+        $price_label = ( $sym[ $currency ] ?? $currency ) . number_format( $amount );
+
+        $subject = 'Your spot is confirmed — ' . $event_title;
+        $body  = self::get_header( 'You\'re in!' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 12px;">Your payment of <strong>' . esc_html( $price_label ) . '</strong> for <strong>' . esc_html( $event_title ) . '</strong> went through — your spot is confirmed.</p>';
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Click below to sign in to your Moveee account, where you can manage your RSVPs and connect with the community.</p>';
+        $body .= self::get_button( $magic_url, 'Access my account' );
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:20px 0 0;">This link expires in 24 hours and can only be used once.</p>';
+        $body .= self::get_footer();
+
+        self::send( $email, $subject, $body );
     }
 
     /**

@@ -993,7 +993,7 @@ frames: Desktop Person, Mobile Reordered, Gated Book, Empty Movement). Targets
 `apps/connect/app/directory/[slug]/page.tsx` + `apps/connect/app/directory.css`
 (`dir-wiki-*` namespace) — **not** `apps/site/app/directory/[slug]/`, which is dead code:
 `apps/site/proxy.ts`'s `connectPrefixes` array already includes `/directory`, so that whole
-route tree 308-redirects to `web.themoveee.com` and is unreachable in production.
+route tree 308-redirects to `themoveee.com` and is unreachable in production.
 
 This page was already structurally very close to the mockup going in (same `dir-wiki-*`
 classnames, same 220px/1fr/260px three-column grid, same `--dir-*` token values, same
@@ -1048,7 +1048,7 @@ copy, same per-type infobox field definitions for all 11 `culture_directory` ent
 
 ### Directory Entry Detail page — follow-up bug-fix pass (double border, radius, lightbox; June 2026)
 
-User-reported, from a live screenshot of `web.themoveee.com/directory/{slug}`: a double border
+User-reported, from a live screenshot of `themoveee.com/directory/{slug}`: a double border
 under the title area, inconsistent/no border-radius on boxes, and a request to make every image on
 the page open in a lightbox. All three fixed in `apps/connect/app/directory.css` and
 `apps/connect/app/directory/[slug]/page.tsx`.

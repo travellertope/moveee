@@ -165,7 +165,7 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
                   quoteText={plainText}
                   quoteAuthor={author}
                   quoteSource={quote.quoteSource || null}
-                  quoteUrl={`https://web.themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
+                  quoteUrl={`https://themoveee.com/quotes/${quote.databaseId}-${quote.slug}`}
                 />
               </div>
             </article>

@@ -11,7 +11,7 @@ interface Props {
 export default function ClusterShareButton({ clusterId, clusterName, variant = "inline" }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const inviteUrl = `https://web.themoveee.com/cluster/${clusterId}/invite`;
+  const inviteUrl = `https://themoveee.com/cluster/${clusterId}/invite`;
 
   const handleShare = async () => {
     if (typeof navigator === "undefined") return;

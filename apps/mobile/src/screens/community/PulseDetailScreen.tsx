@@ -68,7 +68,7 @@ export default function PulseDetailScreen() {
             <TouchableOpacity
               style={styles.openFullBtn}
               onPress={() => {
-                const url = `https://web.themoveee.com/pulse/${item.slug}`;
+                const url = `https://themoveee.com/pulse/${item.slug}`;
                 Share.share(
                   Platform.OS === "ios"
                     ? { url, message: item.title ?? "Check this out on Moveee" }

@@ -125,22 +125,38 @@ function RsvpDisplay({
   postId,
   capacity,
   initialCount,
+  price,
+  priceCurrency,
 }: {
   postId?: string;
   capacity?: number;
   initialCount?: number;
+  price?: number;
+  priceCurrency?: string;
 }) {
-  const [status, setStatus] = useState<{ rsvped: boolean; count: number } | null>(
+  const isPaid = !!price && price > 0;
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<{ rsvped: boolean; count: number; paymentStatus?: string } | null>(
     initialCount !== undefined ? { rsvped: false, count: initialCount } : null
   );
   const [loading, setLoading] = useState(false);
+  const [paidError, setPaidError] = useState("");
+  // Guest RSVP email form (free events, unauthenticated)
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestSent, setGuestSent] = useState(false);
+  const [guestError, setGuestError] = useState("");
+  const [guestLoading, setGuestLoading] = useState(false);
 
   useEffect(() => {
     if (!postId) return;
     fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res.status === 401) { setIsAuthed(false); return null; }
+        setIsAuthed(true);
+        return res.ok ? res.json() : null;
+      })
       .then((data) => {
-        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0) });
+        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0), paymentStatus: data.paymentStatus });
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,49 +166,249 @@ function RsvpDisplay({
   const isFull = !!capacity && capacity > 0 && count >= capacity;
   const rsvped = !!status?.rsvped;
 
-  async function toggle() {
+  function formatPrice(amount: number, currency: string) {
+    const sym: Record<string, string> = { NGN: "₦", USD: "$", GBP: "£", EUR: "€" };
+    return `${sym[currency] ?? currency}${amount.toLocaleString()}`;
+  }
+
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
     if (loading || !postId) return;
     if (!rsvped && isFull) return;
     setLoading(true);
+    setPaidError("");
     try {
-      const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ post_id: Number(postId) }),
-      });
-      if (res.ok) {
-        setStatus((prev) => ({
-          rsvped: !rsvped,
-          count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
-        }));
+      if (isPaid && !rsvped) {
+        const res = await fetch("/api/community/event-rsvp-paid-initiate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: Number(postId) }),
+        });
+        const data = await res.json();
+        if (res.ok && data?.url) {
+          window.location.href = data.url;
+        } else {
+          setPaidError(data?.error ?? "Payment could not be started. Please try again.");
+        }
+      } else {
+        const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: Number(postId) }),
+        });
+        if (res.ok) {
+          setStatus((prev) => ({
+            rsvped: !rsvped,
+            count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
+          }));
+        }
       }
     } catch {}
     setLoading(false);
   }
 
+  async function submitGuestRsvp(e: React.FormEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!guestEmail || !postId || guestLoading) return;
+    setGuestLoading(true);
+    setGuestError("");
+    try {
+      const res = await fetch("/api/community/event-rsvp-guest-magic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: guestEmail, post_id: Number(postId) }),
+      });
+      if (res.ok) {
+        setGuestSent(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setGuestError(data?.error ?? "Could not send link. Please try again.");
+      }
+    } catch {
+      setGuestError("Could not send link. Please try again.");
+    }
+    setGuestLoading(false);
+  }
+
+  const buttonLabel = isPaid
+    ? rsvped
+      ? "Going ✓"
+      : isFull
+      ? "Full"
+      : `RSVP · ${formatPrice(price!, priceCurrency ?? "NGN")}`
+    : rsvped
+    ? "Going ✓"
+    : isFull
+    ? "Full"
+    : "RSVP";
+
+  // Paid event + unauthenticated: email → Flutterwave guest checkout
+  async function submitGuestPaidRsvp(e: React.FormEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!guestEmail || !postId || guestLoading) return;
+    setGuestLoading(true);
+    setGuestError("");
+    try {
+      const res = await fetch("/api/community/event-rsvp-paid-guest-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: guestEmail, post_id: Number(postId) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.payment_url) {
+        window.location.href = data.payment_url;
+      } else {
+        setGuestError(data?.error ?? "Payment could not be started. Please try again.");
+      }
+    } catch {
+      setGuestError("Could not start payment. Please try again.");
+    }
+    setGuestLoading(false);
+  }
+
+  if (isPaid && isAuthed === false) {
+    return (
+      <div style={{ marginBottom: "0.6rem" }}>
+        {guestSent ? (
+          <p style={{ fontSize: "0.78rem", color: "var(--gold)", margin: 0, fontWeight: 600 }}>
+            Redirecting to payment…
+          </p>
+        ) : (
+          <form onSubmit={submitGuestPaidRsvp} style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <input
+              type="email"
+              required
+              placeholder="Your email"
+              value={guestEmail}
+              onChange={(ev) => setGuestEmail(ev.target.value)}
+              onClick={(ev) => ev.stopPropagation()}
+              style={{
+                flex: "1 1 160px",
+                minWidth: 0,
+                padding: "7px 10px",
+                fontSize: "0.78rem",
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--radius-md, 4px)",
+                background: "var(--paper)",
+                color: "var(--ink)",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={guestLoading || isFull}
+              style={{
+                background: "var(--gold)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "999px",
+                padding: "7px 14px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: isFull ? "not-allowed" : "pointer",
+                opacity: guestLoading ? 0.6 : 1,
+              }}
+            >
+              {isFull ? "Full" : `Pay · ${formatPrice(price!, priceCurrency ?? "NGN")}`}
+            </button>
+          </form>
+        )}
+        {guestError && (
+          <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{guestError}</p>
+        )}
+        <span style={{ fontSize: "0.72rem", color: "var(--mute)", display: "block", marginTop: 4 }}>
+          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+        </span>
+      </div>
+    );
+  }
+
+  // Free event + unauthenticated: show inline email form
+  if (!isPaid && isAuthed === false) {
+    return (
+      <div style={{ marginBottom: "0.6rem" }}>
+        {guestSent ? (
+          <p style={{ fontSize: "0.78rem", color: "var(--gold)", margin: 0, fontWeight: 600 }}>
+            Check your inbox — we sent you an RSVP link!
+          </p>
+        ) : (
+          <form onSubmit={submitGuestRsvp} style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <input
+              type="email"
+              required
+              placeholder="Your email to RSVP"
+              value={guestEmail}
+              onChange={(ev) => setGuestEmail(ev.target.value)}
+              onClick={(ev) => ev.stopPropagation()}
+              style={{
+                flex: "1 1 160px",
+                minWidth: 0,
+                padding: "7px 10px",
+                fontSize: "0.78rem",
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--radius-md, 4px)",
+                background: "var(--paper)",
+                color: "var(--ink)",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={guestLoading || isFull}
+              style={{
+                background: "var(--gold)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "999px",
+                padding: "7px 14px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: isFull ? "not-allowed" : "pointer",
+                opacity: guestLoading ? 0.6 : 1,
+              }}
+            >
+              {isFull ? "Full" : "Send link"}
+            </button>
+          </form>
+        )}
+        {guestError && (
+          <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{guestError}</p>
+        )}
+        <span style={{ fontSize: "0.72rem", color: "var(--mute)", display: "block", marginTop: 4 }}>
+          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.6rem" }}>
-      <button
-        type="button"
-        onClick={toggle}
-        disabled={loading || (!rsvped && isFull)}
-        style={{
-          background: rsvped ? "var(--paper)" : "var(--gold)",
-          color: rsvped ? "var(--gold)" : "#fff",
-          border: "1px solid var(--gold)",
-          borderRadius: "999px",
-          padding: "7px 14px",
-          fontSize: "0.78rem",
-          fontWeight: 700,
-          cursor: !rsvped && isFull ? "not-allowed" : "pointer",
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
-      </button>
-      <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
-        {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
-      </span>
+    <div style={{ marginBottom: "0.6rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={loading || (!rsvped && isFull)}
+          style={{
+            background: rsvped ? "var(--paper)" : "var(--gold)",
+            color: rsvped ? "var(--gold)" : "#fff",
+            border: "1px solid var(--gold)",
+            borderRadius: "999px",
+            padding: "7px 14px",
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            cursor: !rsvped && isFull ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {buttonLabel}
+        </button>
+        <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
+          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+        </span>
+      </div>
+      {paidError && (
+        <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{paidError}</p>
+      )}
     </div>
   );
 }
@@ -968,7 +1184,7 @@ export default function FeedCard({
               </div>
             )}
             {item.templateType === "event" && item.rsvpEnabled && (
-              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
+              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} price={item.rsvpPrice} priceCurrency={item.rsvpPriceCurrency} />
             )}
 
             {/* Gallery carousel — all image-capable templates */}

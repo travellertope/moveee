@@ -1267,7 +1267,7 @@ re-skinned floating pill:
   masthead/nav/footer, not just the homepage the mockup itself showed.
   `LiteraryMasthead` renders: a slim oxblood ribbon ("New fiction, poetry, essays and translation,
   published continuously." + a "Get Updates" link to `/newsletter`), a masthead row (real logo +
-  Sign In [cross-domain to `web.themoveee.com/login`, session-aware via `useSession()`] / Submit /
+  Sign In [cross-domain to `themoveee.com/login`, session-aware via `useSession()`] / Submit /
   Subscribe / a search button reusing the sitewide `SearchOverlay` component), and a full 6-item
   section nav (Fiction/Poetry/Essays/Conversations/In Translation/Notes — all six, unlike the old
   pill nav which dropped Notes for space).
@@ -2508,8 +2508,8 @@ Two Vercel projects, one monorepo:
 
 - **Site A (`themoveee.com`)** — Editorial + Shop. No auth. Fully cacheable.
   - `/magazine`, `/newsletter`, `/journeys`, `/shop`, `/`, `/makers`, `/visuals`
-  - proxy.ts 308-redirects all auth/community/vendor paths → web.themoveee.com
-- **Site B (`web.themoveee.com`)** — Community + Auth + Vendor.
+  - proxy.ts 308-redirects all auth/community/vendor paths → themoveee.com
+- **Site B (`themoveee.com`)** — Community + Auth + Vendor.
   - `/login`, `/register`, `/forgot-password`, `/reset-password`
   - `/vendor/*` — vendor dashboard (moved from Site A)
   - `/member/*`, `/connect`, `/events`, `/community`, `/directory`, `/games`, `/pulse`, `/quotes`
@@ -2692,7 +2692,7 @@ mobile-only or web-only wrapper alone, or the two clients will drift.
   `CheckoutScreen.tsx`'s structure. Step 2's "Pay" button does a full `window.location.href`
   redirect to the Paystack/Stripe hosted page (no in-app WebView the way mobile has one — this is
   a normal browser tab, so a hosted-page redirect is the natural web equivalent). Gated: no
-  session → a login-gate card linking to `https://web.themoveee.com/login?callbackUrl=<back here>`
+  session → a login-gate card linking to `https://themoveee.com/login?callbackUrl=<back here>`
   (absolute callback URLs are already supported by `apps/connect/app/login/page.tsx`); empty cart
   → an empty-state card linking back to `/shop`.
 - `app/shop/order-confirmation/page.tsx` — reads `?shop_ref=` (Stripe/Paystack land here after
@@ -4781,7 +4781,7 @@ content type. This codebase has two structurally distinct "quote" things:
 1. **Native quotes** — `culture_quote` CPT posts (editorially seeded or system-authored), surfaced
    in the mobile feed as `FeedItem.type === "quote"`, rendered via `QuoteCard` →
    `QuoteDetailModal.tsx`. Their real detail page is `/quotes/{databaseId}-{slug}` on
-   `web.themoveee.com` — a **compound** URL segment (`apps/connect/app/quotes/[slug]/page.tsx`
+   `themoveee.com` — a **compound** URL segment (`apps/connect/app/quotes/[slug]/page.tsx`
    parses only the leading numeric id via `segment.split('-')[0]`, then does an ID-based GraphQL
    lookup, not a slug-based one).
 2. **Composer-submitted quote posts** — real `culture_post` entries created via the composer's
@@ -4805,7 +4805,7 @@ correctly-shaped, per-type relative path on every `FeedItem.href`
 $post->post_name`) — it just wasn't being used for sharing. New shared helper
 `apps/mobile/src/utils/shareUrl.ts` (`shareUrlFor(item)`) builds off `item.href` instead of
 hand-rolling a path from `item.slug`, with domain routing (`themoveee.com` for `editorial`,
-`web.themoveee.com` for everything else). Kept as its own tiny module rather than exported from
+`themoveee.com` for everything else). Kept as its own tiny module rather than exported from
 `FeedItemCard.tsx` — that file already imports `QuoteDetailModal.tsx`, so exporting the helper
 from there and importing it back into `QuoteDetailModal.tsx` would have created a circular
 import. `FeedItemCard.tsx`'s own local `shareUrlFor()` (previously used for the native
@@ -4929,7 +4929,7 @@ round trip on a real device before considering this fully closed.
 
 First step of a longer-term plan to retire the standalone `/quotes` product and make
 `culture_quote` posts fully feed-native — the user's explicit goal, stated as "how can we
-merge web.themoveee.com/quotes to work as part of the feed not a separate product? so we
+merge themoveee.com/quotes to work as part of the feed not a separate product? so we
 can retire /quotes/". Quote cards already rendered natively inline in the unified feed on
 both platforms (`FeedCard.tsx`'s quote branch on web, `QuoteCard` in
 `apps/mobile/src/components/community/FeedItemCard.tsx` on mobile — neither ever linked
@@ -5420,7 +5420,7 @@ lives at `app/feed/` (`page.tsx`, `feed.css` — renamed from `connect.css`, `Co
 unchanged: `app/connect/people/`, `app/connect/membership/`, `app/connect/perks/`,
 `app/connect/[username]/` — only the feed page itself moved. `apps/site/proxy.ts`'s
 `connectPrefixes` cross-domain redirect array includes both `/connect` and `/feed` so
-either path on themoveee.com correctly forwards to web.themoveee.com.
+either path on themoveee.com correctly forwards to themoveee.com.
 
 **If you add a new link to the community feed**, point it at `/feed`, not `/connect` —
 `/connect` alone now only resolves via the back-compat redirect. Links to the sub-routes
@@ -5497,7 +5497,7 @@ width regardless of the rail.
 
 ## Footer removed sitewide (Connect web only, July 2026)
 
-`apps/connect` (web.themoveee.com) no longer renders a site footer anywhere —
+`apps/connect` (themoveee.com) no longer renders a site footer anywhere —
 `ConditionalFooter.tsx` (which used to render the shared `packages/shared/components/Footer.tsx`
 on every page except `/feed`) was deleted, and `app/layout.tsx` no longer mounts it (or imports
 `footer.css`). **`apps/site` (themoveee.com Magazine) is unaffected** — it still renders
@@ -5526,7 +5526,7 @@ chrome), not a content right-rail — deliberately excluded.
 
 ## App download nudge (Connect web only, June 2026)
 
-`apps/connect` (web.themoveee.com) shows a non-blocking nudge encouraging visitors to use
+`apps/connect` (themoveee.com) shows a non-blocking nudge encouraging visitors to use
 the native Moveee app instead of the web app — "TikTok-style" but explicitly never
 blocking. `apps/site` (themoveee.com) does **not** get this — it already has its own
 download section (`.mz-download-strip` in `MoveeeZone.tsx`).
@@ -6160,7 +6160,7 @@ simple SHA-256-hash check-in token on editorial `culture_event` posts.
   (`render_event_checkin_meta_box()` in `class-culture-post-types.php`) → AJAX
   `culture_generate_checkin_token` → generates a token, stores `hash('sha256', $token)` as
   `_event_checkin_token_hash` post meta, builds
-  `https://web.themoveee.com/events/checkin?id={eventId}&t={token}`, renders the QR as an
+  `https://themoveee.com/events/checkin?id={eventId}&t={token}`, renders the QR as an
   `<img src="https://api.qrserver.com/...">` (third-party QR image API, no local QR library).
 - **`class-culture-rest-api.php` used to register a second, duplicate copy of this exact metabox
   + AJAX handler** (`add_event_checkin_metabox`/`render_event_checkin_metabox`/
@@ -7222,7 +7222,7 @@ data fetching, no session, no `dynamic` override needed.
   which the bare `/stoop` path would be swallowed by the legacy-WordPress-permalink catch-all
   and 301'd to a nonexistent `/magazine/stoop` — the same trap `'literary'` documents. It is
   **deliberately not in `connectPrefixes`**: this is Site A's own page, and its CTAs link out
-  to `web.themoveee.com` rather than the path itself redirecting there. Also added to
+  to `themoveee.com` rather than the path itself redirecting there. Also added to
   `sitemap.ts`'s `staticPages`.
 - **CTAs**: "Get Started" → `{CONNECT_URL}/register`, "Sign in" → `{CONNECT_URL}/login`, both
   carrying a `callbackUrl` of `/connect/stoop` so a member lands on the Stoop browser rather
@@ -8658,7 +8658,7 @@ specifically; `expo-web-browser` itself is still used elsewhere, by
 
 ### Google Cloud Console setup (one-time, by a human with console access)
 1. Create an OAuth 2.0 **Web application** client. Authorized redirect URI:
-   `https://web.themoveee.com/api/auth/callback/google`. Use its
+   `https://themoveee.com/api/auth/callback/google`. Use its
    Client ID/Secret for `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (Vercel
    env vars, Site B project) and its Client ID for the WP Admin "Web
    Client ID" field.
@@ -8729,7 +8729,7 @@ creating a brand-new account, never overwriting an existing one's `display_name`
 (`Culture_Apple_Auth::verify_id_token()` → `::find_or_create_user()` → issue the
 existing mobile session token). **No web/`apps/connect` route was added** — this
 pass was scoped to the mobile app specifically, since that's what App Store review
-actually gates; if Apple Sign-In is ever wanted on `web.themoveee.com` too, mirror
+actually gates; if Apple Sign-In is ever wanted on `themoveee.com` too, mirror
 the Google web route (`/culture/v1/login-apple`, API-key gated) and wire it into
 NextAuth as a new provider, same shape as `providers.google` in
 `packages/shared/lib/auth.ts` — that's a separate, unstarted piece of work.
@@ -8830,7 +8830,7 @@ forwarded/leaked link can't delete an account outright.
   Confirms via `Alert`, calls the delete-request endpoint, then calls `logout()` —
   nothing left to do in-app until the emailed link is confirmed.
 - **`apps/site` is untouched** — its own `/account/*` prefix already 308-redirects to
-  `web.themoveee.com` (see "Site architecture — split complete" above), so
+  `themoveee.com` (see "Site architecture — split complete" above), so
   `themoveee.com/account/delete` correctly reaches these new `apps/connect` pages with
   no proxy changes needed there.
 
@@ -9134,7 +9134,7 @@ set anywhere in this codebase and no WP Admin UI to set one, so the auto-derived
 default is almost certainly what's live in production. **But this must match exactly
 whatever `rp.id` the server actually returns from `GET
 /culture/v1/auth/passkey/register-options`** — if that ever turns out to be
-`web.themoveee.com` instead (e.g. an option was set directly in the database, bypassing
+`themoveee.com` instead (e.g. an option was set directly in the database, bypassing
 the codebase entirely), both the `associatedDomains` entry and the `.well-known` files'
 location need to move to match. Confirm by hitting that endpoint and checking the
 `rp.id` in its response before assuming this fix is complete.

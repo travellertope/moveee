@@ -175,7 +175,7 @@ export default function CreateClusterClient({ viewerCountry = "" }: Props) {
   const addrLabel = ADDRESS_OPTIONS.find((a) => a.value === addressVisible)?.label ?? "";
 
   if (createdId !== null) {
-    const inviteUrl = `https://web.themoveee.com/cluster/${createdId}/invite`;
+    const inviteUrl = `https://themoveee.com/cluster/${createdId}/invite`;
     const handleCopyLink = async () => {
       try {
         if (navigator.share) {

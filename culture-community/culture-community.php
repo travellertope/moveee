@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     3.7.2
+ * Version:     3.7.3
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '3.7.2' );
+define( 'CULTURE_VERSION', '3.7.3' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -102,6 +102,7 @@ require_once CULTURE_PLUGIN_DIR . 'includes/api/class-culture-event-rsvp.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-paystack.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-stripe.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-ticket-payment.php';
+require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-community-rsvp-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-shop-checkout.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/payment/class-culture-services-payment.php';
 require_once CULTURE_PLUGIN_DIR . 'includes/admin/class-culture-tickets-admin.php';
@@ -184,6 +185,7 @@ function culture_community_init() {
     Culture_Content_Admin::init();
     Culture_Perks_Admin::init();
     Culture_Ticket_Payment::init();
+    Culture_Community_RSVP_Payment::init();
     Culture_Shop_Checkout::init();
     Culture_Services_Payment::init();
     Culture_Tickets_Admin::init();
@@ -196,6 +198,7 @@ function culture_community_init() {
     Culture_Guest_Byline::init();
     Culture_Preview::init();
     Culture_Literary_Submissions::init();
+    Culture_Magic_OTP::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

@@ -4,6 +4,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   Image,
   ScrollView,
@@ -29,6 +30,7 @@ import QuoteDetailModal from "./QuoteDetailModal";
 import PulseDetailSheet from "./PulseDetailSheet";
 import { ReportSheet } from "../ui/Overlays";
 import { shareUrlFor } from "../../utils/shareUrl";
+import { openInApp } from "../../utils/openInApp";
 import type { FeedItem, PollOption } from "../../types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -654,6 +656,17 @@ function createStyles(c: ColorPalette) {
       fontSize: fontSize.sm,
       color: "#FFFFFF",
     },
+    eventGuestInput: {
+      borderWidth: 1,
+      borderColor: c.ghost,
+      borderRadius: radius.md,
+      height: 40,
+      paddingHorizontal: 10,
+      fontSize: fontSize.sm,
+      color: c.ink,
+      marginBottom: 6,
+    },
+    eventGuestError: { fontSize: 11, color: c.error, marginBottom: 6 },
     // editorial card
     editorialCategoryChip: {
       backgroundColor: "rgba(243,236,224,0.92)",
@@ -1957,20 +1970,107 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
   const c = useColors();
   const styles = useMemo(() => createStyles(c), [c]);
   const nav = useNav();
+  const isAuthed = useAuthStore((s) => s.isAuthenticated);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [rsvped, setRsvped] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestError, setGuestError] = useState("");
+  const price = item.rsvpPrice ?? 0;
+  const currency = item.rsvpPriceCurrency ?? "NGN";
+  const isPaid = price > 0;
+  const currencySymbol: Record<string, string> = { NGN: "₦", USD: "$", GBP: "£", EUR: "€" };
+  const sym = currencySymbol[currency] ?? currency;
   const gallery = item.galleryImages ?? (item.image ? [item.image] : []);
   const handleMentionPress = onMentionPress ?? ((username: string) => nav.navigate("MemberProfile", { username }));
 
   const handleRsvp = async () => {
-    if (rsvped || !item.wpId) return;
+    if (rsvped || !item.wpId || busy) return;
+    setBusy(true);
     setRsvped(true);
     try {
       await api.post(`${MOBILE_API}/community/event/rsvp`, { post_id: item.wpId });
     } catch {
       setRsvped(false);
+    } finally {
+      setBusy(false);
     }
   };
+
+  const submitGuestPaid = async () => {
+    const email = guestEmail.trim();
+    if (!email || !email.includes("@")) { setGuestError("Enter a valid email address."); return; }
+    setGuestError("");
+    setBusy(true);
+    try {
+      const data = await api.post<{ payment_url: string }>(
+        `${CULTURE_API}/community/event/rsvp-paid-guest-initiate`,
+        { email, post_id: Number(item.wpId) },
+        false
+      );
+      if (data?.payment_url) {
+        await openInApp(data.payment_url);
+      } else {
+        setGuestError("Could not start payment. Please try again.");
+      }
+    } catch {
+      setGuestError("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const rsvpSection = item.ticketUrl ? (
+    <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
+      <Text style={styles.readMore}>Get Tickets →</Text>
+    </View>
+  ) : item.rsvpEnabled ? (
+    <View style={{ marginTop: 10 }}>
+      {isPaid && !isAuthed ? (
+        <>
+          <Text style={[styles.happeningMetaText, { marginBottom: 6 }]}>
+            Reserve a spot · {sym}{price.toLocaleString()}
+          </Text>
+          <TextInput
+            style={styles.eventGuestInput}
+            placeholder="Your email address"
+            placeholderTextColor={c.ghost}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={guestEmail}
+            onChangeText={(t) => { setGuestEmail(t); setGuestError(""); }}
+          />
+          {guestError ? <Text style={styles.eventGuestError}>{guestError}</Text> : null}
+          <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+            <TouchableOpacity
+              style={[styles.eventRsvpBtn, busy && { opacity: 0.6 }]}
+              onPress={submitGuestPaid}
+              activeOpacity={0.8}
+              disabled={busy}
+            >
+              <Text style={styles.eventRsvpBtnText}>
+                {busy ? "Please wait…" : `Pay ${sym}${price.toLocaleString()}`}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+          <TouchableOpacity
+            style={[styles.eventRsvpBtn, (rsvped || item.rsvpAvailable === false) ? styles.eventRsvpBtnDone : undefined]}
+            onPress={handleRsvp}
+            activeOpacity={0.8}
+            disabled={rsvped || item.rsvpAvailable === false || busy}
+          >
+            <Text style={styles.eventRsvpBtnText}>
+              {rsvped ? "RSVPed ✓" : item.rsvpAvailable === false ? "Fully Booked" : isPaid ? `Pay ${sym}${price.toLocaleString()}` : "RSVP Now"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  ) : null;
 
   return (
     <>
@@ -2032,25 +2132,7 @@ function EventCommunityCard({ item, onPress, onAuthorPress, forYouBadge, onMenti
             </View>
           ) : null}
 
-          {/* RSVP button — only when the Pro organiser has explicitly enabled RSVP for this event */}
-          {item.ticketUrl ? (
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
-              <Text style={styles.readMore}>Get Tickets →</Text>
-            </View>
-          ) : item.rsvpEnabled ? (
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginTop: 10 }}>
-              <TouchableOpacity
-                style={[styles.eventRsvpBtn, (rsvped || item.rsvpAvailable === false) ? styles.eventRsvpBtnDone : undefined]}
-                onPress={handleRsvp}
-                activeOpacity={0.8}
-                disabled={rsvped || item.rsvpAvailable === false}
-              >
-                <Text style={styles.eventRsvpBtnText}>
-                  {rsvped ? "RSVPed ✓" : item.rsvpAvailable === false ? "Fully Booked" : "RSVP Now"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
+          {rsvpSection}
         </View>
         {gallery.length > 1 ? (
           <GalleryStrip images={gallery} height={100} width={140} onTap={(i) => setLightboxIdx(i)} />

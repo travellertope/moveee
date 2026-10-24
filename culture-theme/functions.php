@@ -596,7 +596,7 @@ add_action( 'template_redirect', 'moveee_redirect_taxonomies' );
 /**
  * Redirect a single WordPress post/CPT permalink (cms.themoveee.com/{slug}/)
  * to its real Next.js frontend URL — either the public Moveee Magazine site
- * (themoveee.com) or the Community/Connect app (web.themoveee.com),
+ * (themoveee.com) or the Community/Connect app (themoveee.com),
  * depending on the post type. Without this, a raw cms.themoveee.com link —
  * the kind editors paste into Slack/social, or that search engines index
  * from the un-proxied WordPress permalink — serves the bare WP theme
@@ -622,8 +622,8 @@ function moveee_redirect_singular() {
 
     // Site A — Moveee Magazine (themoveee.com)
     $frontend_url = defined( 'MOVE_FRONTEND_URL' ) ? MOVE_FRONTEND_URL : 'https://themoveee.com';
-    // Site B — Moveee Community/Connect (web.themoveee.com)
-    $connect_url = defined( 'MOVE_CONNECT_URL' ) ? MOVE_CONNECT_URL : 'https://web.themoveee.com';
+    // Site B — Moveee Community/Connect (themoveee.com)
+    $connect_url = defined( 'MOVE_CONNECT_URL' ) ? MOVE_CONNECT_URL : 'https://themoveee.com';
 
     $redirect_url = '';
 
