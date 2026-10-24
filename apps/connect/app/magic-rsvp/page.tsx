@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
-export default function MagicRsvpPage() {
+function MagicRsvpInner() {
   const params = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<"verifying" | "error">("verifying");
@@ -74,5 +74,13 @@ export default function MagicRsvpPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function MagicRsvpPage() {
+  return (
+    <Suspense>
+      <MagicRsvpInner />
+    </Suspense>
   );
 }
