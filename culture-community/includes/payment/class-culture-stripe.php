@@ -18,23 +18,61 @@ class Culture_Stripe {
         return get_option( 'culture_stripe_secret_key', '' );
     }
 
+    /* ── Subscription amounts (USD, major units) ─────────────────────── */
+
+    private static $amount_defaults = array(
+        'patron' => array( 'monthly' => 4,  'yearly' => 40  ),
+        'lit'    => array( 'monthly' => 1,  'yearly' => 13  ),
+    );
+
+    private static function get_amount_usd( string $cycle, string $tier ): float {
+        $suffix   = ( 'patron' === $tier ) ? '' : '_' . strtolower( $tier );
+        $key      = 'culture_stripe_amount_' . strtolower( $cycle ) . '_usd' . $suffix;
+        $fallback = self::$amount_defaults[ $tier ][ $cycle ] ?? 4;
+        return (float) get_option( $key, $fallback );
+    }
+
+    /* ── Price provisioning ───────────────────────────────────────────── */
+
     /**
-     * Get the Stripe Price ID based on billing cycle and tier.
+     * Return a cached Stripe Price ID, creating the Product + Price if needed.
+     * The stored value can be a manually entered `price_*` ID (old behaviour) or
+     * empty (auto-provision on first use).
      *
-     * $tier === 'patron' keeps the pre-existing option-key shape
-     * (culture_stripe_price_{cycle}_usd) so nothing needs re-configuring
-     * for the tier this plugin has always supported; 'lit' (Moveee Lit —
-     * see CLAUDE.md's "Three-tier membership" section) reads a parallel,
-     * tier-suffixed key instead.
-     *
-     * @param string $cycle 'monthly' or 'yearly'.
-     * @param string $tier 'patron' or 'lit'.
-     * @return string
+     * @return string|WP_Error
      */
-    private static function get_price_id( $cycle = 'monthly', $tier = 'patron' ) {
-        $suffix = ( 'patron' === $tier ) ? '' : '_' . strtolower( $tier );
-        $key    = 'culture_stripe_price_' . strtolower( $cycle ) . '_usd' . $suffix;
-        return get_option( $key, '' );
+    private static function get_or_create_price_id( string $cycle, string $tier ): string|\WP_Error {
+        $suffix  = ( 'patron' === $tier ) ? '' : '_' . strtolower( $tier );
+        $opt_key = 'culture_stripe_price_' . strtolower( $cycle ) . '_usd' . $suffix;
+
+        $cached = (string) get_option( $opt_key, '' );
+        if ( str_starts_with( $cached, 'price_' ) ) {
+            return $cached;
+        }
+
+        // Auto-create via Stripe API.
+        $tier_label = ( 'patron' === $tier ) ? 'Moveee Pro' : 'Moveee Lit';
+        $interval   = ( 'yearly' === $cycle ) ? 'year' : 'month';
+        $name       = $tier_label . ' ' . ucfirst( $cycle ) . ' USD';
+        $amount_usd = self::get_amount_usd( $cycle, $tier );
+
+        $result = self::api_request( 'POST', '/prices', array(
+            'currency'                => 'usd',
+            'unit_amount'             => (int) round( $amount_usd * 100 ),
+            'recurring'               => array( 'interval' => $interval ),
+            'product_data'            => array( 'name' => $name ),
+        ) );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        $price_id = $result['id'] ?? '';
+        if ( str_starts_with( $price_id, 'price_' ) ) {
+            update_option( $opt_key, $price_id, false );
+        }
+
+        return $price_id ?: new WP_Error( 'stripe_no_price', 'Stripe did not return a price ID.' );
     }
 
     /**
@@ -52,7 +90,11 @@ class Culture_Stripe {
     public static function get_checkout_url( $user_id, $plan_key = 'monthly_usd', $tier = 'patron', $return_path = '' ) {
         $tier     = in_array( $tier, array( 'patron', 'lit' ), true ) ? $tier : 'patron';
         $cycle    = strpos( $plan_key, 'yearly' ) !== false ? 'yearly' : 'monthly';
-        $price_id = self::get_price_id( $cycle, $tier );
+        $price_id = self::get_or_create_price_id( $cycle, $tier );
+
+        if ( is_wp_error( $price_id ) ) {
+            return $price_id;
+        }
 
         if ( empty( $price_id ) ) {
             return new WP_Error( 'missing_price_id', __( 'Stripe Price ID not configured.', 'culture-community' ) );

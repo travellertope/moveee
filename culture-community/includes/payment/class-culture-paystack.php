@@ -96,6 +96,15 @@ class Culture_Paystack {
     }
 
     /**
+     * Whether Paystack subscription initiation is enabled.
+     * Defaults to false — NGN subscriptions now route through Flutterwave.
+     * Set culture_paystack_subscriptions_enabled = '1' in WP options to re-enable.
+     */
+    public static function subscriptions_enabled(): bool {
+        return (bool) get_option( 'culture_paystack_subscriptions_enabled', false );
+    }
+
+    /**
      * Generate checkout URL for upgrading to a paid tier ('patron' or 'lit').
      *
      * @param int    $user_id
@@ -104,6 +113,9 @@ class Culture_Paystack {
      * @return string
      */
     public static function get_checkout_url( $user_id, $plan_key = 'monthly_ngn', $tier = 'patron' ) {
+        if ( ! self::subscriptions_enabled() ) {
+            return '';
+        }
         return add_query_arg( array(
             'culture_action' => 'paystack_checkout',
             'user_id'        => $user_id,
@@ -121,6 +133,9 @@ class Culture_Paystack {
      *                            instead of the site root — see build_return_url().
      */
     public static function init_checkout_session( $user_id, $plan_key = 'monthly_ngn', $tier = 'patron', $return_path = '' ) {
+        if ( ! self::subscriptions_enabled() ) {
+            return new WP_Error( 'paystack_disabled', 'Paystack subscriptions are disabled. Use Flutterwave for NGN.', array( 'status' => 503 ) );
+        }
         $user = get_userdata( $user_id );
         if ( ! $user ) {
             return new WP_Error( 'not_found', 'User not found.' );
@@ -184,6 +199,9 @@ class Culture_Paystack {
      * Verifies the token OR Authorization header and then redirects the user to the Paystack authorization URL.
      */
     private static function process_checkout_action() {
+        if ( ! self::subscriptions_enabled() ) {
+            wp_die( esc_html__( 'Paystack subscriptions are currently disabled.', 'culture-community' ) );
+        }
         $user_id = isset( $_GET['user_id'] ) ? absint( $_GET['user_id'] ) : 0;
         $token   = isset( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : '';
 

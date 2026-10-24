@@ -165,6 +165,14 @@ class Culture_Flutterwave {
             ],
         ];
 
+        if ( ! empty( $args['payment_plan'] ) ) {
+            $payload['payment_plan'] = (int) $args['payment_plan'];
+        }
+
+        if ( ! empty( $args['meta'] ) && is_array( $args['meta'] ) ) {
+            $payload['meta'] = $args['meta'];
+        }
+
         $response = wp_remote_post( self::API_BASE . '/payments', [
             'headers' => [
                 'Authorization' => 'Bearer ' . self::secret_key(),

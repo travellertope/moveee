@@ -212,6 +212,13 @@ class Culture_REST_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Flutterwave membership subscription webhook endpoint (public, verified by hash).
+        register_rest_route( 'culture/v1', '/flutterwave-member-webhook', array(
+            'methods'             => 'POST',
+            'callback'            => array( 'Culture_Flutterwave_Subscriptions', 'handle_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         // Newsletter subscribe endpoint (public).
         register_rest_route( 'culture/v1', '/newsletter-subscribe', array(
             'methods'             => 'POST',
@@ -4045,8 +4052,8 @@ class Culture_REST_API {
         // Paid tier (Lit or Patron) — return payment checkout URL.
         if ( in_array( $tier, array( 'lit', 'patron' ), true ) ) {
             $checkout_url = '';
-            if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-                $checkout_url = Culture_Paystack::get_checkout_url( $user_id, $plan_key, $tier );
+            if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Flutterwave_Subscriptions' ) ) {
+                $checkout_url = Culture_Flutterwave_Subscriptions::get_checkout_url( $user_id, $plan_key, $tier );
             } elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {
                 $checkout_url = Culture_Stripe::get_checkout_url( $user_id, $plan_key, $tier );
             }
@@ -5512,10 +5519,9 @@ class Culture_REST_API {
 
         $checkout_url = '';
 
-        // If Paystack.
-        if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Paystack' ) ) {
-            // We'll call a new method that returns the direct authorization URL.
-            $checkout_url = Culture_Paystack::init_checkout_session( $user_id, $plan_key, $tier, $return_path );
+        // NGN → Flutterwave subscriptions.
+        if ( strpos( $plan_key, '_ngn' ) !== false && class_exists( 'Culture_Flutterwave_Subscriptions' ) ) {
+            $checkout_url = Culture_Flutterwave_Subscriptions::init_checkout_session( $user_id, $plan_key, $tier, $return_path );
         }
         // If Stripe.
         elseif ( strpos( $plan_key, '_usd' ) !== false && class_exists( 'Culture_Stripe' ) ) {

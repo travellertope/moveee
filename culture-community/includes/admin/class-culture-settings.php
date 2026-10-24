@@ -52,6 +52,12 @@ class Culture_Settings {
         'culture_stripe_price_monthly_usd_lit' => '',
         'culture_stripe_price_yearly_usd_lit'  => '',
 
+        // Stripe subscription amounts (USD, major units — used for auto-provisioning Prices).
+        'culture_stripe_amount_monthly_usd'     => 4,
+        'culture_stripe_amount_yearly_usd'      => 40,
+        'culture_stripe_amount_monthly_usd_lit' => 1,
+        'culture_stripe_amount_yearly_usd_lit'  => 13,
+
         // Payment (Google Play Billing — Android app Moveee Pro upgrade).
         'culture_google_play_package_name'              => 'com.moveee.connect',
         'culture_google_play_service_account_json'      => '',
@@ -61,6 +67,12 @@ class Culture_Settings {
         // Flutterwave (airtime perk rewards + paid event RSVPs).
         'culture_flutterwave_secret_key'       => '',
         'culture_flutterwave_webhook_hash'     => '',
+
+        // Flutterwave membership subscription amounts (major NGN units).
+        'culture_flw_amount_monthly_ngn'       => 5000,
+        'culture_flw_amount_yearly_ngn'        => 50000,
+        'culture_flw_amount_monthly_ngn_lit'   => 2000,
+        'culture_flw_amount_yearly_ngn_lit'    => 20000,
 
         // Shop.
         'culture_shop_fx_ngn_per_gbp'          => 1900,
@@ -191,6 +203,7 @@ class Culture_Settings {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 9 );
         add_action( 'admin_init', array( __CLASS__, 'register_settings' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
+        add_action( 'wp_ajax_culture_clear_flw_plan', array( __CLASS__, 'ajax_clear_payment_plan_cache' ) );
     }
 
     /**
@@ -275,6 +288,12 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_stripe_price_monthly_usd', $text );
         register_setting( 'culture_settings_payment', 'culture_stripe_price_yearly_usd', $text );
 
+        // Stripe subscription amounts (USD, major units) — used for auto-provisioning Prices.
+        register_setting( 'culture_settings_payment', 'culture_stripe_amount_monthly_usd', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_stripe_amount_yearly_usd', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_stripe_amount_monthly_usd_lit', array( 'sanitize_callback' => 'floatval' ) );
+        register_setting( 'culture_settings_payment', 'culture_stripe_amount_yearly_usd_lit', array( 'sanitize_callback' => 'floatval' ) );
+
         // Google Play Billing (Android app Moveee Pro upgrade).
         register_setting( 'culture_settings_payment', 'culture_google_play_package_name', $text );
         register_setting( 'culture_settings_payment', 'culture_google_play_service_account_json', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
@@ -284,6 +303,12 @@ class Culture_Settings {
         // Flutterwave (airtime perk rewards + paid event RSVPs).
         register_setting( 'culture_settings_payment', 'culture_flutterwave_secret_key', $text );
         register_setting( 'culture_settings_payment', 'culture_flutterwave_webhook_hash', $text );
+
+        // Flutterwave membership subscription amounts (NGN, major units).
+        register_setting( 'culture_settings_payment', 'culture_flw_amount_monthly_ngn', $int );
+        register_setting( 'culture_settings_payment', 'culture_flw_amount_yearly_ngn', $int );
+        register_setting( 'culture_settings_payment', 'culture_flw_amount_monthly_ngn_lit', $int );
+        register_setting( 'culture_settings_payment', 'culture_flw_amount_yearly_ngn_lit', $int );
 
         // Shop (multi-currency + flat-rate fallback shipping + Pro discount).
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
@@ -397,6 +422,33 @@ class Culture_Settings {
         register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_mid',        $text );
         register_setting( 'culture_settings_advertising', 'culture_ads_slot_leaderboard_pre_quotes', $text );
         register_setting( 'culture_settings_advertising', 'culture_ads_slot_hero_sidebar',           $text );
+    }
+
+    /**
+     * AJAX: clear a cached plan/price ID (Flutterwave or Stripe) so it gets
+     * re-provisioned on next checkout.
+     */
+    public static function ajax_clear_payment_plan_cache() {
+        check_ajax_referer( 'culture_clear_flw_plan', '_wpnonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Insufficient permissions.', 403 );
+        }
+        $allowed = array(
+            'culture_flw_plan_monthly_ngn',
+            'culture_flw_plan_yearly_ngn',
+            'culture_flw_plan_monthly_ngn_lit',
+            'culture_flw_plan_yearly_ngn_lit',
+            'culture_stripe_price_monthly_usd',
+            'culture_stripe_price_yearly_usd',
+            'culture_stripe_price_monthly_usd_lit',
+            'culture_stripe_price_yearly_usd_lit',
+        );
+        $key = sanitize_key( $_POST['key'] ?? '' );
+        if ( ! in_array( $key, $allowed, true ) ) {
+            wp_send_json_error( 'Invalid key.', 400 );
+        }
+        delete_option( $key );
+        wp_send_json_success();
     }
 
     /**
@@ -577,7 +629,7 @@ class Culture_Settings {
 
         <hr />
         <h3><?php esc_html_e( 'Stripe Configuration (International Gateway)', 'culture-community' ); ?></h3>
-        <p class="description"><?php esc_html_e( 'If configured, USD transactions will use Stripe instead of Paystack.', 'culture-community' ); ?></p>
+        <p class="description"><?php esc_html_e( 'USD subscriptions use Stripe. Stripe Prices are created automatically from your secret key on first checkout — enter amounts below and prices are provisioned for you.', 'culture-community' ); ?></p>
         <table class="form-table">
             <tr>
                 <th scope="row"><label for="culture_stripe_publishable_key"><?php esc_html_e( 'Publishable Key', 'culture-community' ); ?></label></th>
@@ -593,43 +645,45 @@ class Culture_Settings {
                            value="<?php echo esc_attr( self::get( 'culture_stripe_secret_key' ) ); ?>" class="regular-text" />
                 </td>
             </tr>
-            <tr>
-                <th scope="row"><label for="culture_stripe_price_monthly_usd"><?php esc_html_e( 'Monthly Price ID', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_stripe_price_monthly_usd" name="culture_stripe_price_monthly_usd"
-                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_monthly_usd' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $4 subscription (price_...).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_stripe_price_yearly_usd"><?php esc_html_e( 'Yearly Price ID', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_stripe_price_yearly_usd" name="culture_stripe_price_yearly_usd"
-                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the $40 subscription (price_...).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
         </table>
 
-        <h3><?php esc_html_e( 'Moveee Lit — Stripe (USD) Price IDs', 'culture-community' ); ?></h3>
-        <p class="description"><?php esc_html_e( 'Leave blank to fall back to roughly a third of the matching Patron price.', 'culture-community' ); ?></p>
+        <h3><?php esc_html_e( 'Stripe — Membership Subscription Amounts (USD)', 'culture-community' ); ?></h3>
+        <p class="description">
+            <?php esc_html_e( 'Enter amounts in US Dollars (e.g. 4 = $4.00). Stripe Prices are created automatically on first checkout and cached here. Use Reset to force re-creation (e.g. after a price change — note this will create a new Price object in Stripe).', 'culture-community' ); ?>
+        </p>
         <table class="form-table">
+            <?php
+            $stripe_fields = array(
+                array( 'amount_key' => 'culture_stripe_amount_monthly_usd',     'price_key' => 'culture_stripe_price_monthly_usd',     'label' => __( 'Pro — Monthly ($)',  'culture-community' ) ),
+                array( 'amount_key' => 'culture_stripe_amount_yearly_usd',      'price_key' => 'culture_stripe_price_yearly_usd',      'label' => __( 'Pro — Yearly ($)',   'culture-community' ) ),
+                array( 'amount_key' => 'culture_stripe_amount_monthly_usd_lit', 'price_key' => 'culture_stripe_price_monthly_usd_lit', 'label' => __( 'Lit — Monthly ($)',  'culture-community' ) ),
+                array( 'amount_key' => 'culture_stripe_amount_yearly_usd_lit',  'price_key' => 'culture_stripe_price_yearly_usd_lit',  'label' => __( 'Lit — Yearly ($)',   'culture-community' ) ),
+            );
+            foreach ( $stripe_fields as $sf ) :
+                $price_id = (string) get_option( $sf['price_key'], '' );
+            ?>
             <tr>
-                <th scope="row"><label for="culture_stripe_price_monthly_usd_lit"><?php esc_html_e( 'Monthly Price ID', 'culture-community' ); ?></label></th>
+                <th scope="row"><label for="<?php echo esc_attr( $sf['amount_key'] ); ?>"><?php echo esc_html( $sf['label'] ); ?></label></th>
                 <td>
-                    <input type="text" id="culture_stripe_price_monthly_usd_lit" name="culture_stripe_price_monthly_usd_lit"
-                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_monthly_usd_lit' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the Moveee Lit monthly subscription (price_...).', 'culture-community' ); ?></p>
+                    <input type="number" id="<?php echo esc_attr( $sf['amount_key'] ); ?>"
+                           name="<?php echo esc_attr( $sf['amount_key'] ); ?>"
+                           value="<?php echo esc_attr( get_option( $sf['amount_key'], '' ) ); ?>"
+                           class="small-text" min="0" step="0.01" />
+                    <?php if ( str_starts_with( $price_id, 'price_' ) ) : ?>
+                        <span class="description" style="margin-left:8px;">
+                            <?php printf( esc_html__( 'Price ID: %s (auto-provisioned)', 'culture-community' ), '<code>' . esc_html( $price_id ) . '</code>' ); ?>
+                        </span>
+                        <button type="button" class="button button-small"
+                                style="margin-left:6px;"
+                                onclick="if(confirm('<?php esc_attr_e( 'Delete cached Price ID? A new price will be created in Stripe on next checkout.', 'culture-community' ); ?>')){jQuery.post(ajaxurl,{action:'culture_clear_flw_plan',key:'<?php echo esc_js( $sf['price_key'] ); ?>',_wpnonce:'<?php echo esc_js( wp_create_nonce( 'culture_clear_flw_plan' ) ); ?>'},function(){location.reload();});}">
+                            <?php esc_html_e( 'Reset', 'culture-community' ); ?>
+                        </button>
+                    <?php else : ?>
+                        <span class="description" style="margin-left:8px;"><?php esc_html_e( 'Price will be created in Stripe on first checkout.', 'culture-community' ); ?></span>
+                    <?php endif; ?>
                 </td>
             </tr>
-            <tr>
-                <th scope="row"><label for="culture_stripe_price_yearly_usd_lit"><?php esc_html_e( 'Yearly Price ID', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_stripe_price_yearly_usd_lit" name="culture_stripe_price_yearly_usd_lit"
-                           value="<?php echo esc_attr( self::get( 'culture_stripe_price_yearly_usd_lit' ) ); ?>" class="regular-text" />
-                    <p class="description"><?php esc_html_e( 'The Stripe Price ID for the Moveee Lit yearly subscription (price_...).', 'culture-community' ); ?></p>
-                </td>
-            </tr>
+            <?php endforeach; ?>
         </table>
 
         <hr />
@@ -733,6 +787,50 @@ class Culture_Settings {
                     </p>
                 </td>
             </tr>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Flutterwave — Membership Subscriptions (NGN)', 'culture-community' ); ?></h3>
+        <p class="description">
+            <?php esc_html_e( 'Amounts for Moveee Pro and Moveee Lit NGN subscriptions charged via Flutterwave. Enter amounts in full Naira (e.g. 5000 = ₦5,000). Payment plans are created automatically in your Flutterwave account the first time a member checks out — the cached plan IDs are shown here for reference.', 'culture-community' ); ?>
+        </p>
+        <table class="form-table">
+            <?php
+            $sub_fields = array(
+                array( 'id' => 'culture_flw_amount_monthly_ngn',     'label' => __( 'Pro — Monthly (₦)',  'culture-community' ), 'default' => 5000  ),
+                array( 'id' => 'culture_flw_amount_yearly_ngn',      'label' => __( 'Pro — Yearly (₦)',   'culture-community' ), 'default' => 50000 ),
+                array( 'id' => 'culture_flw_amount_monthly_ngn_lit', 'label' => __( 'Lit — Monthly (₦)',  'culture-community' ), 'default' => 2000  ),
+                array( 'id' => 'culture_flw_amount_yearly_ngn_lit',  'label' => __( 'Lit — Yearly (₦)',   'culture-community' ), 'default' => 20000 ),
+            );
+            foreach ( $sub_fields as $f ) :
+                $plan_cache_key = str_replace( 'culture_flw_amount_', 'culture_flw_plan_', $f['id'] );
+                $plan_id        = (int) get_option( $plan_cache_key, 0 );
+            ?>
+            <tr>
+                <th scope="row"><label for="<?php echo esc_attr( $f['id'] ); ?>"><?php echo esc_html( $f['label'] ); ?></label></th>
+                <td>
+                    <input type="number" id="<?php echo esc_attr( $f['id'] ); ?>"
+                           name="<?php echo esc_attr( $f['id'] ); ?>"
+                           value="<?php echo esc_attr( get_option( $f['id'], $f['default'] ) ); ?>"
+                           class="small-text" min="0" step="1" />
+                    <?php if ( $plan_id ) : ?>
+                        <span class="description" style="margin-left:8px;">
+                            <?php
+                            /* translators: %d is a numeric Flutterwave plan ID */
+                            printf( esc_html__( 'Plan ID: %d (auto-provisioned)', 'culture-community' ), $plan_id );
+                            ?>
+                        </span>
+                        <button type="button" class="button button-small"
+                                style="margin-left:6px;"
+                                onclick="if(confirm('<?php esc_attr_e( 'Delete cached plan ID? A new plan will be created on next checkout.', 'culture-community' ); ?>')){jQuery.post(ajaxurl,{action:'culture_clear_flw_plan',key:'<?php echo esc_js( $plan_cache_key ); ?>',_wpnonce:'<?php echo esc_js( wp_create_nonce( 'culture_clear_flw_plan' ) ); ?>'},function(){location.reload();});}">
+                            <?php esc_html_e( 'Reset', 'culture-community' ); ?>
+                        </button>
+                    <?php else : ?>
+                        <span class="description" style="margin-left:8px;"><?php esc_html_e( 'Plan will be created on first checkout.', 'culture-community' ); ?></span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
         </table>
         <?php
     }
