@@ -151,6 +151,7 @@ const QUICK_LINKS = [
   { emoji: "📊", label: "Analytics",   screen: "Analytics" },
   { emoji: "🔗", label: "Refer a Friend", screen: "Referral" },
   { emoji: "📋", label: "My Events",   screen: "MyEvents" },
+  { emoji: "💸", label: "Creator Earnings", screen: "CreatorEarnings" },
   { emoji: "📓", label: "Culture Log", screen: "ReadingTracker" },
   { emoji: "📖", label: "Magazine",    screen: "Magazine" },
   { emoji: "⚙️", label: "Settings",    screen: "MemberSettings" },

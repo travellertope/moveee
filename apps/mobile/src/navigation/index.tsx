@@ -90,6 +90,7 @@ import AnalyticsScreen from "../screens/member/AnalyticsScreen";
 import SavedArticlesScreen from "../screens/member/SavedArticlesScreen";
 import ReferralScreen from "../screens/member/ReferralScreen";
 import MyEventsScreen from "../screens/member/MyEventsScreen";
+import EarningsScreen from "../screens/member/EarningsScreen";
 import NewPortfolioItemScreen from "../screens/member/NewPortfolioItemScreen";
 import ReadingTrackerScreen from "../screens/member/ReadingTrackerScreen";
 import { AppLoadingScreen } from "../components/ui/Skeleton";
@@ -140,6 +141,7 @@ type MemberStackParams = {
   Analytics:       undefined;
   Referral:        undefined;
   MyEvents:        undefined;
+  CreatorEarnings: undefined;
   ReadingTracker:  undefined;
 };
 
@@ -186,6 +188,7 @@ function ConnectStack() {
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
+      <Stack.Screen name="CreatorEarnings" component={EarningsScreen} />
       <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
       <Stack.Screen name="ReadingTracker"  component={ReadingTrackerScreen} />
     </Stack.Navigator>
@@ -238,6 +241,7 @@ function HomeStack() {
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
+      <Stack.Screen name="CreatorEarnings" component={EarningsScreen} />
       <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
       <Stack.Screen name="ReadingTracker"  component={ReadingTrackerScreen} />
     </Stack.Navigator>
@@ -300,6 +304,7 @@ function MemberStack() {
       <Stack.Screen name="SavedArticles"   component={SavedArticlesScreen} />
       <Stack.Screen name="Referral"        component={ReferralScreen} />
       <Stack.Screen name="MyEvents"        component={MyEventsScreen} />
+      <Stack.Screen name="CreatorEarnings" component={EarningsScreen} />
       <Stack.Screen name="NewPortfolioItem" component={NewPortfolioItemScreen} />
       <Stack.Screen name="ReadingTracker"  component={ReadingTrackerScreen} />
     </Stack.Navigator>
