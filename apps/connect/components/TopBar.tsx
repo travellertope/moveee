@@ -134,6 +134,9 @@ export default function TopBar() {
                     {user?.tier === "patron" && (
                       <Link href="/member/events" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>My Events</Link>
                     )}
+                    {user?.tier === "patron" && (
+                      <Link href="/member/earnings" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Creator Earnings</Link>
+                    )}
                     <Link href="/member/settings" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Settings</Link>
                     {user?.isVendor && (
                       <Link href="/vendor/dashboard" className="tb-user-item" role="menuitem" onClick={() => setMenuOpen(false)}>Vendor Dashboard</Link>
