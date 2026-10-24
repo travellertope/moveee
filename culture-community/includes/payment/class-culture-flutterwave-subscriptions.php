@@ -372,7 +372,8 @@ class Culture_Flutterwave_Subscriptions {
     /* ── Webhook ──────────────────────────────────────────────────────── */
 
     /**
-     * REST callback for POST /culture/v1/flutterwave-member-webhook.
+     * REST callback for POST /culture/v1/flutterwave-member-webhook (kept for
+     * any direct references; the canonical URL is /flutterwave-webhook).
      *
      * @param WP_REST_Request $request
      * @return WP_REST_Response|WP_Error
@@ -380,26 +381,29 @@ class Culture_Flutterwave_Subscriptions {
     public static function handle_webhook( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
         $hash_secret = get_option( 'culture_flutterwave_webhook_hash', '' );
         if ( $hash_secret ) {
-            $verif_hash = $request->get_header( 'verif-hash' );
-            if ( ! $verif_hash || ! hash_equals( $hash_secret, $verif_hash ) ) {
+            $verif_hash = $request->get_header( 'verif-hash' ) ?: '';
+            if ( ! hash_equals( $hash_secret, $verif_hash ) ) {
                 return new \WP_Error( 'invalid_hash', 'Invalid webhook hash.', array( 'status' => 403 ) );
             }
         }
 
-        $payload = json_decode( $request->get_body(), true ) ?? array();
-        $event   = $payload['event'] ?? '';
+        self::dispatch_flutterwave_event( json_decode( $request->get_body(), true ) ?? array() );
+        return rest_ensure_response( array( 'status' => 'ok' ) );
+    }
 
+    /**
+     * Process a pre-verified Flutterwave payload (called by unified webhook dispatcher).
+     */
+    public static function dispatch_flutterwave_event( array $payload ): void {
+        $event = $payload['event'] ?? '';
         switch ( $event ) {
             case 'charge.completed':
                 self::on_charge_completed( $payload['data'] ?? array() );
                 break;
-
             case 'subscription.cancelled':
                 self::on_subscription_cancelled( $payload['data'] ?? array() );
                 break;
         }
-
-        return rest_ensure_response( array( 'status' => 'ok' ) );
     }
 
     private static function on_charge_completed( array $data ): void {

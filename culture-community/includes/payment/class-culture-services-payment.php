@@ -428,29 +428,32 @@ class Culture_Services_Payment {
     // ── Flutterwave webhook ───────────────────────────────────────────────────
 
     public static function handle_flutterwave_webhook( WP_REST_Request $req ): WP_REST_Response {
-        $hash   = $req->get_header( 'verif_hash' ) ?: $req->get_header( 'x_verif_hash' ) ?: '';
+        $hash   = $req->get_header( 'verif-hash' ) ?: $req->get_header( 'verif_hash' ) ?: '';
         $secret = get_option( 'culture_flutterwave_webhook_hash', '' );
 
-        if ( $secret && $hash !== $secret ) {
+        if ( $secret && ! hash_equals( $secret, $hash ) ) {
             return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
         }
 
-        $data    = $req->get_json_params();
-        $event   = $data['event'] ?? '';
-        $payload = $data['data'] ?? [];
+        self::dispatch_flutterwave_event( $req->get_json_params() ?? [] );
+        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+    }
 
-        if ( 'charge.completed' === $event && ( $payload['status'] ?? '' ) === 'successful' ) {
-            $tx_ref = $payload['tx_ref'] ?? '';
-            $code   = '';
-            if ( preg_match( '/^flw-svc-(.+)$/', $tx_ref, $m ) ) {
-                $code = $m[1];
-            }
-            if ( $code ) {
-                self::confirm_payment( $code, $tx_ref, 'flutterwave' );
-            }
+    /**
+     * Process a pre-verified Flutterwave payload (called by unified webhook dispatcher).
+     */
+    public static function dispatch_flutterwave_event( array $payload ): void {
+        $event = $payload['event'] ?? '';
+        $data  = $payload['data'] ?? [];
+
+        if ( 'charge.completed' !== $event || ( $data['status'] ?? '' ) !== 'successful' ) {
+            return;
         }
 
-        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+        $tx_ref = $data['tx_ref'] ?? '';
+        if ( preg_match( '/^flw-svc-(.+)$/', $tx_ref, $m ) ) {
+            self::confirm_payment( $m[1], $tx_ref, 'flutterwave' );
+        }
     }
 
     // ── Legacy Paystack webhook ───────────────────────────────────────────────

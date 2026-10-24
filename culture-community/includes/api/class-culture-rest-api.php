@@ -219,6 +219,13 @@ class Culture_REST_API {
             'permission_callback' => '__return_true',
         ) );
 
+        // Unified Flutterwave webhook — single URL for all Flutterwave events (RSVPs, services, subscriptions).
+        register_rest_route( 'culture/v1', '/flutterwave-webhook', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_flutterwave_unified_webhook' ),
+            'permission_callback' => '__return_true',
+        ) );
+
         // Newsletter subscribe endpoint (public).
         register_rest_route( 'culture/v1', '/newsletter-subscribe', array(
             'methods'             => 'POST',
@@ -3613,6 +3620,52 @@ class Culture_REST_API {
      * type lists are accepted here; 'region' rows are what `segment` picks
      * from instead.
      */
+    /**
+     * Unified Flutterwave webhook dispatcher.
+     *
+     * Flutterwave supports only one webhook URL per account. This endpoint
+     * verifies the hash once and routes each event to the correct payment class
+     * based on the tx_ref prefix:
+     *
+     *   CRSVP* / CRSVPG*  → Culture_Community_RSVP_Payment
+     *   flw-svc-*          → Culture_Services_Payment
+     *   flw-sub-*          → Culture_Flutterwave_Subscriptions
+     *   subscription.*     → Culture_Flutterwave_Subscriptions (no tx_ref to check)
+     *
+     * Set this URL in the Flutterwave dashboard:
+     *   {cms}/wp-json/culture/v1/flutterwave-webhook
+     */
+    public static function handle_flutterwave_unified_webhook( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        $hash_secret = get_option( 'culture_flutterwave_webhook_hash', '' );
+        if ( $hash_secret ) {
+            $verif_hash = $request->get_header( 'verif-hash' ) ?: '';
+            if ( ! hash_equals( $hash_secret, $verif_hash ) ) {
+                return new WP_Error( 'invalid_hash', 'Invalid webhook hash.', array( 'status' => 403 ) );
+            }
+        }
+
+        $payload = json_decode( $request->get_body(), true ) ?? array();
+        $event   = $payload['event'] ?? '';
+        $data    = $payload['data'] ?? array();
+        $tx_ref  = $data['tx_ref'] ?? '';
+
+        if ( str_starts_with( $tx_ref, 'CRSVP' ) ) {
+            if ( class_exists( 'Culture_Community_RSVP_Payment' ) ) {
+                Culture_Community_RSVP_Payment::dispatch_flutterwave_event( $payload );
+            }
+        } elseif ( str_starts_with( $tx_ref, 'flw-svc-' ) ) {
+            if ( class_exists( 'Culture_Services_Payment' ) ) {
+                Culture_Services_Payment::dispatch_flutterwave_event( $payload );
+            }
+        } elseif ( str_starts_with( $tx_ref, 'flw-sub-' ) || str_starts_with( $event, 'subscription.' ) ) {
+            if ( class_exists( 'Culture_Flutterwave_Subscriptions' ) ) {
+                Culture_Flutterwave_Subscriptions::dispatch_flutterwave_event( $payload );
+            }
+        }
+
+        return rest_ensure_response( array( 'status' => 'ok' ) );
+    }
+
     public static function handle_newsletter_subscribe( $request ) {
         $email   = $request->get_param( 'email' );
         $name    = $request->get_param( 'name' ) ?: '';
