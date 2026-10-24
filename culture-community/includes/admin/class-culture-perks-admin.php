@@ -16,6 +16,33 @@ class Culture_Perks_Admin {
         add_action( 'admin_menu', [ __CLASS__, 'register_menu' ] );
         add_action( 'admin_post_culture_save_perk',   [ __CLASS__, 'handle_save' ] );
         add_action( 'admin_post_culture_delete_perk', [ __CLASS__, 'handle_delete' ] );
+        add_action( 'wp_ajax_culture_flw_bundle_categories', [ __CLASS__, 'handle_ajax_bundle_categories' ] );
+    }
+
+    public static function handle_ajax_bundle_categories(): void {
+        check_ajax_referer( 'culture_perks_admin', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Permission denied.', 403 );
+        }
+        $country = strtoupper( sanitize_text_field( $_POST['country'] ?? 'NG' ) );
+        if ( ! class_exists( 'Culture_Flutterwave' ) || ! Culture_Flutterwave::is_configured() ) {
+            wp_send_json_error( 'Flutterwave secret key is not configured.' );
+            return;
+        }
+        $result = Culture_Flutterwave::get_bill_categories( $country );
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+            return;
+        }
+        $items   = $result['data'] ?? [];
+        $bundles = array_values( array_filter( $items, function( $item ) {
+            if ( ! empty( $item['is_airtime'] ) ) return false;
+            $name = strtoupper( $item['biller_name'] ?? '' ) . strtoupper( $item['name'] ?? '' );
+            return ( false !== strpos( $name, 'DATA' ) )
+                || ( false !== strpos( $name, 'BUNDLE' ) )
+                || ! empty( $item['is_data_bundle'] );
+        } ) );
+        wp_send_json_success( $bundles );
     }
 
     public static function register_menu(): void {
@@ -369,11 +396,16 @@ class Culture_Perks_Admin {
                     <!-- ── Data bundle only ─────────────────────────────────────── -->
                     <tbody id="data-bundle-fields">
                         <tr>
-                            <th><label for="data_bundle_code"><?php esc_html_e( 'Bundle type (Flutterwave type code)', 'culture-community' ); ?></label></th>
+                            <th><label for="data_bundle_code_select"><?php esc_html_e( 'Data bundle', 'culture-community' ); ?></label></th>
                             <td>
-                                <input type="text" id="data_bundle_code" name="data_bundle_code" value="<?php echo esc_attr( $perk['data_bundle_code'] ); ?>" class="regular-text" placeholder="e.g. MTNDATA">
+                                <input type="hidden" id="data_bundle_code" name="data_bundle_code" value="<?php echo esc_attr( $perk['data_bundle_code'] ); ?>">
+                                <select id="data_bundle_code_select" style="width:400px;max-width:100%;display:none;" disabled>
+                                    <option value="">— Select a bundle —</option>
+                                </select>
+                                <p id="flw-bundle-status" style="color:#a00;margin:4px 0 0;font-size:13px;"></p>
                                 <p class="description">
-                                    <?php esc_html_e( 'The Flutterwave bill type for this data bundle, e.g. MTNDATA, AIRTELDATA, GLODATA, 9MOBILEDATA. Get the exact value from your Flutterwave dashboard → Bills → Categories.', 'culture-community' ); ?>
+                                    <?php esc_html_e( 'Bundles are loaded live from Flutterwave for the selected country. Selecting one auto-fills the amount below.', 'culture-community' ); ?>
+                                    <a href="#" id="flw-reload-bundles" style="margin-left:8px;"><?php esc_html_e( 'Reload list', 'culture-community' ); ?></a>
                                 </p>
                             </td>
                         </tr>
@@ -434,8 +466,22 @@ class Culture_Perks_Admin {
             </form>
 
             <script>
+            var culturePerksAdmin = <?php echo wp_json_encode( [
+                'nonce'         => wp_create_nonce( 'culture_perks_admin' ),
+                'flwConfigured' => class_exists( 'Culture_Flutterwave' ) && Culture_Flutterwave::is_configured(),
+                'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+            ] ); ?>;
             (function() {
-                var radios = document.querySelectorAll('input[name="perk_type"]');
+                var radios       = document.querySelectorAll('input[name="perk_type"]');
+                var countryEl    = document.getElementById('airtime_country');
+                var bundleSel    = document.getElementById('data_bundle_code_select');
+                var bundleHidden = document.getElementById('data_bundle_code');
+                var amountInput  = document.getElementById('airtime_amount_local');
+                var statusEl     = document.getElementById('flw-bundle-status');
+                var reloadLink   = document.getElementById('flw-reload-bundles');
+                var savedCode    = bundleHidden ? bundleHidden.value : '';
+                var symMap       = { NG: '₦', GH: '₵', KE: 'KSh ', ZA: 'R', UG: 'USh ', TZ: 'TSh ' };
+
                 function toggle() {
                     var val        = document.querySelector('input[name="perk_type"]:checked').value;
                     var isAirtime  = val === 'airtime';
@@ -446,8 +492,90 @@ class Culture_Perks_Admin {
                     document.getElementById('partner-fields').style.display      = isDelivery ? 'none' : 'table-row-group';
                     document.getElementById('airtime-heading').style.display     = isDelivery ? '' : 'none';
                     document.getElementById('partner-heading').style.display     = isDelivery ? 'none' : '';
+                    if ( isData && culturePerksAdmin.flwConfigured && bundleSel && bundleSel.options.length <= 1 ) {
+                        fetchBundles();
+                    }
                 }
-                radios.forEach(function(r) { r.addEventListener('change', toggle); });
+
+                function fetchBundles() {
+                    if ( ! bundleSel ) return;
+                    var country = countryEl ? countryEl.value : 'NG';
+                    bundleSel.disabled = true;
+                    bundleSel.style.display = '';
+                    bundleSel.innerHTML = '<option value="">… Loading bundles</option>';
+                    if ( statusEl ) statusEl.textContent = '';
+                    var fd = new FormData();
+                    fd.append( 'action',  'culture_flw_bundle_categories' );
+                    fd.append( 'nonce',   culturePerksAdmin.nonce );
+                    fd.append( 'country', country );
+                    fetch( culturePerksAdmin.ajaxUrl, { method: 'POST', body: fd } )
+                        .then( function(r) { return r.json(); } )
+                        .then( function(resp) {
+                            bundleSel.innerHTML = '<option value="">— Select a bundle —</option>';
+                            if ( ! resp.success || ! resp.data || ! resp.data.length ) {
+                                if ( statusEl ) statusEl.textContent = ( typeof resp.data === 'string' ? resp.data : 'No data bundles found for this country.' );
+                                bundleSel.disabled = false;
+                                return;
+                            }
+                            var sym    = symMap[ country ] || '';
+                            var groups = {};
+                            resp.data.forEach( function(item) {
+                                var net = ( item.biller_name || '' ).split('_')[0].split(' ')[0];
+                                if ( ! groups[net] ) groups[net] = [];
+                                groups[net].push(item);
+                            } );
+                            Object.keys(groups).sort().forEach( function(net) {
+                                var og = document.createElement('optgroup');
+                                og.label = net;
+                                groups[net].forEach( function(item) {
+                                    var opt = document.createElement('option');
+                                    opt.value = item.biller_name;
+                                    opt.dataset.amount = item.amount || 0;
+                                    var label = item.short_name || item.name || item.biller_name;
+                                    if ( parseFloat(item.amount) > 0 ) label += ' — ' + sym + item.amount;
+                                    opt.textContent = label;
+                                    if ( item.biller_name === savedCode ) opt.selected = true;
+                                    og.appendChild(opt);
+                                } );
+                                bundleSel.appendChild(og);
+                            } );
+                            if ( savedCode && ! bundleSel.value ) {
+                                var fb = document.createElement('option');
+                                fb.value = savedCode;
+                                fb.textContent = savedCode + ' (saved — not in current list)';
+                                fb.selected = true;
+                                bundleSel.appendChild(fb);
+                            }
+                            bundleSel.disabled = false;
+                            syncFromSelect();
+                        } )
+                        .catch( function() {
+                            if ( statusEl ) statusEl.textContent = 'Failed to load — check your Flutterwave key is saved.';
+                            bundleSel.disabled = false;
+                        } );
+                }
+
+                function syncFromSelect() {
+                    if ( ! bundleSel || ! bundleHidden ) return;
+                    var sel = bundleSel.options[ bundleSel.selectedIndex ];
+                    bundleHidden.value = sel ? sel.value : '';
+                    if ( sel && parseFloat( sel.dataset.amount ) > 0 && amountInput ) {
+                        amountInput.value = sel.dataset.amount;
+                    }
+                }
+
+                if ( bundleSel )  bundleSel.addEventListener( 'change', syncFromSelect );
+                if ( countryEl )  countryEl.addEventListener( 'change', function() {
+                    if ( document.querySelector('input[name="perk_type"]:checked').value === 'data_bundle' && culturePerksAdmin.flwConfigured ) fetchBundles();
+                } );
+                if ( reloadLink ) reloadLink.addEventListener( 'click', function(e) {
+                    e.preventDefault();
+                    if ( document.querySelector('input[name="perk_type"]:checked').value === 'data_bundle' ) fetchBundles();
+                } );
+                radios.forEach( function(r) { r.addEventListener( 'change', toggle ); } );
+
+                var checked = document.querySelector('input[name="perk_type"]:checked');
+                if ( checked && checked.value === 'data_bundle' && culturePerksAdmin.flwConfigured ) fetchBundles();
             })();
             </script>
         </div>
