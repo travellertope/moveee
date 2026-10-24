@@ -5414,7 +5414,7 @@ class Culture_Mobile_API {
 
         return rest_ensure_response( array(
             'referralCode'             => $code,
-            'referralUrl'              => 'https://web.themoveee.com/register?ref=' . $code,
+            'referralUrl'              => 'https://themoveee.com/register?ref=' . $code,
             'referralCount'            => $count,
             'repPerReferral'           => $rep_per,
             'creditsPerReferral'       => $credits_per,

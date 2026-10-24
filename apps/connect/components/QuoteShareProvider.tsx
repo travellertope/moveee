@@ -59,8 +59,8 @@ function downloadBlob(blob: Blob) {
 
 export default function QuoteShareProvider({ children }: { children: React.ReactNode }) {
   const qrRef = useRef<HTMLCanvasElement>(null);
-  const [qrUrl, setQrUrl] = useState("https://web.themoveee.com");
-  const currentQrUrlRef = useRef("https://web.themoveee.com");
+  const [qrUrl, setQrUrl] = useState("https://themoveee.com");
+  const currentQrUrlRef = useRef("https://themoveee.com");
   const pendingRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {

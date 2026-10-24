@@ -180,7 +180,7 @@ export default function StartClusterScreen() {
 
       const res = await api.post<{ id: number }>(`${MOBILE_API}/cluster/create`, body as Record<string, string>);
       if (res?.id) {
-        const url = `https://web.themoveee.com/cluster/${res.id}/invite`;
+        const url = `https://themoveee.com/cluster/${res.id}/invite`;
         Alert.alert(
           "Stoop created!",
           "Now share the invite link with neighbours and friends. You need at least 4 members to activate.",

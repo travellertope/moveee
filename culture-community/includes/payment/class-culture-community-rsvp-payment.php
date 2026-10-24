@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Culture_Community_RSVP_Payment {
 
-    const CONNECT_URL = 'https://web.themoveee.com';
+    const CONNECT_URL = 'https://themoveee.com';
 
     // ── Bootstrap ─────────────────────────────────────────────────────────────
 

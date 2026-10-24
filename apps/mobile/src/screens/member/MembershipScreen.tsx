@@ -104,11 +104,11 @@ export default function MembershipScreen() {
   const hasNativePlans = Platform.OS === "android" && !loadingSubs && (!!monthlySub || !!annualSub);
 
   const handleUpgrade = () => {
-    openInApp("https://web.themoveee.com/register?upgrade=patron");
+    openInApp("https://themoveee.com/register?upgrade=patron");
   };
 
   const handleUpgradeLit = () => {
-    openInApp("https://web.themoveee.com/register?upgrade=lit");
+    openInApp("https://themoveee.com/register?upgrade=lit");
   };
 
   const handleJoinFree = () => {

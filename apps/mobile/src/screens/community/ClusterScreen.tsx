@@ -164,7 +164,7 @@ export default function ClusterScreen() {
 
   const handleShare = async () => {
     if (!cluster) return;
-    const url = `https://web.themoveee.com/cluster/${clusterId}/invite`;
+    const url = `https://themoveee.com/cluster/${clusterId}/invite`;
     await Share.share({
       message: `Join my Stoop "${cluster.name}" on Moveee! ${url}`,
       url,

@@ -51,7 +51,7 @@ stale history.
 | Surface | Brand name | Domain |
 |---|---|---|
 | `apps/site` | **Moveee Magazine** | `themoveee.com` |
-| `apps/connect` | **Moveee** | `web.themoveee.com` |
+| `apps/connect` | **Moveee** | `themoveee.com` |
 | `apps/mobile` | **Moveee** | iOS / Android |
 
 - `apps/site` is always called **Moveee Magazine** in user-facing copy, metadata, and JSON-LD.
@@ -90,7 +90,7 @@ Key paths:
   - `components/` — Site A-only components (Header, CartDrawer, HomepageContent…)
   - `lib/fetchHomepageData.ts` — Site A-only homepage fetch
   - `proxy.ts` — edge routing (Next.js 16 replacement for middleware.ts)
-- `apps/connect/` — Site B: Moveee at web.themoveee.com (Community + Auth)
+- `apps/connect/` — Site B: Moveee at themoveee.com (Community + Auth)
   - `app/` — auth, member, community, events, games, directory pages
   - No local lib/ or components/ — all resolved from packages/shared
 - `apps/mobile/` — React Native app (Expo) for iOS + Android
@@ -110,7 +110,7 @@ Key paths:
 
 **Vercel setup:**
 - Site A project: Root Directory = `apps/site` → deploys to themoveee.com
-- Site B project: Root Directory = `apps/connect` → deploys to web.themoveee.com
+- Site B project: Root Directory = `apps/connect` → deploys to themoveee.com
 - Both share the same GitHub repo (travellertope/moveee)
 
 **Shared code resolution:** Both Next.js apps resolve `@/*` via tsconfig paths array:

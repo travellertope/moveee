@@ -207,7 +207,7 @@ export default function MemberDashboardScreen() {
   const isPro = user.tier === "patron";
 
   const handleCopyReferral = async () => {
-    const link = `https://web.themoveee.com/register?ref=${user.referralCode}`;
+    const link = `https://themoveee.com/register?ref=${user.referralCode}`;
     try {
       await Share.share({
         message: `Join me on Moveee — the community for people who live for culture. Use my link: ${link}`,
@@ -365,7 +365,7 @@ export default function MemberDashboardScreen() {
                 Refer a friend · {user.referralCount ?? 0} joined
               </Text>
               <Text style={{ fontFamily: "monospace", fontSize: 11, color: c.mute }} numberOfLines={1}>
-                web.themoveee.com/r/{user.referralCode || user.username}
+                themoveee.com/r/{user.referralCode || user.username}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={c.ghost} />

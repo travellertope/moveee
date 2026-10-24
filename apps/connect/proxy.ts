@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 
 // Site A (themoveee.com)-only paths. Site B has no route for these — shared
 // components (e.g. Footer.tsx) and vendor pages link to them with relative
-// hrefs, which resolve to web.themoveee.com and 404 without this redirect.
+// hrefs, which resolve to themoveee.com and 404 without this redirect.
 const SITE_A_PREFIXES = ['/shop', '/makers']
 
 export function proxy(request: NextRequest) {

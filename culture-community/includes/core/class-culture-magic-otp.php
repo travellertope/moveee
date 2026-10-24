@@ -303,7 +303,7 @@ class Culture_Magic_OTP {
 			$opt_name, $payload, $payload
 		) );
 
-		$connect_url = untrailingslashit( get_option( 'culture_connect_url', 'https://web.themoveee.com' ) );
+		$connect_url = untrailingslashit( get_option( 'culture_connect_url', 'https://themoveee.com' ) );
 		return $connect_url . '/magic-signin?token=' . rawurlencode( $token ) . '&redirect=' . rawurlencode( $redirect_path );
 	}
 
@@ -410,7 +410,7 @@ class Culture_Magic_OTP {
 		) );
 
 		// Build the magic link URL.
-		$connect_url = untrailingslashit( get_option( 'culture_connect_url', 'https://web.themoveee.com' ) );
+		$connect_url = untrailingslashit( get_option( 'culture_connect_url', 'https://themoveee.com' ) );
 		$magic_url   = $connect_url . '/magic-rsvp?token=' . rawurlencode( $token ) . '&post=' . rawurlencode( $post->post_name );
 
 		if ( class_exists( 'Culture_Emails' ) ) {

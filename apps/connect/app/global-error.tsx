@@ -65,7 +65,7 @@ export default function GlobalError({
         >
           We hit an unexpected snag. Please try refreshing, or visit{" "}
           <a href="/feed" style={{ color: "#b38238" }}>
-            web.themoveee.com
+            themoveee.com
           </a>{" "}
           to start over.
         </p>

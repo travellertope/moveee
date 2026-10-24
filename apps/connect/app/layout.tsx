@@ -22,7 +22,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://web.themoveee.com"),
+  metadataBase: new URL("https://themoveee.com"),
   verification: {
     google: "-PWVNI7d4eBu_a-Qo35KOTlAknn2MiciJ4c_ycsiqdc",
   },
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://web.themoveee.com",
+    url: "https://themoveee.com",
     siteName: "Moveee",
     images: [
       {

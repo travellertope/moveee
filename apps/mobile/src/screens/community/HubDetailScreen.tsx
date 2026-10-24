@@ -651,7 +651,7 @@ export default function HubDetailScreen() {
                 <TouchableOpacity
                   key={ev.id}
                   style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 }}
-                  onPress={() => openInApp(`https://web.themoveee.com/events/${ev.slug}`)}
+                  onPress={() => openInApp(`https://themoveee.com/events/${ev.slug}`)}
                 >
                   {ev.imageUrl ? (
                     <Image source={{ uri: ev.imageUrl }} style={{ width: 48, height: 48, borderRadius: radius.md }} />

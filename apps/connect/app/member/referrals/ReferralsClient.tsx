@@ -84,7 +84,7 @@ export default function ReferralsClient({ initialData }: { initialData: Referral
           </button>
         </div>
         <p className="ref-short">
-          Or share the short URL: <strong>web.themoveee.com/r/{data.referralCode}</strong>
+          Or share the short URL: <strong>themoveee.com/r/{data.referralCode}</strong>
         </p>
       </section>
 
@@ -156,7 +156,7 @@ export default function ReferralsClient({ initialData }: { initialData: Referral
         <div className="acct-card-header"><span className="acct-card-title">How It Works</span></div>
         {[
           { n: "1", text: `Share your link — send it via WhatsApp, Instagram DMs, or email.` },
-          { n: "2", text: `Your friend signs up at web.themoveee.com using your link.` },
+          { n: "2", text: `Your friend signs up at themoveee.com using your link.` },
           { n: "3", text: `You instantly earn +${repPerReferral} reputation and +${creditsPerReferral} credits. No waiting.` },
           { n: "4", text: `Refer 3 friends → Connector badge. Refer 10 → Super Connector badge.` },
         ].map(({ n, text }) => (

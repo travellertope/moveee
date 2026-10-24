@@ -16,6 +16,6 @@ export function shareUrlFor(item: FeedItem): string | undefined {
   const path = item.href.startsWith("/") ? item.href : `/${item.href}`;
   // Editorial (magazine) content lives on Site A (themoveee.com); everything
   // else — pulse, community, quotes, happenings, directory — is Site B.
-  const domain = item.type === "editorial" ? "https://themoveee.com" : "https://web.themoveee.com";
+  const domain = item.type === "editorial" ? "https://themoveee.com" : "https://themoveee.com";
   return `${domain}${path}`;
 }

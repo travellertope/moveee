@@ -14,7 +14,7 @@ const EDITION_ORDER = ["global", "uk", "us", "africa"] as const;
 // as `/feed?_rsc=…`, which 308s cross-origin and dies on CORS ("No
 // 'Access-Control-Allow-Origin' header"), and clicking it costs a wasted
 // round-trip through the redirect. Link them straight at Site B instead.
-const CONNECT_URL = "https://web.themoveee.com";
+const CONNECT_URL = "https://themoveee.com";
 
 // Site-wide footer, rebuilt from mockups/web/moveee_homepage_wepresent_concept.html
 // (WePresent's own structure: newsletter + socials up top, big-serif link

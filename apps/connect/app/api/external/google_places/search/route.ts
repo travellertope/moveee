@@ -53,7 +53,7 @@ async function searchNominatim(q: string) {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?${params}`,
     {
-      headers: { "User-Agent": "Moveee/1.0 (web.themoveee.com)" },
+      headers: { "User-Agent": "Moveee/1.0 (themoveee.com)" },
       next: { revalidate: 3600 },
     }
   ).catch(() => null);
