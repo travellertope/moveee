@@ -225,6 +225,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [evCity, setEvCity]         = useState("");
   const [evDesc, setEvDesc]         = useState("");
   const [evAdmission, setEvAdmission] = useState("");
+  const [evCurrency, setEvCurrency] = useState("NGN");
   const [evTicketUrl, setEvTicketUrl] = useState("");
   const [evAddress, setEvAddress] = useState("");
   const [evCategory, setEvCategory] = useState("");
@@ -528,7 +529,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           payload.event_venue = evVenue.trim();
           payload.event_city = evCity.trim();
           payload.event_address = evAddress.trim() || evVenue.trim();
-          payload.event_admission = evAdmission.trim() || "Free";
+          const admissionNum = evAdmission.trim();
+          payload.event_admission = admissionNum
+            ? `${evCurrency} ${admissionNum}`
+            : "Free";
           if (evTicketUrl.trim()) payload.ticket_url = evTicketUrl.trim();
           if (evCategory) payload.event_category = evCategory;
           if (evOrganiser?.id) payload.organiser_directory_id = evOrganiser.id;
@@ -1284,12 +1288,28 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               <div className="cm-grid-2">
                 <div className="cm-field">
                   <label className="cm-label">Admission <span className="cm-label-opt">(optional)</span></label>
-                  <input
-                    className="cm-input"
-                    placeholder="e.g. Free, £10, $15"
-                    value={evAdmission}
-                    onChange={e => setEvAdmission(e.target.value)}
-                  />
+                  <div className="cm-currency-row">
+                    <select
+                      className="cm-currency-select"
+                      value={evCurrency}
+                      onChange={e => setEvCurrency(e.target.value)}
+                      aria-label="Currency"
+                    >
+                      <option value="NGN">₦ NGN</option>
+                      <option value="USD">$ USD</option>
+                      <option value="GBP">£ GBP</option>
+                      <option value="EUR">€ EUR</option>
+                    </select>
+                    <input
+                      className="cm-input cm-currency-amount"
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Amount (leave blank if free)"
+                      value={evAdmission}
+                      onChange={e => setEvAdmission(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div className="cm-field">
                   <label className="cm-label">Ticket / RSVP link <span className="cm-label-opt">(optional)</span></label>

@@ -774,6 +774,28 @@
 .cm-textarea--serif { font-family: 'Fraunces', 'Georgia', serif; font-style: italic; font-size: 0.95rem; line-height: 1.55; }
 /* datetime-local native styling */
 .cm-input[type="datetime-local"] { color-scheme: light; }
+/* number input — hide browser spin buttons */
+.cm-input[type="number"]::-webkit-inner-spin-button,
+.cm-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.cm-input[type="number"] { -moz-appearance: textfield; }
+
+/* Currency row — selector + amount side by side */
+.cm-currency-row { display: flex; gap: 6px; }
+.cm-currency-select {
+  flex-shrink: 0;
+  background: var(--paper-deep, #ece6d8);
+  border: 1px solid var(--rule, rgba(20,17,13,0.1));
+  border-radius: var(--radius-md, 4px);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0 8px;
+  height: 38px;
+  cursor: pointer;
+  outline: none;
+}
+.cm-currency-select:focus { border-color: rgba(122,36,28,0.45); background: var(--paper); }
+.cm-currency-amount { flex: 1; }
 
 /* Review pills */
 .cm-review-pills { display: flex; flex-wrap: wrap; gap: 6px; }
