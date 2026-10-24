@@ -846,9 +846,9 @@ class Culture_Settings {
                 <th scope="row"><label for="culture_creator_fee_rate"><?php esc_html_e( 'Platform Fee Rate', 'culture-community' ); ?></label></th>
                 <td>
                     <input type="number" id="culture_creator_fee_rate" name="culture_creator_fee_rate"
-                           value="<?php echo esc_attr( get_option( 'culture_creator_fee_rate', '0.10' ) ); ?>"
+                           value="<?php echo esc_attr( get_option( 'culture_creator_fee_rate', '0.20' ) ); ?>"
                            class="small-text" min="0" max="1" step="0.01" />
-                    <p class="description"><?php esc_html_e( 'Default: 0.10 (10%). Set to 0 for no fee.', 'culture-community' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'Default: 0.20 (20%). Set to 0 for no fee.', 'culture-community' ); ?></p>
                 </td>
             </tr>
         </table>

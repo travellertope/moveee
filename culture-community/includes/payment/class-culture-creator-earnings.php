@@ -88,7 +88,7 @@ class Culture_Creator_Earnings {
     /* ── Config ──────────────────────────────────────────────────────── */
 
     public static function platform_fee_rate(): float {
-        return (float) get_option( 'culture_creator_fee_rate', 0.10 );
+        return (float) get_option( 'culture_creator_fee_rate', 0.20 );
     }
 
     /* ── Record an earning ───────────────────────────────────────────── */
