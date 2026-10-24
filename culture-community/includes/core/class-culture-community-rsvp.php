@@ -26,6 +26,7 @@ class Culture_Community_RSVP {
             id bigint(20) NOT NULL AUTO_INCREMENT,
             post_id bigint(20) NOT NULL,
             user_id bigint(20) NOT NULL,
+            guest_email varchar(200) NOT NULL DEFAULT '',
             status varchar(20) NOT NULL DEFAULT 'confirmed',
             rsvp_type varchar(10) NOT NULL DEFAULT 'free',
             amount_paid int(11) NOT NULL DEFAULT 0,

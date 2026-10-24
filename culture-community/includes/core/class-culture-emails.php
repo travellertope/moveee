@@ -523,6 +523,25 @@ class Culture_Emails {
     }
 
     /**
+     * Confirm a paid RSVP to a guest — lets them know their spot is secured
+     * and includes a magic sign-in link to access their new Moveee account.
+     */
+    public static function send_paid_rsvp_confirmation_email( string $email, string $event_title, int $amount, string $currency, string $magic_url ): void {
+        $sym = [ 'NGN' => '₦', 'USD' => '$', 'GBP' => '£', 'EUR' => '€' ];
+        $price_label = ( $sym[ $currency ] ?? $currency ) . number_format( $amount );
+
+        $subject = 'Your spot is confirmed — ' . $event_title;
+        $body  = self::get_header( 'You\'re in!' );
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 12px;">Your payment of <strong>' . esc_html( $price_label ) . '</strong> for <strong>' . esc_html( $event_title ) . '</strong> went through — your spot is confirmed.</p>';
+        $body .= '<p style="font-size:15px;line-height:1.7;color:#3d3d3d;margin:0 0 20px;">Click below to sign in to your Moveee account, where you can manage your RSVPs and connect with the community.</p>';
+        $body .= self::get_button( $magic_url, 'Access my account' );
+        $body .= '<p style="font-size:13px;color:#7a6f5c;margin:20px 0 0;">This link expires in 24 hours and can only be used once.</p>';
+        $body .= self::get_footer();
+
+        self::send( $email, $subject, $body );
+    }
+
+    /**
      * Set from name for wp_mail.
      *
      * @return string

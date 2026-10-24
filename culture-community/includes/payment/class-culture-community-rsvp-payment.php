@@ -71,6 +71,17 @@ class Culture_Community_RSVP_Payment {
             'callback'            => [ __CLASS__, 'handle_stripe_webhook' ],
             'permission_callback' => '__return_true',
         ] );
+
+        // Public — unauthenticated guest initiates paid RSVP with just an email.
+        register_rest_route( 'culture/v1', '/community/event/rsvp-paid-guest-initiate', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_guest_initiate' ],
+            'permission_callback' => '__return_true',
+            'args'                => [
+                'email'   => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_email' ],
+                'post_id' => [ 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ],
+            ],
+        ] );
     }
 
     // ── Shared initiate logic ─────────────────────────────────────────────────
@@ -210,6 +221,96 @@ class Culture_Community_RSVP_Payment {
         return self::do_initiate( (int) $req->get_param( 'post_id' ), $user_id );
     }
 
+    // ── Guest initiate handler ────────────────────────────────────────────────
+
+    public static function handle_guest_initiate( WP_REST_Request $req ): WP_REST_Response {
+        $email   = sanitize_email( $req->get_param( 'email' ) );
+        $post_id = (int) $req->get_param( 'post_id' );
+        if ( ! is_email( $email ) ) {
+            return new WP_REST_Response( [ 'error' => 'invalid_email', 'message' => 'Enter a valid email address.' ], 400 );
+        }
+        return self::do_guest_initiate( $email, $post_id );
+    }
+
+    private static function do_guest_initiate( string $email, int $post_id ): WP_REST_Response {
+        global $wpdb;
+
+        $post = get_post( $post_id );
+        if ( ! $post || 'culture_post' !== $post->post_type || 'event' !== get_post_meta( $post_id, '_template_type', true ) ) {
+            return new WP_REST_Response( [ 'error' => 'invalid_event', 'message' => 'Not a community event.' ], 400 );
+        }
+        if ( ! Culture_Community_RSVP::is_rsvp_enabled( $post_id ) ) {
+            return new WP_REST_Response( [ 'error' => 'rsvp_disabled', 'message' => 'RSVP is not enabled for this event.' ], 400 );
+        }
+        if ( ! Culture_Community_RSVP::is_paid( $post_id ) ) {
+            return new WP_REST_Response( [ 'error' => 'rsvp_free', 'message' => 'This is a free event. Use the magic-link RSVP endpoint.' ], 400 );
+        }
+        $capacity = Culture_Community_RSVP::get_capacity( $post_id );
+        if ( $capacity > 0 && Culture_Community_RSVP::get_count( $post_id ) >= $capacity ) {
+            return new WP_REST_Response( [ 'error' => 'event_full', 'message' => 'This event is fully booked.' ], 409 );
+        }
+
+        // Rate-limit by email+post (3 per 10 min) to deter abuse.
+        $rl_opt  = '_culture_paid_guest_rl_' . md5( strtolower( $email ) . '_' . $post_id );
+        $rl_row  = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $rl_opt ) );
+        $rl      = $rl_row ? json_decode( $rl_row, true ) : null;
+        if ( $rl && time() < (int) $rl['expires'] && (int) $rl['count'] >= 3 ) {
+            return new WP_REST_Response( [ 'error' => 'too_many_requests', 'message' => 'Too many requests — try again in a few minutes.' ], 429 );
+        }
+        $rl      = ( $rl && time() < (int) $rl['expires'] )
+            ? [ 'count' => (int) $rl['count'] + 1, 'expires' => $rl['expires'] ]
+            : [ 'count' => 1, 'expires' => time() + 600 ];
+        $rl_json = wp_json_encode( $rl );
+        $wpdb->query( $wpdb->prepare(
+            "INSERT INTO {$wpdb->options} (option_name,option_value,autoload) VALUES(%s,%s,'no') ON DUPLICATE KEY UPDATE option_value=%s",
+            $rl_opt, $rl_json, $rl_json
+        ) );
+
+        $price    = Culture_Community_RSVP::get_price( $post_id );
+        $currency = Culture_Community_RSVP::get_price_currency( $post_id );
+
+        $tx_ref   = 'CRSVPG-' . strtoupper( bin2hex( random_bytes( 6 ) ) );
+        $post_slug = $post->post_name;
+
+        // Redirect URL tells the callback this is a guest flow (no rsvp_id param).
+        $redirect_url = add_query_arg( [
+            'post_slug'  => $post_slug,
+            'guest_tx'   => $tx_ref,
+        ], rest_url( 'culture/v1/community/event/rsvp-paid-callback' ) );
+
+        $result = Culture_Flutterwave::payment_initiate( [
+            'tx_ref'       => $tx_ref,
+            'amount'       => (float) $price,
+            'currency'     => $currency,
+            'redirect_url' => $redirect_url,
+            'email'        => $email,
+            'name'         => '',
+            'description'  => wp_trim_words( $post->post_title, 12, '…' ),
+            'title'        => 'Moveee Events',
+        ] );
+
+        if ( is_wp_error( $result ) ) {
+            return new WP_REST_Response( [ 'error' => 'payment_error', 'message' => $result->get_error_message() ], 502 );
+        }
+
+        // Store pending data in wp_options (not RSVP table) to avoid UNIQUE KEY violation.
+        $pending_opt  = '_culture_guest_rsvp_pending_' . $tx_ref;
+        $pending_json = wp_json_encode( [
+            'email'     => $email,
+            'post_id'   => $post_id,
+            'post_slug' => $post_slug,
+            'price'     => $price,
+            'currency'  => $currency,
+            'expires'   => time() + 7200, // 2 hours
+        ] );
+        $wpdb->query( $wpdb->prepare(
+            "INSERT INTO {$wpdb->options} (option_name,option_value,autoload) VALUES(%s,%s,'no') ON DUPLICATE KEY UPDATE option_value=%s",
+            $pending_opt, $pending_json, $pending_json
+        ) );
+
+        return new WP_REST_Response( [ 'payment_url' => $result['url'] ], 200 );
+    }
+
     // ── Flutterwave – Standard hosted checkout ────────────────────────────────
 
     private static function init_flutterwave( int $rsvp_id, string $email, string $name, int $amount, string $currency, string $event_title, string $post_slug ): array|\WP_Error {
@@ -285,6 +386,7 @@ class Culture_Community_RSVP_Payment {
         $transaction_id = (int) ( $req->get_param( 'transaction_id' ) ?? 0 );
         $rsvp_id        = (int) ( $req->get_param( 'rsvp_id' ) ?? 0 );
         $post_slug      = sanitize_text_field( $req->get_param( 'post_slug' ) ?: '' );
+        $is_guest       = ! empty( $req->get_param( 'guest_tx' ) );
 
         $connect_url = untrailingslashit( get_option( 'culture_connect_url', self::CONNECT_URL ) );
         $base_url    = $post_slug ? $connect_url . '/community/' . $post_slug : $connect_url;
@@ -299,7 +401,17 @@ class Culture_Community_RSVP_Payment {
             wp_safe_redirect( $fail_url ); exit;
         }
 
-        // rsvp_id from query param (we embed it in the redirect_url) or from tx_ref lookup
+        // Guest flow — tx_ref prefixed with CRSVPG-
+        if ( $is_guest || ( $tx_ref && str_starts_with( $tx_ref, 'CRSVPG-' ) ) ) {
+            if ( ! self::confirm_guest_rsvp_payment( $tx_ref ) ) {
+                wp_safe_redirect( $fail_url ); exit;
+            }
+            // Guest redirect — no rsvp_confirmed param since the page requires auth
+            wp_safe_redirect( $base_url . '?rsvp_confirmed=1' );
+            exit;
+        }
+
+        // Authenticated flow — look up rsvp_id from query param or tx_ref
         if ( ! $rsvp_id && $tx_ref ) {
             global $wpdb;
             $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
@@ -335,15 +447,20 @@ class Culture_Community_RSVP_Payment {
             $tx_ref = $d['tx_ref'] ?? '';
             $status = $d['status'] ?? '';
 
-            // Only handle community RSVP charges (reference prefixed with CRSVP-)
-            if ( 'successful' === $status && str_starts_with( $tx_ref, 'CRSVP-' ) ) {
-                global $wpdb;
-                $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
-                    "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
-                    $tx_ref
-                ) );
-                if ( $rsvp_id ) {
-                    self::confirm_rsvp_payment( $rsvp_id, $tx_ref, 'flutterwave' );
+            if ( 'successful' === $status ) {
+                if ( str_starts_with( $tx_ref, 'CRSVPG-' ) ) {
+                    // Guest paid RSVP — pending data in wp_options
+                    self::confirm_guest_rsvp_payment( $tx_ref );
+                } elseif ( str_starts_with( $tx_ref, 'CRSVP-' ) ) {
+                    // Authenticated paid RSVP
+                    global $wpdb;
+                    $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
+                        "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
+                        $tx_ref
+                    ) );
+                    if ( $rsvp_id ) {
+                        self::confirm_rsvp_payment( $rsvp_id, $tx_ref, 'flutterwave' );
+                    }
                 }
             }
         }
@@ -427,11 +544,13 @@ class Culture_Community_RSVP_Payment {
 
         try {
             $capacity = Culture_Community_RSVP::get_capacity( $post_id );
-            // Exclude this user's own row from the count (they're taking one of the spots)
+            // Exclude this specific RSVP row from the count (they're taking one of the spots).
+            // Using id != rsvp_id rather than user_id != user_id avoids excluding ALL guest
+            // rows when user_id = 0.
             if ( $capacity > 0 ) {
                 $count = (int) $wpdb->get_var( $wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND user_id != %d AND status = 'confirmed'",
-                    $post_id, (int) $row['user_id']
+                    "SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND id != %d AND status = 'confirmed'",
+                    $post_id, $rsvp_id
                 ) );
                 if ( $count >= $capacity ) {
                     // Refund required but out of scope for MVP — log and return false
@@ -478,6 +597,149 @@ class Culture_Community_RSVP_Payment {
         // Gamification
         if ( $attendee && class_exists( 'Culture_Gamification' ) ) {
             Culture_Gamification::award_points( $user_id, 'event_rsvp' );
+        }
+
+        return true;
+    }
+
+    // ── Guest paid RSVP confirmation ─────────────────────────────────────────
+
+    /**
+     * Called after Flutterwave confirms a guest payment (tx_ref prefixed CRSVPG-).
+     * Loads the pending wp_options record, finds-or-creates the account, inserts
+     * the RSVP row as confirmed+paid, sends the confirmation + magic sign-in email,
+     * and cleans up the pending record. Idempotent — a second call with the same
+     * tx_ref finds the pending record already deleted and returns true gracefully
+     * if the RSVP row already exists.
+     */
+    public static function confirm_guest_rsvp_payment( string $tx_ref ): bool {
+        global $wpdb;
+
+        $pending_opt = '_culture_guest_rsvp_pending_' . $tx_ref;
+        $pending_row = $wpdb->get_var( $wpdb->prepare(
+            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+            $pending_opt
+        ) );
+
+        if ( null === $pending_row ) {
+            // Already processed or never existed — check if RSVP row exists.
+            $table   = Culture_Community_RSVP::table();
+            $exists  = $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM {$table} WHERE payment_reference = %s LIMIT 1",
+                $tx_ref
+            ) );
+            return (bool) $exists;
+        }
+
+        $pending = json_decode( $pending_row, true );
+        if ( ! $pending || time() > (int) $pending['expires'] ) {
+            $wpdb->delete( $wpdb->options, [ 'option_name' => $pending_opt ] );
+            return false;
+        }
+
+        $email    = sanitize_email( $pending['email'] );
+        $post_id  = (int) $pending['post_id'];
+        $price    = (int) $pending['price'];
+        $currency = (string) $pending['currency'];
+        $post_slug = (string) $pending['post_slug'];
+
+        // Find or create the account.
+        if ( ! class_exists( 'Culture_Magic_OTP' ) ) return false;
+        $user = Culture_Magic_OTP::find_or_create_user( $email );
+        if ( is_wp_error( $user ) ) {
+            error_log( 'Culture guest RSVP: could not find/create user for ' . $email . ' — ' . $user->get_error_message() );
+            return false;
+        }
+
+        $table = Culture_Community_RSVP::table();
+
+        // Capacity check under lock.
+        $lock_name = 'culture_rsvp_' . $post_id;
+        $locked    = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
+        if ( ! $locked ) return false;
+
+        $inserted = false;
+        try {
+            $capacity = Culture_Community_RSVP::get_capacity( $post_id );
+            if ( $capacity > 0 && Culture_Community_RSVP::get_count( $post_id ) >= $capacity ) {
+                error_log( "Culture guest RSVP: event {$post_id} full at confirm for {$tx_ref} — manual refund needed." );
+                return false;
+            }
+
+            // INSERT OR UPDATE — handle the case where the user account already had
+            // a pending_payment row (rare: user registered between initiate and webhook).
+            $existing = $wpdb->get_row( $wpdb->prepare(
+                "SELECT id FROM {$table} WHERE post_id = %d AND user_id = %d",
+                $post_id, $user->ID
+            ), ARRAY_A );
+
+            if ( $existing ) {
+                $wpdb->update(
+                    $table,
+                    [
+                        'status'            => 'confirmed',
+                        'rsvp_type'         => 'paid',
+                        'amount_paid'       => $price,
+                        'currency'          => $currency,
+                        'payment_status'    => 'paid',
+                        'payment_reference' => $tx_ref,
+                        'payment_gateway'   => 'flutterwave',
+                        'guest_email'       => $email,
+                    ],
+                    [ 'id' => (int) $existing['id'] ],
+                    [ '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ],
+                    [ '%d' ]
+                );
+            } else {
+                $wpdb->insert( $table, [
+                    'post_id'           => $post_id,
+                    'user_id'           => $user->ID,
+                    'guest_email'       => $email,
+                    'status'            => 'confirmed',
+                    'rsvp_type'         => 'paid',
+                    'amount_paid'       => $price,
+                    'currency'          => $currency,
+                    'payment_status'    => 'paid',
+                    'payment_gateway'   => 'flutterwave',
+                    'payment_reference' => $tx_ref,
+                    'created_at'        => current_time( 'mysql' ),
+                ], [ '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ] );
+            }
+            $inserted = true;
+        } finally {
+            $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+        }
+
+        if ( ! $inserted ) return false;
+
+        // Clean up pending record immediately.
+        $wpdb->delete( $wpdb->options, [ 'option_name' => $pending_opt ] );
+
+        // Notify the organiser.
+        $post = get_post( $post_id );
+        if ( $post ) {
+            Culture_Notifications::add(
+                (int) $post->post_author,
+                'event_rsvp',
+                'New paid RSVP',
+                $email . ' RSVPed to "' . wp_trim_words( $post->post_title, 8, '…' ) . '"',
+                '/member/events',
+                [ 'post_id' => $post_id, 'user_id' => $user->ID, 'paid' => true ]
+            );
+        }
+
+        // Gamification.
+        if ( class_exists( 'Culture_Gamification' ) ) {
+            Culture_Gamification::award_points( $user->ID, 'event_rsvp' );
+        }
+
+        // Generate magic sign-in link and send confirmation email.
+        $redirect_path = '/community/' . $post_slug . '?rsvp_confirmed=1';
+        $magic_url     = Culture_Magic_OTP::generate_signin_magic_link( $email, $redirect_path );
+
+        if ( class_exists( 'Culture_Emails' ) ) {
+            $event_title = $post ? $post->post_title : 'your event';
+            Culture_Emails::send_paid_rsvp_confirmation_email( $email, $event_title, $price, $currency, $magic_url );
         }
 
         return true;

@@ -243,6 +243,87 @@ function RsvpDisplay({
     ? "Full"
     : "RSVP";
 
+  // Paid event + unauthenticated: email → Flutterwave guest checkout
+  async function submitGuestPaidRsvp(e: React.FormEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!guestEmail || !postId || guestLoading) return;
+    setGuestLoading(true);
+    setGuestError("");
+    try {
+      const res = await fetch("/api/community/event-rsvp-paid-guest-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: guestEmail, post_id: Number(postId) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.payment_url) {
+        window.location.href = data.payment_url;
+      } else {
+        setGuestError(data?.error ?? "Payment could not be started. Please try again.");
+      }
+    } catch {
+      setGuestError("Could not start payment. Please try again.");
+    }
+    setGuestLoading(false);
+  }
+
+  if (isPaid && isAuthed === false) {
+    return (
+      <div style={{ marginBottom: "0.6rem" }}>
+        {guestSent ? (
+          <p style={{ fontSize: "0.78rem", color: "var(--gold)", margin: 0, fontWeight: 600 }}>
+            Redirecting to payment…
+          </p>
+        ) : (
+          <form onSubmit={submitGuestPaidRsvp} style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <input
+              type="email"
+              required
+              placeholder="Your email"
+              value={guestEmail}
+              onChange={(ev) => setGuestEmail(ev.target.value)}
+              onClick={(ev) => ev.stopPropagation()}
+              style={{
+                flex: "1 1 160px",
+                minWidth: 0,
+                padding: "7px 10px",
+                fontSize: "0.78rem",
+                border: "1px solid var(--rule)",
+                borderRadius: "var(--radius-md, 4px)",
+                background: "var(--paper)",
+                color: "var(--ink)",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={guestLoading || isFull}
+              style={{
+                background: "var(--gold)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "999px",
+                padding: "7px 14px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: isFull ? "not-allowed" : "pointer",
+                opacity: guestLoading ? 0.6 : 1,
+              }}
+            >
+              {isFull ? "Full" : `Pay · ${formatPrice(price!, priceCurrency ?? "NGN")}`}
+            </button>
+          </form>
+        )}
+        {guestError && (
+          <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{guestError}</p>
+        )}
+        <span style={{ fontSize: "0.72rem", color: "var(--mute)", display: "block", marginTop: 4 }}>
+          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+        </span>
+      </div>
+    );
+  }
+
   // Free event + unauthenticated: show inline email form
   if (!isPaid && isAuthed === false) {
     return (

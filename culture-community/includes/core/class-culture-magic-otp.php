@@ -202,7 +202,7 @@ class Culture_Magic_OTP {
 	 *                         actually creates the account.
 	 * @return WP_User|WP_Error
 	 */
-	private static function find_or_create_user( $email, $referral = '' ) {
+	public static function find_or_create_user( $email, $referral = '' ) {
 		$user = get_user_by( 'email', $email );
 		if ( $user ) {
 			if ( '1' !== get_user_meta( $user->ID, '_culture_email_verified', true ) ) {
@@ -267,10 +267,44 @@ class Culture_Magic_OTP {
 
 	// ── Guest RSVP magic-link ─────────────────────────────────────────────────
 
-	const RSVP_MAGIC_TTL = 86400; // 24 hours
+	const RSVP_MAGIC_TTL   = 86400; // 24 hours
+	const SIGNIN_MAGIC_TTL = 86400; // 24 hours
 
 	private static function rsvp_magic_option_name( string $token_hash ): string {
 		return '_culture_rsvp_magic_' . $token_hash;
+	}
+
+	private static function signin_magic_option_name( string $token_hash ): string {
+		return '_culture_signin_magic_' . $token_hash;
+	}
+
+	/**
+	 * Generate a magic sign-in link for a given email (post-payment or other
+	 * headless sign-in surfaces). Stores a single-use token in wp_options;
+	 * the caller decides where to redirect the user after sign-in.
+	 *
+	 * @param string $email
+	 * @param string $redirect_path Relative path to redirect to after sign-in (e.g. '/community/my-event').
+	 * @return string The magic sign-in URL.
+	 */
+	public static function generate_signin_magic_link( string $email, string $redirect_path = '/feed' ): string {
+		global $wpdb;
+
+		$token      = bin2hex( random_bytes( 32 ) );
+		$token_hash = md5( $token );
+		$opt_name   = self::signin_magic_option_name( $token_hash );
+		$payload    = wp_json_encode( [
+			'email'         => sanitize_email( $email ),
+			'redirect_path' => $redirect_path,
+			'expires'       => time() + self::SIGNIN_MAGIC_TTL,
+		] );
+		$wpdb->query( $wpdb->prepare(
+			"INSERT INTO {$wpdb->options} (option_name,option_value,autoload) VALUES(%s,%s,'no') ON DUPLICATE KEY UPDATE option_value=%s",
+			$opt_name, $payload, $payload
+		) );
+
+		$connect_url = untrailingslashit( get_option( 'culture_connect_url', 'https://web.themoveee.com' ) );
+		return $connect_url . '/magic-signin?token=' . rawurlencode( $token ) . '&redirect=' . rawurlencode( $redirect_path );
 	}
 
 	/**
@@ -293,10 +327,20 @@ class Culture_Magic_OTP {
 			],
 		] );
 
-		// API-key-authenticated — called by NextAuth authorize() to verify the token.
+		// API-key-authenticated — called by NextAuth authorize() to verify the RSVP token.
 		register_rest_route( 'culture/v1', '/magic-link/verify-rsvp', [
 			'methods'             => 'POST',
 			'callback'            => [ __CLASS__, 'handle_verify_rsvp_magic' ],
+			'permission_callback' => [ 'Culture_REST_API', 'api_key_permission' ],
+			'args'                => [
+				'token' => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
+			],
+		] );
+
+		// API-key-authenticated — called by NextAuth authorize() to verify a post-payment sign-in token.
+		register_rest_route( 'culture/v1', '/magic-link/verify-signin', [
+			'methods'             => 'POST',
+			'callback'            => [ __CLASS__, 'handle_verify_signin_magic' ],
 			'permission_callback' => [ 'Culture_REST_API', 'api_key_permission' ],
 			'args'                => [
 				'token' => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
@@ -452,6 +496,77 @@ class Culture_Magic_OTP {
 			'passkey_count'          => 0,
 			'credits_escrowed'       => 0,
 			'rsvp_post_slug'         => $data['slug'] ?? '',
+		], 200 );
+	}
+
+	/**
+	 * REST handler — verify a post-payment sign-in token, find/create account,
+	 * and return a user profile for NextAuth. No RSVP action — the RSVP row
+	 * was already confirmed by confirm_guest_rsvp_payment() at webhook time.
+	 */
+	public static function handle_verify_signin_magic( WP_REST_Request $req ): WP_REST_Response {
+		global $wpdb;
+
+		$token      = sanitize_text_field( $req->get_param( 'token' ) );
+		$token_hash = md5( $token );
+		$opt_name   = self::signin_magic_option_name( $token_hash );
+
+		$row = $wpdb->get_var( $wpdb->prepare(
+			"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+			$opt_name
+		) );
+
+		if ( null === $row ) {
+			return new WP_REST_Response( [ 'error' => 'token_expired', 'message' => 'This link has expired or already been used.' ], 400 );
+		}
+
+		$data = json_decode( $row, true );
+		if ( ! $data || time() > (int) $data['expires'] ) {
+			$wpdb->delete( $wpdb->options, [ 'option_name' => $opt_name ] );
+			return new WP_REST_Response( [ 'error' => 'token_expired', 'message' => 'This link has expired.' ], 400 );
+		}
+
+		// Single-use — delete immediately.
+		$wpdb->delete( $wpdb->options, [ 'option_name' => $opt_name ] );
+
+		$email = sanitize_email( $data['email'] );
+		$user  = self::find_or_create_user( $email );
+		if ( is_wp_error( $user ) ) {
+			return new WP_REST_Response( [ 'error' => 'user_error', 'message' => $user->get_error_message() ], 500 );
+		}
+
+		return new WP_REST_Response( [
+			'id'                     => $user->ID,
+			'display_name'           => $user->display_name,
+			'email'                  => $user->user_email,
+			'username'               => $user->user_login,
+			'phone'                  => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
+			'whatsapp'               => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
+			'gender'                 => get_user_meta( $user->ID, '_culture_gender', true ) ?: '',
+			'date_of_birth'          => get_user_meta( $user->ID, '_culture_date_of_birth', true ) ?: '',
+			'nationality'            => get_user_meta( $user->ID, '_culture_nationality', true ) ?: '',
+			'country_of_residence'   => get_user_meta( $user->ID, '_culture_country', true ) ?: '',
+			'city'                   => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
+			'occupation'             => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
+			'registered_at'          => strtotime( $user->user_registered ),
+			'tier'                   => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
+			'interests'              => (array) get_user_meta( $user->ID, '_culture_interests', true ),
+			'credits'                => (int) get_user_meta( $user->ID, '_culture_credits', true ),
+			'reputation'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
+			'reputation_tier'        => get_user_meta( $user->ID, '_culture_reputation_tier', true ) ?: 'member',
+			'daily_credits_remaining'=> 50,
+			'points'                 => (int) get_user_meta( $user->ID, '_culture_points', true ),
+			'badges'                 => (array) get_user_meta( $user->ID, '_culture_badges', true ),
+			'referral_code'          => get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '',
+			'referral_count'         => (int) get_user_meta( $user->ID, '_culture_referral_count', true ),
+			'visual_downloads_today' => 0,
+			'is_vendor'              => false,
+			'vendor_slug'            => '',
+			'avatar_url'             => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+			'has_passkey'            => false,
+			'passkey_count'          => 0,
+			'credits_escrowed'       => 0,
+			'redirect_path'          => $data['redirect_path'] ?? '/feed',
 		], 200 );
 	}
 }
