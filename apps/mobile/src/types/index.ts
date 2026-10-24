@@ -222,6 +222,8 @@ export interface FeedItem {
   rsvpCapacity?: number;
   rsvpCount?: number;
   rsvpAvailable?: boolean;
+  rsvpPrice?: number;
+  rsvpPriceCurrency?: string;
 
   // Directory
   entryType?: string;

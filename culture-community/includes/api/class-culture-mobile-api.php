@@ -4293,6 +4293,8 @@ class Culture_Mobile_API {
                     ? ( ( (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) === 0 )
                         || Culture_Community_RSVP::get_count( $post->ID ) < (int) get_post_meta( $post->ID, '_culture_rsvp_capacity', true ) )
                     : false,
+                'rsvpPrice'               => $template === 'event' ? Culture_Community_RSVP::get_price( $post->ID ) : 0,
+                'rsvpPriceCurrency'       => $template === 'event' ? Culture_Community_RSVP::get_price_currency( $post->ID ) : 'NGN',
                 'isFeatured'              => (bool) get_post_meta( $post->ID, '_culture_is_featured', true ),
                 'organiserDirectoryId'    => (int) get_post_meta( $post->ID, '_culture_event_organiser_id', true ) ?: null,
             );

@@ -4,8 +4,11 @@ import {
   Text,
   Image,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNav } from "../../hooks/useNav";
@@ -17,7 +20,8 @@ import AudioPreviewButton from "../ui/AudioPreviewButton";
 import HashtagText from "./HashtagText";
 import { useColors } from "../../hooks/useColors";
 import CommentSection, { type CommentSectionHandle } from "./CommentSection";
-import { api, MOBILE_API } from "../../api/client";
+import { api, MOBILE_API, CULTURE_API } from "../../api/client";
+import { openInApp } from "../../utils/openInApp";
 import { useAuthStore } from "../../auth/authStore";
 import type { ColorPalette } from "../../theme";
 import { radius, fonts } from "../../theme";
@@ -673,24 +677,39 @@ function TemplateEvent({ item, c, styles }: { item: FeedItem; c: ColorPalette; s
 
 function EventRsvpButton({ item, c, styles }: { item: FeedItem; c: ColorPalette; styles: ReturnType<typeof createStyles> }) {
   const postId = item.wpId ?? item.id ?? "";
+  const isAuthed = useAuthStore((s) => s.isAuthenticated);
+  const price = item.rsvpPrice ?? 0;
+  const currency = item.rsvpPriceCurrency ?? "NGN";
+  const isPaid = price > 0;
+  const currencySymbol: Record<string, string> = { NGN: "₦", USD: "$", GBP: "£", EUR: "€" };
+  const sym = currencySymbol[currency] ?? currency;
+
   const [rsvped, setRsvped] = useState(false);
   const [count, setCount] = useState(item.rsvpCount ?? 0);
   const [busy, setBusy] = useState(false);
   const capacity = item.rsvpCapacity ?? 0;
   const isFull = capacity > 0 && count >= capacity && !rsvped;
 
+  // Guest paid RSVP state
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestError, setGuestError] = useState("");
+
   useEffect(() => {
-    if (!postId) return;
+    if (!postId || !isAuthed) return;
     api.get<{ rsvped: boolean; count: number }>(`${MOBILE_API}/community/event/rsvp-status?post_id=${postId}`)
       .then((s) => { if (s) { setRsvped(s.rsvped); setCount(s.count); } })
       .catch(() => {});
-  }, [postId]);
+  }, [postId, isAuthed]);
 
   const toggle = async () => {
     if (!postId || busy) return;
     setBusy(true);
     try {
-      if (rsvped) {
+      if (isPaid && !rsvped) {
+        await api.post(`${MOBILE_API}/community/event/rsvp-paid-initiate`, { post_id: postId });
+        setRsvped(true);
+        setCount((n) => n + 1);
+      } else if (rsvped) {
         await api.post(`${MOBILE_API}/community/event/rsvp-cancel`, { post_id: postId });
         setRsvped(false);
         setCount((n) => Math.max(0, n - 1));
@@ -706,6 +725,59 @@ function EventRsvpButton({ item, c, styles }: { item: FeedItem; c: ColorPalette;
     }
   };
 
+  const submitGuestPaid = async () => {
+    const email = guestEmail.trim();
+    if (!email || !email.includes("@")) { setGuestError("Enter a valid email address."); return; }
+    setGuestError("");
+    setBusy(true);
+    try {
+      const data = await api.post<{ payment_url: string }>(
+        `${CULTURE_API}/community/event/rsvp-paid-guest-initiate`,
+        { email, post_id: Number(postId) },
+        false
+      );
+      if (data?.payment_url) {
+        await openInApp(data.payment_url);
+      } else {
+        setGuestError("Could not start payment. Please try again.");
+      }
+    } catch {
+      setGuestError("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (isPaid && !isAuthed) {
+    return (
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <Text style={[styles.calendarLink, { marginBottom: 8 }]}>
+          Enter your email to reserve a spot · {sym}{price.toLocaleString()}
+        </Text>
+        <TextInput
+          style={styles.guestEmailInput}
+          placeholder="Your email address"
+          placeholderTextColor={c.ghost}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={guestEmail}
+          onChangeText={(t) => { setGuestEmail(t); setGuestError(""); }}
+        />
+        {guestError ? <Text style={styles.guestError}>{guestError}</Text> : null}
+        <TouchableOpacity
+          style={[styles.rsvpBtn, busy && { opacity: 0.6 }]}
+          onPress={submitGuestPaid}
+          disabled={busy}
+        >
+          <Text style={styles.rsvpBtnText}>
+            {busy ? "Please wait…" : `Pay ${sym}${price.toLocaleString()} →`}
+          </Text>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    );
+  }
+
   return (
     <>
       <TouchableOpacity
@@ -714,7 +786,7 @@ function EventRsvpButton({ item, c, styles }: { item: FeedItem; c: ColorPalette;
         disabled={busy || isFull}
       >
         <Text style={styles.rsvpBtnText}>
-          {isFull ? "Fully booked" : rsvped ? "You're going ✓" : "RSVP Now →"}
+          {isFull ? "Fully booked" : rsvped ? "You're going ✓" : isPaid ? `Pay ${sym}${price.toLocaleString()} →` : "RSVP Now →"}
         </Text>
       </TouchableOpacity>
       {capacity > 0 && (
@@ -1613,6 +1685,17 @@ function createStyles(c: ColorPalette) {
       color: "#fff",
       letterSpacing: 0.6,
     },
+    guestEmailInput: {
+      borderWidth: 1,
+      borderColor: c.ghost,
+      borderRadius: 8,
+      height: 44,
+      paddingHorizontal: 12,
+      fontSize: 14,
+      color: c.ink,
+      marginBottom: 8,
+    },
+    guestError: { fontSize: 12, color: c.error, marginBottom: 8 },
     calendarLink: { fontSize: 13, color: c.mute },
 
     // Quote
