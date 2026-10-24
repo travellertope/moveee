@@ -58,8 +58,9 @@ class Culture_Settings {
         'culture_google_play_product_monthly'           => 'moveee_pro_monthly',
         'culture_google_play_product_annual'            => 'moveee_pro_annual',
 
-        // Flutterwave (airtime perk rewards).
+        // Flutterwave (airtime perk rewards + paid event RSVPs).
         'culture_flutterwave_secret_key'       => '',
+        'culture_flutterwave_webhook_hash'     => '',
 
         // Shop.
         'culture_shop_fx_ngn_per_gbp'          => 1900,
@@ -280,8 +281,9 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_google_play_product_monthly', $text );
         register_setting( 'culture_settings_payment', 'culture_google_play_product_annual', $text );
 
-        // Flutterwave (airtime perk rewards).
+        // Flutterwave (airtime perk rewards + paid event RSVPs).
         register_setting( 'culture_settings_payment', 'culture_flutterwave_secret_key', $text );
+        register_setting( 'culture_settings_payment', 'culture_flutterwave_webhook_hash', $text );
 
         // Shop (multi-currency + flat-rate fallback shipping + Pro discount).
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
@@ -715,8 +717,19 @@ class Culture_Settings {
                         <?php if ( class_exists( 'Culture_Flutterwave' ) && Culture_Flutterwave::is_configured() ) : ?>
                             <br /><span style="color:#46b450;">&#10003; <?php esc_html_e( 'Flutterwave is configured and ready.', 'culture-community' ); ?></span>
                         <?php else : ?>
-                            <br /><span style="color:#dc3232;">&#10007; <?php esc_html_e( 'Flutterwave is not yet configured — airtime perks will not work until a key is saved.', 'culture-community' ); ?></span>
+                            <br /><span style="color:#dc3232;">&#10007; <?php esc_html_e( 'Flutterwave is not yet configured — airtime perks and paid event RSVPs will not work until a key is saved.', 'culture-community' ); ?></span>
                         <?php endif; ?>
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_flutterwave_webhook_hash"><?php esc_html_e( 'Webhook Hash Secret', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="password" id="culture_flutterwave_webhook_hash" name="culture_flutterwave_webhook_hash"
+                           value="<?php echo esc_attr( self::get( 'culture_flutterwave_webhook_hash' ) ); ?>" class="regular-text"
+                           autocomplete="new-password" />
+                    <p class="description">
+                        <?php esc_html_e( 'The secret hash you set in your Flutterwave dashboard under Settings → Webhooks. Used to verify that incoming webhook calls are genuinely from Flutterwave. Any strong random string works — set the same value in both places.', 'culture-community' ); ?>
                     </p>
                 </td>
             </tr>
