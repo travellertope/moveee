@@ -172,8 +172,6 @@ function RsvpDisplay({
         const data = await res.json();
         if (res.ok && data?.url) {
           window.location.href = data.url;
-        } else if (res.status === 403) {
-          setPaidError("Moveee Pro membership required.");
         } else {
           setPaidError(data?.error ?? "Payment could not be started. Please try again.");
         }

@@ -13,9 +13,6 @@ export async function POST(req: NextRequest) {
   }
 
   const user = session.user as any;
-  if (user?.tier !== "patron") {
-    return NextResponse.json({ error: "Moveee Pro membership required to RSVP to paid events." }, { status: 403 });
-  }
 
   const body = await req.json().catch(() => ({}));
   const { post_id } = body as { post_id?: number };
