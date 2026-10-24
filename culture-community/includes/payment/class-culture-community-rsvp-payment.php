@@ -598,6 +598,19 @@ class Culture_Community_RSVP_Payment {
                 '/member/events',
                 [ 'post_id' => $post_id, 'user_id' => $user_id, 'paid' => true ]
             );
+
+            // Creator earnings ledger.
+            if ( class_exists( 'Culture_Creator_Earnings' ) ) {
+                Culture_Creator_Earnings::record_rsvp_earning(
+                    $rsvp_id,
+                    $post_id,
+                    $organiser_id,
+                    (float) $row['amount_paid'],
+                    (string) $row['currency'],
+                    $gateway,
+                    $reference
+                );
+            }
         }
 
         // Gamification
@@ -665,6 +678,7 @@ class Culture_Community_RSVP_Payment {
         if ( ! $locked ) return false;
 
         $inserted = false;
+        $rsvp_id  = 0;
         try {
             $capacity = Culture_Community_RSVP::get_capacity( $post_id );
             if ( $capacity > 0 && Culture_Community_RSVP::get_count( $post_id ) >= $capacity ) {
@@ -680,6 +694,7 @@ class Culture_Community_RSVP_Payment {
             ), ARRAY_A );
 
             if ( $existing ) {
+                $rsvp_id = (int) $existing['id'];
                 $wpdb->update(
                     $table,
                     [
@@ -692,7 +707,7 @@ class Culture_Community_RSVP_Payment {
                         'payment_gateway'   => 'flutterwave',
                         'guest_email'       => $email,
                     ],
-                    [ 'id' => (int) $existing['id'] ],
+                    [ 'id' => $rsvp_id ],
                     [ '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ],
                     [ '%d' ]
                 );
@@ -710,6 +725,7 @@ class Culture_Community_RSVP_Payment {
                     'payment_reference' => $tx_ref,
                     'created_at'        => current_time( 'mysql' ),
                 ], [ '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s' ] );
+                $rsvp_id = (int) $wpdb->insert_id;
             }
             $inserted = true;
         } finally {
@@ -724,14 +740,28 @@ class Culture_Community_RSVP_Payment {
         // Notify the organiser.
         $post = get_post( $post_id );
         if ( $post ) {
+            $organiser_id = (int) $post->post_author;
             Culture_Notifications::add(
-                (int) $post->post_author,
+                $organiser_id,
                 'event_rsvp',
                 'New paid RSVP',
                 $email . ' RSVPed to "' . wp_trim_words( $post->post_title, 8, '…' ) . '"',
                 '/member/events',
                 [ 'post_id' => $post_id, 'user_id' => $user->ID, 'paid' => true ]
             );
+
+            // Creator earnings ledger.
+            if ( $rsvp_id && class_exists( 'Culture_Creator_Earnings' ) ) {
+                Culture_Creator_Earnings::record_rsvp_earning(
+                    $rsvp_id,
+                    $post_id,
+                    $organiser_id,
+                    (float) $price,
+                    $currency,
+                    'flutterwave',
+                    $tx_ref
+                );
+            }
         }
 
         // Gamification.

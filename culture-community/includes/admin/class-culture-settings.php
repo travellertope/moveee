@@ -310,6 +310,9 @@ class Culture_Settings {
         register_setting( 'culture_settings_payment', 'culture_flw_amount_monthly_ngn_lit', $int );
         register_setting( 'culture_settings_payment', 'culture_flw_amount_yearly_ngn_lit', $int );
 
+        // Creator payout platform fee rate (decimal, e.g. 0.10 = 10%).
+        register_setting( 'culture_settings_payment', 'culture_creator_fee_rate', array( 'sanitize_callback' => 'floatval' ) );
+
         // Shop (multi-currency + flat-rate fallback shipping + Pro discount).
         register_setting( 'culture_settings_payment', 'culture_shop_fx_ngn_per_gbp', array( 'sanitize_callback' => 'floatval' ) );
         register_setting( 'culture_settings_payment', 'culture_shop_flat_shipping_gbp', array( 'sanitize_callback' => 'floatval' ) );
@@ -831,6 +834,23 @@ class Culture_Settings {
                 </td>
             </tr>
             <?php endforeach; ?>
+        </table>
+
+        <hr />
+        <h3><?php esc_html_e( 'Creator Payouts', 'culture-community' ); ?></h3>
+        <p class="description">
+            <?php esc_html_e( 'Platform fee deducted from each paid RSVP before the net amount is credited to the event creator\'s earnings ledger. Enter as a decimal (e.g. 0.10 = 10%).', 'culture-community' ); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><label for="culture_creator_fee_rate"><?php esc_html_e( 'Platform Fee Rate', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_creator_fee_rate" name="culture_creator_fee_rate"
+                           value="<?php echo esc_attr( get_option( 'culture_creator_fee_rate', '0.10' ) ); ?>"
+                           class="small-text" min="0" max="1" step="0.01" />
+                    <p class="description"><?php esc_html_e( 'Default: 0.10 (10%). Set to 0 for no fee.', 'culture-community' ); ?></p>
+                </td>
+            </tr>
         </table>
         <?php
     }

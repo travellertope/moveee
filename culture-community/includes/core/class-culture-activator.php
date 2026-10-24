@@ -267,6 +267,10 @@ class Culture_Activator {
         // culture_newsletter/getmelit/culture_drop post at all.
         Culture_Campaigns::create_table();
 
+        // Creator earnings ledger — tracks paid-RSVP revenue owed to event
+        // creators and payout requests (Option B payout model).
+        Culture_Creator_Earnings::create_tables();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

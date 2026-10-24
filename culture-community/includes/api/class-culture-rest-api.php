@@ -1614,6 +1614,48 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Creator earnings ledger — event creators viewing their balance + history.
+        register_rest_route( 'culture/v1', '/creator/earnings', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_creator_earnings' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id' => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'page'    => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 1 ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/creator/payout-request', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_creator_payout_request' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'user_id'        => array( 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ),
+                'amount'         => array( 'required' => true, 'type' => 'number' ),
+                'currency'       => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'bank_code'      => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'account_number' => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+                'account_name'   => array( 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
+        // Admin: list and process creator payout requests.
+        register_rest_route( 'culture/v1', '/admin/creator-payouts', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_admin_creator_payouts' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'status'  => array( 'required' => false, 'type' => 'string', 'default' => '' ),
+                'page'    => array( 'required' => false, 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 1 ),
+            ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/admin/creator-payouts/(?P<id>\d+)/process', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_admin_process_payout' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // Reading Tracker shelves (web — API key, explicit user_id param).
         // Mirrors /mobile/reading/* in class-culture-mobile-api.php.
         register_rest_route( 'culture/v1', '/reading/shelf', array(
@@ -3665,6 +3707,85 @@ class Culture_REST_API {
 
         return rest_ensure_response( array( 'status' => 'ok' ) );
     }
+
+    /* ── Creator earnings ─────────────────────────────────────────────── */
+
+    public static function handle_creator_earnings( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $user_id  = (int) $request->get_param( 'user_id' );
+        $page     = max( 1, (int) $request->get_param( 'page' ) );
+        $balance  = Culture_Creator_Earnings::get_balance( $user_id );
+        $history  = Culture_Creator_Earnings::get_history( $user_id, $page );
+        $fee_rate = Culture_Creator_Earnings::platform_fee_rate();
+
+        return rest_ensure_response( [
+            'balance'      => $balance,
+            'fee_rate'     => $fee_rate,
+            'history'      => $history,
+        ] );
+    }
+
+    public static function handle_creator_payout_request( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $user_id        = (int) $request->get_param( 'user_id' );
+        $amount         = (float) $request->get_param( 'amount' );
+        $currency       = strtoupper( (string) $request->get_param( 'currency' ) );
+        $bank_code      = (string) $request->get_param( 'bank_code' );
+        $account_number = (string) $request->get_param( 'account_number' );
+        $account_name   = (string) $request->get_param( 'account_name' );
+
+        $result = Culture_Creator_Earnings::request_payout(
+            $user_id, $amount, $currency, $bank_code, $account_number, $account_name
+        );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( [
+            'request_id' => $result,
+            'message'    => 'Payout request submitted. You will be notified when it is processed.',
+        ] );
+    }
+
+    public static function handle_admin_creator_payouts( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $status = sanitize_text_field( $request->get_param( 'status' ) ?: '' );
+        $page   = max( 1, (int) $request->get_param( 'page' ) );
+
+        return rest_ensure_response(
+            Culture_Creator_Earnings::get_payout_requests( $status, $page )
+        );
+    }
+
+    public static function handle_admin_process_payout( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+        if ( ! class_exists( 'Culture_Creator_Earnings' ) ) {
+            return new WP_Error( 'not_available', 'Creator earnings not available.', [ 'status' => 503 ] );
+        }
+
+        $id     = (int) $request->get_param( 'id' );
+        $result = Culture_Creator_Earnings::process_payout( $id );
+
+        if ( is_wp_error( $result ) ) {
+            return $result;
+        }
+
+        return rest_ensure_response( [
+            'success'  => true,
+            'transfer' => $result,
+        ] );
+    }
+
+    /* ── Newsletters ──────────────────────────────────────────────────── */
 
     public static function handle_newsletter_subscribe( $request ) {
         $email   = $request->get_param( 'email' );
