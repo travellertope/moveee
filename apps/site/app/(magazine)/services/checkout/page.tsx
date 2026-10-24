@@ -200,7 +200,7 @@ export default function ServicesCheckoutPage() {
             {status === "submitting" ? "Starting checkout…" : "Pay securely →"}
           </button>
           <p className="svc-cta-subtext">
-            You&rsquo;ll be taken to {item.price?.includes("₦") ? "Paystack" : "Stripe"} to complete payment securely.
+            You&rsquo;ll be taken to {item.price?.includes("₦") ? "Flutterwave" : "Stripe"} to complete payment securely.
           </p>
         </form>
       </div>
