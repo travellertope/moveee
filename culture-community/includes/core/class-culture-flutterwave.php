@@ -123,6 +123,106 @@ class Culture_Flutterwave {
         return $body['data'] ?? $body;
     }
 
+    /* ── Standard payment collection ───────────────────────────────── */
+
+    /**
+     * Create a hosted checkout session (Flutterwave Standard).
+     *
+     * Amount must be in the major currency unit (e.g. 5000 for ₦5,000 NGN).
+     *
+     * @param array $args {
+     *   @type string $tx_ref       Unique idempotency reference (required).
+     *   @type float  $amount       Amount in major currency units (required).
+     *   @type string $currency     ISO-4217 currency code, e.g. "NGN" (required).
+     *   @type string $redirect_url URL Flutterwave redirects to after payment (required).
+     *   @type string $email        Customer email (required).
+     *   @type string $name         Customer display name.
+     *   @type string $phone        Customer phone (optional).
+     *   @type string $description  Line-item description shown on checkout.
+     *   @type string $title        Merchant title shown on checkout.
+     * }
+     * @return array{ url: string, reference: string }|WP_Error
+     */
+    public static function payment_initiate( array $args ): array|\WP_Error {
+        if ( ! self::is_configured() ) {
+            return new \WP_Error( 'flutterwave_unconfigured', 'Flutterwave is not configured.', [ 'status' => 503 ] );
+        }
+
+        $payload = [
+            'tx_ref'       => $args['tx_ref'],
+            'amount'       => (float) $args['amount'],
+            'currency'     => strtoupper( $args['currency'] ),
+            'redirect_url' => $args['redirect_url'],
+            'customer'     => [
+                'email'       => $args['email'],
+                'name'        => $args['name'] ?? '',
+                'phonenumber' => $args['phone'] ?? '',
+            ],
+            'customizations' => [
+                'title'       => $args['title'] ?? 'Moveee',
+                'description' => $args['description'] ?? '',
+                'logo'        => 'https://themoveee.com/favicon.ico',
+            ],
+        ];
+
+        $response = wp_remote_post( self::API_BASE . '/payments', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . self::secret_key(),
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode( $payload ),
+            'timeout' => 30,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new \WP_Error( 'flutterwave_network', 'Could not reach Flutterwave: ' . $response->get_error_message(), [ 'status' => 502 ] );
+        }
+
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
+
+        if ( $code >= 400 || ( $body['status'] ?? '' ) !== 'success' ) {
+            return new \WP_Error( 'flutterwave_api', $body['message'] ?? "Flutterwave returned HTTP {$code}", [ 'status' => $code >= 500 ? 502 : 422 ] );
+        }
+
+        $link = $body['data']['link'] ?? '';
+        if ( ! $link ) {
+            return new \WP_Error( 'flutterwave_no_link', 'Flutterwave did not return a payment link.' );
+        }
+
+        return [ 'url' => $link, 'reference' => $args['tx_ref'] ];
+    }
+
+    /**
+     * Verify a completed transaction by Flutterwave transaction ID.
+     *
+     * @param int $transaction_id  The numeric ID from the redirect/webhook payload.
+     * @return array|WP_Error      Transaction data array on success, WP_Error on failure.
+     */
+    public static function verify_transaction( int $transaction_id ): array|\WP_Error {
+        if ( ! self::is_configured() ) {
+            return new \WP_Error( 'flutterwave_unconfigured', 'Flutterwave is not configured.', [ 'status' => 503 ] );
+        }
+
+        $response = wp_remote_get( self::API_BASE . '/transactions/' . $transaction_id . '/verify', [
+            'headers' => [ 'Authorization' => 'Bearer ' . self::secret_key() ],
+            'timeout' => 30,
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            return new \WP_Error( 'flutterwave_network', 'Could not reach Flutterwave: ' . $response->get_error_message(), [ 'status' => 502 ] );
+        }
+
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
+
+        if ( $code >= 400 || ( $body['status'] ?? '' ) !== 'success' ) {
+            return new \WP_Error( 'flutterwave_api', $body['message'] ?? "Flutterwave returned HTTP {$code}", [ 'status' => $code >= 500 ? 502 : 422 ] );
+        }
+
+        return $body['data'] ?? $body;
+    }
+
     /**
      * Send airtime to a phone number via the Flutterwave Bills API.
      *

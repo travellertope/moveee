@@ -8,10 +8,10 @@
  * table; actual payout is manual for the current release.
  *
  * REST endpoints (all under /wp-json/culture/v1/):
- *   POST community/event/rsvp-paid-initiate        — create pending paid RSVP + start session
- *   GET  community/event/rsvp-paid-callback        — Paystack post-payment browser redirect
- *   POST community/event/rsvp-paid-webhook/paystack
- *   POST community/event/rsvp-paid-webhook/stripe
+ *   POST community/event/rsvp-paid-initiate          — create pending paid RSVP + start session
+ *   GET  community/event/rsvp-paid-callback          — Flutterwave post-payment browser redirect
+ *   POST community/event/rsvp-paid-webhook/flutterwave
+ *   POST community/event/rsvp-paid-webhook/stripe    — Stripe fallback webhook
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -51,21 +51,21 @@ class Culture_Community_RSVP_Payment {
             ],
         ] );
 
-        // Paystack browser redirect after payment
+        // Flutterwave browser redirect after payment
         register_rest_route( 'culture/v1', '/community/event/rsvp-paid-callback', [
             'methods'             => 'GET',
-            'callback'            => [ __CLASS__, 'handle_paystack_callback' ],
+            'callback'            => [ __CLASS__, 'handle_flutterwave_callback' ],
             'permission_callback' => '__return_true',
         ] );
 
-        // Paystack server-to-server webhook
-        register_rest_route( 'culture/v1', '/community/event/rsvp-paid-webhook/paystack', [
+        // Flutterwave server-to-server webhook
+        register_rest_route( 'culture/v1', '/community/event/rsvp-paid-webhook/flutterwave', [
             'methods'             => 'POST',
-            'callback'            => [ __CLASS__, 'handle_paystack_webhook' ],
+            'callback'            => [ __CLASS__, 'handle_flutterwave_webhook' ],
             'permission_callback' => '__return_true',
         ] );
 
-        // Stripe server-to-server webhook
+        // Stripe fallback webhook
         register_rest_route( 'culture/v1', '/community/event/rsvp-paid-webhook/stripe', [
             'methods'             => 'POST',
             'callback'            => [ __CLASS__, 'handle_stripe_webhook' ],
@@ -170,18 +170,20 @@ class Culture_Community_RSVP_Payment {
     }
 
     private static function start_payment( int $rsvp_id, int $post_id, WP_Post $post, int $user_id, int $price, string $currency ): array|\WP_Error {
-        $user         = get_userdata( $user_id );
-        $email        = $user ? $user->user_email : '';
-        $name         = $user ? $user->display_name : '';
-        $post_slug    = $post->post_name;
-        $event_title  = wp_trim_words( $post->post_title, 12, '…' );
-        $amount_minor = $price * 100; // major → kobo / cents
-        $gateway      = ( 'NGN' === strtoupper( $currency ) ) ? 'paystack' : 'stripe';
+        $user        = get_userdata( $user_id );
+        $email       = $user ? $user->user_email : '';
+        $name        = $user ? $user->display_name : '';
+        $post_slug   = $post->post_name;
+        $event_title = wp_trim_words( $post->post_title, 12, '…' );
 
-        if ( 'paystack' === $gateway ) {
-            $res = self::init_paystack( $rsvp_id, $email, $name, $amount_minor, $currency, $event_title, $post_slug );
+        // Flutterwave is primary for all currencies.
+        // Fall back to Stripe only if Flutterwave is not configured.
+        if ( Culture_Flutterwave::is_configured() ) {
+            $res     = self::init_flutterwave( $rsvp_id, $email, $name, $price, $currency, $event_title, $post_slug );
+            $gateway = 'flutterwave';
         } else {
-            $res = self::init_stripe( $rsvp_id, $email, $amount_minor, $currency, $event_title, $post_slug );
+            $res     = self::init_stripe( $rsvp_id, $email, $price * 100, $currency, $event_title, $post_slug );
+            $gateway = 'stripe';
         }
 
         if ( is_wp_error( $res ) ) return $res;
@@ -208,47 +210,30 @@ class Culture_Community_RSVP_Payment {
         return self::do_initiate( (int) $req->get_param( 'post_id' ), $user_id );
     }
 
-    // ── Paystack – one-time charge initialisation ─────────────────────────────
+    // ── Flutterwave – Standard hosted checkout ────────────────────────────────
 
-    private static function init_paystack( int $rsvp_id, string $email, string $name, int $amount, string $currency, string $event_title, string $post_slug ): array|\WP_Error {
-        $reference    = 'CRSVP-' . strtoupper( bin2hex( random_bytes( 6 ) ) );
-        $callback_url = add_query_arg( [
-            'gateway'   => 'paystack',
+    private static function init_flutterwave( int $rsvp_id, string $email, string $name, int $amount, string $currency, string $event_title, string $post_slug ): array|\WP_Error {
+        $tx_ref       = 'CRSVP-' . strtoupper( bin2hex( random_bytes( 6 ) ) );
+        $redirect_url = add_query_arg( [
             'rsvp_id'   => $rsvp_id,
             'post_slug' => $post_slug,
         ], rest_url( 'culture/v1/community/event/rsvp-paid-callback' ) );
 
-        $response = Culture_Paystack::charge_initiate( [
-            'email'        => $email,
-            'amount'       => $amount,
+        // Flutterwave takes major units (e.g. 5000 for ₦5,000), not kobo/cents.
+        $result = Culture_Flutterwave::payment_initiate( [
+            'tx_ref'       => $tx_ref,
+            'amount'       => (float) $amount,
             'currency'     => $currency,
-            'reference'    => $reference,
-            'callback_url' => $callback_url,
-            'metadata'     => [
-                'rsvp_id'       => $rsvp_id,
-                'attendee_name' => $name,
-                'event_title'   => $event_title,
-                'custom_fields' => [ [
-                    'display_name'  => 'Event',
-                    'variable_name' => 'event_title',
-                    'value'         => $event_title,
-                ] ],
-            ],
+            'redirect_url' => $redirect_url,
+            'email'        => $email,
+            'name'         => $name,
+            'description'  => $event_title,
+            'title'        => 'Moveee Events',
         ] );
 
-        if ( is_wp_error( $response ) ) return $response;
-        if ( empty( $response['data']['authorization_url'] ) ) {
-            return new \WP_Error( 'paystack_error', 'Could not initialize Paystack payment.' );
-        }
+        if ( is_wp_error( $result ) ) return $result;
 
-        // Store the reference we generated (Paystack echoes it back in verify)
-        global $wpdb;
-        $wpdb->update( Culture_Community_RSVP::table(), [ 'payment_reference' => $reference ], [ 'id' => $rsvp_id ], [ '%s' ], [ '%d' ] );
-
-        return [
-            'url'       => $response['data']['authorization_url'],
-            'reference' => $response['data']['reference'] ?? $reference,
-        ];
+        return [ 'url' => $result['url'], 'reference' => $tx_ref ];
     }
 
     // ── Stripe – one-time Checkout Session ───────────────────────────────────
@@ -292,33 +277,38 @@ class Culture_Community_RSVP_Payment {
         ];
     }
 
-    // ── Paystack callback (browser redirect after payment) ───────────────────
+    // ── Flutterwave callback (browser redirect after payment) ────────────────
 
-    public static function handle_paystack_callback( WP_REST_Request $req ) {
-        $reference = sanitize_text_field( $req->get_param( 'reference' ) ?: $req->get_param( 'trxref' ) ?: '' );
-        $rsvp_id   = (int) ( $req->get_param( 'rsvp_id' ) ?? 0 );
-        $post_slug = sanitize_text_field( $req->get_param( 'post_slug' ) ?: '' );
+    public static function handle_flutterwave_callback( WP_REST_Request $req ) {
+        $status         = sanitize_text_field( $req->get_param( 'status' ) ?: '' );
+        $tx_ref         = sanitize_text_field( $req->get_param( 'tx_ref' ) ?: '' );
+        $transaction_id = (int) ( $req->get_param( 'transaction_id' ) ?? 0 );
+        $rsvp_id        = (int) ( $req->get_param( 'rsvp_id' ) ?? 0 );
+        $post_slug      = sanitize_text_field( $req->get_param( 'post_slug' ) ?: '' );
 
         $connect_url = untrailingslashit( get_option( 'culture_connect_url', self::CONNECT_URL ) );
         $base_url    = $post_slug ? $connect_url . '/community/' . $post_slug : $connect_url;
         $fail_url    = $base_url . '?rsvp_failed=1';
 
-        if ( ! $reference ) {
+        if ( 'successful' !== $status || ! $transaction_id ) {
             wp_safe_redirect( $fail_url ); exit;
         }
 
-        $verify = Culture_Paystack::verify_transaction( $reference );
-        if ( is_wp_error( $verify ) || ( $verify['data']['status'] ?? '' ) !== 'success' ) {
+        $verify = Culture_Flutterwave::verify_transaction( $transaction_id );
+        if ( is_wp_error( $verify ) || ( $verify['status'] ?? '' ) !== 'successful' ) {
             wp_safe_redirect( $fail_url ); exit;
         }
 
-        // rsvp_id from query param, or from metadata
-        if ( ! $rsvp_id ) {
-            $meta    = $verify['data']['metadata'] ?? [];
-            $rsvp_id = (int) ( $meta['rsvp_id'] ?? 0 );
+        // rsvp_id from query param (we embed it in the redirect_url) or from tx_ref lookup
+        if ( ! $rsvp_id && $tx_ref ) {
+            global $wpdb;
+            $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
+                $tx_ref
+            ) );
         }
 
-        if ( ! $rsvp_id || ! self::confirm_rsvp_payment( $rsvp_id, $reference, 'paystack' ) ) {
+        if ( ! $rsvp_id || ! self::confirm_rsvp_payment( $rsvp_id, $tx_ref, 'flutterwave' ) ) {
             wp_safe_redirect( $fail_url ); exit;
         }
 
@@ -326,38 +316,34 @@ class Culture_Community_RSVP_Payment {
         exit;
     }
 
-    // ── Paystack webhook ──────────────────────────────────────────────────────
+    // ── Flutterwave webhook ───────────────────────────────────────────────────
 
-    public static function handle_paystack_webhook( WP_REST_Request $req ): WP_REST_Response {
-        $payload   = $req->get_body();
-        $signature = $req->get_header( 'x-paystack-signature' ) ?? '';
-        $secret    = get_option( 'culture_paystack_secret_key', '' );
+    public static function handle_flutterwave_webhook( WP_REST_Request $req ): WP_REST_Response {
+        $payload     = $req->get_body();
+        $verif_hash  = $req->get_header( 'verif-hash' ) ?? '';
+        $secret_hash = get_option( 'culture_flutterwave_webhook_hash', '' );
 
-        if ( $secret && ! hash_equals( hash_hmac( 'sha512', $payload, $secret ), $signature ) ) {
+        if ( $secret_hash && ! hash_equals( $secret_hash, $verif_hash ) ) {
             return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
         }
 
         $data  = json_decode( $payload, true );
         $event = $data['event'] ?? '';
 
-        if ( 'charge.success' === $event ) {
-            $d         = $data['data'] ?? [];
-            $reference = $d['reference'] ?? '';
-            $meta      = $d['metadata'] ?? [];
+        if ( 'charge.completed' === $event ) {
+            $d      = $data['data'] ?? [];
+            $tx_ref = $d['tx_ref'] ?? '';
+            $status = $d['status'] ?? '';
 
             // Only handle community RSVP charges (reference prefixed with CRSVP-)
-            if ( str_starts_with( $reference, 'CRSVP-' ) ) {
-                $rsvp_id = (int) ( $meta['rsvp_id'] ?? 0 );
-                if ( ! $rsvp_id ) {
-                    // Fall back to lookup by reference
-                    global $wpdb;
-                    $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
-                        "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
-                        $reference
-                    ) );
-                }
+            if ( 'successful' === $status && str_starts_with( $tx_ref, 'CRSVP-' ) ) {
+                global $wpdb;
+                $rsvp_id = (int) $wpdb->get_var( $wpdb->prepare(
+                    "SELECT id FROM " . Culture_Community_RSVP::table() . " WHERE payment_reference = %s LIMIT 1",
+                    $tx_ref
+                ) );
                 if ( $rsvp_id ) {
-                    self::confirm_rsvp_payment( $rsvp_id, $reference, 'paystack' );
+                    self::confirm_rsvp_payment( $rsvp_id, $tx_ref, 'flutterwave' );
                 }
             }
         }
@@ -483,7 +469,7 @@ class Culture_Community_RSVP_Payment {
                 $organiser_id,
                 'event_rsvp',
                 'New paid RSVP',
-                ( $attendee ? $attendee->display_name : 'Someone' ) . ' paid to attend "' . wp_trim_words( $post->post_title, 8, '…' ) . '"',
+                ( $attendee ? $attendee->display_name : 'Someone' ) . ' RSVPed to "' . wp_trim_words( $post->post_title, 8, '…' ) . '"',
                 '/member/events',
                 [ 'post_id' => $post_id, 'user_id' => $user_id, 'paid' => true ]
             );
