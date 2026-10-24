@@ -125,22 +125,28 @@ function RsvpDisplay({
   postId,
   capacity,
   initialCount,
+  price,
+  priceCurrency,
 }: {
   postId?: string;
   capacity?: number;
   initialCount?: number;
+  price?: number;
+  priceCurrency?: string;
 }) {
-  const [status, setStatus] = useState<{ rsvped: boolean; count: number } | null>(
+  const isPaid = !!price && price > 0;
+  const [status, setStatus] = useState<{ rsvped: boolean; count: number; paymentStatus?: string } | null>(
     initialCount !== undefined ? { rsvped: false, count: initialCount } : null
   );
   const [loading, setLoading] = useState(false);
+  const [paidError, setPaidError] = useState("");
 
   useEffect(() => {
     if (!postId) return;
     fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0) });
+        if (data) setStatus({ rsvped: !!data.rsvped, count: Number(data.count ?? initialCount ?? 0), paymentStatus: data.paymentStatus });
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,49 +156,89 @@ function RsvpDisplay({
   const isFull = !!capacity && capacity > 0 && count >= capacity;
   const rsvped = !!status?.rsvped;
 
-  async function toggle() {
+  function formatPrice(amount: number, currency: string) {
+    const sym: Record<string, string> = { NGN: "₦", USD: "$", GBP: "£", EUR: "€" };
+    return `${sym[currency] ?? currency}${amount.toLocaleString()}`;
+  }
+
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
     if (loading || !postId) return;
     if (!rsvped && isFull) return;
     setLoading(true);
+    setPaidError("");
     try {
-      const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ post_id: Number(postId) }),
-      });
-      if (res.ok) {
-        setStatus((prev) => ({
-          rsvped: !rsvped,
-          count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
-        }));
+      if (isPaid && !rsvped) {
+        const res = await fetch("/api/community/event-rsvp-paid-initiate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: Number(postId) }),
+        });
+        const data = await res.json();
+        if (res.ok && data?.url) {
+          window.location.href = data.url;
+        } else if (res.status === 403) {
+          setPaidError("Moveee Pro membership required.");
+        } else {
+          setPaidError(data?.error ?? "Payment could not be started. Please try again.");
+        }
+      } else {
+        const res = await fetch(`/api/community/event-${rsvped ? "rsvp-cancel" : "rsvp"}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: Number(postId) }),
+        });
+        if (res.ok) {
+          setStatus((prev) => ({
+            rsvped: !rsvped,
+            count: Math.max(0, (prev?.count ?? count) + (rsvped ? -1 : 1)),
+          }));
+        }
       }
     } catch {}
     setLoading(false);
   }
 
+  const buttonLabel = isPaid
+    ? rsvped
+      ? "Going ✓"
+      : isFull
+      ? "Full"
+      : `RSVP · ${formatPrice(price!, priceCurrency ?? "NGN")}`
+    : rsvped
+    ? "Going ✓"
+    : isFull
+    ? "Full"
+    : "RSVP";
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.6rem" }}>
-      <button
-        type="button"
-        onClick={toggle}
-        disabled={loading || (!rsvped && isFull)}
-        style={{
-          background: rsvped ? "var(--paper)" : "var(--gold)",
-          color: rsvped ? "var(--gold)" : "#fff",
-          border: "1px solid var(--gold)",
-          borderRadius: "999px",
-          padding: "7px 14px",
-          fontSize: "0.78rem",
-          fontWeight: 700,
-          cursor: !rsvped && isFull ? "not-allowed" : "pointer",
-          opacity: loading ? 0.6 : 1,
-        }}
-      >
-        {rsvped ? "Going ✓" : isFull ? "Full" : "RSVP"}
-      </button>
-      <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
-        {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
-      </span>
+    <div style={{ marginBottom: "0.6rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <button
+          type="button"
+          onClick={toggle}
+          disabled={loading || (!rsvped && isFull)}
+          style={{
+            background: rsvped ? "var(--paper)" : "var(--gold)",
+            color: rsvped ? "var(--gold)" : "#fff",
+            border: "1px solid var(--gold)",
+            borderRadius: "999px",
+            padding: "7px 14px",
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            cursor: !rsvped && isFull ? "not-allowed" : "pointer",
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {buttonLabel}
+        </button>
+        <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
+          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+        </span>
+      </div>
+      {paidError && (
+        <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{paidError}</p>
+      )}
     </div>
   );
 }
@@ -968,7 +1014,7 @@ export default function FeedCard({
               </div>
             )}
             {item.templateType === "event" && item.rsvpEnabled && (
-              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} />
+              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} price={item.rsvpPrice} priceCurrency={item.rsvpPriceCurrency} />
             )}
 
             {/* Gallery carousel — all image-capable templates */}

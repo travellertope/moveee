@@ -232,6 +232,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [evOrganiser, setEvOrganiser] = useState<any>(null);
   const [evRsvpEnabled, setEvRsvpEnabled] = useState(false);
   const [evCapacity, setEvCapacity] = useState("");
+  const [evRsvpPrice, setEvRsvpPrice] = useState("");
 
   // Poll additions
   const [pollDuration, setPollDuration] = useState("3");
@@ -538,6 +539,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           if (evOrganiser?.id) payload.organiser_directory_id = evOrganiser.id;
           payload.rsvp_enabled = evRsvpEnabled;
           if (evRsvpEnabled && evCapacity.trim()) payload.rsvp_capacity = parseInt(evCapacity);
+          if (evRsvpEnabled && evRsvpPrice.trim()) {
+            const p = parseInt(evRsvpPrice, 10);
+            if (p > 0) { payload.rsvp_price = p; payload.rsvp_price_currency = evCurrency; }
+          }
           if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         }
 
@@ -1333,7 +1338,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   <button
                     type="button"
                     className={`cm-pill${!evRsvpEnabled ? " cm-pill--active" : ""}`}
-                    onClick={() => { setEvRsvpEnabled(false); setEvCapacity(""); }}
+                    onClick={() => { setEvRsvpEnabled(false); setEvCapacity(""); setEvRsvpPrice(""); }}
                   >No</button>
                 </div>
               </div>
@@ -1348,6 +1353,34 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     value={evCapacity}
                     onChange={e => setEvCapacity(e.target.value)}
                   />
+                </div>
+              )}
+              {evRsvpEnabled && (session?.user as any)?.tier === "patron" && (
+                <div className="cm-field">
+                  <label className="cm-label">RSVP price <span className="cm-label-opt">(optional — leave blank for free)</span></label>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <select
+                      className="cm-input"
+                      style={{ width: "90px", flexShrink: 0 }}
+                      value={evCurrency}
+                      onChange={e => setEvCurrency(e.target.value)}
+                    >
+                      <option value="NGN">₦ NGN</option>
+                      <option value="USD">$ USD</option>
+                      <option value="GBP">£ GBP</option>
+                      <option value="EUR">€ EUR</option>
+                    </select>
+                    <input
+                      className="cm-input"
+                      type="number"
+                      min="1"
+                      placeholder="Amount…"
+                      value={evRsvpPrice}
+                      onChange={e => setEvRsvpPrice(e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <p className="cm-label-opt" style={{ marginTop: "4px" }}>Platform takes 20% commission. Payouts processed manually.</p>
                 </div>
               )}
               <div className="cm-field">

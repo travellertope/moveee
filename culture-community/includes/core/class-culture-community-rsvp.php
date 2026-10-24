@@ -21,15 +21,23 @@ class Culture_Community_RSVP {
         $charset_collate = $wpdb->get_charset_collate();
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         $table = self::table();
+        // status includes 'pending_payment' for paid RSVPs awaiting confirmation
         dbDelta( "CREATE TABLE {$table} (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             post_id bigint(20) NOT NULL,
             user_id bigint(20) NOT NULL,
             status varchar(20) NOT NULL DEFAULT 'confirmed',
+            rsvp_type varchar(10) NOT NULL DEFAULT 'free',
+            amount_paid int(11) NOT NULL DEFAULT 0,
+            currency varchar(10) NOT NULL DEFAULT '',
+            payment_gateway varchar(20) NOT NULL DEFAULT '',
+            payment_reference varchar(200) NOT NULL DEFAULT '',
+            payment_status varchar(20) NOT NULL DEFAULT '',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY post_user (post_id, user_id),
-            KEY post_status (post_id, status)
+            KEY post_status (post_id, status),
+            KEY payment_reference (payment_reference)
         ) {$charset_collate};" );
     }
 
@@ -57,6 +65,19 @@ class Culture_Community_RSVP {
         return (int) get_post_meta( $post_id, '_culture_rsvp_capacity', true );
     }
 
+    /** Price in major currency units (e.g. 1500 = ₦1,500). 0 = free event. */
+    public static function get_price( int $post_id ) : int {
+        return (int) get_post_meta( $post_id, '_culture_rsvp_price', true );
+    }
+
+    public static function get_price_currency( int $post_id ) : string {
+        return (string) ( get_post_meta( $post_id, '_culture_rsvp_price_currency', true ) ?: 'NGN' );
+    }
+
+    public static function is_paid( int $post_id ) : bool {
+        return self::is_rsvp_enabled( $post_id ) && self::get_price( $post_id ) > 0;
+    }
+
     public static function get_count( int $post_id ) : int {
         global $wpdb;
         return (int) $wpdb->get_var( $wpdb->prepare(
@@ -71,26 +92,35 @@ class Culture_Community_RSVP {
     }
 
     public static function get_status( int $post_id, int $user_id ) : array {
-        $rsvped = false;
+        $rsvped         = false;
+        $payment_status = '';
         if ( $user_id ) {
             global $wpdb;
-            $status = $wpdb->get_var( $wpdb->prepare(
-                "SELECT status FROM " . self::table() . " WHERE post_id = %d AND user_id = %d",
+            $row = $wpdb->get_row( $wpdb->prepare(
+                "SELECT status, payment_status FROM " . self::table() . " WHERE post_id = %d AND user_id = %d",
                 $post_id, $user_id
-            ) );
-            $rsvped = ( 'confirmed' === $status );
+            ), ARRAY_A );
+            if ( $row ) {
+                $rsvped         = ( 'confirmed' === $row['status'] );
+                $payment_status = $row['payment_status'] ?? '';
+            }
         }
         $capacity = self::get_capacity( $post_id );
         $count    = self::get_count( $post_id );
+        $price    = self::get_price( $post_id );
 
         return array(
-            'enabled'     => self::is_rsvp_enabled( $post_id ),
-            'rsvped'      => $rsvped,
-            'count'       => $count,
-            'capacity'    => $capacity,
-            'spotsLeft'   => $capacity > 0 ? max( 0, $capacity - $count ) : null,
-            'isFull'      => $capacity > 0 && $count >= $capacity,
-            'isOrganiser' => $user_id ? self::is_organiser( $post_id, $user_id ) : false,
+            'enabled'        => self::is_rsvp_enabled( $post_id ),
+            'rsvped'         => $rsvped,
+            'count'          => $count,
+            'capacity'       => $capacity,
+            'spotsLeft'      => $capacity > 0 ? max( 0, $capacity - $count ) : null,
+            'isFull'         => $capacity > 0 && $count >= $capacity,
+            'isOrganiser'    => $user_id ? self::is_organiser( $post_id, $user_id ) : false,
+            'isPaid'         => $price > 0,
+            'price'          => $price,
+            'priceCurrency'  => $price > 0 ? self::get_price_currency( $post_id ) : '',
+            'paymentStatus'  => $payment_status,
         );
     }
 
@@ -108,6 +138,9 @@ class Culture_Community_RSVP {
         }
         if ( ! self::is_rsvp_enabled( $post_id ) ) {
             return new WP_Error( 'rsvp_disabled', 'RSVP is not enabled for this event.', array( 'status' => 400 ) );
+        }
+        if ( self::is_paid( $post_id ) ) {
+            return new WP_Error( 'rsvp_paid', 'This is a paid event. Please use the payment flow to RSVP.', array( 'status' => 402 ) );
         }
         if ( (int) $post->post_author === $user_id ) {
             return new WP_Error( 'own_event', 'You cannot RSVP to your own event.', array( 'status' => 400 ) );
@@ -195,6 +228,19 @@ class Culture_Community_RSVP {
         return $rows ?: array();
     }
 
+    /**
+     * Total organiser payout (80% of confirmed paid RSVPs) for a given event.
+     * Actual payouts are manual for the current release.
+     */
+    public static function get_organiser_revenue( int $post_id ) : int {
+        global $wpdb;
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COALESCE(SUM(amount_paid), 0) FROM " . self::table() . " WHERE post_id = %d AND rsvp_type = 'paid' AND status = 'confirmed'",
+            $post_id
+        ) );
+        return (int) round( $total * 0.8 );
+    }
+
     public static function get_organiser_events( int $user_id ) : array {
         global $wpdb;
         $rows = $wpdb->get_results( $wpdb->prepare(
@@ -213,14 +259,19 @@ class Culture_Community_RSVP {
         ), ARRAY_A );
 
         return array_map( function( $row ) {
+            $post_id = (int) $row['ID'];
+            $price   = self::get_price( $post_id );
             return array(
-                'postId'       => (int) $row['ID'],
-                'title'        => $row['post_title'],
-                'status'       => $row['post_status'],
-                'rsvpEnabled'  => (bool) $row['rsvp_enabled'],
-                'rsvpCapacity' => (int) $row['rsvp_capacity'],
-                'rsvpCount'    => self::get_count( (int) $row['ID'] ),
-                'eventDate'    => $row['event_date'] ?: '',
+                'postId'         => $post_id,
+                'title'          => $row['post_title'],
+                'status'         => $row['post_status'],
+                'rsvpEnabled'    => (bool) $row['rsvp_enabled'],
+                'rsvpCapacity'   => (int) $row['rsvp_capacity'],
+                'rsvpCount'      => self::get_count( $post_id ),
+                'eventDate'      => $row['event_date'] ?: '',
+                'rsvpPrice'      => $price,
+                'rsvpPriceCurrency' => $price > 0 ? self::get_price_currency( $post_id ) : '',
+                'rsvpRevenue'    => $price > 0 ? self::get_organiser_revenue( $post_id ) : 0,
             );
         }, $rows ?: array() );
     }

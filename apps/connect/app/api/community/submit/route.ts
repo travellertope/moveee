@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     film_fav_line, film_recommend, film_genres, film_cover_url,
     event_title, event_date, event_end_date, event_venue, event_city, event_address,
     event_admission, ticket_url, event_category, organiser_directory_id,
-    rsvp_enabled, rsvp_capacity, hub_id,
+    rsvp_enabled, rsvp_capacity, rsvp_price, rsvp_price_currency, hub_id,
   } = body as {
     text?: string;
     imageUrl?: string;
@@ -116,6 +116,8 @@ export async function POST(req: NextRequest) {
     organiser_directory_id?: number;
     rsvp_enabled?: boolean;
     rsvp_capacity?: number;
+    rsvp_price?: number;
+    rsvp_price_currency?: string;
     hub_id?: number;
   };
 
@@ -352,6 +354,10 @@ export async function POST(req: NextRequest) {
           ...(organiser_directory_id != null && { _culture_event_organiser_id: organiser_directory_id }),
           _culture_rsvp_enabled:       rsvpEnabled,
           _culture_rsvp_capacity:      rsvpEnabled ? Math.max(0, Number(rsvp_capacity) || 0) : 0,
+          ...(rsvpEnabled && rsvp_price && rsvp_price > 0 && {
+            _culture_rsvp_price:          Math.round(rsvp_price),
+            _culture_rsvp_price_currency: rsvp_price_currency?.trim() || "NGN",
+          }),
         }),
       },
     }),

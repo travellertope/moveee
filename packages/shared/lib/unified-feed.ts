@@ -124,6 +124,8 @@ export interface FeedItem {
   rsvpEnabled?: boolean;
   rsvpCapacity?: number;
   rsvpCount?: number;
+  rsvpPrice?: number;
+  rsvpPriceCurrency?: string;
   // reactions (community + pulse)
   reactions?: { love: number; fire: number; clap: number };
   wpId?: string;
@@ -301,6 +303,8 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       rsvpEnabled: post.community_event_meta?.rsvp_enabled ?? undefined,
       rsvpCapacity: post.community_event_meta?.rsvp_capacity ?? undefined,
       rsvpCount: post.community_event_meta?.rsvp_count ?? undefined,
+      rsvpPrice: post.community_event_meta?.rsvp_price ?? undefined,
+      rsvpPriceCurrency: post.community_event_meta?.rsvp_price_currency ?? undefined,
       isFeatured: Boolean(post.community_event_meta?.is_featured),
       organiserDirectoryId: post.community_event_meta?.organiser_id ? Number(post.community_event_meta.organiser_id) : undefined,
       stoopClusterId: m._stoop_cluster_id ? Number(m._stoop_cluster_id) : undefined,
