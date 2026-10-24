@@ -51,7 +51,7 @@ interface Props {
   /** When set, also searches this external catalog alongside the local
    * directory and offers each result as a one-tap create (prefilled
    * title/about/cover, deduped server-side by external ID). */
-  externalSource?: "google_books" | "spotify" | "tmdb";
+  externalSource?: "google_books" | "spotify" | "tmdb" | "google_places";
 }
 
 let debounceTimer: ReturnType<typeof setTimeout>;
@@ -260,7 +260,7 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
     );
   }
 
-  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "iTunes" : "TMDB";
+  const externalSourceLabel = externalSource === "google_books" ? "Google Books" : externalSource === "spotify" ? "iTunes" : externalSource === "google_places" ? "Google Maps" : "TMDB";
   const noLocalMatches = showList && results.length === 0;
   const noExternalMatches = !externalSource || (!externalLoading && externalResults.length === 0);
 
