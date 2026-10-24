@@ -224,6 +224,32 @@ class Culture_Flutterwave {
     }
 
     /**
+     * Fetch available bill categories for a country.
+     * Used in the admin bundle-selector AJAX call.
+     *
+     * @param string $country 2-letter ISO code (e.g. "NG")
+     * @return array|WP_Error
+     */
+    public static function get_bill_categories( string $country ): array|WP_Error {
+        if ( ! self::is_configured() ) {
+            return new WP_Error( 'flutterwave_unconfigured', 'Flutterwave is not configured.', [ 'status' => 503 ] );
+        }
+        $response = wp_remote_get( self::API_BASE . '/bills/categories?country=' . strtoupper( $country ), [
+            'headers' => [ 'Authorization' => 'Bearer ' . self::secret_key() ],
+            'timeout' => 30,
+        ] );
+        if ( is_wp_error( $response ) ) {
+            return new WP_Error( 'flutterwave_network', 'Could not reach Flutterwave: ' . $response->get_error_message(), [ 'status' => 502 ] );
+        }
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true ) ?? [];
+        if ( $code >= 400 || ( $body['status'] ?? '' ) !== 'success' ) {
+            return new WP_Error( 'flutterwave_api', $body['message'] ?? "Flutterwave returned HTTP {$code}", [ 'status' => $code >= 500 ? 502 : 422 ] );
+        }
+        return $body;
+    }
+
+    /**
      * Send airtime to a phone number via the Flutterwave Bills API.
      *
      * @param string $phone      Phone number in E.164 format (e.g. "+2348012345678")
