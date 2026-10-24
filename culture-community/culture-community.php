@@ -198,6 +198,7 @@ function culture_community_init() {
     Culture_Guest_Byline::init();
     Culture_Preview::init();
     Culture_Literary_Submissions::init();
+    Culture_Magic_OTP::init();
 
     // Register WP-CLI commands.
     if ( defined( 'WP_CLI' ) && WP_CLI ) {

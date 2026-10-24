@@ -264,4 +264,194 @@ class Culture_Magic_OTP {
 
 		return $username;
 	}
+
+	// ── Guest RSVP magic-link ─────────────────────────────────────────────────
+
+	const RSVP_MAGIC_TTL = 86400; // 24 hours
+
+	private static function rsvp_magic_option_name( string $token_hash ): string {
+		return '_culture_rsvp_magic_' . $token_hash;
+	}
+
+	/**
+	 * Register REST routes for guest RSVP magic link.
+	 * Call Culture_Magic_OTP::init() from culture_community_init().
+	 */
+	public static function init(): void {
+		add_action( 'rest_api_init', [ __CLASS__, 'register_routes' ] );
+	}
+
+	public static function register_routes(): void {
+		// Public — rate-limited; sends the magic-link email to the guest.
+		register_rest_route( 'culture/v1', '/community/event/rsvp-guest-magic', [
+			'methods'             => 'POST',
+			'callback'            => [ __CLASS__, 'handle_send_guest_rsvp_magic' ],
+			'permission_callback' => '__return_true',
+			'args'                => [
+				'email'   => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_email' ],
+				'post_id' => [ 'required' => true, 'type' => 'integer', 'sanitize_callback' => 'absint' ],
+			],
+		] );
+
+		// API-key-authenticated — called by NextAuth authorize() to verify the token.
+		register_rest_route( 'culture/v1', '/magic-link/verify-rsvp', [
+			'methods'             => 'POST',
+			'callback'            => [ __CLASS__, 'handle_verify_rsvp_magic' ],
+			'permission_callback' => [ 'Culture_REST_API', 'api_key_permission' ],
+			'args'                => [
+				'token' => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field' ],
+			],
+		] );
+	}
+
+	/**
+	 * REST handler — send the guest RSVP magic link.
+	 */
+	public static function handle_send_guest_rsvp_magic( WP_REST_Request $req ): WP_REST_Response {
+		$email   = sanitize_email( $req->get_param( 'email' ) );
+		$post_id = (int) $req->get_param( 'post_id' );
+
+		if ( ! is_email( $email ) ) {
+			return new WP_REST_Response( [ 'error' => 'invalid_email', 'message' => 'Enter a valid email address.' ], 400 );
+		}
+
+		// Validate this is a free, RSVP-enabled community event with capacity remaining.
+		$post = get_post( $post_id );
+		if ( ! $post || 'culture_post' !== $post->post_type || 'event' !== get_post_meta( $post_id, '_template_type', true ) ) {
+			return new WP_REST_Response( [ 'error' => 'invalid_event', 'message' => 'Event not found.' ], 404 );
+		}
+		if ( ! class_exists( 'Culture_Community_RSVP' ) || ! Culture_Community_RSVP::is_rsvp_enabled( $post_id ) ) {
+			return new WP_REST_Response( [ 'error' => 'rsvp_disabled', 'message' => 'RSVP is not enabled for this event.' ], 400 );
+		}
+		if ( Culture_Community_RSVP::is_paid( $post_id ) ) {
+			return new WP_REST_Response( [ 'error' => 'rsvp_paid', 'message' => 'Paid events require a Moveee account.' ], 400 );
+		}
+		$capacity = Culture_Community_RSVP::get_capacity( $post_id );
+		if ( $capacity > 0 && Culture_Community_RSVP::get_count( $post_id ) >= $capacity ) {
+			return new WP_REST_Response( [ 'error' => 'event_full', 'message' => 'This event is fully booked.' ], 409 );
+		}
+
+		// Rate-limit by email hash (3 requests per 10 min).
+		global $wpdb;
+		$key    = 'rsvp_magic_rl_' . md5( strtolower( $email ) . '_' . $post_id );
+		$rl_opt = '_culture_otp_rl_' . $key;
+		$rl_row = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $rl_opt ) );
+		$rl     = $rl_row ? json_decode( $rl_row, true ) : null;
+		if ( $rl && time() < (int) $rl['window_expires'] && (int) $rl['count'] >= 3 ) {
+			return new WP_REST_Response( [ 'error' => 'too_many_requests', 'message' => 'Too many requests — try again in a few minutes.' ], 429 );
+		}
+		$rl = $rl && time() < (int) $rl['window_expires']
+			? [ 'count' => (int) $rl['count'] + 1, 'window_expires' => $rl['window_expires'] ]
+			: [ 'count' => 1, 'window_expires' => time() + self::CODE_TTL ];
+		$rl_json = wp_json_encode( $rl );
+		$wpdb->query( $wpdb->prepare(
+			"INSERT INTO {$wpdb->options} (option_name,option_value,autoload) VALUES(%s,%s,'no') ON DUPLICATE KEY UPDATE option_value=%s",
+			$rl_opt, $rl_json, $rl_json
+		) );
+
+		// Generate token, store with event context.
+		$token      = bin2hex( random_bytes( 32 ) );
+		$token_hash = md5( $token );
+		$opt_name   = self::rsvp_magic_option_name( $token_hash );
+		$payload    = wp_json_encode( [
+			'email'    => $email,
+			'post_id'  => $post_id,
+			'slug'     => $post->post_name,
+			'title'    => $post->post_title,
+			'expires'  => time() + self::RSVP_MAGIC_TTL,
+		] );
+		$wpdb->query( $wpdb->prepare(
+			"INSERT INTO {$wpdb->options} (option_name,option_value,autoload) VALUES(%s,%s,'no') ON DUPLICATE KEY UPDATE option_value=%s",
+			$opt_name, $payload, $payload
+		) );
+
+		// Build the magic link URL.
+		$connect_url = untrailingslashit( get_option( 'culture_connect_url', 'https://web.themoveee.com' ) );
+		$magic_url   = $connect_url . '/magic-rsvp?token=' . rawurlencode( $token ) . '&post=' . rawurlencode( $post->post_name );
+
+		if ( class_exists( 'Culture_Emails' ) ) {
+			Culture_Emails::send_guest_rsvp_email( $email, $magic_url, $post->post_title );
+		}
+
+		return new WP_REST_Response( [ 'sent' => true ], 200 );
+	}
+
+	/**
+	 * REST handler — verify token, find/create account, perform free RSVP,
+	 * return user profile for NextAuth.
+	 */
+	public static function handle_verify_rsvp_magic( WP_REST_Request $req ): WP_REST_Response {
+		global $wpdb;
+
+		$token      = sanitize_text_field( $req->get_param( 'token' ) );
+		$token_hash = md5( $token );
+		$opt_name   = self::rsvp_magic_option_name( $token_hash );
+
+		$row = $wpdb->get_var( $wpdb->prepare(
+			"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+			$opt_name
+		) );
+
+		if ( null === $row ) {
+			return new WP_REST_Response( [ 'error' => 'token_expired', 'message' => 'This link has expired or already been used.' ], 400 );
+		}
+
+		$data = json_decode( $row, true );
+		if ( ! $data || time() > (int) $data['expires'] ) {
+			$wpdb->delete( $wpdb->options, [ 'option_name' => $opt_name ] );
+			return new WP_REST_Response( [ 'error' => 'token_expired', 'message' => 'This link has expired.' ], 400 );
+		}
+
+		// Single-use — delete immediately.
+		$wpdb->delete( $wpdb->options, [ 'option_name' => $opt_name ] );
+
+		$email   = sanitize_email( $data['email'] );
+		$post_id = (int) $data['post_id'];
+
+		// Find or create the user.
+		$user = self::find_or_create_user( $email );
+		if ( is_wp_error( $user ) ) {
+			return new WP_REST_Response( [ 'error' => 'user_error', 'message' => $user->get_error_message() ], 500 );
+		}
+
+		// Perform the free RSVP (idempotent — already-RSVPed returns gracefully).
+		if ( $post_id && class_exists( 'Culture_Community_RSVP' ) ) {
+			Culture_Community_RSVP::rsvp( $post_id, $user->ID );
+		}
+
+		// Return the same profile shape as the OTP verify path.
+		return new WP_REST_Response( [
+			'id'                     => $user->ID,
+			'display_name'           => $user->display_name,
+			'email'                  => $user->user_email,
+			'username'               => $user->user_login,
+			'phone'                  => get_user_meta( $user->ID, '_culture_phone', true ) ?: '',
+			'whatsapp'               => get_user_meta( $user->ID, '_culture_whatsapp', true ) ?: '',
+			'gender'                 => get_user_meta( $user->ID, '_culture_gender', true ) ?: '',
+			'date_of_birth'          => get_user_meta( $user->ID, '_culture_date_of_birth', true ) ?: '',
+			'nationality'            => get_user_meta( $user->ID, '_culture_nationality', true ) ?: '',
+			'country_of_residence'   => get_user_meta( $user->ID, '_culture_country', true ) ?: '',
+			'city'                   => get_user_meta( $user->ID, '_culture_city', true ) ?: '',
+			'occupation'             => get_user_meta( $user->ID, '_culture_occupation', true ) ?: '',
+			'registered_at'          => strtotime( $user->user_registered ),
+			'tier'                   => get_user_meta( $user->ID, '_culture_membership_tier', true ) ?: 'citizen',
+			'interests'              => (array) get_user_meta( $user->ID, '_culture_interests', true ),
+			'credits'                => (int) get_user_meta( $user->ID, '_culture_credits', true ),
+			'reputation'             => (int) get_user_meta( $user->ID, '_culture_points', true ),
+			'reputation_tier'        => get_user_meta( $user->ID, '_culture_reputation_tier', true ) ?: 'member',
+			'daily_credits_remaining'=> 50,
+			'points'                 => (int) get_user_meta( $user->ID, '_culture_points', true ),
+			'badges'                 => (array) get_user_meta( $user->ID, '_culture_badges', true ),
+			'referral_code'          => get_user_meta( $user->ID, '_culture_referral_code', true ) ?: '',
+			'referral_count'         => (int) get_user_meta( $user->ID, '_culture_referral_count', true ),
+			'visual_downloads_today' => 0,
+			'is_vendor'              => false,
+			'vendor_slug'            => '',
+			'avatar_url'             => get_user_meta( $user->ID, '_culture_avatar_url', true ) ?: '',
+			'has_passkey'            => false,
+			'passkey_count'          => 0,
+			'credits_escrowed'       => 0,
+			'rsvp_post_slug'         => $data['slug'] ?? '',
+		], 200 );
+	}
 }
