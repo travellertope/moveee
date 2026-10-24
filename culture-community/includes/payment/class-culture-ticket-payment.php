@@ -1,20 +1,22 @@
 <?php
 /**
- * Event ticketing — paid ticket flow via Paystack (NGN) and Stripe (USD/EUR/GBP).
+ * Event ticketing — paid ticket flow via Flutterwave (NGN) and Stripe (USD/EUR/GBP).
  *
  * Table: {prefix}culture_tickets
  *
  * REST endpoints (all under /wp-json/culture/v1/):
- *   POST ticket/initiate           — create pending ticket + start payment session
- *   GET  ticket/callback           — Paystack post-payment browser redirect
- *   POST ticket/webhook/paystack   — Paystack charge.success webhook
- *   POST ticket/webhook/stripe     — Stripe checkout.session.completed webhook
- *   POST ticket/verify             — scan/verify ticket code at door (staff only)
- *   GET  ticket/status             — read-only status poll by code
+ *   POST ticket/initiate              — create pending ticket + start payment session
+ *   GET  ticket/callback/flutterwave  — Flutterwave post-payment browser redirect
+ *   GET  ticket/callback              — legacy Paystack browser redirect (kept for in-flight)
+ *   POST ticket/webhook/flutterwave   — Flutterwave charge.completed webhook
+ *   POST ticket/webhook/paystack      — legacy Paystack webhook (kept for in-flight)
+ *   POST ticket/webhook/stripe        — Stripe checkout.session.completed webhook
+ *   POST ticket/verify                — scan/verify ticket code at door (staff only)
+ *   GET  ticket/status                — read-only status poll by code
  *
  * Webhook URLs to configure in payment dashboards:
- *   Paystack: {site}/wp-json/culture/v1/ticket/webhook/paystack
- *   Stripe:   {site}/wp-json/culture/v1/ticket/webhook/stripe
+ *   Flutterwave: {site}/wp-json/culture/v1/ticket/webhook/flutterwave
+ *   Stripe:      {site}/wp-json/culture/v1/ticket/webhook/stripe
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -90,9 +92,21 @@ class Culture_Ticket_Payment {
             ],
         ] );
 
+        register_rest_route( 'culture/v1', '/ticket/callback/flutterwave', [
+            'methods'             => 'GET',
+            'callback'            => [ __CLASS__, 'handle_flutterwave_callback' ],
+            'permission_callback' => '__return_true',
+        ] );
+
         register_rest_route( 'culture/v1', '/ticket/callback', [
             'methods'             => 'GET',
             'callback'            => [ __CLASS__, 'handle_paystack_callback' ],
+            'permission_callback' => '__return_true',
+        ] );
+
+        register_rest_route( 'culture/v1', '/ticket/webhook/flutterwave', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_flutterwave_webhook' ],
             'permission_callback' => '__return_true',
         ] );
 
@@ -144,8 +158,8 @@ class Culture_Ticket_Payment {
         $source           = $req->get_param( 'source' ) ?? '';
         $ip               = sanitize_text_field( $_SERVER['REMOTE_ADDR'] ?? '' );
 
-        // Route: NGN → Paystack, everything else → Stripe
-        $gateway = ( 'NGN' === $price_currency ) ? 'paystack' : 'stripe';
+        // Route: NGN → Flutterwave, everything else → Stripe
+        $gateway = ( 'NGN' === $price_currency ) ? 'flutterwave' : 'stripe';
 
         // Unique 16-char hex ticket code
         $ticket_code = strtoupper( bin2hex( random_bytes( 8 ) ) );
@@ -175,9 +189,9 @@ class Culture_Ticket_Payment {
         $ticket_id    = (int) $wpdb->insert_id;
         $amount_minor = $price_amount * 100; // major → lowest unit (kobo / cents)
 
-        $result = ( 'paystack' === $gateway )
-            ? self::init_paystack( $ticket_id, $ticket_code, $name, $email, $amount_minor, $price_currency, $event_title, $ticket_type_name, $event_slug )
-            : self::init_stripe(   $ticket_id, $ticket_code, $name, $email, $amount_minor, $price_currency, $event_title, $ticket_type_name, $event_slug );
+        $result = ( 'flutterwave' === $gateway )
+            ? self::init_flutterwave( $ticket_id, $ticket_code, $name, $email, $amount_minor, $price_currency, $event_title, $ticket_type_name, $event_slug )
+            : self::init_stripe(      $ticket_id, $ticket_code, $name, $email, $amount_minor, $price_currency, $event_title, $ticket_type_name, $event_slug );
 
         if ( is_wp_error( $result ) ) {
             $wpdb->delete( $t, [ 'id' => $ticket_id ], [ '%d' ] );
@@ -193,46 +207,36 @@ class Culture_Ticket_Payment {
         ], 200 ) );
     }
 
-    // ── Paystack — one-time charge initialisation ──────────────────────────
+    // ── Flutterwave — hosted checkout ─────────────────────────────────────
 
-    private static function init_paystack(
+    private static function init_flutterwave(
         int $ticket_id, string $ticket_code, string $name, string $email,
         int $amount, string $currency, string $event_title, string $ticket_type_name, string $event_slug
     ): array|\WP_Error {
+        // $amount arrives in minor units (kobo); Flutterwave takes major units.
+        $amount_major = $amount / 100;
 
-        $callback_url = add_query_arg( [
-            'gateway'     => 'paystack',
+        $redirect_url = add_query_arg( [
             'ticket_code' => $ticket_code,
             'event_slug'  => $event_slug,
-        ], rest_url( 'culture/v1/ticket/callback' ) );
+        ], rest_url( 'culture/v1/ticket/callback/flutterwave' ) );
 
-        $response = Culture_Paystack::charge_initiate( [
-            'email'        => $email,
-            'amount'       => $amount,
+        $result = Culture_Flutterwave::payment_initiate( [
+            'tx_ref'       => 'TKT-' . $ticket_code,
+            'amount'       => (float) $amount_major,
             'currency'     => $currency,
-            'reference'    => 'TKT-' . $ticket_code,
-            'callback_url' => $callback_url,
-            'metadata'     => [
-                'ticket_id'     => $ticket_id,
-                'ticket_code'   => $ticket_code,
-                'event_title'   => $event_title,
-                'attendee_name' => $name,
-                'custom_fields' => [ [
-                    'display_name'  => 'Ticket Type',
-                    'variable_name' => 'ticket_type',
-                    'value'         => $ticket_type_name,
-                ] ],
-            ],
+            'redirect_url' => $redirect_url,
+            'email'        => $email,
+            'name'         => $name,
+            'title'        => 'Moveee Events',
+            'description'  => $event_title . ( $ticket_type_name ? ' — ' . $ticket_type_name : '' ),
         ] );
 
-        if ( is_wp_error( $response ) ) return $response;
-        if ( empty( $response['data']['authorization_url'] ) ) {
-            return new \WP_Error( 'paystack_error', 'Could not initialize Paystack payment.' );
-        }
+        if ( is_wp_error( $result ) ) return $result;
 
         return [
-            'url'       => $response['data']['authorization_url'],
-            'reference' => $response['data']['reference'],
+            'url'       => $result['url'],
+            'reference' => 'TKT-' . $ticket_code,
         ];
     }
 
@@ -281,7 +285,69 @@ class Culture_Ticket_Payment {
         ];
     }
 
-    // ── Paystack callback (browser redirect after payment) ────────────────
+    // ── Flutterwave callback + webhook ───────────────────────────────────
+
+    public static function handle_flutterwave_callback( WP_REST_Request $req ) {
+        $status         = sanitize_text_field( $req->get_param( 'status' ) ?: '' );
+        $tx_ref         = sanitize_text_field( $req->get_param( 'tx_ref' ) ?: '' );
+        $transaction_id = (int) ( $req->get_param( 'transaction_id' ) ?? 0 );
+        $ticket_code    = sanitize_text_field( $req->get_param( 'ticket_code' ) ?: '' );
+        $event_slug     = sanitize_text_field( $req->get_param( 'event_slug' ) ?: '' );
+
+        $frontend   = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
+        $event_base = $event_slug ? $frontend . '/events/' . $event_slug : $frontend;
+        $fail_url   = $event_base . '?ticket_failed=1';
+
+        if ( 'successful' !== $status || ! $transaction_id ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        $verify = Culture_Flutterwave::verify_transaction( $transaction_id );
+        if ( is_wp_error( $verify ) || ( $verify['status'] ?? '' ) !== 'successful' ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        // Resolve code from tx_ref (TKT-{ticket_code}) if not in params
+        if ( ! $ticket_code && str_starts_with( $tx_ref, 'TKT-' ) ) {
+            $ticket_code = substr( $tx_ref, 4 );
+        }
+
+        if ( ! $ticket_code || ! self::confirm_ticket( $ticket_code, $tx_ref ?: (string) $transaction_id, 'flutterwave' ) ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        wp_safe_redirect( $event_base . '?ticket_confirmed=' . urlencode( $ticket_code ) );
+        exit;
+    }
+
+    public static function handle_flutterwave_webhook( WP_REST_Request $req ): WP_REST_Response {
+        $verif_hash  = $req->get_header( 'verif-hash' ) ?? '';
+        $secret_hash = get_option( 'culture_flutterwave_webhook_hash', '' );
+
+        if ( $secret_hash && ! hash_equals( $secret_hash, $verif_hash ) ) {
+            return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
+        }
+
+        $data  = json_decode( $req->get_body(), true ) ?? [];
+        $event = $data['event'] ?? '';
+
+        if ( 'charge.completed' === $event ) {
+            $d      = $data['data'] ?? [];
+            $tx_ref = $d['tx_ref'] ?? '';
+            $status = $d['status'] ?? '';
+
+            if ( 'successful' === $status && str_starts_with( $tx_ref, 'TKT-' ) ) {
+                $code = substr( $tx_ref, 4 );
+                if ( $code ) {
+                    self::confirm_ticket( $code, $tx_ref, 'flutterwave' );
+                }
+            }
+        }
+
+        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+    }
+
+    // ── Legacy Paystack callback (browser redirect after payment) ────────
 
     public static function handle_paystack_callback( WP_REST_Request $req ) {
         $reference   = sanitize_text_field( $req->get_param( 'reference' ) ?: $req->get_param( 'trxref' ) ?: '' );

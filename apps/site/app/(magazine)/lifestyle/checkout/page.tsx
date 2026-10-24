@@ -25,7 +25,7 @@ interface TotalsResponse {
 interface PayResponse {
   url: string;
   reference: string;
-  gateway: "paystack" | "stripe";
+  gateway: "flutterwave" | "stripe";
 }
 
 type Step = "address" | "review";
@@ -282,7 +282,7 @@ function CheckoutContent() {
           >
             {paying ? "Starting payment…" : `Pay ${totals ? fmt(totals.display.total) : ""}`}
           </button>
-          <p className="chk-secure-note">🔒 Secure payment · Paystack / Stripe</p>
+          <p className="chk-secure-note">🔒 Secure payment · Flutterwave / Stripe</p>
         </>
       )}
     </div>
