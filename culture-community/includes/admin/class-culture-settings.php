@@ -549,67 +549,67 @@ class Culture_Settings {
             </table>
         </details>
 
-        <hr />
-        <h3><?php esc_html_e( 'Stripe Configuration (International Gateway)', 'culture-community' ); ?></h3>
-        <p class="description"><?php esc_html_e( 'USD subscriptions use Stripe. Stripe Prices are created automatically from your secret key on first checkout — enter amounts below and prices are provisioned for you.', 'culture-community' ); ?></p>
-        <table class="form-table">
-            <tr>
-                <th scope="row"><label for="culture_stripe_publishable_key"><?php esc_html_e( 'Publishable Key', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="text" id="culture_stripe_publishable_key" name="culture_stripe_publishable_key"
-                           value="<?php echo esc_attr( self::get( 'culture_stripe_publishable_key' ) ); ?>" class="regular-text" />
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><label for="culture_stripe_secret_key"><?php esc_html_e( 'Secret Key', 'culture-community' ); ?></label></th>
-                <td>
-                    <input type="password" id="culture_stripe_secret_key" name="culture_stripe_secret_key"
-                           value="<?php echo esc_attr( self::get( 'culture_stripe_secret_key' ) ); ?>" class="regular-text" />
-                </td>
-            </tr>
-        </table>
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Stripe (International Gateway)', 'culture-community' ); ?></summary>
+            <p class="description" style="margin-top:10px;"><?php esc_html_e( 'USD subscriptions use Stripe. Stripe Prices are created automatically from your secret key on first checkout — enter amounts below and prices are provisioned for you.', 'culture-community' ); ?></p>
+            <table class="form-table" style="margin-top:4px;">
+                <tr>
+                    <th scope="row"><label for="culture_stripe_publishable_key"><?php esc_html_e( 'Publishable Key', 'culture-community' ); ?></label></th>
+                    <td>
+                        <input type="text" id="culture_stripe_publishable_key" name="culture_stripe_publishable_key"
+                               value="<?php echo esc_attr( self::get( 'culture_stripe_publishable_key' ) ); ?>" class="regular-text" />
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="culture_stripe_secret_key"><?php esc_html_e( 'Secret Key', 'culture-community' ); ?></label></th>
+                    <td>
+                        <input type="password" id="culture_stripe_secret_key" name="culture_stripe_secret_key"
+                               value="<?php echo esc_attr( self::get( 'culture_stripe_secret_key' ) ); ?>" class="regular-text" />
+                    </td>
+                </tr>
+            </table>
+            <p style="margin:12px 0 4px;font-weight:600;font-size:13px;"><?php esc_html_e( 'Subscription Amounts (USD)', 'culture-community' ); ?></p>
+            <p class="description">
+                <?php esc_html_e( 'Enter amounts in US Dollars (e.g. 4 = $4.00). Stripe Prices are created automatically on first checkout and cached here. Use Reset to force re-creation (e.g. after a price change — note this will create a new Price object in Stripe).', 'culture-community' ); ?>
+            </p>
+            <table class="form-table" style="margin-top:4px;">
+                <?php
+                $stripe_fields = array(
+                    array( 'amount_key' => 'culture_stripe_amount_monthly_usd',     'price_key' => 'culture_stripe_price_monthly_usd',     'label' => __( 'Pro — Monthly ($)',  'culture-community' ) ),
+                    array( 'amount_key' => 'culture_stripe_amount_yearly_usd',      'price_key' => 'culture_stripe_price_yearly_usd',      'label' => __( 'Pro — Yearly ($)',   'culture-community' ) ),
+                    array( 'amount_key' => 'culture_stripe_amount_monthly_usd_lit', 'price_key' => 'culture_stripe_price_monthly_usd_lit', 'label' => __( 'Lit — Monthly ($)',  'culture-community' ) ),
+                    array( 'amount_key' => 'culture_stripe_amount_yearly_usd_lit',  'price_key' => 'culture_stripe_price_yearly_usd_lit',  'label' => __( 'Lit — Yearly ($)',   'culture-community' ) ),
+                );
+                foreach ( $stripe_fields as $sf ) :
+                    $price_id = (string) get_option( $sf['price_key'], '' );
+                ?>
+                <tr>
+                    <th scope="row"><label for="<?php echo esc_attr( $sf['amount_key'] ); ?>"><?php echo esc_html( $sf['label'] ); ?></label></th>
+                    <td>
+                        <input type="number" id="<?php echo esc_attr( $sf['amount_key'] ); ?>"
+                               name="<?php echo esc_attr( $sf['amount_key'] ); ?>"
+                               value="<?php echo esc_attr( get_option( $sf['amount_key'], '' ) ); ?>"
+                               class="small-text" min="0" step="0.01" />
+                        <?php if ( str_starts_with( $price_id, 'price_' ) ) : ?>
+                            <span class="description" style="margin-left:8px;">
+                                <?php printf( esc_html__( 'Price ID: %s (auto-provisioned)', 'culture-community' ), '<code>' . esc_html( $price_id ) . '</code>' ); ?>
+                            </span>
+                            <button type="button" class="button button-small"
+                                    style="margin-left:6px;"
+                                    onclick="if(confirm('<?php esc_attr_e( 'Delete cached Price ID? A new price will be created in Stripe on next checkout.', 'culture-community' ); ?>')){jQuery.post(ajaxurl,{action:'culture_clear_flw_plan',key:'<?php echo esc_js( $sf['price_key'] ); ?>',_wpnonce:'<?php echo esc_js( wp_create_nonce( 'culture_clear_flw_plan' ) ); ?>'},function(){location.reload();});}">
+                                <?php esc_html_e( 'Reset', 'culture-community' ); ?>
+                            </button>
+                        <?php else : ?>
+                            <span class="description" style="margin-left:8px;"><?php esc_html_e( 'Price will be created in Stripe on first checkout.', 'culture-community' ); ?></span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        </details>
 
-        <h3><?php esc_html_e( 'Stripe — Membership Subscription Amounts (USD)', 'culture-community' ); ?></h3>
-        <p class="description">
-            <?php esc_html_e( 'Enter amounts in US Dollars (e.g. 4 = $4.00). Stripe Prices are created automatically on first checkout and cached here. Use Reset to force re-creation (e.g. after a price change — note this will create a new Price object in Stripe).', 'culture-community' ); ?>
-        </p>
-        <table class="form-table">
-            <?php
-            $stripe_fields = array(
-                array( 'amount_key' => 'culture_stripe_amount_monthly_usd',     'price_key' => 'culture_stripe_price_monthly_usd',     'label' => __( 'Pro — Monthly ($)',  'culture-community' ) ),
-                array( 'amount_key' => 'culture_stripe_amount_yearly_usd',      'price_key' => 'culture_stripe_price_yearly_usd',      'label' => __( 'Pro — Yearly ($)',   'culture-community' ) ),
-                array( 'amount_key' => 'culture_stripe_amount_monthly_usd_lit', 'price_key' => 'culture_stripe_price_monthly_usd_lit', 'label' => __( 'Lit — Monthly ($)',  'culture-community' ) ),
-                array( 'amount_key' => 'culture_stripe_amount_yearly_usd_lit',  'price_key' => 'culture_stripe_price_yearly_usd_lit',  'label' => __( 'Lit — Yearly ($)',   'culture-community' ) ),
-            );
-            foreach ( $stripe_fields as $sf ) :
-                $price_id = (string) get_option( $sf['price_key'], '' );
-            ?>
-            <tr>
-                <th scope="row"><label for="<?php echo esc_attr( $sf['amount_key'] ); ?>"><?php echo esc_html( $sf['label'] ); ?></label></th>
-                <td>
-                    <input type="number" id="<?php echo esc_attr( $sf['amount_key'] ); ?>"
-                           name="<?php echo esc_attr( $sf['amount_key'] ); ?>"
-                           value="<?php echo esc_attr( get_option( $sf['amount_key'], '' ) ); ?>"
-                           class="small-text" min="0" step="0.01" />
-                    <?php if ( str_starts_with( $price_id, 'price_' ) ) : ?>
-                        <span class="description" style="margin-left:8px;">
-                            <?php printf( esc_html__( 'Price ID: %s (auto-provisioned)', 'culture-community' ), '<code>' . esc_html( $price_id ) . '</code>' ); ?>
-                        </span>
-                        <button type="button" class="button button-small"
-                                style="margin-left:6px;"
-                                onclick="if(confirm('<?php esc_attr_e( 'Delete cached Price ID? A new price will be created in Stripe on next checkout.', 'culture-community' ); ?>')){jQuery.post(ajaxurl,{action:'culture_clear_flw_plan',key:'<?php echo esc_js( $sf['price_key'] ); ?>',_wpnonce:'<?php echo esc_js( wp_create_nonce( 'culture_clear_flw_plan' ) ); ?>'},function(){location.reload();});}">
-                            <?php esc_html_e( 'Reset', 'culture-community' ); ?>
-                        </button>
-                    <?php else : ?>
-                        <span class="description" style="margin-left:8px;"><?php esc_html_e( 'Price will be created in Stripe on first checkout.', 'culture-community' ); ?></span>
-                    <?php endif; ?>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </table>
-
-        <hr />
-        <h3><?php esc_html_e( 'Google Play Billing (Android app)', 'culture-community' ); ?></h3>
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Google Play Billing (Android app)', 'culture-community' ); ?></summary>
         <p class="description">
             <?php esc_html_e( 'Powers the Moveee Pro upgrade purchased inside the Android app. Requires a subscription product created in Play Console (Monetize → Subscriptions) under this package name, and a service account with access to the Google Play Developer API (Play Console → Setup → API access) — paste that service account\'s downloaded JSON key below. The two Product ID fields must match the subscription IDs exactly as created in Play Console.', 'culture-community' ); ?>
         </p>
@@ -646,8 +646,10 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <hr />
-        <h3><?php esc_html_e( 'Lifestyle Shop', 'culture-community' ); ?></h3>
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Lifestyle Shop', 'culture-community' ); ?></summary>
         <p class="description"><?php esc_html_e( 'Shop products are priced in GBP (the WooCommerce store currency). Nigerian shoppers are shown a converted NGN price and pay via Paystack at this rate; everyone else pays in GBP via Stripe. The underlying order is always recorded in GBP.', 'culture-community' ); ?></p>
         <table class="form-table">
             <tr>
@@ -676,8 +678,11 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <hr />
-        <h3><?php esc_html_e( 'Flutterwave (Airtime Perk Rewards)', 'culture-community' ); ?></h3>
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Flutterwave', 'culture-community' ); ?></summary>
+            <p style="margin:10px 0 4px;font-weight:600;font-size:13px;"><?php esc_html_e( 'Airtime Perk Rewards', 'culture-community' ); ?></p>
         <p class="description">
             <?php esc_html_e( 'Used to send instant airtime to members when they redeem an airtime-type perk with their credits. Get your secret key from the Flutterwave dashboard under Settings → API Keys. If the environment variable FLUTTERWAVE_SECRET_KEY is set on the server, it takes precedence over this field.', 'culture-community' ); ?>
         </p>
@@ -711,8 +716,7 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <hr />
-        <h3><?php esc_html_e( 'Flutterwave — Membership Subscriptions (NGN)', 'culture-community' ); ?></h3>
+        <p style="margin:16px 0 4px;font-weight:600;font-size:13px;"><?php esc_html_e( 'Membership Subscriptions (NGN)', 'culture-community' ); ?></p>
         <p class="description">
             <?php esc_html_e( 'Amounts for Moveee Pro and Moveee Lit NGN subscriptions charged via Flutterwave. Enter amounts in full Naira (e.g. 5000 = ₦5,000). Payment plans are created automatically in your Flutterwave account the first time a member checks out — the cached plan IDs are shown here for reference.', 'culture-community' ); ?>
         </p>
@@ -755,8 +759,10 @@ class Culture_Settings {
             <?php endforeach; ?>
         </table>
 
-        <hr />
-        <h3><?php esc_html_e( 'Creator Payouts', 'culture-community' ); ?></h3>
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+            <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Creator Payouts', 'culture-community' ); ?></summary>
         <p class="description">
             <?php esc_html_e( 'Platform fee deducted from each paid RSVP before the net amount is credited to the event creator\'s earnings ledger. Enter as a decimal (e.g. 0.10 = 10%).', 'culture-community' ); ?>
         </p>
@@ -771,6 +777,7 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
         <?php
     }
 
@@ -805,9 +812,10 @@ class Culture_Settings {
             'like_count'            => __( 'likes given', 'culture-community' ),
         );
         ?>
-        <h2><?php esc_html_e( 'Badge Thresholds', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Set the threshold required to unlock each badge. Credit and reputation values per action are configured in the Credits and Reputation tabs.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Badge Thresholds', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Set the threshold required to unlock each badge. Credit and reputation values per action are configured in the Credits and Reputation tabs.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <?php foreach ( $badges as $slug => $badge ) :
                 $key     = 'culture_badge_' . $slug;
                 $default = (int) $badge['threshold'];
@@ -828,6 +836,7 @@ class Culture_Settings {
                 </tr>
             <?php endforeach; ?>
         </table>
+        </details>
         <?php
     }
 
@@ -857,9 +866,10 @@ class Culture_Settings {
             'poll_vote'              => __( 'Poll Vote', 'culture-community' ),
         );
         ?>
-        <h2><?php esc_html_e( 'Credit Bonuses per Action', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Credits are spendable and capped daily. Set how many credits each action awards.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Credit Bonuses per Action', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Credits are spendable and capped daily. Set how many credits each action awards.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <?php foreach ( $credit_actions as $action => $label ) :
                 $key     = 'culture_credits_' . $action;
                 $default = isset( $credit_defaults[ $action ] ) ? $credit_defaults[ $action ] : 0;
@@ -876,9 +886,12 @@ class Culture_Settings {
             <?php endforeach; ?>
         </table>
 
-        <h2><?php esc_html_e( 'Post Validation Credits', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Credits awarded when a community post reaches the validation threshold (5 reactions or 3 unique commenters).', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Post Validation Credits', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Credits awarded when a community post reaches the validation threshold (5 reactions or 3 unique commenters).', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_credits_post_validated_standard"><?php esc_html_e( 'Standard Post', 'culture-community' ); ?></label></th>
                 <td>
@@ -897,9 +910,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Daily Credit Cap', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Maximum credits a member can earn in a single calendar day, across all actions.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Daily Credit Cap', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Maximum credits a member can earn in a single calendar day, across all actions.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_daily_credit_cap"><?php esc_html_e( 'Daily Cap', 'culture-community' ); ?></label></th>
                 <td>
@@ -910,9 +926,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Currency Exchange Rates', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'How many credits equal 1 unit of each currency. Used for cashout calculations.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Currency Exchange Rates', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'How many credits equal 1 unit of each currency. Used for cashout calculations.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_credits_per_gbp"><?php esc_html_e( 'Credits per £1 GBP', 'culture-community' ); ?></label></th>
                 <td>
@@ -938,6 +957,7 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
         <?php
     }
 
@@ -968,9 +988,10 @@ class Culture_Settings {
         );
 
         ?>
-        <h2><?php esc_html_e( 'Reputation per Action', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Reputation is permanent — it never decreases and cannot be spent. Every action awards both reputation and credits (see the Credits tab).', 'culture-community' ); ?></p>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Reputation per Action', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Reputation is permanent — it never decreases and cannot be spent. Every action awards both reputation and credits (see the Credits tab).', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <?php foreach ( $rep_actions as $action => $label ) :
                 $key     = 'culture_points_' . $action;
                 $default = isset( $rep_defaults[ $action ] ) ? $rep_defaults[ $action ] : 0;
@@ -987,9 +1008,12 @@ class Culture_Settings {
             <?php endforeach; ?>
         </table>
 
-        <h2><?php esc_html_e( 'Reputation Tier Thresholds', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'The minimum reputation score required to reach each tier. Tiers are evaluated in descending order — a member reaches the highest tier their score qualifies for.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Reputation Tier Thresholds', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'The minimum reputation score required to reach each tier. Tiers are evaluated in descending order — a member reaches the highest tier their score qualifies for.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_rep_tier_contributor"><?php esc_html_e( 'Culture Contributor', 'culture-community' ); ?></label></th>
                 <td>
@@ -1015,14 +1039,16 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
         <?php
     }
 
     private static function render_referrals_tab() {
         ?>
-        <h2><?php esc_html_e( 'Referral Settings', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Configure how the referral system works.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Referral Settings', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Configure how the referral system works.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_referral_cookie_days"><?php esc_html_e( 'Referral Cookie Duration', 'culture-community' ); ?></label></th>
                 <td>
@@ -1047,14 +1073,16 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
         <?php
     }
 
     private static function render_emails_tab() {
         ?>
-        <h2><?php esc_html_e( 'Email Branding', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Customise the appearance of outgoing plugin emails.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Email Branding', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Customise the appearance of outgoing plugin emails.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_email_from_name"><?php esc_html_e( 'From Name', 'culture-community' ); ?></label></th>
                 <td>
@@ -1081,8 +1109,11 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Email Notifications', 'culture-community' ); ?></h2>
-        <p class="description">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Email Notifications', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;">
             <?php esc_html_e( 'The following automated emails are sent by the plugin.', 'culture-community' ); ?>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-email-templates' ) ); ?>" class="button button-secondary" style="margin-left:10px;">
                 <?php esc_html_e( 'Edit Email Templates', 'culture-community' ); ?> &rarr;
@@ -1103,14 +1134,16 @@ class Culture_Settings {
                 <tr><td><?php esc_html_e( 'Downgrade Notice', 'culture-community' ); ?></td><td><?php esc_html_e( 'Grace period expires, account downgraded', 'culture-community' ); ?></td></tr>
             </tbody>
         </table>
+        </details>
         <?php
     }
 
     private static function render_membership_tab() {
         ?>
-        <h2><?php esc_html_e( 'Membership Tiers', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Configure tier display names and grace period behavior.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Membership Tiers', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Configure tier display names and grace period behavior.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_patron_label"><?php esc_html_e( 'Paid Tier Label', 'culture-community' ); ?></label></th>
                 <td>
@@ -1137,8 +1170,11 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Tier Benefits Summary', 'culture-community' ); ?></h2>
-        <table class="widefat fixed striped" style="max-width:700px;">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Tier Benefits Summary', 'culture-community' ); ?></summary>
+        <table class="widefat fixed striped" style="max-width:700px;margin-top:10px;">
             <thead>
                 <tr>
                     <th><?php esc_html_e( 'Feature', 'culture-community' ); ?></th>
@@ -1157,13 +1193,15 @@ class Culture_Settings {
                 <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
             </tbody>
         </table>
+        </details>
         <?php
     }
 
     private static function render_general_tab() {
         ?>
-        <h2><?php esc_html_e( 'General Settings', 'culture-community' ); ?></h2>
-        <table class="form-table">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'General Settings', 'culture-community' ); ?></summary>
+        <table class="form-table" style="margin-top:10px;">
             <tr>
                 <th scope="row"><label for="culture_api_secret"><?php esc_html_e( 'Next.js API Secret', 'culture-community' ); ?></label></th>
                 <td>
@@ -1207,9 +1245,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Google Sign-In', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'OAuth Client IDs from Google Cloud Console, used to validate Google ID tokens on login. Leave a field blank to disable Google Sign-In for that surface.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Google Sign-In', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'OAuth Client IDs from Google Cloud Console, used to validate Google ID tokens on login. Leave a field blank to disable Google Sign-In for that surface.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_google_client_id_web"><?php esc_html_e( 'Web Client ID', 'culture-community' ); ?></label></th>
                 <td>
@@ -1239,9 +1280,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Sign in with Apple', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Required for App Store review (Guideline 4.8) since the app also offers Google Sign-In. The native iOS app flow needs no configuration here — its identity token is already trusted against the app\'s own bundle ID (com.moveee.connect). Only fill this in if Sign in with Apple is ever added to a web login flow.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Sign in with Apple', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Required for App Store review (Guideline 4.8) since the app also offers Google Sign-In. The native iOS app flow needs no configuration here — its identity token is already trusted against the app\'s own bundle ID (com.moveee.connect). Only fill this in if Sign in with Apple is ever added to a web login flow.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_apple_service_id"><?php esc_html_e( 'Service ID (web, optional)', 'culture-community' ); ?></label></th>
                 <td>
@@ -1252,9 +1296,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Cloudflare R2 Storage', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Credentials for the shared media bucket. Mobile app uploads (community post images, avatars, cover photos) are stored here, the same bucket used by the web app.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Cloudflare R2 Storage', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Credentials for the shared media bucket. Mobile app uploads (community post images, avatars, cover photos) are stored here, the same bucket used by the web app.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_r2_account_id"><?php esc_html_e( 'Account ID', 'culture-community' ); ?></label></th>
                 <td>
@@ -1296,9 +1343,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Literati Connect / Stoop', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Controls the culture_cluster CPT lifecycle — area-level Stoop clusters that form, activate, and (if they never reach enough members) auto-archive.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Literati Connect / Stoop', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Controls the culture_cluster CPT lifecycle — area-level Stoop clusters that form, activate, and (if they never reach enough members) auto-archive.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_cluster_min_activation_members"><?php esc_html_e( 'Min. Members to Activate', 'culture-community' ); ?></label></th>
                 <td>
@@ -1333,9 +1383,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Analytics Dashboard', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Control how many items appear in the analytics dashboard tables.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Analytics Dashboard', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Control how many items appear in the analytics dashboard tables.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_analytics_limit_top_members"><?php esc_html_e( 'Top Members Shown', 'culture-community' ); ?></label></th>
                 <td>
@@ -1352,9 +1405,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Shortcodes Reference', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Use these shortcodes on any page or post:', 'culture-community' ); ?></p>
-        <table class="widefat fixed striped" style="max-width:700px;">
+        </details>
+
+        <details style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#555;"><?php esc_html_e( 'Shortcodes Reference', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Use these shortcodes on any page or post:', 'culture-community' ); ?></p>
+        <table class="widefat fixed striped" style="max-width:700px;margin-top:8px;">
             <thead>
                 <tr>
                     <th><?php esc_html_e( 'Shortcode', 'culture-community' ); ?></th>
@@ -1369,6 +1425,7 @@ class Culture_Settings {
                 <tr><td><code>[culture_register]</code></td><td><?php esc_html_e( 'Multi-step registration wizard.', 'culture-community' ); ?></td></tr>
             </tbody>
         </table>
+        </details>
         <?php
     }
 
@@ -1376,10 +1433,11 @@ class Culture_Settings {
         $blocklist   = get_option( 'culture_community_blocklist', '' );
         $review_days = (int) get_option( 'culture_new_member_review_days', 7 );
         ?>
-        <h2><?php esc_html_e( 'Community Moderation', 'culture-community' ); ?></h2>
-        <p><?php esc_html_e( 'Configure spam protection for the Connect community feed.', 'culture-community' ); ?></p>
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Community Moderation', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Configure spam protection for the Connect community feed.', 'culture-community' ); ?></p>
 
-        <table class="form-table">
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row">
                     <label for="culture_new_member_review_days"><?php esc_html_e( 'New-member review period', 'culture-community' ); ?></label>
@@ -1412,18 +1470,20 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
         <?php
     }
 
 
     private static function render_advertising_tab() {
         ?>
-        <h2><?php esc_html_e( 'Google Ads / AdSense', 'culture-community' ); ?></h2>
-        <p class="description">
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Google Ads / AdSense', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;">
             <?php esc_html_e( 'Configure Google AdSense or Ad Manager. Set your Publisher ID and individual slot IDs for each placement. Leave a slot empty to hide that placement entirely — no blank space will appear on the frontend.', 'culture-community' ); ?>
         </p>
 
-        <table class="form-table">
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><?php esc_html_e( 'Enable Ads', 'culture-community' ); ?></th>
                 <td>
@@ -1446,9 +1506,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Ad Slot IDs', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Paste the data-ad-slot value for each placement. Find these in your AdSense account under Ads → By ad unit.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Ad Slot IDs', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Paste the data-ad-slot value for each placement. Find these in your AdSense account under Ads → By ad unit.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_ads_slot_leaderboard_top"><?php esc_html_e( 'Leaderboard — Top', 'culture-community' ); ?></label></th>
                 <td>
@@ -1487,9 +1550,12 @@ class Culture_Settings {
             </tr>
         </table>
 
-        <h2><?php esc_html_e( 'Custom Script', 'culture-community' ); ?></h2>
-        <p class="description"><?php esc_html_e( 'Optional — paste a raw JavaScript snippet here (e.g. Google Tag Manager, Ad Manager tag, or any other ad network initialisation code). Do not include &lt;script&gt; tags. Leave blank if using standard AdSense above.', 'culture-community' ); ?></p>
-        <table class="form-table">
+        </details>
+
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Custom Script', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Optional — paste a raw JavaScript snippet here (e.g. Google Tag Manager, Ad Manager tag, or any other ad network initialisation code). Do not include &lt;script&gt; tags. Leave blank if using standard AdSense above.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
             <tr>
                 <th scope="row"><label for="culture_ads_custom_script"><?php esc_html_e( 'Custom Ad Script', 'culture-community' ); ?></label></th>
                 <td>
@@ -1500,6 +1566,7 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
         <?php
     }
 }
