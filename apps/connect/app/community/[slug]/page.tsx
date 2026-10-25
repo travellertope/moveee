@@ -235,6 +235,7 @@ export default async function CommunityPostPage({
                 authorAvatar={authorAvatarUrl || undefined}
                 authorUsername={organiserUsername || authorUsername || undefined}
                 wpId={String(post.id)}
+                slug={post.slug}
                 initialComments={comments}
                 rsvpEnabled={rsvpEnabled}
                 rsvpCount={rsvpCount}

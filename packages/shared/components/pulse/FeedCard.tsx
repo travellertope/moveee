@@ -774,6 +774,23 @@ export default function FeedCard({
     const [editing, setEditing] = useState(false);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [editError, setEditError] = useState("");
+    // Only detect orientation for event cards; other community cards don't use it.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [eventImgOrientation, setEventImgOrientation] = useState<"landscape"|"portrait"|"square"|"unknown">(
+      item.templateType === "event" && item.image ? "unknown" : "square"
+    );
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      if (item.templateType !== "event" || !item.image) return;
+      const img = new window.Image();
+      img.onload = () => {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        setEventImgOrientation(ratio > 1.2 ? "landscape" : ratio < 0.85 ? "portrait" : "square");
+      };
+      img.onerror = () => setEventImgOrientation("landscape");
+      img.src = item.image;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [item.image, item.templateType]);
 
     const sessionUser = session?.user as any;
     const sessionUserId = sessionUser?.id ? Number(sessionUser.id) : sessionUser?.databaseId ? Number(sessionUser.databaseId) : null;
@@ -1184,141 +1201,126 @@ export default function FeedCard({
               <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
             )}
 
-            {/* Event card — rich self-contained layout matching the Stoop Hub mockup */}
-            {item.templateType === "event" && (
-              <div style={{
-                borderRadius: "var(--radius-xl)",
-                overflow: "hidden",
-                border: "1px solid var(--rule)",
-                marginBottom: "0.6rem",
-              }}>
-                {/* Cover image */}
-                {item.image && (
-                  <div style={{ width: "100%", overflow: "hidden", flexShrink: 0 }}>
-                    <img
-                      src={item.image}
-                      alt=""
-                      style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover" }}
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-                <div style={{ padding: "12px 14px", backgroundColor: "var(--paper-deep)" }}>
-                  {/* Label */}
-                  <div style={{
-                    fontSize: "0.62rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.09em",
-                    textTransform: "uppercase",
-                    color: "var(--ochre)",
-                    marginBottom: "5px",
-                  }}>
-                    Community Event
-                  </div>
-                  {/* Title + body from post text */}
+            {/* Event card — orientation-aware layout */}
+            {item.templateType === "event" && (() => {
+              const isPortrait = eventImgOrientation === "portrait" || eventImgOrientation === "square";
+              const evTitle = item.eventPostTitle ?? (() => {
+                const nlIdx = item.title.indexOf("\n");
+                return nlIdx === -1 ? item.title.trim() : item.title.slice(0, nlIdx).trim();
+              })();
+              const rawBody = item.eventPostTitle ? item.title.trim() : (() => {
+                const nlIdx = item.title.indexOf("\n");
+                return nlIdx === -1 ? "" : item.title.slice(nlIdx + 1).trim();
+              })();
+              const evBody = rawBody === evTitle ? "" : rawBody;
+              const evLabel = (
+                <div style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--ochre)", marginBottom: "5px" }}>
+                  Community Event
+                </div>
+              );
+              const evDate = item.eventDate && (
+                <div style={{ fontSize: "0.72rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "3px" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
                   {(() => {
-                    const title = item.eventPostTitle ?? (() => {
-                      const nlIdx = item.title.indexOf("\n");
-                      return nlIdx === -1 ? item.title.trim() : item.title.slice(0, nlIdx).trim();
-                    })();
-                    const rawBody = item.eventPostTitle ? item.title.trim() : (() => {
-                      const nlIdx = item.title.indexOf("\n");
-                      return nlIdx === -1 ? "" : item.title.slice(nlIdx + 1).trim();
-                    })();
-                    // Suppress body when it's identical to the title (fallback from empty post content)
-                    const body = rawBody === title ? "" : rawBody;
-                    return (
-                      <>
-                        {title && (
-                          <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "5px" }}>
-                            {title}
-                          </div>
-                        )}
-                        {body && (
-                          <div style={{
-                            fontSize: "0.78rem",
-                            color: "var(--ink-soft)",
-                            lineHeight: 1.5,
-                            marginBottom: "7px",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          } as React.CSSProperties}>
-                            {body}
-                          </div>
-                        )}
-                      </>
-                    );
+                    const d = new Date(item.eventDate);
+                    const dateText = d.toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" });
+                    const h = d.getHours(), m = d.getMinutes();
+                    return (h !== 0 || m !== 0) ? `${dateText}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}` : dateText;
                   })()}
-                  {/* Date + Time */}
-                  {item.eventDate && (
-                    <div style={{ fontSize: "0.78rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "3px" }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
-                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                      </svg>
-                      {(() => {
-                        const d = new Date(item.eventDate);
-                        const dateText = d.toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" });
-                        const h = d.getHours(), m = d.getMinutes();
-                        return (h !== 0 || m !== 0) ? `${dateText}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}` : dateText;
-                      })()}
-                      {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+                </div>
+              );
+              const evLocation = (item.location || item.city) && (
+                <div style={{ fontSize: "0.72rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                  <svg width="9" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                  {[item.location, item.city].filter(Boolean).join(", ")}
+                </div>
+              );
+              const evRsvp = (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "4px" }}>
+                  {item.rsvpEnabled ? (
+                    <>
+                      <span style={{ fontSize: "0.68rem", color: "var(--mute)" }}>
+                        {item.rsvpCount ?? 0} going{item.rsvpCapacity ? ` · ${Math.max(0, item.rsvpCapacity - (item.rsvpCount ?? 0))} left` : ""}
+                      </span>
+                      <span style={{ display: "inline-flex", padding: "5px 14px", borderRadius: "var(--radius-full)", background: "var(--ink)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, pointerEvents: "none", letterSpacing: "0.03em", flexShrink: 0 }}>
+                        RSVP
+                      </span>
+                    </>
+                  ) : item.ticketUrl ? (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                      {item.admission && <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>}
+                      <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", padding: "5px 14px", borderRadius: "var(--radius-full)", backgroundColor: "var(--ochre)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, textDecoration: "none" }}>
+                        Get tickets
+                      </a>
                     </div>
-                  )}
-                  {/* Location */}
-                  {(item.location || item.city) && (
-                    <div style={{ fontSize: "0.78rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "7px" }}>
-                      <svg width="10" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                        <circle cx="12" cy="9" r="2.5"/>
-                      </svg>
-                      {[item.location, item.city].filter(Boolean).join(", ")}
+                  ) : item.admission ? (
+                    <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>
+                  ) : null}
+                </div>
+              );
+
+              if (isPortrait && item.image) {
+                // Portrait / square: image left 38%, content right
+                return (
+                  <div style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1px solid var(--rule)", marginBottom: "0.6rem", display: "flex", flexDirection: "row" }}>
+                    <div style={{ width: "38%", flexShrink: 0, overflow: "hidden" }}>
+                      <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
                     </div>
-                  )}
-                  {/* Organiser */}
-                  {item.organiserName && (
-                    <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginBottom: "8px" }}>
-                      By{" "}
-                      {item.organiserSlug
-                        ? <a href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ color: "var(--ochre)" }}>{item.organiserName}</a>
-                        : item.organiserName}
-                    </div>
-                  )}
-                  {/* RSVP / tickets — pill only; full RSVP flow is in the modal */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "4px" }}>
-                    {item.rsvpEnabled ? (
-                      <>
-                        <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
-                          {item.rsvpCount ?? 0} going{item.rsvpCapacity ? ` · ${Math.max(0, item.rsvpCapacity - (item.rsvpCount ?? 0))} spots left` : ""}
-                        </span>
-                        <span style={{
-                          display: "inline-flex", padding: "5px 14px",
-                          borderRadius: "var(--radius-full)", background: "var(--ink)", color: "#fff",
-                          fontSize: "0.72rem", fontWeight: 700, pointerEvents: "none",
-                          letterSpacing: "0.03em", flexShrink: 0,
-                        }}>
-                          RSVP
-                        </span>
-                      </>
-                    ) : item.ticketUrl ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                        {item.admission && <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>}
-                        <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{
-                          display: "inline-flex", alignItems: "center", padding: "5px 14px",
-                          borderRadius: "var(--radius-full)", backgroundColor: "var(--ochre)", color: "#fff",
-                          fontSize: "0.72rem", fontWeight: 700, textDecoration: "none",
-                        }}>
-                          Get tickets
-                        </a>
+                    <div style={{ flex: 1, minWidth: 0, padding: "10px 12px", backgroundColor: "var(--paper-deep)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <div>
+                        {evLabel}
+                        {evTitle && <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "6px" }}>{evTitle}</div>}
+                        {evDate}
+                        {evLocation}
+                        {item.organiserName && (
+                          <div style={{ fontSize: "0.68rem", color: "var(--mute)", marginBottom: "4px" }}>
+                            By {item.organiserSlug
+                              ? <a href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ color: "var(--ochre)" }}>{item.organiserName}</a>
+                              : item.organiserName}
+                          </div>
+                        )}
                       </div>
-                    ) : item.admission ? (
-                      <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>
-                    ) : null}
+                      {evRsvp}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Landscape (or unknown while loading): full-width cover image on top
+              return (
+                <div style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1px solid var(--rule)", marginBottom: "0.6rem" }}>
+                  {item.image && (
+                    <div style={{ width: "100%", overflow: "hidden" }}>
+                      <img src={item.image} alt="" style={{ width: "100%", display: "block", maxHeight: "220px", objectFit: "cover" }} loading="lazy" />
+                    </div>
+                  )}
+                  <div style={{ padding: "12px 14px", backgroundColor: "var(--paper-deep)" }}>
+                    {evLabel}
+                    {evTitle && <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "5px" }}>{evTitle}</div>}
+                    {evBody && (
+                      <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "7px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
+                        {evBody}
+                      </div>
+                    )}
+                    {evDate}
+                    {evLocation}
+                    {item.organiserName && (
+                      <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginBottom: "8px" }}>
+                        By {item.organiserSlug
+                          ? <a href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ color: "var(--ochre)" }}>{item.organiserName}</a>
+                          : item.organiserName}
+                      </div>
+                    )}
+                    {evRsvp}
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Gallery carousel — all image-capable templates */}
             {item.galleryImages && item.galleryImages.length >= 1 && (
