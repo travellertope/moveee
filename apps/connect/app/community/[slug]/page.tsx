@@ -97,10 +97,11 @@ export default async function CommunityPostPage({
 
   // Template meta
   const m = post.meta;
-  // Use community_event_meta (server-resolved REST field) as the event
-  // detector — _template_type is registered with show_in_rest but the meta
-  // filter param is custom and may be unreliable for older posts.
-  const isEventPost   = post.community_event_meta != null;
+  // Use community_event_meta as the primary event detector; fall back to
+  // _template_type so posts created before community_event_meta was stable,
+  // or where the WP callback returned null for transient reasons, still
+  // render the event layout instead of the generic post view.
+  const isEventPost   = post.community_event_meta != null || m._template_type === "event";
   const templateType  = isEventPost ? "event" : (m._template_type || "post");
   const starRating    = m._star_rating ? Number(m._star_rating) : undefined;
   const locationName  = m._location_name || undefined;
