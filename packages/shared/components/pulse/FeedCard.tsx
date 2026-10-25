@@ -1240,7 +1240,15 @@ export default function FeedCard({
                   {[item.location, item.city].filter(Boolean).join(", ")}
                 </div>
               );
-              const evRsvp = (
+              const evAdmission = item.admission && (
+                <div style={{ fontSize: "0.92rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
+                    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/>
+                  </svg>
+                  {item.admission}
+                </div>
+              );
+              const evRsvp = (item.rsvpEnabled || item.ticketUrl) ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "4px" }}>
                   {item.rsvpEnabled ? (
                     <>
@@ -1251,18 +1259,15 @@ export default function FeedCard({
                         RSVP
                       </span>
                     </>
-                  ) : item.ticketUrl ? (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                      {item.admission && <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>}
-                      <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", padding: "5px 14px", borderRadius: "var(--radius-full)", backgroundColor: "var(--ochre)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, textDecoration: "none" }}>
-                        Get tickets
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                      <a href={item.ticketUrl!} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", alignItems: "center", padding: "5px 14px", borderRadius: "var(--radius-full)", backgroundColor: "var(--ochre)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, textDecoration: "none" }}>
+                        Get tickets →
                       </a>
                     </div>
-                  ) : item.admission ? (
-                    <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>
-                  ) : null}
+                  )}
                 </div>
-              );
+              ) : null;
 
               if (isPortrait && item.image) {
                 // Portrait / square: image left 38%, content right
@@ -1277,6 +1282,7 @@ export default function FeedCard({
                         {evTitle && <div style={{ fontWeight: 700, fontSize: "2.0rem", color: "var(--ink)", lineHeight: 1.2, marginBottom: "6px" }}>{evTitle}</div>}
                         {evDate}
                         {evLocation}
+                        {evAdmission}
                         {item.organiserName && (
                           <div style={{ fontSize: "0.68rem", color: "var(--mute)", marginBottom: "4px" }}>
                             By {item.organiserSlug
@@ -1309,6 +1315,7 @@ export default function FeedCard({
                     )}
                     {evDate}
                     {evLocation}
+                    {evAdmission}
                     {item.organiserName && (
                       <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginBottom: "8px" }}>
                         By {item.organiserSlug

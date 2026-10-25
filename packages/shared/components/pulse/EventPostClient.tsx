@@ -413,6 +413,11 @@ export default function EventPostClient({
       <circle cx="12" cy="9" r="2.5"/>
     </svg>
   );
+  const ticketIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/>
+    </svg>
+  );
 
   const iconPill = (icon: React.ReactNode) => (
     <div style={{
@@ -443,7 +448,7 @@ export default function EventPostClient({
   );
 
   // Boxed date/location block
-  const infoBar = (dateFormatted || locationDisplay) ? (
+  const infoBar = (dateFormatted || locationDisplay || admission) ? (
     <div style={{
       display: "flex", flexDirection: "column", gap: "6px",
       background: "var(--paper-deep)", borderRadius: "var(--radius-lg)",
@@ -475,6 +480,18 @@ export default function EventPostClient({
             <div>{locationDisplay}</div>
             {venueAddress && <div style={{ fontSize: "0.75rem", color: "var(--mute)", marginTop: "2px" }}>{venueAddress}</div>}
           </div>
+        </div>
+      )}
+      {admission && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%",
+            background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            {ticketIcon}
+          </div>
+          {admission}
         </div>
       )}
     </div>
@@ -621,27 +638,21 @@ export default function EventPostClient({
             </div>
           )}
 
-          {/* Tickets / admission — shown when RSVP is off */}
-          {!rsvpEnabled && (ticketUrl || admission) && (
+          {/* Tickets CTA — shown when RSVP is off and a ticket link exists */}
+          {!rsvpEnabled && ticketUrl && (
             <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              gap: "12px",
-              background: "var(--paper-deep)", border: "1px solid var(--rule)",
-              borderRadius: "var(--radius-xl)", padding: "0.85rem 1rem",
+              display: "flex", alignItems: "center", justifyContent: "flex-end",
               marginBottom: "1rem",
             }}>
-              {admission && <span style={{ fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>{admission}</span>}
-              {ticketUrl && (
-                <a href={ticketUrl} target="_blank" rel="noopener noreferrer" style={{
-                  display: "inline-flex", alignItems: "center", gap: "6px",
-                  padding: "5px 14px", borderRadius: "var(--radius-full)",
-                  background: "var(--ochre)", color: "#fff",
-                  fontSize: "0.72rem", fontWeight: 700, textDecoration: "none",
-                  flexShrink: 0, letterSpacing: "0.04em",
-                }}>
-                  Get tickets
-                </a>
-              )}
+              <a href={ticketUrl} target="_blank" rel="noopener noreferrer" style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                padding: "7px 20px", borderRadius: "var(--radius-full)",
+                background: "var(--ochre)", color: "#fff",
+                fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
+                letterSpacing: "0.04em",
+              }}>
+                Get tickets →
+              </a>
             </div>
           )}
 

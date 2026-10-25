@@ -422,6 +422,12 @@ export default function EventDetailModal({ item, onClose }: Props) {
       <circle cx="12" cy="9" r="2.5"/>
     </svg>
   );
+  // Ticket icon SVG
+  const ticketIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/>
+    </svg>
+  );
 
   const iconPill = (icon: React.ReactNode) => (
     <div style={{
@@ -452,7 +458,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
   );
 
   // Boxed date/location block (used below portrait/square image section and for landscape + no-image)
-  const infoBar = (dateFormatted || location) ? (
+  const infoBar = (dateFormatted || location || item.admission) ? (
     <div style={{
       display: "flex", flexDirection: "column", gap: "6px",
       background: "var(--paper-deep)", borderRadius: "var(--radius-lg)",
@@ -481,6 +487,18 @@ export default function EventDetailModal({ item, onClose }: Props) {
             {pinIcon}
           </div>
           {location}
+        </div>
+      )}
+      {item.admission && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%",
+            background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            {ticketIcon}
+          </div>
+          {item.admission}
         </div>
       )}
     </div>
@@ -619,8 +637,8 @@ export default function EventDetailModal({ item, onClose }: Props) {
               </>
             )}
 
-            {/* Host + RSVP row */}
-            {(authorName || item.rsvpEnabled) && (
+            {/* Host + RSVP / tickets row */}
+            {(authorName || item.rsvpEnabled || item.ticketUrl) && (
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 gap: "12px",
@@ -652,6 +670,23 @@ export default function EventDetailModal({ item, onClose }: Props) {
                 )}
                 {item.rsvpEnabled && (
                   <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} isOwn={isOwn} />
+                )}
+                {item.ticketUrl && !item.rsvpEnabled && (
+                  <a
+                    href={item.ticketUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      display: "inline-flex", alignItems: "center",
+                      padding: "6px 18px", borderRadius: "var(--radius-full)",
+                      background: "var(--ochre)", color: "#fff",
+                      fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
+                      letterSpacing: "0.03em", flexShrink: 0,
+                    }}
+                  >
+                    Get tickets →
+                  </a>
                 )}
               </div>
             )}
