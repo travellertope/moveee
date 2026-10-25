@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
+import ReactionBar from "./ReactionBar";
 
 const CommentThread = dynamic(() => import("./CommentThread"), { ssr: false });
 
@@ -152,6 +153,7 @@ interface Props {
   rsvpEnabled?: boolean;
   rsvpCount?: number;
   isOwn?: boolean;
+  initialReactions?: { love: number; fire?: number; clap?: number };
 }
 
 export default function EventPostClient({
@@ -174,6 +176,7 @@ export default function EventPostClient({
   rsvpEnabled,
   rsvpCount,
   isOwn,
+  initialReactions,
 }: Props) {
   const orientation = useImageOrientation(image);
 
@@ -492,6 +495,17 @@ export default function EventPostClient({
           </div>
         )}
 
+      </div>
+
+      {/* Reactions */}
+      <div style={{ padding: "0 1.5rem", borderTop: "1px solid var(--rule)" }}>
+        <ReactionBar
+          noBorder
+          itemId={wpId}
+          itemType="community"
+          initialCounts={initialReactions ?? { love: 0, fire: 0, clap: 0 }}
+          shareUrl={typeof window !== "undefined" ? window.location.href : ""}
+        />
       </div>
 
       {/* Discussion */}

@@ -166,6 +166,11 @@ export default async function CommunityPostPage({
   const organiserName  = cem?.organiser_name || null;
   const organiserUsername = cem?.organiser_slug || null;
   const isOwn = !!session?.user && (session.user as any)?.username === (organiserUsername || authorUsername);
+  const eventReactions = {
+    love: Number(m.reaction_love ?? 0),
+    fire: Number(m.reaction_fire ?? 0),
+    clap: Number(m.reaction_clap ?? 0),
+  };
 
   const linkedDirectorySlug = m._linked_directory_slug || undefined;
   const sourceUrl    = m.community_link_url || undefined;
@@ -234,6 +239,7 @@ export default async function CommunityPostPage({
                 rsvpEnabled={rsvpEnabled}
                 rsvpCount={rsvpCount}
                 isOwn={isOwn}
+                initialReactions={eventReactions}
               />
             ) : (
             <article style={{
