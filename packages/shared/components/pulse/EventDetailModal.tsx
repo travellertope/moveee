@@ -283,6 +283,13 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
 }
 
 const EVENT_CATEGORIES = ["Art","Music","Fashion","Food","Film","Literature","Sport","Design","Tech","Talk","Workshop","Community"];
+const CURRENCIES = ["₦", "£", "$", "€", "GH₵", "R", "KES"];
+function parseCurrency(val: string) {
+  for (const c of CURRENCIES) {
+    if (val.startsWith(c)) return { currency: c, amount: val.slice(c.length).trim() };
+  }
+  return { currency: "", amount: val };
+}
 
 interface Props {
   item: FeedItem;
@@ -319,6 +326,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
   const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Derive event title and body text
   const displayTitle = item.eventPostTitle
@@ -337,7 +345,9 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const [editVenue, setEditVenue] = useState(item.location ?? "");
   const [editCity, setEditCity] = useState(item.city ?? "");
   const [editAddress, setEditAddress] = useState(item.venueAddress ?? "");
-  const [editAdmission, setEditAdmission] = useState(item.admission ?? "");
+  const { currency: _initCur, amount: _initAmt } = parseCurrency(item.admission ?? "");
+  const [editCurrency, setEditCurrency] = useState(_initCur);
+  const [editAmount, setEditAmount] = useState(_initAmt);
   const [editCategory, setEditCategory] = useState(item.eventCategory ?? "");
   const [editTicketUrl, setEditTicketUrl] = useState(item.ticketUrl ?? "");
   const [editRsvpEnabled, setEditRsvpEnabled] = useState(!!item.rsvpEnabled);
@@ -361,7 +371,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
           event_venue: editVenue,
           event_city: editCity,
           event_address: editAddress,
-          event_admission: editAdmission,
+          event_admission: editCurrency + editAmount,
           event_category: editCategory,
           ticket_url: editTicketUrl,
           rsvp_enabled: editRsvpEnabled,
@@ -567,11 +577,12 @@ export default function EventDetailModal({ item, onClose }: Props) {
           {/* LANDSCAPE — image full-width, no overlay; badge + title + infoBar below */}
           {item.image && isLandscape && (
             <>
-              <div style={{ overflow: "hidden", flexShrink: 0 }}>
+              <div style={{ padding: "1rem 1rem 0", flexShrink: 0 }}>
                 <img
                   src={item.image}
                   alt=""
-                  style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover" }}
+                  onClick={() => setLightboxOpen(true)}
+                  style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover", borderRadius: "var(--radius-xl)", cursor: "zoom-in" }}
                 />
               </div>
               <div style={{ padding: "1rem 1.25rem 0.25rem" }}>
@@ -589,12 +600,13 @@ export default function EventDetailModal({ item, onClose }: Props) {
 
           {/* PORTRAIT / SQUARE — left image 40%, right column: badge + title + date/location */}
           {item.image && isPortraitOrSquare && (
-            <div style={{ display: "flex", flexDirection: "row", borderBottom: "1px solid var(--rule)" }}>
-              <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px" }}>
+            <div style={{ display: "flex", flexDirection: "row", borderBottom: "1px solid var(--rule)", padding: "1rem 0 1rem 1rem", gap: "0.75rem" }}>
+              <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px", borderRadius: "var(--radius-xl)" }}>
                 <img
                   src={item.image}
                   alt=""
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  onClick={() => setLightboxOpen(true)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }}
                 />
               </div>
               <div style={{
@@ -884,12 +896,22 @@ export default function EventDetailModal({ item, onClose }: Props) {
               <div style={{ display: "flex", gap: "0.75rem" }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--mute)", marginBottom: "4px" }}>Admission</label>
-                  <input
-                    value={editAdmission}
-                    onChange={e => setEditAdmission(e.target.value)}
-                    placeholder="e.g. Free, ₦2,000"
-                    style={{ width: "100%", background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: "var(--radius-md)", color: "var(--ink)", fontFamily: "inherit", fontSize: "0.9rem", padding: "0.65rem 0.9rem", boxSizing: "border-box", outline: "none" }}
-                  />
+                  <div style={{ display: "flex", gap: "4px" }}>
+                    <select
+                      value={editCurrency}
+                      onChange={e => setEditCurrency(e.target.value)}
+                      style={{ background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: "var(--radius-md)", color: "var(--ink)", fontFamily: "inherit", fontSize: "0.9rem", padding: "0.65rem 0.4rem", flexShrink: 0, outline: "none" }}
+                    >
+                      <option value="">—</option>
+                      {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <input
+                      value={editAmount}
+                      onChange={e => setEditAmount(e.target.value)}
+                      placeholder={editCurrency ? "e.g. 2,000" : "e.g. Free, 2,000"}
+                      style={{ flex: 1, background: "var(--paper)", border: "1px solid var(--rule)", borderRadius: "var(--radius-md)", color: "var(--ink)", fontFamily: "inherit", fontSize: "0.9rem", padding: "0.65rem 0.9rem", boxSizing: "border-box", outline: "none" }}
+                    />
+                  </div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--mute)", marginBottom: "4px" }}>Category</label>
@@ -952,6 +974,32 @@ export default function EventDetailModal({ item, onClose }: Props) {
             </div>
           </div>
         </>
+      )}
+
+      {/* Lightbox */}
+      {lightboxOpen && item.image && (
+        <div
+          onClick={() => setLightboxOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9500,
+            background: "rgba(0,0,0,0.92)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "zoom-out",
+          }}
+        >
+          <img
+            src={item.image}
+            alt=""
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: "var(--radius-xl)", display: "block" }}
+          />
+          <button
+            onClick={() => setLightboxOpen(false)}
+            style={{ position: "absolute", top: "1rem", right: "1rem", background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: "40px", height: "40px", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
       )}
 
     </div>
