@@ -94,15 +94,28 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
     setLoading(false);
   }
 
+  const guestListLabel = (
+    <div style={{ fontSize: "0.58rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--mute)" }}>
+      Guest List
+    </div>
+  );
+
+  const attendingCount = (
+    <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
+      {count} attending
+    </div>
+  );
+
   if (isOwn) {
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <span style={{ fontSize: "0.78rem", color: "var(--mute)" }}>{count} attending</span>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
+        {guestListLabel}
+        {attendingCount}
         <button disabled style={{
-          padding: "6px 18px", borderRadius: "var(--radius-full)",
-          fontWeight: 700, fontSize: "0.78rem", border: "none",
+          padding: "5px 14px", borderRadius: "var(--radius-full)",
+          fontWeight: 700, fontSize: "0.72rem", border: "none",
           background: "var(--paper-deep)", color: "var(--mute)",
-          cursor: "default", opacity: 0.7,
+          cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
         }}>
           Your event
         </button>
@@ -112,33 +125,36 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
 
   if (isAuthed === false) {
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <span style={{ fontSize: "0.78rem", color: "var(--mute)" }}>{count} attending</span>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
+        {guestListLabel}
+        {attendingCount}
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-      <span style={{ fontSize: "0.78rem", color: "var(--mute)" }}>{count} attending</span>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
+      {guestListLabel}
+      {attendingCount}
       {isAuthed && rsvped !== null && (
         <button
           onClick={toggle}
           disabled={loading}
           style={{
-            padding: "6px 18px",
+            padding: "5px 14px",
             borderRadius: "var(--radius-full)",
             fontWeight: 700,
-            fontSize: "0.78rem",
+            fontSize: "0.72rem",
             border: "none",
             cursor: loading ? "wait" : "pointer",
             transition: "background 0.15s, opacity 0.15s",
             opacity: loading ? 0.7 : 1,
-            background: rsvped ? "var(--ochre)" : "var(--ink)",
+            letterSpacing: "0.04em",
+            background: rsvped ? "#2e7d32" : "var(--ink)",
             color: "#fff",
           }}
         >
-          {rsvped ? "✓ Attending" : "RSVP"}
+          {rsvped ? "✓ Attending" : "RSVP Now"}
         </button>
       )}
     </div>
@@ -158,7 +174,6 @@ const communityBadge = (
     fontSize: "0.58rem", fontWeight: 700,
     letterSpacing: "0.1em", textTransform: "uppercase",
     padding: "0.2rem 0.6rem", borderRadius: "999px",
-    backdropFilter: "blur(4px)",
     display: "inline-block",
   }}>
     Community Event
@@ -188,9 +203,11 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const displayTitle = item.eventPostTitle
     ? item.eventPostTitle
     : (item.title.indexOf("\n") !== -1 ? item.title.slice(0, item.title.indexOf("\n")).trim() : item.title.trim());
-  const bodyText = item.eventPostTitle
+  const rawBodyText = item.eventPostTitle
     ? item.title.trim()
     : (item.title.indexOf("\n") !== -1 ? item.title.slice(item.title.indexOf("\n") + 1).trim() : "");
+  // Suppress body when it duplicates the title (fallback when post has no description)
+  const bodyText = rawBodyText === displayTitle ? "" : rawBodyText;
 
   const [editTitle, setEditTitle] = useState(displayTitle);
   const [editDesc, setEditDesc] = useState(bodyText);
@@ -271,6 +288,49 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const isLandscape = orientation === "landscape" || orientation === "unknown";
   const isPortraitOrSquare = orientation === "portrait" || orientation === "square";
 
+  // Clock icon SVG
+  const clockIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
+  // Pin icon SVG
+  const pinIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      <circle cx="12" cy="9" r="2.5"/>
+    </svg>
+  );
+
+  const iconPill = (icon: React.ReactNode) => (
+    <div style={{
+      width: "24px", height: "24px", borderRadius: "50%",
+      background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+    }}>
+      {icon}
+    </div>
+  );
+
+  // Compact date/location rows (used in portrait/square right column)
+  const metaRowsSmall = (dateFormatted || location) && (
+    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+      {dateFormatted && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "0.75rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          {iconPill(clockIcon)}
+          <span style={{ marginTop: "4px" }}>{dateFormatted}</span>
+        </div>
+      )}
+      {location && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "0.75rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          {iconPill(pinIcon)}
+          <span style={{ marginTop: "4px" }}>{location}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  // Boxed date/location block (used below portrait/square image section and for landscape + no-image)
   const infoBar = (dateFormatted || location) ? (
     <div style={{
       display: "flex", flexDirection: "column", gap: "6px",
@@ -286,9 +346,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
             background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
+            {clockIcon}
           </div>
           {dateFormatted}
         </div>
@@ -300,10 +358,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
             background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-              <circle cx="12" cy="9" r="2.5"/>
-            </svg>
+            {pinIcon}
           </div>
           {location}
         </div>
@@ -336,16 +391,15 @@ export default function EventDetailModal({ item, onClose }: Props) {
           margin: "auto",
         }}
       >
-        {/* Header bar */}
+        {/* Header bar — actions only */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
+          display: "flex", alignItems: "center", justifyContent: "flex-end",
           padding: "0.7rem 1rem",
-          borderBottom: isPortraitOrSquare && item.image ? "none" : "1px solid var(--rule)",
+          borderBottom: "none",
           flexShrink: 0,
           background: "var(--paper)",
           zIndex: 1,
         }}>
-          {isPortraitOrSquare && item.image ? communityBadge : !item.image ? communityBadge : <div />}
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
             {canEdit && (
               <button
@@ -389,24 +443,18 @@ export default function EventDetailModal({ item, onClose }: Props) {
         {/* Scrollable content */}
         <div style={{ overflowY: "auto", flex: "1 1 auto", minHeight: 0 }}>
 
-          {/* LANDSCAPE */}
+          {/* LANDSCAPE — image full-width, no overlay; badge + title + infoBar below */}
           {item.image && isLandscape && (
             <>
-              <div style={{ position: "relative", overflow: "hidden", flexShrink: 0 }}>
+              <div style={{ overflow: "hidden", flexShrink: 0 }}>
                 <img
                   src={item.image}
                   alt=""
                   style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover" }}
                 />
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: "linear-gradient(to top, rgba(20,17,13,0.70) 0%, rgba(20,17,13,0.10) 55%, transparent 100%)",
-                }} />
-                <div style={{ position: "absolute", bottom: "0.85rem", left: "1rem" }}>
-                  {communityBadge}
-                </div>
               </div>
-              <div style={{ padding: "1.1rem 1.25rem 0.5rem" }}>
+              <div style={{ padding: "1rem 1.25rem 0.25rem" }}>
+                <div style={{ marginBottom: "0.6rem" }}>{communityBadge}</div>
                 <h2 style={{
                   fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 700, fontSize: "1.45rem", lineHeight: 1.25,
@@ -419,10 +467,10 @@ export default function EventDetailModal({ item, onClose }: Props) {
             </>
           )}
 
-          {/* PORTRAIT / SQUARE */}
+          {/* PORTRAIT / SQUARE — left image 40%, right column: badge + title + date/location */}
           {item.image && isPortraitOrSquare && (
             <div style={{ display: "flex", flexDirection: "row", borderBottom: "1px solid var(--rule)" }}>
-              <div style={{ width: "40%", flexShrink: 0, position: "relative", overflow: "hidden", maxHeight: "260px" }}>
+              <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px" }}>
                 <img
                   src={item.image}
                   alt=""
@@ -430,58 +478,36 @@ export default function EventDetailModal({ item, onClose }: Props) {
                 />
               </div>
               <div style={{
-                flex: 1, padding: "1rem 1.1rem", display: "flex",
-                flexDirection: "column", justifyContent: "center", gap: "0.75rem",
+                flex: 1, padding: "1.1rem 1.1rem", display: "flex",
+                flexDirection: "column", justifyContent: "center", gap: "0.65rem",
                 minWidth: 0,
               }}>
+                <div>{communityBadge}</div>
                 <h2 style={{
                   fontFamily: "var(--font-fraunces), Georgia, serif",
-                  fontWeight: 700, fontSize: "1.15rem", lineHeight: 1.25,
+                  fontWeight: 700, fontSize: "1.1rem", lineHeight: 1.25,
                   color: "var(--ink)", margin: 0,
                 }}>
                   {displayTitle}
                 </h2>
-                {(dateFormatted || location) && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                    {dateFormatted && (
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "0.76rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                        <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(122,36,28,0.08)", color: "var(--ochre)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                          </svg>
-                        </div>
-                        <span>{dateFormatted}</span>
-                      </div>
-                    )}
-                    {location && (
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "0.76rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                        <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(122,36,28,0.08)", color: "var(--ochre)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                            <circle cx="12" cy="9" r="2.5"/>
-                          </svg>
-                        </div>
-                        <span>{location}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {metaRowsSmall}
               </div>
             </div>
           )}
 
-          {/* NO IMAGE */}
+          {/* NO IMAGE — dark accent bar as placeholder */}
           {!item.image && (
-            <div style={{ height: "80px", background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ fontSize: "2rem", opacity: 0.12 }}>🎉</span>
+            <div style={{ height: "64px", background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: "2rem", opacity: 0.1 }}>🎉</span>
             </div>
           )}
 
           <div style={{ padding: "1.25rem 1.25rem 0.5rem" }}>
 
-            {/* Title + info bar for no-image case */}
+            {/* Title + infoBar for no-image case */}
             {!item.image && (
               <>
+                <div style={{ marginBottom: "0.6rem" }}>{communityBadge}</div>
                 <h2 style={{
                   fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 700, fontSize: "1.45rem", lineHeight: 1.25,
@@ -492,6 +518,9 @@ export default function EventDetailModal({ item, onClose }: Props) {
                 {infoBar}
               </>
             )}
+
+            {/* For landscape: infoBar already rendered above; for portrait/square: show boxed infoBar here */}
+            {item.image && isPortraitOrSquare && infoBar}
 
             {/* Host + RSVP row */}
             {(authorName || item.rsvpEnabled) && (
@@ -530,10 +559,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
               </div>
             )}
 
-            {/* For portrait/square, show full infoBar below host row */}
-            {item.image && isPortraitOrSquare && infoBar}
-
-            {/* Event description — shown right after host/RSVP */}
+            {/* Event description */}
             {bodyText && (
               <div style={{ marginBottom: "1.25rem" }}>
                 <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--mute)", marginBottom: "0.5rem" }}>
