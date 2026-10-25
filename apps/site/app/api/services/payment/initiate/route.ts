@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const kind: PaymentKind = body.kind === "subscription" ? "subscription" : "one_time";
   const partnershipCategory = typeof body.partnershipCategory === "string" ? body.partnershipCategory : "";
 
-  if (!name || !email || !sectionId || !itemName) {
+  if (!name || !email || (!sectionId && !partnershipCategory) || !itemName) {
     return NextResponse.json({ error: "missing_fields", message: "Please fill in your name and email." }, { status: 400 });
   }
 
