@@ -318,7 +318,7 @@ function RsvpDisplay({
           <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{guestError}</p>
         )}
         <span style={{ fontSize: "0.72rem", color: "var(--mute)", display: "block", marginTop: 4 }}>
-          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+          {count} going{capacity ? ` · ${capacity} Slots` : ""}
         </span>
       </div>
     );
@@ -375,7 +375,7 @@ function RsvpDisplay({
           <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--ochre)" }}>{guestError}</p>
         )}
         <span style={{ fontSize: "0.72rem", color: "var(--mute)", display: "block", marginTop: 4 }}>
-          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+          {count} going{capacity ? ` · ${capacity} Slots` : ""}
         </span>
       </div>
     );
@@ -403,7 +403,7 @@ function RsvpDisplay({
           {buttonLabel}
         </button>
         <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
-          {count} going{capacity ? ` · ${Math.max(0, capacity - count)} spots left` : ""}
+          {count} going{capacity ? ` · ${capacity} Slots` : ""}
         </span>
       </div>
       {paidError && (
@@ -1253,7 +1253,7 @@ export default function FeedCard({
                   {item.rsvpEnabled ? (
                     <>
                       <span style={{ fontSize: "0.68rem", color: "var(--mute)" }}>
-                        {item.rsvpCapacity ? `${Math.max(0, item.rsvpCapacity - (item.rsvpCount ?? 0))} Open Slots` : ""}
+                        {item.rsvpCapacity ? `${item.rsvpCapacity} Slots` : ""}
                       </span>
                       <span style={{ display: "inline-flex", padding: "5px 14px", borderRadius: "var(--radius-full)", background: "var(--ink)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, pointerEvents: "none", letterSpacing: "0.03em", flexShrink: 0 }}>
                         RSVP
