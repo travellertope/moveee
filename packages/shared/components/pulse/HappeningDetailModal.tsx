@@ -88,23 +88,6 @@ export default function HappeningDetailModal({ item, onClose }: Props) {
             )}
           </div>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-            <Link
-              href={item.href}
-              aria-label="Open full page"
-              title="Open full page"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "var(--mute)", padding: "0.25rem",
-                borderRadius: "6px", transition: "color 0.15s",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = "var(--ochre)")}
-              onMouseLeave={e => (e.currentTarget.style.color = "var(--mute)")}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-                <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-              </svg>
-            </Link>
             <button onClick={close} aria-label="Close" style={{
               background: "none", border: "none", cursor: "pointer",
               color: "var(--ink)", lineHeight: 1, padding: "0.25rem", display: "flex",

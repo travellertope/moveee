@@ -171,9 +171,9 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
       (activeTemplate === "events" && isEventItem(item)) ||
       (item.type === "community" && activeTemplateTemplates.includes((item.templateType ?? "post") as never))
     );
-    // Events are excluded from the main feed (shown in Spotlight instead) unless
-    // the Events tab is explicitly selected
-    return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && (activeTemplate === "events" || !isEventItem(item));
+    // Editorial happenings (type:"happening") go to Spotlight only; community event
+    // posts (templateType:"event") appear in the main feed like other community posts.
+    return typeMatch && regionMatch && tagMatch && categoryMatch && templateMatch && (activeTemplate === "events" || item.type !== "happening");
   }), [items, activeType, activeRegion, activeTag, activeCategory, activeTemplate, activeTemplateTemplates, interestTagSet]);
 
   // Posts from people you follow — community posts only

@@ -1194,11 +1194,11 @@ export default function FeedCard({
               }}>
                 {/* Cover image */}
                 {item.image && (
-                  <div style={{ width: "100%", height: 160, overflow: "hidden", flexShrink: 0 }}>
+                  <div style={{ width: "100%", overflow: "hidden", flexShrink: 0 }}>
                     <img
                       src={item.image}
                       alt=""
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover" }}
                       loading="lazy"
                     />
                   </div>

@@ -611,7 +611,8 @@
 }
 .ar-wrap .prose-content h4 {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11.5px;
+  font-size: 14px;
+  line-height: 1.55;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.09em;
