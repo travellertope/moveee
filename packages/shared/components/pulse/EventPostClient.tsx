@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { WpComment } from "@/lib/pulse-wordpress";
@@ -54,6 +54,13 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
   const [loading, setLoading] = useState(false);
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
 
+  // Inline magic-OTP state for unauthenticated RSVP
+  const [otpStep, setOtpStep] = useState<"idle" | "email" | "otp" | "verifying">("idle");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+
   useEffect(() => {
     if (!postId) return;
     fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" })
@@ -91,6 +98,62 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
     setLoading(false);
   }
 
+  async function sendOtp() {
+    if (!otpEmail.trim() || otpSending) return;
+    setOtpSending(true); setOtpError("");
+    try {
+      const res = await fetch("/api/auth/magic-otp/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: otpEmail.trim() }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok) { setOtpStep("otp"); }
+      else { setOtpError(d.error ?? "Couldn't send a code — try again."); }
+    } catch { setOtpError("Network error — try again."); }
+    setOtpSending(false);
+  }
+
+  async function verifyOtp() {
+    if (!otpCode.trim() || otpStep === "verifying") return;
+    setOtpStep("verifying"); setOtpError("");
+    const result = await signIn("credentials", {
+      redirect: false,
+      otpEmail: otpEmail.trim(),
+      otpCode: otpCode.trim(),
+    }).catch(() => null);
+    if (result?.ok) {
+      try {
+        const res = await fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setIsAuthed(true);
+          setRsvped(!!data.rsvped);
+          if (typeof data.count === "number") setCount(data.count);
+          if (!data.rsvped) {
+            const rsvpRes = await fetch("/api/community/event-rsvp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ post_id: Number(postId) }),
+            });
+            if (rsvpRes.ok) {
+              const rsvpData = await rsvpRes.json().catch(() => ({}));
+              setRsvped(true);
+              setCount((c: number) => typeof rsvpData.count === "number" ? rsvpData.count : c + 1);
+            }
+          }
+          setOtpStep("idle");
+        } else {
+          setOtpError("Sign-in failed — try again.");
+          setOtpStep("otp");
+        }
+      } catch { setOtpError("Sign-in failed."); setOtpStep("otp"); }
+    } else {
+      setOtpError(result?.error === "CredentialsSignin" ? "Incorrect code." : "Sign-in failed.");
+      setOtpStep("otp");
+    }
+  }
+
   const guestListLabel = (
     <div style={{ fontSize: "0.58rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--mute)" }}>
       Guest List
@@ -100,6 +163,26 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
     <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
       {count} attending
     </div>
+  );
+  const pillBtn = (label: string, onClick: () => void, disabled = false): React.ReactNode => (
+    <button onClick={onClick} disabled={disabled} style={{
+      padding: "5px 12px", borderRadius: "var(--radius-full)",
+      fontWeight: 700, fontSize: "0.72rem", border: "none", flexShrink: 0,
+      cursor: disabled ? "default" : "pointer", letterSpacing: "0.04em",
+      background: disabled ? "var(--paper-deep)" : "var(--ink)",
+      color: disabled ? "var(--mute)" : "#fff", opacity: disabled ? 0.6 : 1,
+    }}>{label}</button>
+  );
+  const inputStyle: React.CSSProperties = {
+    fontSize: "0.75rem", padding: "5px 8px",
+    borderRadius: "var(--radius-md)", border: "1px solid var(--rule)",
+    background: "var(--paper)", color: "var(--ink)", outline: "none", fontFamily: "inherit",
+  };
+  const ghostBtn = (label: string, onClick: () => void): React.ReactNode => (
+    <button onClick={onClick} style={{
+      fontSize: "0.62rem", color: "var(--mute)", background: "none",
+      border: "none", cursor: "pointer", padding: 0,
+    }}>{label}</button>
   );
 
   if (isOwn) {
@@ -112,18 +195,62 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
           fontWeight: 700, fontSize: "0.72rem", border: "none",
           background: "var(--paper-deep)", color: "var(--mute)",
           cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
-        }}>
-          Your event
-        </button>
+        }}>Your event</button>
       </div>
     );
   }
 
   if (isAuthed === false) {
+    if (otpStep === "idle") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
+          {guestListLabel}
+          {attendingCount}
+          {pillBtn("RSVP Now", () => setOtpStep("email"))}
+        </div>
+      );
+    }
+    if (otpStep === "email") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" }}>
+          {otpError && <div style={{ fontSize: "0.65rem", color: "#c62828", textAlign: "right" }}>{otpError}</div>}
+          <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+            <input
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              type="email"
+              value={otpEmail}
+              onChange={e => setOtpEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && sendOtp()}
+              placeholder="your@email.com"
+              style={{ ...inputStyle, width: "148px" }}
+            />
+            {pillBtn(otpSending ? "…" : "Send code", sendOtp, otpSending || !otpEmail.trim())}
+          </div>
+          {ghostBtn("Cancel", () => { setOtpStep("idle"); setOtpError(""); })}
+        </div>
+      );
+    }
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-        {guestListLabel}
-        {attendingCount}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" }}>
+        <div style={{ fontSize: "0.65rem", color: "var(--mute)", textAlign: "right" }}>Code sent to {otpEmail}</div>
+        {otpError && <div style={{ fontSize: "0.65rem", color: "#c62828", textAlign: "right" }}>{otpError}</div>}
+        <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+          <input
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            type="text"
+            inputMode="numeric"
+            value={otpCode}
+            onChange={e => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onKeyDown={e => e.key === "Enter" && verifyOtp()}
+            placeholder="000000"
+            maxLength={6}
+            style={{ ...inputStyle, width: "72px", textAlign: "center", letterSpacing: "0.12em" }}
+          />
+          {pillBtn(otpStep === "verifying" ? "…" : "Verify", verifyOtp, otpStep === "verifying" || !otpCode.trim())}
+        </div>
+        {ghostBtn("← Change email", () => { setOtpStep("email"); setOtpCode(""); setOtpError(""); })}
       </div>
     );
   }
@@ -142,8 +269,7 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
             cursor: loading ? "wait" : "pointer",
             transition: "background 0.15s, opacity 0.15s",
             opacity: loading ? 0.7 : 1, letterSpacing: "0.04em",
-            background: rsvped ? "#2e7d32" : "var(--ink)",
-            color: "#fff",
+            background: rsvped ? "#2e7d32" : "var(--ink)", color: "#fff",
           }}
         >
           {rsvped ? "✓ Attending" : "RSVP Now"}
@@ -287,6 +413,11 @@ export default function EventPostClient({
       <circle cx="12" cy="9" r="2.5"/>
     </svg>
   );
+  const ticketIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/>
+    </svg>
+  );
 
   const iconPill = (icon: React.ReactNode) => (
     <div style={{
@@ -317,13 +448,12 @@ export default function EventPostClient({
   );
 
   // Boxed date/location block
-  const infoBar = (dateFormatted || locationDisplay) ? (
+  const infoBar = (dateFormatted || locationDisplay || admission) ? (
     <div style={{
       display: "flex", flexDirection: "column", gap: "6px",
       background: "var(--paper-deep)", borderRadius: "var(--radius-lg)",
       border: "1px solid var(--rule)",
       padding: "0.75rem 0.9rem",
-      marginBottom: "1rem",
     }}>
       {dateFormatted && (
         <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>
@@ -350,6 +480,18 @@ export default function EventPostClient({
             <div>{locationDisplay}</div>
             {venueAddress && <div style={{ fontSize: "0.75rem", color: "var(--mute)", marginTop: "2px" }}>{venueAddress}</div>}
           </div>
+        </div>
+      )}
+      {admission && (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          <div style={{
+            width: "28px", height: "28px", borderRadius: "50%",
+            background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            {ticketIcon}
+          </div>
+          {admission}
         </div>
       )}
     </div>
@@ -404,7 +546,7 @@ export default function EventPostClient({
               }}>
                 {eventTitle}
               </h2>
-              {infoBar}
+              {infoBar && <div style={{ marginBottom: "1rem" }}>{infoBar}</div>}
             </div>
           </>
         )}
@@ -421,17 +563,17 @@ export default function EventPostClient({
             </div>
             <div style={{
               flex: 1, padding: "1.1rem", display: "flex",
-              flexDirection: "column", justifyContent: "center", gap: "0.65rem",
-              minWidth: 0,
+              flexDirection: "column", justifyContent: "flex-start", gap: "0.65rem",
+              minWidth: 0, overflowY: "auto",
             }}>
               <div>{communityBadge}</div>
               <h2 style={{
-                fontWeight: 700, fontSize: "1.1rem", lineHeight: 1.25,
+                fontWeight: 700, fontSize: "2.1rem", lineHeight: 1.2,
                 color: "var(--ink)", margin: 0,
               }}>
                 {eventTitle}
               </h2>
-              {metaRowsSmall}
+              {infoBar}
             </div>
           </div>
         )}
@@ -455,12 +597,9 @@ export default function EventPostClient({
               }}>
                 {eventTitle}
               </h2>
-              {infoBar}
+              {infoBar && <div style={{ marginBottom: "1rem" }}>{infoBar}</div>}
             </>
           )}
-
-          {/* Portrait/square: boxed infoBar below the two-column header */}
-          {image && isPortraitOrSquare && infoBar}
 
           {/* Host + RSVP row */}
           {(authorName || rsvpEnabled) && (
@@ -499,27 +638,21 @@ export default function EventPostClient({
             </div>
           )}
 
-          {/* Tickets / admission — shown when RSVP is off */}
-          {!rsvpEnabled && (ticketUrl || admission) && (
+          {/* Tickets CTA — shown when RSVP is off and a ticket link exists */}
+          {!rsvpEnabled && ticketUrl && (
             <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              gap: "12px",
-              background: "var(--paper-deep)", border: "1px solid var(--rule)",
-              borderRadius: "var(--radius-xl)", padding: "0.85rem 1rem",
+              display: "flex", alignItems: "center", justifyContent: "flex-end",
               marginBottom: "1rem",
             }}>
-              {admission && <span style={{ fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>{admission}</span>}
-              {ticketUrl && (
-                <a href={ticketUrl} target="_blank" rel="noopener noreferrer" style={{
-                  display: "inline-flex", alignItems: "center", gap: "6px",
-                  padding: "5px 14px", borderRadius: "var(--radius-full)",
-                  background: "var(--ochre)", color: "#fff",
-                  fontSize: "0.72rem", fontWeight: 700, textDecoration: "none",
-                  flexShrink: 0, letterSpacing: "0.04em",
-                }}>
-                  Get tickets
-                </a>
-              )}
+              <a href={ticketUrl} target="_blank" rel="noopener noreferrer" style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                padding: "7px 20px", borderRadius: "var(--radius-full)",
+                background: "var(--ochre)", color: "#fff",
+                fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
+                letterSpacing: "0.04em",
+              }}>
+                Get tickets →
+              </a>
             </div>
           )}
 
