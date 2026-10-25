@@ -190,6 +190,7 @@ function culture_community_init() {
     Culture_Perks_Admin::init();
     Culture_Ticket_Payment::init();
     Culture_Community_RSVP_Payment::init();
+    Culture_Flutterwave::init();
     Culture_Shop_Checkout::init();
     Culture_Services_Payment::init();
     Culture_Tickets_Admin::init();

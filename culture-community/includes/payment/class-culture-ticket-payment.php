@@ -8,14 +8,13 @@
  *   POST ticket/initiate              — create pending ticket + start payment session
  *   GET  ticket/callback/flutterwave  — Flutterwave post-payment browser redirect
  *   GET  ticket/callback              — legacy Paystack browser redirect (kept for in-flight)
- *   POST ticket/webhook/flutterwave   — Flutterwave charge.completed webhook
  *   POST ticket/webhook/paystack      — legacy Paystack webhook (kept for in-flight)
  *   POST ticket/webhook/stripe        — Stripe checkout.session.completed webhook
  *   POST ticket/verify                — scan/verify ticket code at door (staff only)
  *   GET  ticket/status                — read-only status poll by code
  *
  * Webhook URLs to configure in payment dashboards:
- *   Flutterwave: {site}/wp-json/culture/v1/ticket/webhook/flutterwave
+ *   Flutterwave: {site}/wp-json/culture/v1/flutterwave/webhook  (unified — shared with all modules)
  *   Stripe:      {site}/wp-json/culture/v1/ticket/webhook/stripe
  */
 
@@ -101,12 +100,6 @@ class Culture_Ticket_Payment {
         register_rest_route( 'culture/v1', '/ticket/callback', [
             'methods'             => 'GET',
             'callback'            => [ __CLASS__, 'handle_paystack_callback' ],
-            'permission_callback' => '__return_true',
-        ] );
-
-        register_rest_route( 'culture/v1', '/ticket/webhook/flutterwave', [
-            'methods'             => 'POST',
-            'callback'            => [ __CLASS__, 'handle_flutterwave_webhook' ],
             'permission_callback' => '__return_true',
         ] );
 
@@ -320,31 +313,23 @@ class Culture_Ticket_Payment {
         exit;
     }
 
-    public static function handle_flutterwave_webhook( WP_REST_Request $req ): WP_REST_Response {
-        $verif_hash  = $req->get_header( 'verif-hash' ) ?? '';
-        $secret_hash = get_option( 'culture_flutterwave_webhook_hash', '' );
-
-        if ( $secret_hash && ! hash_equals( $secret_hash, $verif_hash ) ) {
-            return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
+    /**
+     * Called by the unified Flutterwave webhook dispatcher in Culture_Flutterwave.
+     */
+    public static function dispatch_flutterwave_event( array $payload ): void {
+        if ( ( $payload['event'] ?? '' ) !== 'charge.completed' ) {
+            return;
         }
+        $d      = $payload['data'] ?? [];
+        $tx_ref = $d['tx_ref'] ?? '';
+        $status = $d['status'] ?? '';
 
-        $data  = json_decode( $req->get_body(), true ) ?? [];
-        $event = $data['event'] ?? '';
-
-        if ( 'charge.completed' === $event ) {
-            $d      = $data['data'] ?? [];
-            $tx_ref = $d['tx_ref'] ?? '';
-            $status = $d['status'] ?? '';
-
-            if ( 'successful' === $status && str_starts_with( $tx_ref, 'TKT-' ) ) {
-                $code = substr( $tx_ref, 4 );
-                if ( $code ) {
-                    self::confirm_ticket( $code, $tx_ref, 'flutterwave' );
-                }
+        if ( 'successful' === $status && str_starts_with( $tx_ref, 'TKT-' ) ) {
+            $code = substr( $tx_ref, 4 );
+            if ( $code ) {
+                self::confirm_ticket( $code, $tx_ref, 'flutterwave' );
             }
         }
-
-        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
     }
 
     // ── Legacy Paystack callback (browser redirect after payment) ────────

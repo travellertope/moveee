@@ -19,6 +19,52 @@ class Culture_Flutterwave {
 
     const API_BASE = 'https://api.flutterwave.com/v3';
 
+    /* ── Webhook ─────────────────────────────────────────────────── */
+
+    public static function init(): void {
+        add_action( 'rest_api_init', [ __CLASS__, 'register_routes' ] );
+    }
+
+    public static function register_routes(): void {
+        register_rest_route( 'culture/v1', '/flutterwave/webhook', [
+            'methods'             => 'POST',
+            'callback'            => [ __CLASS__, 'handle_webhook' ],
+            'permission_callback' => '__return_true',
+        ] );
+    }
+
+    /**
+     * Unified Flutterwave webhook — single URL for all payment modules.
+     *
+     * Register this URL in the Flutterwave dashboard:
+     *   {site}/wp-json/culture/v1/flutterwave/webhook
+     *
+     * Verifies the signature once, then dispatches to every payment module
+     * by tx_ref prefix:
+     *   flw-svc-*  → Culture_Services_Payment
+     *   CRSVP-*    → Culture_Community_RSVP_Payment
+     *   CRSVPG-*   → Culture_Community_RSVP_Payment
+     *   SHOP-*     → Culture_Shop_Checkout
+     *   TKT-*      → Culture_Ticket_Payment
+     */
+    public static function handle_webhook( WP_REST_Request $req ): WP_REST_Response {
+        $verif_hash  = $req->get_header( 'verif-hash' ) ?: $req->get_header( 'verif_hash' ) ?: '';
+        $secret_hash = get_option( 'culture_flutterwave_webhook_hash', '' );
+
+        if ( $secret_hash && ! hash_equals( $secret_hash, $verif_hash ) ) {
+            return new WP_REST_Response( [ 'error' => 'invalid_signature' ], 403 );
+        }
+
+        $payload = $req->get_json_params() ?? [];
+
+        Culture_Services_Payment::dispatch_flutterwave_event( $payload );
+        Culture_Community_RSVP_Payment::dispatch_flutterwave_event( $payload );
+        Culture_Shop_Checkout::dispatch_flutterwave_event( $payload );
+        Culture_Ticket_Payment::dispatch_flutterwave_event( $payload );
+
+        return new WP_REST_Response( [ 'status' => 'ok' ], 200 );
+    }
+
     /* ── Credentials ────────────────────────────────────────────── */
 
     private static function secret_key(): string {

@@ -23,7 +23,6 @@
  *   POST mobile/checkout/totals                   — quote cart + real shipping rates (JWT auth required)
  *   POST mobile/checkout/pay                      — start payment for a quote (JWT auth required)
  *   GET  shop/checkout/callback/flutterwave       — Flutterwave post-payment browser redirect
- *   POST shop/checkout/webhook/flutterwave        — Flutterwave charge.completed webhook
  *   POST shop/checkout/webhook/paystack           — legacy Paystack webhook (kept for in-flight orders)
  *   POST shop/checkout/webhook/stripe             — Stripe checkout.session.completed webhook
  *   GET  mobile/checkout/order/{id}               — order status lookup (JWT auth, ownership-checked)
@@ -81,12 +80,6 @@ class Culture_Shop_Checkout {
         register_rest_route( 'culture/v1', '/shop/checkout/callback/flutterwave', array(
             'methods'             => 'GET',
             'callback'            => array( __CLASS__, 'handle_flutterwave_callback' ),
-            'permission_callback' => '__return_true',
-        ) );
-
-        register_rest_route( 'culture/v1', '/shop/checkout/webhook/flutterwave', array(
-            'methods'             => 'POST',
-            'callback'            => array( __CLASS__, 'handle_flutterwave_webhook' ),
             'permission_callback' => '__return_true',
         ) );
 
@@ -425,29 +418,21 @@ class Culture_Shop_Checkout {
         exit;
     }
 
-    public static function handle_flutterwave_webhook( WP_REST_Request $request ): WP_REST_Response {
-        $verif_hash  = $request->get_header( 'verif-hash' ) ?? '';
-        $secret_hash = get_option( 'culture_flutterwave_webhook_hash', '' );
-
-        if ( $secret_hash && ! hash_equals( $secret_hash, $verif_hash ) ) {
-            return new WP_REST_Response( array( 'error' => 'invalid_signature' ), 403 );
+    /**
+     * Called by the unified Flutterwave webhook dispatcher in Culture_Flutterwave.
+     */
+    public static function dispatch_flutterwave_event( array $payload ): void {
+        if ( ( $payload['event'] ?? '' ) !== 'charge.completed' ) {
+            return;
         }
+        $d      = $payload['data'] ?? array();
+        $tx_ref = $d['tx_ref'] ?? '';
+        $status = $d['status'] ?? '';
+        $tx_id  = (string) ( $d['id'] ?? '' );
 
-        $data  = json_decode( $request->get_body(), true ) ?? array();
-        $event = $data['event'] ?? '';
-
-        if ( 'charge.completed' === $event ) {
-            $d      = $data['data'] ?? array();
-            $tx_ref = $d['tx_ref'] ?? '';
-            $status = $d['status'] ?? '';
-            $tx_id  = (string) ( $d['id'] ?? '' );
-
-            if ( 'successful' === $status && $tx_ref && str_starts_with( $tx_ref, 'SHOP-' ) ) {
-                self::confirm_order( $tx_ref, $tx_id, 'flutterwave' );
-            }
+        if ( 'successful' === $status && $tx_ref && str_starts_with( $tx_ref, 'SHOP-' ) ) {
+            self::confirm_order( $tx_ref, $tx_id, 'flutterwave' );
         }
-
-        return new WP_REST_Response( array( 'status' => 'ok' ), 200 );
     }
 
     // ── Legacy Paystack + Stripe webhooks ────────────────────────────────
