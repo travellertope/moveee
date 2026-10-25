@@ -162,11 +162,11 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
       Guest List
     </div>
   );
-  const attendingCount = (
+  const attendingCount = count > 0 ? (
     <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
       {count} attending
     </div>
-  );
+  ) : null;
   const pillBtn = (label: string, onClick: () => void, disabled = false): React.ReactNode => (
     <button onClick={onClick} disabled={disabled} style={{
       padding: "5px 12px", borderRadius: "var(--radius-full)",
