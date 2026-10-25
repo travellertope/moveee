@@ -51,7 +51,7 @@ function toDatetimeLocal(dateStr?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function RsvpToggle({ postId, initialCount }: { postId?: string; initialCount?: number }) {
+function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialCount?: number; isOwn?: boolean }) {
   const [rsvped, setRsvped] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount ?? 0);
   const [loading, setLoading] = useState(false);
@@ -92,6 +92,22 @@ function RsvpToggle({ postId, initialCount }: { postId?: string; initialCount?: 
       }
     } catch {}
     setLoading(false);
+  }
+
+  if (isOwn) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <span style={{ fontSize: "0.78rem", color: "var(--mute)" }}>{count} attending</span>
+        <button disabled style={{
+          padding: "6px 18px", borderRadius: "var(--radius-full)",
+          fontWeight: 700, fontSize: "0.78rem", border: "none",
+          background: "var(--paper-deep)", color: "var(--mute)",
+          cursor: "default", opacity: 0.7,
+        }}>
+          Your event
+        </button>
+      </div>
+    );
   }
 
   if (isAuthed === false) {
@@ -428,24 +444,24 @@ export default function EventDetailModal({ item, onClose }: Props) {
                 {(dateFormatted || location) && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                     {dateFormatted && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.76rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                        <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(122,36,28,0.08)", color: "var(--ochre)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "0.76rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+                        <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(122,36,28,0.08)", color: "var(--ochre)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                           </svg>
                         </div>
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dateFormatted}</span>
+                        <span>{dateFormatted}</span>
                       </div>
                     )}
                     {location && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.76rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                        <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(122,36,28,0.08)", color: "var(--ochre)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "0.76rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+                        <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "rgba(122,36,28,0.08)", color: "var(--ochre)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px" }}>
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                             <circle cx="12" cy="9" r="2.5"/>
                           </svg>
                         </div>
-                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{location}</span>
+                        <span>{location}</span>
                       </div>
                     )}
                   </div>
@@ -509,7 +525,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
                   </div>
                 )}
                 {item.rsvpEnabled && (
-                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} />
+                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} isOwn={isOwn} />
                 )}
               </div>
             )}
@@ -531,7 +547,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
 
             {/* Reactions */}
             {item.wpId && (
-              <div style={{ paddingBottom: "1rem", borderBottom: "1px solid var(--rule)", marginBottom: "0.5rem" }}>
+              <div style={{ paddingBottom: "0.5rem", marginBottom: "0.5rem" }}>
                 <ReactionBar
                   noBorder
                   itemId={item.wpId}

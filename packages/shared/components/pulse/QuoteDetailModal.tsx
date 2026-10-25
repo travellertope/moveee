@@ -194,7 +194,7 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
 
           {/* Comments */}
           {item.wpId && (
-            <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: "1px solid var(--rule)" }}>
+            <div style={{ marginTop: "1rem" }}>
               {commentsLoading ? (
                 <p style={{ color: "var(--mute)", fontSize: "0.8rem" }}>Loading comments…</p>
               ) : (

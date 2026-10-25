@@ -1037,7 +1037,7 @@ export default function CommunityDetailModal({ item, onClose, onMentionClick, on
 
           {/* Reactions */}
           {item.wpId && (
-            <div style={{ marginBottom: "1.25rem", paddingBottom: "1rem", borderBottom: "1px solid var(--rule)" }}>
+            <div style={{ marginBottom: "0.75rem", paddingBottom: "0.5rem" }}>
               <ReactionBar
                 noBorder
                 itemId={item.wpId}
