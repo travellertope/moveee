@@ -1322,8 +1322,8 @@ export default function FeedCard({
               );
             })()}
 
-            {/* Gallery carousel — all image-capable templates */}
-            {item.galleryImages && item.galleryImages.length >= 1 && (
+            {/* Gallery carousel — all image-capable templates except events (image already shown inside the event card) */}
+            {item.galleryImages && item.galleryImages.length >= 1 && item.templateType !== "event" && (
               <GalleryCarousel images={item.galleryImages} onTap={(index) => setLightbox({ images: item.galleryImages!, index })} />
             )}
 
