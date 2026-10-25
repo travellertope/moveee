@@ -157,11 +157,6 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
     }
   }
 
-  const guestListLabel = (
-    <div style={{ fontSize: "0.58rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--mute)" }}>
-      Guest List
-    </div>
-  );
   const openSlots = capacity != null ? Math.max(0, capacity - count) : null;
   const attendingCount = openSlots != null ? (
     <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
@@ -192,7 +187,6 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
   if (isOwn) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-        {guestListLabel}
         {attendingCount}
         <button disabled style={{
           padding: "5px 14px", borderRadius: "var(--radius-full)",
@@ -208,7 +202,6 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
     if (otpStep === "idle") {
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-          {guestListLabel}
           {attendingCount}
           {pillBtn("RSVP Now", () => setOtpStep("email"))}
         </div>
@@ -261,7 +254,6 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-      {guestListLabel}
       {attendingCount}
       {isAuthed && rsvped !== null && (
         <button
