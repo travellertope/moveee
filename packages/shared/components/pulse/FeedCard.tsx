@@ -649,59 +649,83 @@ export default function FeedCard({
             position: "relative",
             background: "var(--paper)",
             border: "1px solid var(--rule)",
-            borderRadius: "12px",
-            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            borderLeft: "4px solid var(--ochre)",
+            borderRadius: "var(--radius-xl)",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.06)",
             margin: "12px 16px",
             overflow: "hidden",
             minWidth: 0,
-            padding: "20px 24px 20px 24px",
+            padding: "18px 20px 14px 18px",
             cursor: "pointer",
           }}
         >
-          <span
-            style={{
-              position: "absolute",
-              top: "16px",
-              left: "16px",
-              color: "var(--mute)",
-              fontFamily: "var(--font-fraunces), serif",
-              fontSize: "34px",
-              lineHeight: 1,
-              userSelect: "none",
-            }}
-          >
+          {/* Top row: date + optional category chip */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{formatDate(item.date)}</span>
+            {item.quoteType && (
+              <span style={{
+                fontSize: "0.68rem",
+                fontWeight: 600,
+                color: "var(--ochre)",
+                background: "rgba(122,36,28,0.08)",
+                borderRadius: "var(--radius-full)",
+                padding: "2px 9px",
+                letterSpacing: "0.02em",
+              }}>
+                #{item.quoteType}
+              </span>
+            )}
+          </div>
+
+          {/* Opening quotation mark */}
+          <div style={{
+            color: "var(--ochre)",
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontSize: "52px",
+            lineHeight: 0.75,
+            marginBottom: "6px",
+            userSelect: "none",
+          }}>
             "
-          </span>
-          <div style={{ paddingLeft: "32px" }}>
-            <p style={{
-              color: "var(--ink)",
-              fontFamily: "var(--font-fraunces), serif",
-              fontSize: "18px",
-              fontStyle: "italic",
-              lineHeight: 1.4,
-              margin: "0 0 12px",
-            }}>
-              {decodeHtml(item.title)}
-            </p>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "10px" }}>
+          </div>
+
+          {/* Quote text */}
+          <p style={{
+            color: "var(--ink)",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "1rem",
+            fontStyle: "italic",
+            lineHeight: 1.55,
+            margin: "0 0 12px",
+          }}>
+            "{decodeHtml(item.title)}"
+          </p>
+
+          {/* Attribution */}
+          {(item.quoteAuthor || item.quoteSource) && (
+            <p style={{ margin: "0 0 12px", fontSize: "0.83rem", lineHeight: 1.4 }}>
               {item.quoteAuthor && (
-                <span style={{ color: "var(--ink)", fontSize: "0.83rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
+                <span style={{ color: "var(--ink)", fontWeight: 700 }}>
                   — {decodeHtml(item.quoteAuthor)}
                 </span>
               )}
-              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.83rem", fontWeight: 400, fontFamily: "var(--font-sans), sans-serif" }}>{decodeHtml(item.quoteSource)}</span>}
-              <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-            </div>
-            <div onClick={(e) => e.stopPropagation()}>
-              <ReactionBar
-                itemId={item.wpId ?? item.id}
-                itemType="quote"
-                initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-                shareUrl={item.href}
-                noBorder
-                onShare={() => shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, item.href)}
-              />
-            </div>
+              {item.quoteSource && (
+                <span style={{ color: "var(--mute)", fontWeight: 400 }}>
+                  {item.quoteAuthor ? " " : ""}({decodeHtml(item.quoteSource)})
+                </span>
+              )}
+            </p>
+          )}
+
+          <div onClick={(e) => e.stopPropagation()}>
+            <ReactionBar
+              itemId={item.wpId ?? item.id}
+              itemType="quote"
+              initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+              shareUrl={item.href}
+              noBorder
+              onShare={() => shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, item.href)}
+            />
           </div>
         </article>
         {modalOpen && (
