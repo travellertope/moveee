@@ -128,44 +128,50 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
 
         {/* Content */}
         <div style={{
-          padding: "2rem 1.5rem", flex: "1 1 auto", minHeight: 0, overflowY: "auto",
+          padding: "1.5rem", flex: "1 1 auto", minHeight: 0, overflowY: "auto",
           display: "flex", flexDirection: "column", justifyContent: "center",
         }}>
-          {/* Decorative quote mark */}
-          <span style={{
-            color: "var(--rule)", fontFamily: "serif",
-            fontSize: "4rem", lineHeight: 0.8, marginBottom: "0.5rem",
-          }}>"</span>
-
-          {/* Quote text */}
-          <p style={{
-            fontFamily: "var(--font-fraunces), serif",
-            fontSize: "1.35rem",
-            lineHeight: 1.55,
-            fontStyle: "italic",
-            color: "var(--ink)",
+          {/* Quote block — styled to match the feed card and mockup */}
+          <div style={{
+            borderLeft: "4px solid var(--ochre)",
+            borderRadius: "var(--radius-xl)",
+            background: "rgba(122,36,28,0.05)",
+            padding: "1.25rem 1.25rem 1rem",
             marginBottom: "1.25rem",
           }}>
-            {decodeHtml(item.title)}
-          </p>
+            {/* Decorative quote mark — 24px, ochre */}
+            <div style={{
+              color: "var(--ochre)", fontFamily: "var(--font-fraunces), Georgia, serif",
+              fontSize: "24px", lineHeight: 1, marginBottom: "8px", userSelect: "none",
+            }}>"</div>
 
-          {/* Attribution */}
-          <div style={{
-            display: "flex", flexDirection: "column", gap: "0.25rem",
-            paddingTop: "1rem", borderTop: "1px solid var(--rule)",
-          }}>
-            {item.quoteAuthor && (
-              <span style={{
-                color: "var(--ochre)", fontSize: "0.95rem", fontWeight: 600,
-                fontFamily: "var(--font-fraunces), serif",
-              }}>
-                — {decodeHtml(item.quoteAuthor)}
-              </span>
-            )}
-            {item.quoteSource && (
-              <span style={{ color: "var(--mute)", fontSize: "0.82rem", fontStyle: "italic" }}>
-                {decodeHtml(item.quoteSource)}
-              </span>
+            {/* Quote text */}
+            <p style={{
+              fontFamily: "var(--font-fraunces), serif",
+              fontSize: "1.15rem",
+              fontWeight: 500,
+              lineHeight: 1.6,
+              fontStyle: "italic",
+              color: "var(--ink)",
+              margin: "0 0 10px",
+            }}>
+              "{decodeHtml(item.title)}"
+            </p>
+
+            {/* Attribution — author bold + source in parens, text-xs */}
+            {(item.quoteAuthor || item.quoteSource) && (
+              <p style={{ margin: 0, fontSize: "0.75rem", lineHeight: 1.4 }}>
+                {item.quoteAuthor && (
+                  <span style={{ color: "var(--ink)", fontWeight: 700 }}>
+                    — {decodeHtml(item.quoteAuthor)}
+                  </span>
+                )}
+                {item.quoteSource && (
+                  <span style={{ color: "var(--mute)", fontWeight: 400 }}>
+                    {item.quoteAuthor ? " " : ""}({decodeHtml(item.quoteSource)})
+                  </span>
+                )}
+              </p>
             )}
           </div>
 

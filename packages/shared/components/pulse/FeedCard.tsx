@@ -648,7 +648,9 @@ export default function FeedCard({
           style={{
             position: "relative",
             background: "var(--paper)",
-            border: "1px solid var(--rule)",
+            borderTop: "1px solid var(--rule)",
+            borderRight: "1px solid var(--rule)",
+            borderBottom: "1px solid var(--rule)",
             borderLeft: "4px solid var(--ochre)",
             borderRadius: "var(--radius-xl)",
             boxShadow: "0px 1px 3px rgba(20,17,13,0.06)",
@@ -677,33 +679,34 @@ export default function FeedCard({
             )}
           </div>
 
-          {/* Opening quotation mark */}
+          {/* Opening quotation mark — text-xl (20px) matching the mockup */}
           <div style={{
             color: "var(--ochre)",
             fontFamily: "var(--font-fraunces), Georgia, serif",
-            fontSize: "52px",
-            lineHeight: 0.75,
+            fontSize: "20px",
+            lineHeight: 1,
             marginBottom: "6px",
             userSelect: "none",
           }}>
             "
           </div>
 
-          {/* Quote text */}
+          {/* Quote text — text-base (1rem) / font-medium matching the mockup */}
           <p style={{
             color: "var(--ink)",
             fontFamily: "var(--font-fraunces), serif",
             fontSize: "1rem",
+            fontWeight: 500,
             fontStyle: "italic",
             lineHeight: 1.55,
-            margin: "0 0 12px",
+            margin: "0 0 10px",
           }}>
             "{decodeHtml(item.title)}"
           </p>
 
-          {/* Attribution */}
+          {/* Attribution — text-xs (0.75rem) matching the mockup */}
           {(item.quoteAuthor || item.quoteSource) && (
-            <p style={{ margin: "0 0 12px", fontSize: "0.83rem", lineHeight: 1.4 }}>
+            <p style={{ margin: "0 0 12px", fontSize: "0.75rem", lineHeight: 1.4 }}>
               {item.quoteAuthor && (
                 <span style={{ color: "var(--ink)", fontWeight: 700 }}>
                   — {decodeHtml(item.quoteAuthor)}
