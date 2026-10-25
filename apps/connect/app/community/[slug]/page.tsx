@@ -156,11 +156,16 @@ export default async function CommunityPostPage({
   const eventEndDate  = m._event_end_date || undefined;
   const eventVenue    = m._event_venue || undefined;
   const eventCity     = m._event_city || undefined;
+  const eventVenueAddress = m._event_address || undefined;
+  const eventAdmission    = m._event_admission || undefined;
+  const eventTicketUrl    = m._event_ticket_url || undefined;
   const cem = post.community_event_meta;
-  const rsvpEnabled   = cem?.rsvp_enabled ?? false;
-  const rsvpCount     = cem?.rsvp_count ?? 0;
-  const organiserName = cem?.organiser_name || null;
+  const rsvpEnabled    = cem?.rsvp_enabled ?? false;
+  const rsvpCount      = cem?.rsvp_count ?? 0;
+  const rsvpCapacity   = (cem as any)?.rsvp_capacity != null ? Number((cem as any).rsvp_capacity) : undefined;
+  const organiserName  = cem?.organiser_name || null;
   const organiserUsername = cem?.organiser_slug || null;
+  const isOwn = !!session?.user && (session.user as any)?.username === (organiserUsername || authorUsername);
 
   const linkedDirectorySlug = m._linked_directory_slug || undefined;
   const sourceUrl    = m.community_link_url || undefined;
@@ -217,6 +222,10 @@ export default async function CommunityPostPage({
                 endDate={eventEndDate}
                 location={eventVenue}
                 city={eventCity}
+                venueAddress={eventVenueAddress}
+                admission={eventAdmission}
+                ticketUrl={eventTicketUrl}
+                rsvpCapacity={rsvpCapacity}
                 authorName={organiserName || author}
                 authorAvatar={authorAvatarUrl || undefined}
                 authorUsername={organiserUsername || authorUsername || undefined}
@@ -224,6 +233,7 @@ export default async function CommunityPostPage({
                 initialComments={comments}
                 rsvpEnabled={rsvpEnabled}
                 rsvpCount={rsvpCount}
+                isOwn={isOwn}
               />
             ) : (
             <article style={{
