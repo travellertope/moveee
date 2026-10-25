@@ -1219,7 +1219,7 @@ export default function FeedCard({
                 </div>
               );
               const evDate = item.eventDate && (
-                <div style={{ fontSize: "0.72rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "3px" }}>
+                <div style={{ fontSize: "0.92rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "3px" }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
@@ -1232,7 +1232,7 @@ export default function FeedCard({
                 </div>
               );
               const evLocation = (item.location || item.city) && (
-                <div style={{ fontSize: "0.72rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                <div style={{ fontSize: "0.92rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
                   <svg width="9" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                     <circle cx="12" cy="9" r="2.5"/>
@@ -1274,7 +1274,7 @@ export default function FeedCard({
                     <div style={{ flex: 1, minWidth: 0, padding: "10px 12px", backgroundColor: "var(--paper-deep)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                       <div>
                         {evLabel}
-                        {evTitle && <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "6px" }}>{evTitle}</div>}
+                        {evTitle && <div style={{ fontWeight: 700, fontSize: "2.0rem", color: "var(--ink)", lineHeight: 1.2, marginBottom: "6px" }}>{evTitle}</div>}
                         {evDate}
                         {evLocation}
                         {item.organiserName && (
@@ -1301,7 +1301,7 @@ export default function FeedCard({
                   )}
                   <div style={{ padding: "12px 14px", backgroundColor: "var(--paper-deep)" }}>
                     {evLabel}
-                    {evTitle && <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "5px" }}>{evTitle}</div>}
+                    {evTitle && <div style={{ fontWeight: 700, fontSize: "2.0rem", color: "var(--ink)", lineHeight: 1.2, marginBottom: "5px" }}>{evTitle}</div>}
                     {evBody && (
                       <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "7px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
                         {evBody}
