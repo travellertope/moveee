@@ -496,6 +496,7 @@ const PulseDetailModal = dynamic(() => import("./PulseDetailModal"), { ssr: fals
 const HappeningDetailModal = dynamic(() => import("./HappeningDetailModal"), { ssr: false });
 const DirectoryDetailModal = dynamic(() => import("./DirectoryDetailModal"), { ssr: false });
 const QuoteDetailModal = dynamic(() => import("./QuoteDetailModal"), { ssr: false });
+const EventDetailModal = dynamic(() => import("./EventDetailModal"), { ssr: false });
 
 /** Remove the last URL from text when a link preview will be shown for it. */
 function stripTrailingUrl(text: string, sourceUrl?: string): string {
@@ -1451,7 +1452,10 @@ export default function FeedCard({
         {modalOpen && (
           <>
             <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 7999, background: "rgba(20,17,13,0.55)" }} />
-            <CommunityDetailModal item={item} onClose={closeModal} />
+            {item.templateType === "event"
+              ? <EventDetailModal item={item} onClose={closeModal} />
+              : <CommunityDetailModal item={item} onClose={closeModal} />
+            }
           </>
         )}
         {reportState === "confirm" && (

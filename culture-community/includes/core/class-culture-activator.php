@@ -271,6 +271,10 @@ class Culture_Activator {
         // creators and payout requests (Option B payout model).
         Culture_Creator_Earnings::create_tables();
 
+        // Media Services payment table — stores pending/completed charges for
+        // Sponsored Content, Content Amplification, etc. (October 2026).
+        Culture_Services_Payment::create_table();
+
         update_option( 'culture_db_version', CULTURE_VERSION );
 
         // ── Badge threshold migration (v2.0+) ────────────────────────────────

@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommunityPostBySlug, getAllCommunitySlugs, getPostComments } from "@/lib/community-wordpress";
 import CommunityPostClient from "./CommunityPostClient";
+import EventPostClient from "@/components/pulse/EventPostClient";
 import "@/app/pulse-layout.css";
 
 // Fully dynamic, not ISR — every fetch this page depends on
@@ -146,6 +147,17 @@ export default async function CommunityPostPage({
   const filmGenres     = m._film_genres ? (typeof m._film_genres === "string" ? JSON.parse(m._film_genres) : m._film_genres) as string[] : undefined;
   const filmCoverUrl   = m._film_cover_url || undefined;
 
+  // Event template fields
+  const eventDate     = m._event_date || undefined;
+  const eventEndDate  = m._event_end_date || undefined;
+  const eventVenue    = m._event_venue || undefined;
+  const eventCity     = m._event_city || undefined;
+  const cem = post.community_event_meta;
+  const rsvpEnabled   = cem?.rsvp_enabled ?? false;
+  const rsvpCount     = cem?.rsvp_count ?? 0;
+  const organiserName = cem?.organiser_name || null;
+  const organiserUsername = cem?.organiser_slug || null;
+
   const linkedDirectorySlug = m._linked_directory_slug || undefined;
   const sourceUrl    = m.community_link_url || undefined;
   const source       = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })() : undefined;
@@ -202,7 +214,25 @@ export default async function CommunityPostPage({
               </Link>
             </div>
 
-            {/* Post card */}
+            {/* Post card — event template gets its own full layout */}
+            {templateType === "event" ? (
+              <EventPostClient
+                eventTitle={decodeEntities(post.title.rendered)}
+                bodyText={rawText}
+                image={image}
+                eventDate={eventDate}
+                endDate={eventEndDate}
+                location={eventVenue}
+                city={eventCity}
+                authorName={organiserName || author}
+                authorAvatar={authorAvatarUrl || undefined}
+                authorUsername={organiserUsername || authorUsername || undefined}
+                wpId={String(post.id)}
+                initialComments={comments}
+                rsvpEnabled={rsvpEnabled}
+                rsvpCount={rsvpCount}
+              />
+            ) : (
             <article style={{
               background: "#fff",
               border: "1px solid rgba(20,17,13,0.09)",
@@ -359,6 +389,7 @@ export default async function CommunityPostPage({
                 ogImage={ogImage}
               />
             </article>
+            )}
           </div>
           </main>
 
