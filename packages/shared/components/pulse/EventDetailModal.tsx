@@ -51,7 +51,7 @@ function toDatetimeLocal(dateStr?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string; initialCount?: number; capacity?: number; isOwn?: boolean }) {
+function RsvpToggle({ postId, initialCount, capacity, isOwn, onManage }: { postId?: string; initialCount?: number; capacity?: number; isOwn?: boolean; onManage?: () => void }) {
   const [rsvped, setRsvped] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount ?? 0);
   const [loading, setLoading] = useState(false);
@@ -186,13 +186,27 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
   if (isOwn) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-        {attendingCount}
-        <button disabled style={{
-          padding: "5px 14px", borderRadius: "var(--radius-full)",
-          fontWeight: 700, fontSize: "0.72rem", border: "none",
-          background: "var(--paper-deep)", color: "var(--mute)",
-          cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
-        }}>Your event</button>
+        <div style={{ fontSize: "0.58rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--mute)" }}>
+          Guest List
+        </div>
+        <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
+          {count} attending
+        </div>
+        {onManage ? (
+          <button onClick={onManage} style={{
+            padding: "5px 14px", borderRadius: "var(--radius-full)",
+            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            background: "var(--ink)", color: "#fff",
+            cursor: "pointer", letterSpacing: "0.04em",
+          }}>Manage Event</button>
+        ) : (
+          <button disabled style={{
+            padding: "5px 14px", borderRadius: "var(--radius-full)",
+            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            background: "var(--paper-deep)", color: "var(--mute)",
+            cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
+          }}>Your event</button>
+        )}
       </div>
     );
   }
@@ -700,7 +714,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
                   </div>
                 )}
                 {item.rsvpEnabled && (
-                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} capacity={item.rsvpCapacity} isOwn={isOwn} />
+                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} capacity={item.rsvpCapacity} isOwn={isOwn} onManage={canEdit ? () => setOwnerMenuOpen(true) : undefined} />
                 )}
                 {item.ticketUrl && !item.rsvpEnabled && (
                   <a
