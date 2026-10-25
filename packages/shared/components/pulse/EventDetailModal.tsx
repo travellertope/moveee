@@ -128,6 +128,23 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
         {guestListLabel}
         {attendingCount}
+        <Link
+          href="/auth/signin"
+          style={{
+            display: "inline-block",
+            padding: "5px 14px",
+            borderRadius: "var(--radius-full)",
+            fontWeight: 700,
+            fontSize: "0.72rem",
+            border: "1px solid var(--ink)",
+            background: "transparent",
+            color: "var(--ink)",
+            textDecoration: "none",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Sign in to RSVP
+        </Link>
       </div>
     );
   }
@@ -337,7 +354,6 @@ export default function EventDetailModal({ item, onClose }: Props) {
       background: "var(--paper-deep)", borderRadius: "var(--radius-lg)",
       border: "1px solid var(--rule)",
       padding: "0.75rem 0.9rem",
-      marginBottom: "1rem",
     }}>
       {dateFormatted && (
         <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.82rem", color: "var(--ink-soft)", fontWeight: 500 }}>
@@ -444,7 +460,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
                 }}>
                   {displayTitle}
                 </h2>
-                {infoBar}
+                {infoBar && <div style={{ marginBottom: "1rem" }}>{infoBar}</div>}
               </div>
             </>
           )}
@@ -461,17 +477,17 @@ export default function EventDetailModal({ item, onClose }: Props) {
               </div>
               <div style={{
                 flex: 1, padding: "1.1rem 1.1rem", display: "flex",
-                flexDirection: "column", justifyContent: "center", gap: "0.65rem",
-                minWidth: 0,
+                flexDirection: "column", justifyContent: "flex-start", gap: "0.65rem",
+                minWidth: 0, overflowY: "auto",
               }}>
                 <div>{communityBadge}</div>
                 <h2 style={{
-                  fontWeight: 700, fontSize: "1.1rem", lineHeight: 1.25,
+                  fontWeight: 700, fontSize: "2.1rem", lineHeight: 1.2,
                   color: "var(--ink)", margin: 0,
                 }}>
                   {displayTitle}
                 </h2>
-                {metaRowsSmall}
+                {infoBar}
               </div>
             </div>
           )}
@@ -495,12 +511,9 @@ export default function EventDetailModal({ item, onClose }: Props) {
                 }}>
                   {displayTitle}
                 </h2>
-                {infoBar}
+                {infoBar && <div style={{ marginBottom: "1rem" }}>{infoBar}</div>}
               </>
             )}
-
-            {/* For landscape: infoBar already rendered above; for portrait/square: show boxed infoBar here */}
-            {item.image && isPortraitOrSquare && infoBar}
 
             {/* Host + RSVP row */}
             {(authorName || item.rsvpEnabled) && (
