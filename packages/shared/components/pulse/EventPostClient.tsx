@@ -48,7 +48,7 @@ function toDatetimeLocal(dateStr?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialCount?: number; isOwn?: boolean }) {
+function RsvpToggle({ postId, initialCount, isOwn, onManage }: { postId?: string; initialCount?: number; isOwn?: boolean; onManage?: () => void }) {
   const [rsvped, setRsvped] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount ?? 0);
   const [loading, setLoading] = useState(false);
@@ -190,12 +190,21 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
         {guestListLabel}
         {attendingCount}
-        <button disabled style={{
-          padding: "5px 14px", borderRadius: "var(--radius-full)",
-          fontWeight: 700, fontSize: "0.72rem", border: "none",
-          background: "var(--paper-deep)", color: "var(--mute)",
-          cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
-        }}>Your event</button>
+        {onManage ? (
+          <button onClick={onManage} style={{
+            padding: "5px 14px", borderRadius: "var(--radius-full)",
+            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            background: "var(--ink)", color: "#fff",
+            cursor: "pointer", letterSpacing: "0.04em",
+          }}>Manage Event</button>
+        ) : (
+          <button disabled style={{
+            padding: "5px 14px", borderRadius: "var(--radius-full)",
+            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            background: "var(--paper-deep)", color: "var(--mute)",
+            cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
+          }}>Your event</button>
+        )}
       </div>
     );
   }
@@ -204,8 +213,6 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
     if (otpStep === "idle") {
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-          {guestListLabel}
-          {attendingCount}
           {pillBtn("RSVP Now", () => setOtpStep("email"))}
         </div>
       );
@@ -257,8 +264,6 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-      {guestListLabel}
-      {attendingCount}
       {isAuthed && rsvped !== null && (
         <button
           onClick={toggle}
@@ -646,7 +651,7 @@ export default function EventPostClient({
                 </div>
               )}
               {rsvpEnabled && (
-                <RsvpToggle postId={wpId} initialCount={rsvpCount} isOwn={isOwn} />
+                <RsvpToggle postId={wpId} initialCount={rsvpCount} isOwn={isOwn} onManage={canEdit ? () => setOwnerMenuOpen(true) : undefined} />
               )}
             </div>
           )}

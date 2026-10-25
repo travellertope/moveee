@@ -51,7 +51,7 @@ function toDatetimeLocal(dateStr?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string; initialCount?: number; capacity?: number; isOwn?: boolean }) {
+function RsvpToggle({ postId, initialCount, capacity, isOwn, onManage }: { postId?: string; initialCount?: number; capacity?: number; isOwn?: boolean; onManage?: () => void }) {
   const [rsvped, setRsvped] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount ?? 0);
   const [loading, setLoading] = useState(false);
@@ -157,15 +157,9 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
     }
   }
 
-  const guestListLabel = (
-    <div style={{ fontSize: "0.58rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--mute)" }}>
-      Guest List
-    </div>
-  );
-  const openSlots = capacity != null ? Math.max(0, capacity - count) : null;
-  const attendingCount = openSlots != null ? (
+  const attendingCount = capacity != null && capacity > 0 ? (
     <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
-      {openSlots} Open Slots
+      {capacity} Slots
     </div>
   ) : null;
   const pillBtn = (label: string, onClick: () => void, disabled = false): React.ReactNode => (
@@ -192,14 +186,27 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
   if (isOwn) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-        {guestListLabel}
-        {attendingCount}
-        <button disabled style={{
-          padding: "5px 14px", borderRadius: "var(--radius-full)",
-          fontWeight: 700, fontSize: "0.72rem", border: "none",
-          background: "var(--paper-deep)", color: "var(--mute)",
-          cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
-        }}>Your event</button>
+        <div style={{ fontSize: "0.58rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--mute)" }}>
+          Guest List
+        </div>
+        <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
+          {count} attending
+        </div>
+        {onManage ? (
+          <button onClick={onManage} style={{
+            padding: "5px 14px", borderRadius: "var(--radius-full)",
+            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            background: "var(--ink)", color: "#fff",
+            cursor: "pointer", letterSpacing: "0.04em",
+          }}>Manage Event</button>
+        ) : (
+          <button disabled style={{
+            padding: "5px 14px", borderRadius: "var(--radius-full)",
+            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            background: "var(--paper-deep)", color: "var(--mute)",
+            cursor: "default", opacity: 0.7, letterSpacing: "0.04em",
+          }}>Your event</button>
+        )}
       </div>
     );
   }
@@ -208,7 +215,6 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
     if (otpStep === "idle") {
       return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-          {guestListLabel}
           {attendingCount}
           {pillBtn("RSVP Now", () => setOtpStep("email"))}
         </div>
@@ -261,7 +267,6 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
-      {guestListLabel}
       {attendingCount}
       {isAuthed && rsvped !== null && (
         <button
@@ -328,6 +333,13 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const [editError, setEditError] = useState("");
   const [reportState, setReportState] = useState<"idle" | "confirm" | "sent" | "error">("idle");
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 540);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 540);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Derive event title and body text
   const displayTitle = item.eventPostTitle
@@ -599,32 +611,49 @@ export default function EventDetailModal({ item, onClose }: Props) {
             </>
           )}
 
-          {/* PORTRAIT / SQUARE — left image 40%, right column: badge + title + date/location */}
+          {/* PORTRAIT / SQUARE — mobile: stacked (image top, content below); desktop: side-by-side */}
           {item.image && isPortraitOrSquare && (
-            <div style={{ display: "flex", flexDirection: "row", borderBottom: "1px solid var(--rule)", padding: "1rem 0 1rem 1rem", gap: "0.75rem" }}>
-              <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px", borderRadius: "var(--radius-xl)" }}>
-                <img
-                  src={item.image}
-                  alt=""
-                  onClick={() => setLightboxOpen(true)}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }}
-                />
-              </div>
-              <div style={{
-                flex: 1, padding: "1.1rem 1.1rem", display: "flex",
-                flexDirection: "column", justifyContent: "flex-start", gap: "0.65rem",
-                minWidth: 0, overflowY: "auto",
-              }}>
-                <div>{communityBadge}</div>
-                <h2 style={{
-                  fontWeight: 700, fontSize: "2.1rem", lineHeight: 1.2,
-                  color: "var(--ink)", margin: 0,
+            isMobile ? (
+              <>
+                <div style={{ padding: "0.75rem 0.75rem 0" }}>
+                  <img
+                    src={item.image}
+                    alt=""
+                    onClick={() => setLightboxOpen(true)}
+                    style={{ width: "100%", display: "block", height: "220px", objectFit: "cover", borderRadius: "var(--radius-xl)", cursor: "zoom-in" }}
+                  />
+                </div>
+                <div style={{ padding: "0.85rem 1rem 0.25rem" }}>
+                  <div style={{ marginBottom: "0.5rem" }}>{communityBadge}</div>
+                  <h2 style={{ fontWeight: 700, fontSize: "1.45rem", lineHeight: 1.25, color: "var(--ink)", margin: "0 0 0.75rem" }}>
+                    {displayTitle}
+                  </h2>
+                  {infoBar && <div style={{ marginBottom: "0.75rem" }}>{infoBar}</div>}
+                </div>
+              </>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "row", borderBottom: "1px solid var(--rule)", padding: "1rem 0 1rem 1rem", gap: "0.75rem" }}>
+                <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px", borderRadius: "var(--radius-xl)" }}>
+                  <img
+                    src={item.image}
+                    alt=""
+                    onClick={() => setLightboxOpen(true)}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }}
+                  />
+                </div>
+                <div style={{
+                  flex: 1, padding: "1.1rem 1.1rem", display: "flex",
+                  flexDirection: "column", justifyContent: "flex-start", gap: "0.65rem",
+                  minWidth: 0, overflowY: "auto",
                 }}>
-                  {displayTitle}
-                </h2>
-                {infoBar}
+                  <div>{communityBadge}</div>
+                  <h2 style={{ fontWeight: 700, fontSize: "2.1rem", lineHeight: 1.2, color: "var(--ink)", margin: 0 }}>
+                    {displayTitle}
+                  </h2>
+                  {infoBar}
+                </div>
               </div>
-            </div>
+            )
           )}
 
           {/* NO IMAGE — dark accent bar as placeholder */}
@@ -653,8 +682,11 @@ export default function EventDetailModal({ item, onClose }: Props) {
             {/* Host + RSVP / tickets row */}
             {(authorName || item.rsvpEnabled || item.ticketUrl) && (
               <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                gap: "12px",
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "flex-start" : "center",
+                justifyContent: "space-between",
+                gap: isMobile ? "10px" : "12px",
                 background: "var(--paper)", border: "1px solid var(--rule)",
                 borderRadius: "var(--radius-xl)", padding: "0.85rem 1rem",
                 marginBottom: "1rem",
@@ -682,7 +714,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
                   </div>
                 )}
                 {item.rsvpEnabled && (
-                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} capacity={item.rsvpCapacity} isOwn={isOwn} />
+                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} capacity={item.rsvpCapacity} isOwn={isOwn} onManage={canEdit ? () => setOwnerMenuOpen(true) : undefined} />
                 )}
                 {item.ticketUrl && !item.rsvpEnabled && (
                   <a
