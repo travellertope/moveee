@@ -157,10 +157,9 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string
     }
   }
 
-  const openSlots = capacity != null ? Math.max(0, capacity - count) : null;
-  const attendingCount = openSlots != null ? (
+  const attendingCount = capacity != null && capacity > 0 ? (
     <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
-      {openSlots} Open Slots
+      {capacity} Slots
     </div>
   ) : null;
   const pillBtn = (label: string, onClick: () => void, disabled = false): React.ReactNode => (
