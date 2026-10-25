@@ -648,60 +648,87 @@ export default function FeedCard({
           style={{
             position: "relative",
             background: "var(--paper)",
-            border: "1px solid var(--rule)",
-            borderRadius: "12px",
-            boxShadow: "0px 1px 3px rgba(20,17,13,0.08), 0px 1px 2px rgba(20,17,13,0.04)",
+            borderTop: "1px solid var(--rule)",
+            borderRight: "1px solid var(--rule)",
+            borderBottom: "1px solid var(--rule)",
+            borderLeft: "4px solid var(--ochre)",
+            borderRadius: "var(--radius-xl)",
+            boxShadow: "0px 1px 3px rgba(20,17,13,0.06)",
             margin: "12px 16px",
             overflow: "hidden",
             minWidth: 0,
-            padding: "20px 24px 20px 24px",
+            padding: "18px 20px 14px 18px",
             cursor: "pointer",
           }}
         >
-          <span
-            style={{
-              position: "absolute",
-              top: "16px",
-              left: "16px",
-              color: "var(--mute)",
-              fontFamily: "var(--font-fraunces), serif",
-              fontSize: "34px",
-              lineHeight: 1,
-              userSelect: "none",
-            }}
-          >
+          {/* Top row: date + optional category chip */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{formatDate(item.date)}</span>
+            {item.quoteType && (
+              <span style={{
+                fontSize: "0.68rem",
+                fontWeight: 600,
+                color: "var(--ochre)",
+                background: "rgba(122,36,28,0.08)",
+                borderRadius: "var(--radius-full)",
+                padding: "2px 9px",
+                letterSpacing: "0.02em",
+              }}>
+                #{item.quoteType}
+              </span>
+            )}
+          </div>
+
+          {/* Opening quotation mark — text-xl (20px) matching the mockup */}
+          <div style={{
+            color: "var(--ochre)",
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontSize: "20px",
+            lineHeight: 1,
+            marginBottom: "6px",
+            userSelect: "none",
+          }}>
             "
-          </span>
-          <div style={{ paddingLeft: "32px" }}>
-            <p style={{
-              color: "var(--ink)",
-              fontFamily: "var(--font-fraunces), serif",
-              fontSize: "18px",
-              fontStyle: "italic",
-              lineHeight: 1.4,
-              margin: "0 0 12px",
-            }}>
-              {decodeHtml(item.title)}
-            </p>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", marginBottom: "10px" }}>
+          </div>
+
+          {/* Quote text — text-base (1rem) / font-medium matching the mockup */}
+          <p style={{
+            color: "var(--ink)",
+            fontFamily: "var(--font-fraunces), serif",
+            fontSize: "1rem",
+            fontWeight: 500,
+            fontStyle: "italic",
+            lineHeight: 1.55,
+            margin: "0 0 10px",
+          }}>
+            "{decodeHtml(item.title)}"
+          </p>
+
+          {/* Attribution — text-xs (0.75rem) matching the mockup */}
+          {(item.quoteAuthor || item.quoteSource) && (
+            <p style={{ margin: "0 0 12px", fontSize: "0.75rem", lineHeight: 1.4 }}>
               {item.quoteAuthor && (
-                <span style={{ color: "var(--ink)", fontSize: "0.83rem", fontWeight: 700, fontFamily: "var(--font-sans), sans-serif" }}>
+                <span style={{ color: "var(--ink)", fontWeight: 700 }}>
                   — {decodeHtml(item.quoteAuthor)}
                 </span>
               )}
-              {item.quoteSource && <span style={{ color: "var(--mute)", fontSize: "0.83rem", fontWeight: 400, fontFamily: "var(--font-sans), sans-serif" }}>{decodeHtml(item.quoteSource)}</span>}
-              <span style={{ marginLeft: "auto", color: "var(--mute)", fontSize: "0.68rem" }}>{formatDate(item.date)}</span>
-            </div>
-            <div onClick={(e) => e.stopPropagation()}>
-              <ReactionBar
-                itemId={item.wpId ?? item.id}
-                itemType="quote"
-                initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
-                shareUrl={item.href}
-                noBorder
-                onShare={() => shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, item.href)}
-              />
-            </div>
+              {item.quoteSource && (
+                <span style={{ color: "var(--mute)", fontWeight: 400 }}>
+                  {item.quoteAuthor ? " " : ""}({decodeHtml(item.quoteSource)})
+                </span>
+              )}
+            </p>
+          )}
+
+          <div onClick={(e) => e.stopPropagation()}>
+            <ReactionBar
+              itemId={item.wpId ?? item.id}
+              itemType="quote"
+              initialCounts={item.reactions ?? { love: 0, fire: 0, clap: 0 }}
+              shareUrl={item.href}
+              noBorder
+              onShare={() => shareQuote(decodeHtml(item.title), item.quoteAuthor || null, item.quoteSource || null, item.href)}
+            />
           </div>
         </article>
         {modalOpen && (
@@ -1016,6 +1043,7 @@ export default function FeedCard({
                   const inlineYt = ytUrl && !item.videoUrl && !(item.sourceUrl?.includes("youtu")) ? ytUrl : undefined;
                   const stripBy = item.sourceUrl && !item.image ? item.sourceUrl : (inlineYt ?? undefined);
                   const fullText = stripTrailingUrl(item.title, stripBy);
+                  if (item.templateType === "event") return null; // rendered inside the event card below
                   const isInfoCardType = ["music-review", "book-review", "film-review", "food-review"].includes(item.templateType ?? "");
                   if (isInfoCardType) {
                     // Strip any leading title the user typed (it duplicates the info card)
@@ -1155,36 +1183,116 @@ export default function FeedCard({
               <PollDisplay postId={item.wpId} options={item.pollOptions} expiresAt={item.pollExpiresAt} />
             )}
 
-            {/* Event details + RSVP */}
+            {/* Event card — rich self-contained layout matching the Stoop Hub mockup */}
             {item.templateType === "event" && (
-              <div style={{ fontSize: "0.78rem", color: "var(--mute)", marginBottom: "0.5rem", lineHeight: 1.5 }}>
-                {item.eventDate && (
-                  <div>
-                    📅 {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
-                    {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+              <div style={{
+                borderRadius: "var(--radius-xl)",
+                overflow: "hidden",
+                border: "1px solid var(--rule)",
+                marginBottom: "0.6rem",
+              }}>
+                {/* Cover image */}
+                {item.image && (
+                  <div style={{ width: "100%", height: 160, overflow: "hidden", flexShrink: 0 }}>
+                    <img
+                      src={item.image}
+                      alt=""
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      loading="lazy"
+                    />
                   </div>
                 )}
-                {(item.location || item.city) && (
-                  <div>📍 {[item.location, item.city].filter(Boolean).join(", ")}</div>
-                )}
-                {item.admission && <div>🎟 {item.admission}</div>}
-                {item.organiserName && item.organiserSlug && (
-                  <div>
-                    Organised by{" "}
-                    <a href={`/directory/${item.organiserSlug}`} style={{ color: "var(--gold)" }}>
-                      {item.organiserName}
-                    </a>
+                <div style={{ padding: "12px 14px", backgroundColor: "var(--paper-deep)" }}>
+                  {/* Label */}
+                  <div style={{
+                    fontSize: "0.62rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.09em",
+                    textTransform: "uppercase",
+                    color: "var(--ochre)",
+                    marginBottom: "5px",
+                  }}>
+                    Community Event
                   </div>
-                )}
-                {item.ticketUrl && (
-                  <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" style={{ color: "var(--gold)", display: "inline-block", marginTop: "4px" }}>
-                    Get tickets →
-                  </a>
-                )}
+                  {/* Title + body from post text */}
+                  {(() => {
+                    const nlIdx = item.title.indexOf("\n");
+                    const title = nlIdx === -1 ? item.title.trim() : item.title.slice(0, nlIdx).trim();
+                    const body = nlIdx === -1 ? "" : item.title.slice(nlIdx + 1).trim();
+                    return (
+                      <>
+                        {title && (
+                          <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--ink)", lineHeight: 1.3, marginBottom: "5px" }}>
+                            {title}
+                          </div>
+                        )}
+                        {body && (
+                          <div style={{
+                            fontSize: "0.78rem",
+                            color: "var(--ink-soft)",
+                            lineHeight: 1.5,
+                            marginBottom: "7px",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          } as React.CSSProperties}>
+                            {body}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                  {/* Date */}
+                  {item.eventDate && (
+                    <div style={{ fontSize: "0.78rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "3px" }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
+                      {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
+                    </div>
+                  )}
+                  {/* Location */}
+                  {(item.location || item.city) && (
+                    <div style={{ fontSize: "0.78rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "7px" }}>
+                      <svg width="10" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                        <circle cx="12" cy="9" r="2.5"/>
+                      </svg>
+                      {[item.location, item.city].filter(Boolean).join(", ")}
+                    </div>
+                  )}
+                  {/* Organiser */}
+                  {item.organiserName && (
+                    <div style={{ fontSize: "0.72rem", color: "var(--mute)", marginBottom: "8px" }}>
+                      By{" "}
+                      {item.organiserSlug
+                        ? <a href={`/directory/${item.organiserSlug}`} onClick={(e) => e.stopPropagation()} style={{ color: "var(--ochre)" }}>{item.organiserName}</a>
+                        : item.organiserName}
+                    </div>
+                  )}
+                  {/* RSVP / tickets */}
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {item.rsvpEnabled ? (
+                      <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} price={item.rsvpPrice} priceCurrency={item.rsvpPriceCurrency} />
+                    ) : item.ticketUrl ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        {item.admission && <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>}
+                        <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{
+                          display: "inline-flex", alignItems: "center", padding: "5px 14px",
+                          borderRadius: "var(--radius-full)", backgroundColor: "var(--ochre)", color: "#fff",
+                          fontSize: "0.72rem", fontWeight: 700, textDecoration: "none",
+                        }}>
+                          Get tickets
+                        </a>
+                      </div>
+                    ) : item.admission ? (
+                      <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-            )}
-            {item.templateType === "event" && item.rsvpEnabled && (
-              <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} price={item.rsvpPrice} priceCurrency={item.rsvpPriceCurrency} />
             )}
 
             {/* Gallery carousel — all image-capable templates */}
@@ -1264,8 +1372,8 @@ export default function FeedCard({
               );
             })()}
 
-            {/* Single image — only when no gallery */}
-            {item.image && !item.galleryImages?.length && (
+            {/* Single image — only when no gallery; events use the image inside their card */}
+            {item.image && !item.galleryImages?.length && item.templateType !== "event" && (
               <div
                 onClick={() => setLightbox({ images: [item.image!], index: 0 })}
                 style={{ width: "100%", maxHeight: "280px", overflow: "hidden", borderRadius: "6px", marginBottom: "0.6rem", border: "1px solid var(--rule)", cursor: "zoom-in" }}

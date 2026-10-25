@@ -2,7 +2,7 @@
 /**
  * In-house mobile checkout for the Moveee Lifestyle Shop (WooCommerce + WCFM
  * Marketplace). Replaces the hosted-checkout-page handoff for mobile with a
- * native flow: quote totals (real WC shipping zones) → pay (Paystack NGN /
+ * native flow: quote totals (real WC shipping zones) → pay (Flutterwave NGN /
  * Stripe everything-else) → webhook creates the real WC_Order.
  *
  * Order creation always goes through WC_Checkout::create_order(), the exact
@@ -20,11 +20,12 @@
  * and reporting stay in one consistent currency.
  *
  * REST endpoints (all under /wp-json/culture/v1/):
- *   POST mobile/checkout/totals            — quote cart + real shipping rates (JWT auth required)
- *   POST mobile/checkout/pay                — start payment for a quote (JWT auth required)
- *   POST shop/checkout/webhook/paystack     — Paystack charge.success webhook
- *   POST shop/checkout/webhook/stripe       — Stripe checkout.session.completed webhook
- *   GET  mobile/checkout/order/{id}         — order status lookup (JWT auth, ownership-checked)
+ *   POST mobile/checkout/totals                   — quote cart + real shipping rates (JWT auth required)
+ *   POST mobile/checkout/pay                      — start payment for a quote (JWT auth required)
+ *   GET  shop/checkout/callback/flutterwave       — Flutterwave post-payment browser redirect
+ *   POST shop/checkout/webhook/paystack           — legacy Paystack webhook (kept for in-flight orders)
+ *   POST shop/checkout/webhook/stripe             — Stripe checkout.session.completed webhook
+ *   GET  mobile/checkout/order/{id}               — order status lookup (JWT auth, ownership-checked)
  *   GET  mobile/checkout/order-by-reference/{reference} — order status by reference (JWT auth)
  *
  * Web mirrors (API key + explicit user_id, same convention as the Follow
@@ -52,7 +53,7 @@ class Culture_Shop_Checkout {
     // ── Internal payment gateway ──────────────────────────────────────────
     // Registered only so WC_Checkout::create_order() has a valid, enabled
     // payment_method to attach to the order. Never shown at a real
-    // storefront checkout — Paystack/Stripe capture happens before this
+    // storefront checkout — Flutterwave/Stripe capture happens before this
     // gateway is ever touched; process_payment() is never called by our
     // flow (we call $order->payment_complete() directly from the webhook).
 
@@ -74,6 +75,12 @@ class Culture_Shop_Checkout {
             'methods'             => 'POST',
             'callback'            => array( __CLASS__, 'handle_pay' ),
             'permission_callback' => array( 'Culture_Mobile_API', 'mobile_permission' ),
+        ) );
+
+        register_rest_route( 'culture/v1', '/shop/checkout/callback/flutterwave', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_flutterwave_callback' ),
+            'permission_callback' => '__return_true',
         ) );
 
         register_rest_route( 'culture/v1', '/shop/checkout/webhook/paystack', array(
@@ -256,8 +263,8 @@ class Culture_Shop_Checkout {
      * Body: quote_token, name, email, phone (billing contact for the order
      *       and the payment gateway's receipt).
      *
-     * Gateway selection mirrors the existing ticket/membership convention:
-     * NGN (Nigeria-resident shopper) → Paystack, everything else → Stripe.
+     * Gateway selection: NGN (Nigeria-resident shopper) → Flutterwave,
+     * everything else → Stripe.
      */
     public static function handle_pay( WP_REST_Request $request ) {
         $user_id = get_current_user_id();
@@ -297,7 +304,7 @@ class Culture_Shop_Checkout {
         }
 
         $fx      = Culture_Mobile_API::resolve_shop_currency( $request );
-        $gateway = ( 'NGN' === $fx['code'] ) ? 'paystack' : 'stripe';
+        $gateway = ( 'NGN' === $fx['code'] ) ? 'flutterwave' : 'stripe';
 
         $reference = 'SHOP-' . strtoupper( bin2hex( random_bytes( 8 ) ) );
 
@@ -310,8 +317,8 @@ class Culture_Shop_Checkout {
         $pending['fx_rate']  = $fx['rate'];
         set_transient( 'culture_shop_pay_' . $reference, $pending, self::PAY_TTL );
 
-        $result = ( 'paystack' === $gateway )
-            ? self::init_paystack( $reference, $email, $quote['total'], $fx )
+        $result = ( 'flutterwave' === $gateway )
+            ? self::init_flutterwave( $reference, $name, $email, $quote['total'], $fx )
             : self::init_stripe( $reference, $email, $quote['total'] );
 
         if ( is_wp_error( $result ) ) {
@@ -326,30 +333,33 @@ class Culture_Shop_Checkout {
         ) );
     }
 
-    private static function init_paystack( string $reference, string $email, float $total_gbp, array $fx ) {
+    private static function init_flutterwave( string $reference, string $name, string $email, float $total_gbp, array $fx ) {
         $display_total = round( $total_gbp * $fx['rate'], 2 );
-        $amount_minor  = (int) round( $display_total * 100 );
 
-        $response = Culture_Paystack::charge_initiate( array(
-            'email'     => $email,
-            'amount'    => $amount_minor,
-            'currency'  => $fx['code'],
-            'reference' => $reference,
-            'metadata'  => array( 'shop_reference' => $reference ),
+        $redirect_url = add_query_arg(
+            array( 'reference' => $reference ),
+            rest_url( 'culture/v1/shop/checkout/callback/flutterwave' )
+        );
+
+        $result = Culture_Flutterwave::payment_initiate( array(
+            'tx_ref'       => $reference,
+            'amount'       => $display_total,
+            'currency'     => $fx['code'],
+            'redirect_url' => $redirect_url,
+            'email'        => $email,
+            'name'         => $name,
+            'title'        => 'Moveee Shop',
+            'description'  => 'Moveee Lifestyle Shop order',
         ) );
 
-        if ( is_wp_error( $response ) ) return $response;
-        if ( empty( $response['data']['authorization_url'] ) ) {
-            return new WP_Error( 'paystack_error', 'Could not initialize Paystack payment.' );
-        }
-
-        return array( 'url' => $response['data']['authorization_url'] );
+        if ( is_wp_error( $result ) ) return $result;
+        return array( 'url' => $result['url'] );
     }
 
     private static function init_stripe( string $reference, string $email, float $total_gbp ) {
         $frontend_url = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
-        $success_url  = $frontend_url . '/shop/order-confirmation?shop_ref=' . $reference . '&session_id={CHECKOUT_SESSION_ID}';
-        $cancel_url   = $frontend_url . '/shop/checkout?checkout_cancelled=1';
+        $success_url  = $frontend_url . '/lifestyle/order-confirmation?shop_ref=' . $reference . '&session_id={CHECKOUT_SESSION_ID}';
+        $cancel_url   = $frontend_url . '/lifestyle/checkout?checkout_cancelled=1';
 
         $response = Culture_Stripe::payment_session( array(
             'mode'                => 'payment',
@@ -378,7 +388,54 @@ class Culture_Shop_Checkout {
         return array( 'url' => $response['url'] );
     }
 
-    // ── Webhooks ─────────────────────────────────────────────────────────
+    // ── Flutterwave callback + webhook ───────────────────────────────────
+
+    public static function handle_flutterwave_callback( WP_REST_Request $request ) {
+        $status         = sanitize_text_field( $request->get_param( 'status' ) ?: '' );
+        $tx_ref         = sanitize_text_field( $request->get_param( 'tx_ref' ) ?: '' );
+        $transaction_id = (int) ( $request->get_param( 'transaction_id' ) ?? 0 );
+        $reference      = sanitize_text_field( $request->get_param( 'reference' ) ?: $tx_ref );
+
+        $frontend_url = untrailingslashit( get_option( 'culture_frontend_url', home_url( '/' ) ) );
+        $fail_url     = $frontend_url . '/lifestyle/checkout?checkout_cancelled=1';
+
+        if ( 'successful' !== $status || ! $transaction_id ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        $verify = Culture_Flutterwave::verify_transaction( $transaction_id );
+        if ( is_wp_error( $verify ) || ( $verify['status'] ?? '' ) !== 'successful' ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        if ( ! $reference || ! str_starts_with( $reference, 'SHOP-' ) ) {
+            wp_safe_redirect( $fail_url ); exit;
+        }
+
+        self::confirm_order( $reference, (string) $transaction_id, 'flutterwave' );
+
+        wp_safe_redirect( $frontend_url . '/lifestyle/order-confirmation?shop_ref=' . urlencode( $reference ) );
+        exit;
+    }
+
+    /**
+     * Called by the unified Flutterwave webhook dispatcher in Culture_Flutterwave.
+     */
+    public static function dispatch_flutterwave_event( array $payload ): void {
+        if ( ( $payload['event'] ?? '' ) !== 'charge.completed' ) {
+            return;
+        }
+        $d      = $payload['data'] ?? array();
+        $tx_ref = $d['tx_ref'] ?? '';
+        $status = $d['status'] ?? '';
+        $tx_id  = (string) ( $d['id'] ?? '' );
+
+        if ( 'successful' === $status && $tx_ref && str_starts_with( $tx_ref, 'SHOP-' ) ) {
+            self::confirm_order( $tx_ref, $tx_id, 'flutterwave' );
+        }
+    }
+
+    // ── Legacy Paystack + Stripe webhooks ────────────────────────────────
 
     public static function handle_paystack_webhook( WP_REST_Request $request ) {
         $payload   = $request->get_body();
@@ -486,7 +543,11 @@ class Culture_Shop_Checkout {
             'shipping_postcode'   => $pending['address']['postcode'] ?? '',
             'shipping_address_1'  => $pending['address']['address_1'] ?? '',
             'payment_method'      => 'culture_external',
-            'payment_method_title' => 'paystack' === $gateway ? 'Paystack' : 'Stripe',
+            'payment_method_title' => match ( $gateway ) {
+                'flutterwave' => 'Flutterwave',
+                'paystack'    => 'Paystack',
+                default       => 'Stripe',
+            },
         );
 
         try {
@@ -754,7 +815,7 @@ add_action( 'plugins_loaded', function () {
         public function __construct() {
             $this->id                 = 'culture_external';
             $this->method_title       = 'Moveee App Checkout (internal)';
-            $this->method_description = 'Internal gateway used by the Moveee mobile app in-house checkout. Funds are captured via Paystack/Stripe before the order is created — do not enable at storefront checkout.';
+            $this->method_description = 'Internal gateway used by the Moveee mobile app in-house checkout. Funds are captured via Flutterwave/Stripe before the order is created — do not enable at storefront checkout.';
             $this->has_fields         = false;
             $this->enabled            = 'yes';
             $this->title              = 'Card payment';

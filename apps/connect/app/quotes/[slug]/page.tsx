@@ -101,42 +101,46 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
 
             {/* Quote card */}
             <article style={{
-              background: '#fff',
-              border: '1px solid rgba(20,17,13,0.09)',
-              borderRadius: '12px',
+              background: 'var(--paper)',
+              borderTop: '1px solid var(--rule)',
+              borderRight: '1px solid var(--rule)',
+              borderBottom: '1px solid var(--rule)',
+              borderLeft: '4px solid var(--ochre)',
+              borderRadius: 'var(--radius-xl)',
               boxShadow: '0 1px 4px rgba(20,17,13,0.06)',
-              padding: '2rem 2rem 1.5rem',
+              padding: '1.5rem 1.5rem 1.25rem',
               margin: '0.85rem 1rem 1rem',
             }}>
-              <span style={{
-                color: 'var(--rule)', fontFamily: 'serif', fontSize: '3.5rem',
-                lineHeight: 0.8, display: 'block', marginBottom: '0.75rem',
-              }}>
-                &quot;
-              </span>
-
-              <p style={{
-                fontFamily: 'var(--font-fraunces), serif', fontSize: '1.45rem', lineHeight: 1.55,
-                fontStyle: 'italic', color: 'var(--ink)', marginBottom: '1.5rem',
-              }}>
-                {plainText}
-              </p>
-
+              {/* Quote block with tinted background */}
               <div style={{
-                display: 'flex', flexDirection: 'column', gap: '0.25rem',
-                paddingTop: '1.25rem', borderTop: '1px solid var(--rule)',
+                background: 'rgba(122,36,28,0.05)',
+                borderRadius: '10px',
+                padding: '1.25rem 1.25rem 1rem',
+                marginBottom: '1.25rem',
               }}>
-                <span style={{
-                  color: 'var(--ochre)', fontSize: '1rem', fontWeight: 600,
-                  fontFamily: 'var(--font-fraunces), serif',
+                {/* Decorative quote mark — 24px, ochre */}
+                <div style={{
+                  color: 'var(--ochre)', fontFamily: 'var(--font-fraunces), Georgia, serif',
+                  fontSize: '24px', lineHeight: 1, marginBottom: '8px', userSelect: 'none',
                 }}>
-                  — {author}
-                </span>
-                {quote.quoteSource && (
-                  <span style={{ color: 'var(--mute)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                    {quote.quoteSource}
-                  </span>
-                )}
+                  &ldquo;
+                </div>
+
+                <p style={{
+                  fontFamily: 'var(--font-fraunces), serif', fontSize: '1.25rem',
+                  fontWeight: 500, lineHeight: 1.6,
+                  fontStyle: 'italic', color: 'var(--ink)', margin: '0 0 10px',
+                }}>
+                  &ldquo;{plainText}&rdquo;
+                </p>
+
+                {/* Attribution — author bold + source in parens, text-xs */}
+                <p style={{ margin: 0, fontSize: '0.75rem', lineHeight: 1.4 }}>
+                  <span style={{ color: 'var(--ink)', fontWeight: 700 }}>— {author}</span>
+                  {quote.quoteSource && (
+                    <span style={{ color: 'var(--mute)', fontWeight: 400 }}> ({quote.quoteSource})</span>
+                  )}
+                </p>
               </div>
 
               {quote.quoteSharingReason && (

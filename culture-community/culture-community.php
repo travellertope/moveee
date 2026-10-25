@@ -3,7 +3,7 @@
  * Plugin Name: Culture Community
  * Plugin URI:  https://themoveee.com
  * Description: Core plugin for Moveee Connect — membership tiers, community feed, newsletters, events, gamification, and mobile API.
- * Version:     3.7.3
+ * Version:     3.7.4
  * Author:      Moveee
  * License:     GPL-2.0+
  * Text Domain: culture-community
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'CULTURE_VERSION', '3.7.3' );
+define( 'CULTURE_VERSION', '3.7.4' );
 define( 'CULTURE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CULTURE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CULTURE_PLUGIN_FILE', __FILE__ );
@@ -190,6 +190,7 @@ function culture_community_init() {
     Culture_Perks_Admin::init();
     Culture_Ticket_Payment::init();
     Culture_Community_RSVP_Payment::init();
+    Culture_Flutterwave::init();
     Culture_Shop_Checkout::init();
     Culture_Services_Payment::init();
     Culture_Tickets_Admin::init();
