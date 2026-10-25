@@ -7,6 +7,25 @@ import type { WpComment } from "@/lib/pulse-wordpress";
 
 const CommentThread = dynamic(() => import("./CommentThread"), { ssr: false });
 
+type Orientation = "landscape" | "portrait" | "square" | "unknown";
+
+function useImageOrientation(src?: string | null): Orientation {
+  const [orientation, setOrientation] = useState<Orientation>(src ? "unknown" : "square");
+  useEffect(() => {
+    if (!src) { setOrientation("square"); return; }
+    const img = new window.Image();
+    img.onload = () => {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      if (ratio > 1.2) setOrientation("landscape");
+      else if (ratio < 0.85) setOrientation("portrait");
+      else setOrientation("square");
+    };
+    img.onerror = () => setOrientation("landscape");
+    img.src = src;
+  }, [src]);
+  return orientation;
+}
+
 function RsvpToggle({ postId, initialCount }: { postId: string; initialCount: number }) {
   const [rsvped, setRsvped] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount);
@@ -109,6 +128,8 @@ export default function EventPostClient({
   rsvpEnabled,
   rsvpCount,
 }: Props) {
+  const orientation = useImageOrientation(image);
+
   const dateFormatted = eventDate
     ? new Date(eventDate).toLocaleDateString("en-GB", {
         weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -116,6 +137,62 @@ export default function EventPostClient({
     : null;
 
   const locationDisplay = [location, city].filter(Boolean).join(", ") || null;
+
+  const isLandscape = orientation === "landscape" || orientation === "unknown";
+  const isPortraitOrSquare = orientation === "portrait" || orientation === "square";
+
+  const infoBar = (dateFormatted || locationDisplay) ? (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: "8px",
+      background: "var(--paper-deep)", borderRadius: "var(--radius-lg)",
+      border: "1px solid var(--rule)",
+      padding: "0.85rem 1rem",
+      marginBottom: "1.1rem",
+    }}>
+      {dateFormatted && (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          <div style={{
+            width: "30px", height: "30px", borderRadius: "50%",
+            background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          {dateFormatted}
+        </div>
+      )}
+      {locationDisplay && (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+          <div style={{
+            width: "30px", height: "30px", borderRadius: "50%",
+            background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+          </div>
+          {locationDisplay}
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  const communityBadge = (
+    <span style={{
+      background: "rgba(122,36,28,0.85)", color: "#fff",
+      fontSize: "0.6rem", fontWeight: 700,
+      letterSpacing: "0.1em", textTransform: "uppercase",
+      padding: "0.22rem 0.65rem", borderRadius: "999px",
+      backdropFilter: "blur(4px)",
+      display: "inline-block",
+    }}>
+      Community Event
+    </span>
+  );
 
   return (
     <article style={{
@@ -126,31 +203,94 @@ export default function EventPostClient({
       overflow: "hidden",
       margin: "0.85rem 1rem 1rem",
     }}>
-      {/* Cover image */}
-      {image ? (
-        <div style={{ height: "260px", position: "relative", overflow: "hidden" }}>
+      {/* ── LANDSCAPE header ── */}
+      {image && isLandscape && (
+        <div style={{ position: "relative", overflow: "hidden" }}>
           <img
             src={image}
             alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{ width: "100%", display: "block", maxHeight: "320px", objectFit: "cover" }}
           />
           <div style={{
             position: "absolute", inset: 0,
             background: "linear-gradient(to top, rgba(20,17,13,0.70) 0%, rgba(20,17,13,0.12) 55%, transparent 100%)",
           }} />
           <div style={{ position: "absolute", bottom: "1rem", left: "1.25rem" }}>
-            <span style={{
-              background: "rgba(122,36,28,0.85)", color: "#fff",
-              fontSize: "0.6rem", fontWeight: 700,
-              letterSpacing: "0.1em", textTransform: "uppercase",
-              padding: "0.22rem 0.65rem", borderRadius: "999px",
-              backdropFilter: "blur(4px)",
-            }}>
-              Community Event
-            </span>
+            {communityBadge}
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* ── PORTRAIT / SQUARE header ── */}
+      {image && isPortraitOrSquare && (
+        <div style={{
+          display: "flex", flexDirection: "row",
+          borderBottom: "1px solid var(--rule)",
+        }}>
+          {/* Image column */}
+          <div style={{
+            width: "40%", flexShrink: 0, position: "relative", overflow: "hidden",
+            maxHeight: "300px",
+          }}>
+            <img
+              src={image}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </div>
+          {/* Info column */}
+          <div style={{
+            flex: 1, padding: "1.25rem 1.25rem", display: "flex",
+            flexDirection: "column", justifyContent: "center", gap: "0.85rem",
+            minWidth: 0,
+          }}>
+            <div>{communityBadge}</div>
+            <h1 style={{
+              fontFamily: "var(--font-fraunces), Georgia, serif",
+              fontWeight: 700, fontSize: "1.35rem", lineHeight: 1.2,
+              color: "var(--ink)", margin: 0,
+            }}>
+              {eventTitle}
+            </h1>
+            {(dateFormatted || locationDisplay) && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                {dateFormatted && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+                    <div style={{
+                      width: "22px", height: "22px", borderRadius: "50%",
+                      background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </div>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dateFormatted}</span>
+                  </div>
+                )}
+                {locationDisplay && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 500 }}>
+                    <div style={{
+                      width: "22px", height: "22px", borderRadius: "50%",
+                      background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                        <circle cx="12" cy="9" r="2.5"/>
+                      </svg>
+                    </div>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{locationDisplay}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── NO IMAGE fallback ── */}
+      {!image && (
         <div style={{
           height: "100px",
           background: "var(--ink)",
@@ -159,73 +299,30 @@ export default function EventPostClient({
         }}>
           <span style={{ fontSize: "2.5rem", opacity: 0.12 }}>🎉</span>
           <div style={{ position: "absolute", bottom: "0.75rem", left: "1.25rem" }}>
-            <span style={{
-              background: "rgba(122,36,28,0.90)", color: "#fff",
-              fontSize: "0.6rem", fontWeight: 700,
-              letterSpacing: "0.1em", textTransform: "uppercase",
-              padding: "0.22rem 0.65rem", borderRadius: "999px",
-            }}>
-              Community Event
-            </span>
+            {communityBadge}
           </div>
         </div>
       )}
 
       <div style={{ padding: "1.5rem 1.5rem 0" }}>
-        {/* Event title */}
-        <h1 style={{
-          fontFamily: "var(--font-fraunces), Georgia, serif",
-          fontWeight: 700,
-          fontSize: "1.75rem",
-          lineHeight: 1.2,
-          color: "var(--ink)",
-          margin: "0 0 1.1rem",
-        }}>
-          {eventTitle}
-        </h1>
 
-        {/* Date + Location info bar */}
-        {(dateFormatted || locationDisplay) && (
-          <div style={{
-            display: "flex", flexDirection: "column", gap: "8px",
-            background: "var(--paper-deep)", borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--rule)",
-            padding: "0.85rem 1rem",
-            marginBottom: "1.1rem",
+        {/* Title shown in body only for landscape and no-image cases */}
+        {(isLandscape || !image) && (
+          <h1 style={{
+            fontFamily: "var(--font-fraunces), Georgia, serif",
+            fontWeight: 700,
+            fontSize: "1.75rem",
+            lineHeight: 1.2,
+            color: "var(--ink)",
+            margin: "0 0 1.1rem",
           }}>
-            {dateFormatted && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                <div style={{
-                  width: "30px", height: "30px", borderRadius: "50%",
-                  background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                </div>
-                {dateFormatted}
-              </div>
-            )}
-            {locationDisplay && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "0.85rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                <div style={{
-                  width: "30px", height: "30px", borderRadius: "50%",
-                  background: "rgba(122,36,28,0.08)", color: "var(--ochre)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                    <circle cx="12" cy="9" r="2.5"/>
-                  </svg>
-                </div>
-                {locationDisplay}
-              </div>
-            )}
-          </div>
+            {eventTitle}
+          </h1>
         )}
+
+        {/* Full info bar shown in body for landscape and no-image; portrait gets compact inline version */}
+        {(isLandscape || !image) && infoBar}
+        {image && isPortraitOrSquare && infoBar}
 
         {/* Host + RSVP row */}
         <div style={{
