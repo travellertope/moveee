@@ -1217,9 +1217,14 @@ export default function FeedCard({
                   </div>
                   {/* Title + body from post text */}
                   {(() => {
-                    const nlIdx = item.title.indexOf("\n");
-                    const title = nlIdx === -1 ? item.title.trim() : item.title.slice(0, nlIdx).trim();
-                    const body = nlIdx === -1 ? "" : item.title.slice(nlIdx + 1).trim();
+                    const title = item.eventPostTitle ?? (() => {
+                      const nlIdx = item.title.indexOf("\n");
+                      return nlIdx === -1 ? item.title.trim() : item.title.slice(0, nlIdx).trim();
+                    })();
+                    const body = item.eventPostTitle ? item.title.trim() : (() => {
+                      const nlIdx = item.title.indexOf("\n");
+                      return nlIdx === -1 ? "" : item.title.slice(nlIdx + 1).trim();
+                    })();
                     return (
                       <>
                         {title && (
@@ -1244,13 +1249,18 @@ export default function FeedCard({
                       </>
                     );
                   })()}
-                  {/* Date */}
+                  {/* Date + Time */}
                   {item.eventDate && (
                     <div style={{ fontSize: "0.78rem", color: "var(--mute)", display: "flex", alignItems: "center", gap: "5px", marginBottom: "3px" }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ color: "var(--ochre)", flexShrink: 0 } as React.CSSProperties}>
                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                       </svg>
-                      {new Date(item.eventDate).toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" })}
+                      {(() => {
+                        const d = new Date(item.eventDate);
+                        const dateText = d.toLocaleDateString("en-GB", { weekday: "short", month: "short", day: "numeric" });
+                        const h = d.getHours(), m = d.getMinutes();
+                        return (h !== 0 || m !== 0) ? `${dateText}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}` : dateText;
+                      })()}
                       {item.endDate && ` – ${new Date(item.endDate).toLocaleDateString("en-GB", { month: "short", day: "numeric" })}`}
                     </div>
                   )}

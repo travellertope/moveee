@@ -91,18 +91,6 @@ export default function CommentThread({ postId, initialComments }: CommentThread
 
   return (
     <section style={{ marginTop: "1.75rem", paddingTop: "1.5rem", borderTop: "1px solid var(--rule, #e8e2d8)" }}>
-      <h2 style={{
-        color: "var(--ink, #14110d)",
-        fontFamily: "var(--font-fraunces), serif",
-        fontSize: "1rem",
-        fontWeight: 600,
-        marginBottom: "1.25rem",
-      }}>
-        {comments.length > 0
-          ? `${comments.length} Comment${comments.length !== 1 ? "s" : ""}`
-          : "Start the conversation"}
-      </h2>
-
       {/* Comment list */}
       {comments.length > 0 && (
         <div style={{ marginBottom: "1.75rem", display: "flex", flexDirection: "column", gap: "1rem" }}>

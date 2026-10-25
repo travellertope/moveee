@@ -16,20 +16,40 @@ export async function POST(req: NextRequest) {
   }
 
   const user = session.user as any;
-  const tier = user?.tier ?? "citizen";
 
-  if (tier !== "patron" && tier !== "lit" && user?.isAdmin !== true) {
-    return NextResponse.json({ error: "Editing posts requires Moveee Pro." }, { status: 403 });
-  }
-
-  const { postId, text, tag } = await req.json().catch(() => ({})) as {
+  const body = await req.json().catch(() => ({})) as {
     postId?: number;
     text?: string;
     tag?: string;
+    template_type?: string;
+    // Event fields
+    event_title?: string;
+    event_date?: string;
+    event_end_date?: string;
+    event_venue?: string;
+    event_city?: string;
+    event_address?: string;
+    event_admission?: string;
+    event_category?: string;
+    ticket_url?: string;
+    rsvp_enabled?: boolean;
+    rsvp_capacity?: number;
   };
 
-  if (!postId || !text?.trim()) {
-    return NextResponse.json({ error: "Missing postId or text." }, { status: 400 });
+  const { postId, text, tag, template_type } = body;
+
+  if (!postId) {
+    return NextResponse.json({ error: "Missing postId." }, { status: 400 });
+  }
+
+  const isEvent = template_type === "event";
+
+  if (!isEvent && !text?.trim()) {
+    return NextResponse.json({ error: "Missing text." }, { status: 400 });
+  }
+
+  if (isEvent && !body.event_title?.trim()) {
+    return NextResponse.json({ error: "Event title is required." }, { status: 400 });
   }
 
   const userId = Number(user?.id ?? user?.databaseId ?? 0);
@@ -53,17 +73,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "You can only edit your own posts." }, { status: 403 });
   }
 
-  const body: Record<string, any> = {
-    content: text.trim(),
-  };
-  if (tag) {
-    body.meta = { community_tag: tag };
+  const isPro = user?.tier === "patron" || user?.tier === "lit" || isAdmin;
+
+  if (!isPro) {
+    return NextResponse.json({ error: "Pro membership required to edit posts." }, { status: 403 });
+  }
+
+  const escHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+  const updateBody: Record<string, any> = {};
+
+  if (isEvent) {
+    const title = body.event_title!.trim().slice(0, 150);
+    const desc = text?.trim() ?? "";
+    updateBody.title = title;
+    updateBody.content = desc ? `<p>${escHtml(desc).replace(/\n/g, "</p><p>")}</p>` : "";
+    updateBody.meta = {
+      _event_date:        body.event_date ?? "",
+      _event_end_date:    body.event_end_date?.trim() ?? "",
+      _event_venue:       body.event_venue?.trim() ?? "",
+      _event_city:        body.event_city?.trim() ?? "",
+      _event_address:     body.event_address?.trim() ?? "",
+      _event_admission:   body.event_admission?.trim() ?? "",
+      _event_ticket_url:  body.ticket_url?.trim() ?? "",
+      _event_category:    body.event_category ?? "",
+      // RSVP is only updateable for Pro users
+      ...(isPro && {
+        _culture_rsvp_enabled:  !!body.rsvp_enabled,
+        _culture_rsvp_capacity: body.rsvp_enabled && body.rsvp_capacity ? Math.max(0, Number(body.rsvp_capacity)) : 0,
+      }),
+    };
+  } else {
+    updateBody.content = `<p>${escHtml(text!.trim()).replace(/\n/g, "</p><p>")}</p>`;
+    if (tag) updateBody.meta = { community_tag: tag };
   }
 
   const res = await fetch(`${BASE}/community-posts/${postId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Basic ${AUTH}` },
-    body: JSON.stringify(body),
+    body: JSON.stringify(updateBody),
     cache: "no-store",
   });
 
@@ -73,7 +122,7 @@ export async function POST(req: NextRequest) {
   }
 
   revalidatePath("/feed");
-  revalidatePath(`/community`);
+  revalidatePath("/community");
 
   return NextResponse.json({ success: true });
 }
