@@ -1221,10 +1221,12 @@ export default function FeedCard({
                       const nlIdx = item.title.indexOf("\n");
                       return nlIdx === -1 ? item.title.trim() : item.title.slice(0, nlIdx).trim();
                     })();
-                    const body = item.eventPostTitle ? item.title.trim() : (() => {
+                    const rawBody = item.eventPostTitle ? item.title.trim() : (() => {
                       const nlIdx = item.title.indexOf("\n");
                       return nlIdx === -1 ? "" : item.title.slice(nlIdx + 1).trim();
                     })();
+                    // Suppress body when it's identical to the title (fallback from empty post content)
+                    const body = rawBody === title ? "" : rawBody;
                     return (
                       <>
                         {title && (
