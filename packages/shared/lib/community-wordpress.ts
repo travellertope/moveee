@@ -78,7 +78,27 @@ export interface WpCommunityPost {
     _film_recommend?:          string;
     _film_genres?:             string | string[];
     _film_cover_url?:          string;
+    // event template
+    _event_date?:              string;
+    _event_end_date?:          string;
+    _event_venue?:             string;
+    _event_city?:              string;
+    _event_address?:           string;
+    _event_admission?:         string;
+    _event_ticket_url?:        string;
+    _event_category?:          string;
   };
+  community_event_meta?: {
+    organiser_id?:       number | null;
+    organiser_name?:     string | null;
+    organiser_slug?:     string | null;
+    rsvp_enabled?:       boolean;
+    rsvp_capacity?:      number;
+    rsvp_count?:         number;
+    rsvp_price?:         number;
+    rsvp_price_currency?: string;
+    is_featured?:        boolean;
+  } | null;
 }
 
 export async function getAllCommunitySlugs(): Promise<string[]> {
@@ -95,7 +115,7 @@ export async function getAllCommunitySlugs(): Promise<string[]> {
   }
 }
 
-const COMMUNITY_FIELDS = "_fields=id,slug,date,modified,title,content,meta,comment_count";
+const COMMUNITY_FIELDS = "_fields=id,slug,date,modified,title,content,meta,comment_count,community_event_meta";
 const COMMUNITY_META_FIELDS = "meta_fields=community_author_name,community_author_id,community_author_username,community_author_tier,community_author_avatar,community_tag,community_region,community_image_url,community_link_url,community_og_title,community_og_description,community_og_image,reaction_love,reaction_fire,reaction_clap,_template_type,_linked_directory_id,_linked_directory_slug,_star_rating,_location_name,_poll_options,_poll_expires_at,_gallery_images,_video_url,_itinerary_stops,_food_dish_name,_food_rating_taste,_food_rating_value,_food_rating_vibe,_book_title,_book_author,_book_status,_book_overall_rating,_book_rating_writing,_book_rating_story,_book_rating_characters,_book_rating_pacing,_book_fav_quote,_book_recommend,_book_genres,_book_cover_url,_music_title,_music_artist,_music_overall_rating,_music_rating_production,_music_rating_lyrics,_music_rating_replay,_music_rating_vibe,_music_fav_lyric,_music_recommend,_music_genres,_music_cover_url,_music_preview_url,_film_title,_film_director,_film_overall_rating,_film_rating_story,_film_rating_acting,_film_rating_visuals,_film_rating_pacing,_film_fav_line,_film_recommend,_film_genres,_film_cover_url,_event_date,_event_end_date,_event_venue,_event_city,_event_address,_event_admission,_event_ticket_url,_event_category,_hub_id";
 
 // A bare fetch() can reject outright (timeout, DNS failure, connection
