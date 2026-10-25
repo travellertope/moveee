@@ -456,7 +456,6 @@ export default function EventDetailModal({ item, onClose }: Props) {
               <div style={{ padding: "1rem 1.25rem 0.25rem" }}>
                 <div style={{ marginBottom: "0.6rem" }}>{communityBadge}</div>
                 <h2 style={{
-                  fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 700, fontSize: "1.45rem", lineHeight: 1.25,
                   color: "var(--ink)", margin: "0 0 0.85rem",
                 }}>
@@ -484,7 +483,6 @@ export default function EventDetailModal({ item, onClose }: Props) {
               }}>
                 <div>{communityBadge}</div>
                 <h2 style={{
-                  fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 700, fontSize: "1.1rem", lineHeight: 1.25,
                   color: "var(--ink)", margin: 0,
                 }}>
@@ -509,7 +507,6 @@ export default function EventDetailModal({ item, onClose }: Props) {
               <>
                 <div style={{ marginBottom: "0.6rem" }}>{communityBadge}</div>
                 <h2 style={{
-                  fontFamily: "var(--font-fraunces), Georgia, serif",
                   fontWeight: 700, fontSize: "1.45rem", lineHeight: 1.25,
                   color: "var(--ink)", margin: "0 0 0.85rem",
                 }}>

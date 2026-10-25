@@ -1285,12 +1285,24 @@ export default function FeedCard({
                         : item.organiserName}
                     </div>
                   )}
-                  {/* RSVP / tickets */}
-                  <div onClick={(e) => e.stopPropagation()}>
+                  {/* RSVP / tickets — pill only; full RSVP flow is in the modal */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "4px" }}>
                     {item.rsvpEnabled ? (
-                      <RsvpDisplay postId={item.wpId} capacity={item.rsvpCapacity} initialCount={item.rsvpCount} price={item.rsvpPrice} priceCurrency={item.rsvpPriceCurrency} />
+                      <>
+                        <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>
+                          {item.rsvpCount ?? 0} going{item.rsvpCapacity ? ` · ${Math.max(0, item.rsvpCapacity - (item.rsvpCount ?? 0))} spots left` : ""}
+                        </span>
+                        <span style={{
+                          display: "inline-flex", padding: "5px 14px",
+                          borderRadius: "var(--radius-full)", background: "var(--ink)", color: "#fff",
+                          fontSize: "0.72rem", fontWeight: 700, pointerEvents: "none",
+                          letterSpacing: "0.03em", flexShrink: 0,
+                        }}>
+                          RSVP
+                        </span>
+                      </>
                     ) : item.ticketUrl ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                         {item.admission && <span style={{ fontSize: "0.72rem", color: "var(--mute)" }}>{item.admission}</span>}
                         <a href={item.ticketUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{
                           display: "inline-flex", alignItems: "center", padding: "5px 14px",
