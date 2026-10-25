@@ -237,8 +237,10 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       hubName: post.community_hub_meta?.name || undefined,
       hubSlug: post.community_hub_meta?.slug || undefined,
       hubIsOfficial: Boolean(post.community_hub_meta?.is_official),
-      // Template fields
-      templateType: m._template_type || "post",
+      // Template fields — prefer community_event_meta (reliable REST field) to
+      // detect event posts; _template_type is the authoritative stored value but
+      // may not come back if the meta_fields filter param is ignored.
+      templateType: (post.community_event_meta != null ? "event" : null) ?? m._template_type ?? "post",
       linkedDirectoryId: m._linked_directory_id ? Number(m._linked_directory_id) : undefined,
       linkedDirectorySlug: (m._linked_directory_slug as string) || undefined,
       starRating: m._star_rating ? Number(m._star_rating) : undefined,
@@ -291,7 +293,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       filmGenres: m._film_genres ? (typeof m._film_genres === "string" ? (() => { try { return JSON.parse(m._film_genres); } catch { return undefined; } })() : m._film_genres) : undefined,
       filmCoverUrl: m._film_cover_url || undefined,
       // Event template (community-organiser events)
-      eventPostTitle: (m._template_type === "event" && post.title?.rendered)
+      eventPostTitle: ((post.community_event_meta != null || m._template_type === "event") && post.title?.rendered)
         ? decodeHtml(post.title.rendered.replace(/<[^>]+>/g, ""))
         : undefined,
       eventDate: m._event_date || undefined,
