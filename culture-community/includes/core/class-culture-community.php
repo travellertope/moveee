@@ -27,6 +27,72 @@ class Culture_Community {
         add_action( 'trashed_post',   [ __CLASS__, 'flush_on_delete' ] );
         add_action( 'deleted_post',   [ __CLASS__, 'flush_on_delete' ] );
         add_action( 'untrashed_post', [ __CLASS__, 'flush_on_delete' ] );
+        // Extend WP search for community posts to also match author meta fields
+        // so searching a username (community_author_username) or display name
+        // (community_author_name) returns the author's posts.
+        add_filter( 'posts_search', [ __CLASS__, 'extend_community_meta_search' ], 10, 2 );
+    }
+
+    /**
+     * Extend the SQL search clause for culture_post queries so that
+     * community_author_username and community_author_name postmeta fields are
+     * included alongside the default post_title / post_content search.
+     *
+     * Fires on both REST API and front-end WP_Query instances.
+     */
+    public static function extend_community_meta_search( $search, $wp_query ) {
+        global $wpdb;
+
+        if ( empty( $search ) ) {
+            return $search;
+        }
+
+        // Only extend for queries that include culture_post
+        $post_type = $wp_query->get( 'post_type' );
+        if ( empty( $post_type ) ) {
+            return $search;
+        }
+        $types = is_array( $post_type ) ? $post_type : [ $post_type ];
+        if ( ! in_array( 'culture_post', $types, true ) ) {
+            return $search;
+        }
+
+        $s = $wp_query->get( 's' );
+        if ( empty( $s ) ) {
+            return $search;
+        }
+
+        // Build one EXISTS subquery per search term per meta key.
+        $terms      = array_filter( preg_split( '/[\s,]+/', $s ) );
+        $meta_keys  = [ 'community_author_username', 'community_author_name' ];
+        $extra_ors  = [];
+
+        foreach ( $terms as $term ) {
+            $like = '%' . $wpdb->esc_like( $term ) . '%';
+            foreach ( $meta_keys as $key ) {
+                $extra_ors[] = $wpdb->prepare(
+                    "EXISTS (
+                        SELECT 1 FROM {$wpdb->postmeta} cpm
+                        WHERE cpm.post_id = {$wpdb->posts}.ID
+                          AND cpm.meta_key = %s
+                          AND cpm.meta_value LIKE %s
+                    )",
+                    $key,
+                    $like
+                );
+            }
+        }
+
+        if ( empty( $extra_ors ) ) {
+            return $search;
+        }
+
+        // $search is "AND (…existing title/content conditions…)".
+        // Strip the trailing ")" and append the extra OR branches before re-closing.
+        $extra_sql = implode( ' OR ', $extra_ors );
+        $search    = preg_replace( '/\)\s*$/', " OR {$extra_sql})", $search );
+
+        return $search;
     }
 
     public static function flush_on_delete( $post_id ) {
