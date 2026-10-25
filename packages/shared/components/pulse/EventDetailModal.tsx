@@ -51,7 +51,7 @@ function toDatetimeLocal(dateStr?: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialCount?: number; isOwn?: boolean }) {
+function RsvpToggle({ postId, initialCount, capacity, isOwn }: { postId?: string; initialCount?: number; capacity?: number; isOwn?: boolean }) {
   const [rsvped, setRsvped] = useState<boolean | null>(null);
   const [count, setCount] = useState(initialCount ?? 0);
   const [loading, setLoading] = useState(false);
@@ -162,9 +162,10 @@ function RsvpToggle({ postId, initialCount, isOwn }: { postId?: string; initialC
       Guest List
     </div>
   );
-  const attendingCount = count > 0 ? (
+  const openSlots = capacity != null ? Math.max(0, capacity - count) : null;
+  const attendingCount = openSlots != null ? (
     <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 600, marginBottom: "5px" }}>
-      {count} attending
+      {openSlots} Open Slots
     </div>
   ) : null;
   const pillBtn = (label: string, onClick: () => void, disabled = false): React.ReactNode => (
@@ -681,7 +682,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
                   </div>
                 )}
                 {item.rsvpEnabled && (
-                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} isOwn={isOwn} />
+                  <RsvpToggle postId={item.wpId} initialCount={item.rsvpCount} capacity={item.rsvpCapacity} isOwn={isOwn} />
                 )}
                 {item.ticketUrl && !item.rsvpEnabled && (
                   <a
