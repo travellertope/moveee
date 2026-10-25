@@ -131,9 +131,15 @@ export default function EventPostClient({
   const orientation = useImageOrientation(image);
 
   const dateFormatted = eventDate
-    ? new Date(eventDate).toLocaleDateString("en-GB", {
-        weekday: "long", day: "numeric", month: "long", year: "numeric",
-      })
+    ? (() => {
+        const d = new Date(eventDate);
+        const dateText = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+        const h = d.getHours(), m = d.getMinutes();
+        if (h !== 0 || m !== 0) {
+          return `${dateText}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+        }
+        return dateText;
+      })()
     : null;
 
   const locationDisplay = [location, city].filter(Boolean).join(", ") || null;
@@ -383,9 +389,6 @@ export default function EventPostClient({
 
       {/* Discussion */}
       <div style={{ borderTop: "1px solid var(--rule)", padding: "1.25rem 1.5rem 2rem" }}>
-        <div style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--mute)", marginBottom: "0.85rem" }}>
-          Event Discussion
-        </div>
         <CommentThread postId={parseInt(wpId, 10)} initialComments={initialComments} />
       </div>
     </article>

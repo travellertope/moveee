@@ -120,6 +120,7 @@ export interface FeedItem {
   filmRecommend?: boolean;
   filmGenres?: string[];
   // event template + RSVP (community posts)
+  eventPostTitle?: string;  // WP post title = the event name (item.title holds body text)
   ticketUrl?: string;
   rsvpEnabled?: boolean;
   rsvpCapacity?: number;
@@ -290,6 +291,9 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       filmGenres: m._film_genres ? (typeof m._film_genres === "string" ? (() => { try { return JSON.parse(m._film_genres); } catch { return undefined; } })() : m._film_genres) : undefined,
       filmCoverUrl: m._film_cover_url || undefined,
       // Event template (community-organiser events)
+      eventPostTitle: (m._template_type === "event" && post.title?.rendered)
+        ? decodeHtml(post.title.rendered.replace(/<[^>]+>/g, ""))
+        : undefined,
       eventDate: m._event_date || undefined,
       endDate: m._event_end_date || undefined,
       location: m._event_venue || undefined,
