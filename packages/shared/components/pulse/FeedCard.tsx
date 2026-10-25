@@ -1253,7 +1253,7 @@ export default function FeedCard({
                   {item.rsvpEnabled ? (
                     <>
                       <span style={{ fontSize: "0.68rem", color: "var(--mute)" }}>
-                        {item.rsvpCapacity ? `${Math.max(0, item.rsvpCapacity - (item.rsvpCount ?? 0))} spots left` : ""}
+                        {item.rsvpCapacity ? `${Math.max(0, item.rsvpCapacity - (item.rsvpCount ?? 0))} Open Slots` : ""}
                       </span>
                       <span style={{ display: "inline-flex", padding: "5px 14px", borderRadius: "var(--radius-full)", background: "var(--ink)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, pointerEvents: "none", letterSpacing: "0.03em", flexShrink: 0 }}>
                         RSVP
