@@ -193,13 +193,6 @@ export default async function CommunityPostPage({
           <div className="pulse-timeline-inner">
             {/* Back link */}
             <div style={{ padding: "1rem 1rem 0", display: "flex", alignItems: "center" }}>
-              <Link href="/feed" style={{
-                color: "#7a6f5c", fontSize: "0.82rem", textDecoration: "none",
-                display: "inline-flex", alignItems: "center", gap: "0.35rem",
-                fontWeight: 500,
-              }}>
-                ← Back to Feed
-              </Link>
             </div>
 
             {/* Post card */}

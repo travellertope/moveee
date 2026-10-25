@@ -134,14 +134,6 @@ export default async function HubBrowsePage() {
               <p style={{ color: "#3a342b", fontSize: "0.78rem", lineHeight: 1.55, margin: "0 0 0.85rem" }}>
                 Village square for culture loving creatives, entrepreneurs, professionals.
               </p>
-              <Link href="/feed" style={{
-                display: "block", background: "#14110d", color: "#fff",
-                textAlign: "center", padding: "0.45rem 0.75rem",
-                fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.1em",
-                textTransform: "uppercase", textDecoration: "none",
-              }}>
-                Back to Feed →
-              </Link>
             </div>
 
             {/* apps/connect has no site-wide footer — every page with a
