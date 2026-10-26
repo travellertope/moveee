@@ -55,52 +55,6 @@ class Culture_Magic_OTP {
 	}
 
 	/**
-	 * HMAC-SHA256 the code with a stable app-specific secret stored in wp_options.
-	 *
-	 * Using wp_hash() here is unsafe: wp_hash() depends on WordPress secret keys
-	 * (AUTH_KEY etc.) which can be rotated by security plugins or manual wp-config
-	 * updates. A rotation between request_otp() and verify_otp() makes every in-flight
-	 * OTP fail hash_equals, causing "Incorrect code" even for correct codes.
-	 * This secret lives in wp_options and is generated once; it never changes
-	 * unless explicitly deleted from the DB.
-	 */
-	private static function stable_hmac( string $code ): string {
-		static $secret = null;
-		if ( null === $secret ) {
-			global $wpdb;
-			// Bypass the WordPress object cache entirely — same reason the OTP
-			// rows themselves use raw SQL. A persistent cache (Redis/Memcached)
-			// can hold a stale notoptions entry that makes get_option() return
-			// false even though the secret IS in the DB, causing each PHP worker
-			// to generate a different secret and making every hash comparison fail.
-			$secret = $wpdb->get_var(
-				"SELECT option_value FROM {$wpdb->options} WHERE option_name = '_culture_otp_hmac_secret'"
-			);
-			if ( ! $secret ) {
-				$secret = bin2hex( random_bytes( 32 ) );
-				// ON DUPLICATE KEY UPDATE option_value = option_value: if another
-				// PHP-FPM worker already inserted the secret between our read and
-				// write, keep theirs (don't overwrite) so we can re-read the winner.
-				$wpdb->query( $wpdb->prepare(
-					"INSERT INTO {$wpdb->options} (option_name, option_value, autoload)
-					 VALUES ('_culture_otp_hmac_secret', %s, 'no')
-					 ON DUPLICATE KEY UPDATE option_value = option_value",
-					$secret
-				) );
-				// Re-read what's actually in the DB — could be ours or the winner
-				// from a concurrent worker that beat us to the INSERT.
-				$actual = $wpdb->get_var(
-					"SELECT option_value FROM {$wpdb->options} WHERE option_name = '_culture_otp_hmac_secret'"
-				);
-				if ( $actual ) {
-					$secret = $actual;
-				}
-			}
-		}
-		return hash_hmac( 'sha256', $code, $secret );
-	}
-
-	/**
 	 * Step 1 — generate and email a 6-digit sign-in code.
 	 *
 	 * @param string $email
@@ -142,7 +96,7 @@ class Culture_Magic_OTP {
 		$code    = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		$otp_opt = self::otp_option_name( $key );
 		$otp_json = wp_json_encode( array(
-			'hash'     => self::stable_hmac( $code ),
+			'code'     => $code,
 			'attempts' => 0,
 			'expires'  => time() + self::CODE_TTL,
 		) );
@@ -212,7 +166,7 @@ class Culture_Magic_OTP {
 			$wpdb->delete( $wpdb->options, array( 'option_name' => $otp_opt ) );
 			return new WP_Error( 'too_many_attempts', __( 'Too many incorrect attempts — request a new code.', 'culture-community' ), array( 'status' => 429 ) );
 		}
-		if ( ! hash_equals( $data['hash'], self::stable_hmac( $code ) ) ) {
+		if ( ! hash_equals( (string) $data['code'], $code ) ) {
 			$data['attempts'] = $attempts + 1;
 			$wpdb->update(
 				$wpdb->options,
