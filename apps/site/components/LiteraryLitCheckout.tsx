@@ -83,14 +83,22 @@ export default function LiteraryLitCheckout({
     }
     setBusy(true);
     try {
+      const vRes = await fetch("/api/auth/magic-otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim(), list: "getmelit" }),
+      });
+      const vData = await vRes.json().catch(() => ({}));
+      if (!vRes.ok) {
+        setError(vData?.error || "That code didn't work — check it and try again.");
+        return;
+      }
       const signInResult = await signIn("credentials", {
-        otpEmail: email,
-        otpCode: code.trim(),
-        otpList: "getmelit",
+        otpVerifiedJwt: vData.token,
         redirect: false,
       });
       if (!signInResult || signInResult.error) {
-        setError("That code didn't work — check it and try again.");
+        setError("Sign-in failed — try again.");
         return;
       }
 

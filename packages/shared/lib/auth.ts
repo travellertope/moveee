@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { decodeProfileJwt } from "./otp-utils";
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
@@ -134,66 +135,46 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Magic-code sign-in: an already-verified email/OTP pair (see
-        // class-culture-magic-otp.php) — WordPress re-verifies the code
-        // itself, finds-or-creates the account, subscribes it to the given
-        // list, and returns the same profile shape as the password branch.
-        if ((credentials as any)?.otpEmail && (credentials as any)?.otpCode) {
+        // Magic-code sign-in: a short-lived profile JWT issued by
+        // /api/auth/magic-otp/verify after it verified the 6-digit code
+        // in Next.js (no WordPress call needed here — the profile is already
+        // in the token payload).
+        if ((credentials as any)?.otpVerifiedJwt) {
           try {
-            const res = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: (credentials as any).otpEmail,
-                code: (credentials as any).otpCode,
-                // Always sent, even when empty: an explicitly-empty list tells
-                // WordPress this code is a credential, not a subscription, so
-                // signing in never joins anyone to a mailing list. The
-                // subscribe widgets pass a real slug; /login and /register
-                // pass "".
-                list: (credentials as any).otpList ?? "",
-                // Only meaningful when this verify actually creates the
-                // account — attributes it to the referrer behind a ?ref= link.
-                referral: (credentials as any).otpReferral ?? "",
-              }),
-              cache: "no-store",
-            });
-            if (!res.ok) {
-              return null;
-            }
-            const data = await res.json();
+            const data = await decodeProfileJwt((credentials as any).otpVerifiedJwt);
+            if (!data) return null;
             return {
               id: String(data.id),
-            name: data.display_name,
-            email: data.email,
-            username: data.username,
-            phone: data.phone ?? "",
-            whatsapp: data.whatsapp ?? "",
-            gender: data.gender ?? "",
-            dateOfBirth: data.date_of_birth ?? "",
-            nationality: data.nationality ?? "",
-            countryOfResidence: data.country_of_residence ?? "",
-            city: data.city ?? "",
-            occupation: data.occupation ?? "",
-            registeredAt: data.registered_at ?? 0,
-            tier: data.tier,
-            interests: data.interests ?? [],
-            credits: data.credits ?? 0,
-            reputation: data.reputation ?? data.points ?? 0,
-            reputationTier: data.reputation_tier ?? "member",
-            dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
-            points: data.points ?? 0,
-            badges: data.badges ?? [],
-            referralCode: data.referral_code ?? "",
-            referralCount: data.referral_count ?? 0,
-            visual_downloads_today: data.visual_downloads_today ?? 0,
-            isVendor: data.is_vendor ?? false,
-            vendorSlug: data.vendor_slug ?? "",
-            avatarUrl: data.avatar_url ?? "",
-            hasPasskey: data.has_passkey ?? false,
-            passkeyCount: data.passkey_count ?? 0,
-            creditsEscrowed: data.credits_escrowed ?? 0,
-          };
+              name: data.display_name as string,
+              email: data.email as string,
+              username: data.username as string,
+              phone: (data.phone as string) ?? "",
+              whatsapp: (data.whatsapp as string) ?? "",
+              gender: (data.gender as string) ?? "",
+              dateOfBirth: (data.date_of_birth as string) ?? "",
+              nationality: (data.nationality as string) ?? "",
+              countryOfResidence: (data.country_of_residence as string) ?? "",
+              city: (data.city as string) ?? "",
+              occupation: (data.occupation as string) ?? "",
+              registeredAt: (data.registered_at as number) ?? 0,
+              tier: data.tier as string,
+              interests: (data.interests as string[]) ?? [],
+              credits: (data.credits as number) ?? 0,
+              reputation: ((data.reputation as number) ?? (data.points as number)) ?? 0,
+              reputationTier: (data.reputation_tier as string) ?? "member",
+              dailyCreditsRemaining: (data.daily_credits_remaining as number) ?? 50,
+              points: (data.points as number) ?? 0,
+              badges: (data.badges as string[]) ?? [],
+              referralCode: (data.referral_code as string) ?? "",
+              referralCount: (data.referral_count as number) ?? 0,
+              visual_downloads_today: (data.visual_downloads_today as number) ?? 0,
+              isVendor: (data.is_vendor as boolean) ?? false,
+              vendorSlug: (data.vendor_slug as string) ?? "",
+              avatarUrl: (data.avatar_url as string) ?? "",
+              hasPasskey: (data.has_passkey as boolean) ?? false,
+              passkeyCount: (data.passkey_count as number) ?? 0,
+              creditsEscrowed: (data.credits_escrowed as number) ?? 0,
+            };
           } catch {
             return null;
           }

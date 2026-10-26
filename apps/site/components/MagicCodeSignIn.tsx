@@ -118,26 +118,41 @@ export default function MagicCodeSignIn({
     setNotice("");
     setLoading(true);
 
+    let token: string;
+    try {
+      const vRes = await fetch("/api/auth/magic-otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: entered, list: "", referral }),
+      });
+      const vData = await vRes.json().catch(() => ({}));
+      if (!vRes.ok) {
+        setLoading(false);
+        const errCode = vData?.code ?? "";
+        if (errCode === "code_expired") {
+          setError("That code has expired. Hit 'Send a new code' to get a fresh one.");
+        } else if (errCode === "too_many_attempts") {
+          setError("Too many incorrect attempts. Request a new code to try again.");
+        } else {
+          setError(vData?.error || "That code didn't work. Check it, or send a new one.");
+        }
+        return;
+      }
+      token = vData.token;
+    } catch {
+      setLoading(false);
+      setError("Couldn't reach the server — check your connection.");
+      return;
+    }
+
     const result = await signIn("credentials", {
-      otpEmail: email.trim(),
-      otpCode: entered,
-      otpList: "",
-      otpReferral: referral,
+      otpVerifiedJwt: token,
       redirect: false,
     });
 
     setLoading(false);
     if (result?.error) {
-      const errCode = result.error;
-      if (errCode === "code_expired") {
-        setError("That code has expired. Hit 'Send a new code' to get a fresh one.");
-      } else if (errCode === "too_many_attempts") {
-        setError("Too many incorrect attempts. Request a new code to try again.");
-      } else if (errCode === "too_many_requests") {
-        setError("Too many code requests. Wait a few minutes before requesting another.");
-      } else {
-        setError("That code didn't work. Check it, or send a new one.");
-      }
+      setError("Sign-in failed — try again.");
       return;
     }
     finish();

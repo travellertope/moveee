@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  OTP_COOKIE,
+  OTP_CODE_TTL,
+  encodeOtpCookie,
+} from "@/lib/otp-utils";
 
-// Must match the WP_URL used in packages/shared/lib/auth.ts so that the
-// code stored by this request is verified against the same WordPress instance.
 const WP_BASE_URL =
   process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
+const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
 
 /**
- * Step 1 of the magic-code sign-in/subscribe flow every <SubscribeForm>
- * on the site now uses (see components/SubscribeForm.tsx and
- * culture-community/includes/core/class-culture-magic-otp.php). Public —
- * WordPress itself rate-limits and never reveals whether the email already
- * has an account. Step 2 (verify) has no proxy route of its own: the
- * client calls next-auth's signIn("credentials", { otpEmail, otpCode, ... })
- * directly, which reaches WordPress via authorize() in
- * packages/shared/lib/auth.ts.
+ * Step 1 of the magic-code subscribe flow used by <SubscribeForm> widgets
+ * on the magazine site. Generates the code here, stores it in a signed
+ * HttpOnly cookie, and asks WordPress only to send the email.
+ * Step 2 calls /api/auth/magic-otp/verify (Site A's copy) with the code.
  */
 export async function POST(request: NextRequest) {
   let body: any;
@@ -23,23 +23,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const email = typeof body?.email === "string" ? body.email.trim() : "";
-  if (!email) {
-    return NextResponse.json({ error: "Email is required." }, { status: 400 });
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
+  const code = String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
+
   try {
-    const res = await fetch(`${WP_BASE_URL}/wp-json/culture/v1/magic-otp/request`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return NextResponse.json({ error: json?.message || "Couldn't send a code — try again." }, { status: res.status });
+    const emailRes = await fetch(
+      `${WP_BASE_URL}/wp-json/culture/v1/otp/send-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${API_SECRET}`,
+        },
+        body: JSON.stringify({ email, code }),
+        cache: "no-store",
+      }
+    );
+    if (!emailRes.ok) {
+      const j = await emailRes.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: j?.message || "Couldn't send a code — try again." },
+        { status: emailRes.status }
+      );
     }
-    return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "Couldn't reach the server — try again." }, { status: 502 });
+    return NextResponse.json(
+      { error: "Couldn't reach the server — try again." },
+      { status: 502 }
+    );
   }
+
+  const signed = encodeOtpCookie(email, code);
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(OTP_COOKIE, signed, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: OTP_CODE_TTL,
+    secure: process.env.NODE_ENV === "production",
+  });
+  return response;
 }

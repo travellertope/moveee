@@ -399,6 +399,50 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Next.js-owned OTP — Next.js generates and verifies the code itself
+        // (stored in a signed HttpOnly cookie). These two endpoints are the
+        // only WP surface that OTP needs: one to email the code, one to
+        // find-or-create the account after Next.js has verified the code.
+        register_rest_route( 'culture/v1', '/otp/send-email', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_otp_send_email' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'email' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'code' => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+            ),
+        ) );
+        register_rest_route( 'culture/v1', '/otp/find-or-create', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_otp_find_or_create' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+            'args'                => array(
+                'email'    => array(
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'list'     => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_title',
+                ),
+                'referral' => array(
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_key',
+                ),
+            ),
+        ) );
+
         // Login endpoint — validates WP credentials, returns user profile.
         register_rest_route( 'culture/v1', '/login', array(
             'methods'             => 'POST',
@@ -3591,6 +3635,55 @@ class Culture_REST_API {
         if ( is_wp_error( $user ) ) {
             return $user;
         }
+        return rest_ensure_response( self::user_profile( $user ) );
+    }
+
+    /**
+     * Next.js OTP — step 1: just email the code.
+     * Next.js generates the code and stores it in a signed HttpOnly cookie;
+     * WordPress only needs to send the email.
+     */
+    public static function handle_otp_send_email( $request ) {
+        $email = $request->get_param( 'email' );
+        $code  = $request->get_param( 'code' );
+        if ( ! is_email( $email ) ) {
+            return new WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+        if ( preg_match( '/^\d{6}$/', $code ) !== 1 ) {
+            return new WP_Error( 'invalid_code_format', __( 'Invalid code format.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+        if ( class_exists( 'Culture_Emails' ) ) {
+            Culture_Emails::send_magic_otp_email( $email, $code );
+        }
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
+     * Next.js OTP — step 2: find or create the WP account.
+     * Next.js has already verified the code; we just handle account
+     * management and list subscription here.
+     */
+    public static function handle_otp_find_or_create( $request ) {
+        $email    = $request->get_param( 'email' );
+        $list     = $request->has_param( 'list' ) ? sanitize_title( (string) $request->get_param( 'list' ) ) : '';
+        $referral = sanitize_key( (string) $request->get_param( 'referral' ) );
+
+        if ( ! is_email( $email ) ) {
+            return new WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'culture-community' ), array( 'status' => 400 ) );
+        }
+        if ( ! class_exists( 'Culture_Magic_OTP' ) ) {
+            return new WP_Error( 'server_error', __( 'OTP class unavailable.', 'culture-community' ), array( 'status' => 500 ) );
+        }
+
+        $user = Culture_Magic_OTP::find_or_create_user( $email, $referral );
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+
+        if ( '' !== $list && class_exists( 'Culture_Subscribers_DB' ) ) {
+            Culture_Subscribers_DB::subscribe( $email, array( $list ), $user->display_name );
+        }
+
         return rest_ensure_response( self::user_profile( $user ) );
     }
 

@@ -100,14 +100,22 @@ export default function SubscribeForm({
     setBusy(true);
     setError("");
     try {
+      const vRes = await fetch("/api/auth/magic-otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, list }),
+      });
+      const vData = await vRes.json().catch(() => ({}));
+      if (!vRes.ok) {
+        setError(vData?.error || "That code didn't work — try again.");
+        return;
+      }
       const result = await signIn("credentials", {
-        otpEmail: email,
-        otpCode: code,
-        otpList: list,
+        otpVerifiedJwt: vData.token,
         redirect: false,
       });
       if (!result || result.error) {
-        setError("That code didn't work — try again.");
+        setError("Sign-in failed — try again.");
         return;
       }
       setStep("success");
