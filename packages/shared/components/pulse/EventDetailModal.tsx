@@ -120,45 +120,59 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn, onManage }: { postI
   async function verifyOtp() {
     if (!otpCode.trim() || otpStep === "verifying") return;
     setOtpStep("verifying"); setOtpError("");
-    const result = await signIn("credentials", {
-      redirect: false,
-      otpEmail: otpEmail.trim(),
-      otpCode: otpCode.trim(),
-    }).catch(() => null);
-    if (result?.ok) {
-      try {
-        const res = await fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setIsAuthed(true);
-          setRsvped(!!data.rsvped);
-          if (typeof data.count === "number") setCount(data.count);
-          if (!data.rsvped) {
-            const rsvpRes = await fetch("/api/community/event-rsvp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ post_id: Number(postId) }),
-            });
-            if (rsvpRes.ok) {
-              const rsvpData = await rsvpRes.json().catch(() => ({}));
-              setRsvped(true);
-              setCount((c: number) => typeof rsvpData.count === "number" ? rsvpData.count : c + 1);
+    try {
+      const vRes = await fetch("/api/auth/magic-otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: otpCode.trim() }),
+      });
+      const vData = await vRes.json().catch(() => ({}));
+      if (!vRes.ok) {
+        const errCode = vData?.code ?? "";
+        setOtpError(
+          errCode === "code_expired" ? "That code has expired — request a new one." :
+          errCode === "too_many_attempts" ? "Too many incorrect attempts — request a new code." :
+          vData?.error || "Incorrect code."
+        );
+        setOtpStep("otp");
+        return;
+      }
+      const result = await signIn("credentials", {
+        redirect: false,
+        otpVerifiedJwt: vData.token,
+      }).catch(() => null);
+      if (result?.ok) {
+        try {
+          const res = await fetch(`/api/community/event-rsvp-status?post_id=${postId}`, { cache: "no-store" });
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            setIsAuthed(true);
+            setRsvped(!!data.rsvped);
+            if (typeof data.count === "number") setCount(data.count);
+            if (!data.rsvped) {
+              const rsvpRes = await fetch("/api/community/event-rsvp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ post_id: Number(postId) }),
+              });
+              if (rsvpRes.ok) {
+                const rsvpData = await rsvpRes.json().catch(() => ({}));
+                setRsvped(true);
+                setCount((c: number) => typeof rsvpData.count === "number" ? rsvpData.count : c + 1);
+              }
             }
+            setOtpStep("idle");
+          } else {
+            setOtpError("Sign-in failed — try again.");
+            setOtpStep("otp");
           }
-          setOtpStep("idle");
-        } else {
-          setOtpError("Sign-in failed — try again.");
-          setOtpStep("otp");
-        }
-      } catch { setOtpError("Sign-in failed."); setOtpStep("otp"); }
-    } else {
-      const errCode = result?.error ?? "";
-      setOtpError(
-        errCode === "code_expired" ? "That code has expired — request a new one." :
-        errCode === "too_many_attempts" ? "Too many incorrect attempts — request a new code." :
-        errCode === "invalid_code" || errCode === "CredentialsSignin" ? "Incorrect code." :
-        "Sign-in failed — try again."
-      );
+        } catch { setOtpError("Sign-in failed."); setOtpStep("otp"); }
+      } else {
+        setOtpError("Sign-in failed — try again.");
+        setOtpStep("otp");
+      }
+    } catch {
+      setOtpError("Network error — try again.");
       setOtpStep("otp");
     }
   }
