@@ -3,7 +3,28 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import GameDoneScreen from "./GameDoneScreen";
-import type { CrosswordPuzzle, CrosswordClue } from "@/app/api/games/crossword/daily/route";
+interface CrosswordCell {
+  letter:  string;
+  number?: number;
+  black:   boolean;
+}
+
+interface CrosswordClue {
+  number:    number;
+  direction: "across" | "down";
+  clue:      string;
+  answer:    string;
+  row:       number;
+  col:       number;
+  length:    number;
+}
+
+interface CrosswordPuzzle {
+  size:   number;
+  cells:  CrosswordCell[][];
+  clues:  CrosswordClue[];
+  title:  string;
+}
 
 type Phase = "loading" | "playing" | "complete" | "error";
 const STORAGE_KEY = (d: string) => `moveee_crossword_${d}`;
