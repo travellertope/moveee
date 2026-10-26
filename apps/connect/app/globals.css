@@ -240,6 +240,10 @@ body {
   .cw-shell-content { flex: 1; min-width: 0; }
 }
 
+/* Hide the left nav rail on pages that add .hide-sidebar to <body> */
+body.hide-sidebar .cw-shell { display: block !important; }
+body.hide-sidebar .ch-rail  { display: none  !important; }
+
 /* Utility: hide native scrollbar on horizontal carousels/rails while keeping them scrollable */
 .hide-scrollbar {
   scrollbar-width: none;
