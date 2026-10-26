@@ -6,6 +6,7 @@ import RSVPForm from "../components/RSVPForm";
 import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import EventThumb from "../components/EventThumb";
+import HideSidebar from "@/components/HideSidebar";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
@@ -177,6 +178,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="bg-paper">
+      <style>{`.ch-rail{display:none!important}.cw-shell{display:block!important}`}</style>
+      <HideSidebar />
 
       {/* ── DETAIL HERO ── */}
       <section className="evt-detail-hero">
