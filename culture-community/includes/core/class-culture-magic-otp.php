@@ -67,10 +67,34 @@ class Culture_Magic_OTP {
 	private static function stable_hmac( string $code ): string {
 		static $secret = null;
 		if ( null === $secret ) {
-			$secret = get_option( '_culture_otp_hmac_secret' );
+			global $wpdb;
+			// Bypass the WordPress object cache entirely — same reason the OTP
+			// rows themselves use raw SQL. A persistent cache (Redis/Memcached)
+			// can hold a stale notoptions entry that makes get_option() return
+			// false even though the secret IS in the DB, causing each PHP worker
+			// to generate a different secret and making every hash comparison fail.
+			$secret = $wpdb->get_var(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = '_culture_otp_hmac_secret'"
+			);
 			if ( ! $secret ) {
 				$secret = bin2hex( random_bytes( 32 ) );
-				add_option( '_culture_otp_hmac_secret', $secret, '', 'no' );
+				// ON DUPLICATE KEY UPDATE option_value = option_value: if another
+				// PHP-FPM worker already inserted the secret between our read and
+				// write, keep theirs (don't overwrite) so we can re-read the winner.
+				$wpdb->query( $wpdb->prepare(
+					"INSERT INTO {$wpdb->options} (option_name, option_value, autoload)
+					 VALUES ('_culture_otp_hmac_secret', %s, 'no')
+					 ON DUPLICATE KEY UPDATE option_value = option_value",
+					$secret
+				) );
+				// Re-read what's actually in the DB — could be ours or the winner
+				// from a concurrent worker that beat us to the INSERT.
+				$actual = $wpdb->get_var(
+					"SELECT option_value FROM {$wpdb->options} WHERE option_name = '_culture_otp_hmac_secret'"
+				);
+				if ( $actual ) {
+					$secret = $actual;
+				}
 			}
 		}
 		return hash_hmac( 'sha256', $code, $secret );
@@ -123,12 +147,15 @@ class Culture_Magic_OTP {
 			'expires'  => time() + self::CODE_TTL,
 		) );
 		// Write directly to wp_options, bypassing the object cache.
-		$wpdb->query( $wpdb->prepare(
+		$inserted = $wpdb->query( $wpdb->prepare(
 			"INSERT INTO {$wpdb->options} (option_name, option_value, autoload)
 			 VALUES (%s, %s, 'no')
 			 ON DUPLICATE KEY UPDATE option_value = %s",
 			$otp_opt, $otp_json, $otp_json
 		) );
+		if ( false === $inserted ) {
+			return new WP_Error( 'db_error', __( 'Could not store code — please try again.', 'culture-community' ), array( 'status' => 500 ) );
+		}
 
 		if ( class_exists( 'Culture_Emails' ) ) {
 			Culture_Emails::send_magic_otp_email( $email, $code );
