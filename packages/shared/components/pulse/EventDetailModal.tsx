@@ -152,7 +152,13 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn, onManage }: { postI
         }
       } catch { setOtpError("Sign-in failed."); setOtpStep("otp"); }
     } else {
-      setOtpError(result?.error === "CredentialsSignin" ? "Incorrect code." : "Sign-in failed.");
+      const errCode = result?.error ?? "";
+      setOtpError(
+        errCode === "code_expired" ? "That code has expired — request a new one." :
+        errCode === "too_many_attempts" ? "Too many incorrect attempts — request a new code." :
+        errCode === "invalid_code" || errCode === "CredentialsSignin" ? "Incorrect code." :
+        "Sign-in failed — try again."
+      );
       setOtpStep("otp");
     }
   }
