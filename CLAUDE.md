@@ -108,10 +108,10 @@ Key paths:
   - `templates/` — WP template overrides
   - `assets/` — plugin CSS and JS
 
-**Vercel setup:**
-- Site A project: Root Directory = `apps/site` → deploys to themoveee.com
-- Site B project: Root Directory = `apps/connect` → deploys to themoveee.com
-- Both share the same GitHub repo (travellertope/moveee)
+**Vercel setup (single project — October 2026):**
+- One Vercel project at `themoveee.com` — `web.themoveee.com` has been retired and
+  merged into it. Both `apps/site` and `apps/connect` deploy under the same project.
+- GitHub repo: `travellertope/moveee`
 
 **Shared code resolution:** Both Next.js apps resolve `@/*` via tsconfig paths array:
 `["../../packages/shared/*", "./*"]` — packages/shared is checked first, then the

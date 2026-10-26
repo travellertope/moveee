@@ -2502,21 +2502,21 @@ Hashtags removed entirely. @mentions implemented end-to-end.
 
 ---
 
-## Site architecture — split complete
+## Site architecture — single Vercel project (merged October 2026)
 
-Two Vercel projects, one monorepo:
+One Vercel project, one monorepo. `web.themoveee.com` was retired and merged into `themoveee.com`.
 
-- **Site A (`themoveee.com`)** — Editorial + Shop. No auth. Fully cacheable.
+- **`apps/site`** — Editorial + Shop. No auth. Fully cacheable.
   - `/magazine`, `/newsletter`, `/journeys`, `/shop`, `/`, `/makers`, `/visuals`
-  - proxy.ts 308-redirects all auth/community/vendor paths → themoveee.com
-- **Site B (`themoveee.com`)** — Community + Auth + Vendor.
+  - proxy.ts 308-redirects all auth/community/vendor paths within the same domain
+- **`apps/connect`** — Community + Auth + Vendor.
   - `/login`, `/register`, `/forgot-password`, `/reset-password`
-  - `/vendor/*` — vendor dashboard (moved from Site A)
+  - `/vendor/*` — vendor dashboard
   - `/member/*`, `/connect`, `/events`, `/community`, `/directory`, `/games`, `/pulse`, `/quotes`
   - `apps/connect/components/Header.tsx` — Site B header (logo + Connect badge + nav + user menu)
-  - NextAuth cookie should use `domain: .themoveee.com` for cross-subdomain sharing
+  - NextAuth cookie uses `domain: .themoveee.com` for cross-app sharing
 
-Both share `cms.themoveee.com` (WordPress) as the backend.
+Both `apps/site` and `apps/connect` share `cms.themoveee.com` (WordPress) as the backend, and all environment variables are set on the single Vercel project.
 
 ### `MagazineArchiveWrapper`'s `edition` prop — scope (August 2026)
 
@@ -7468,11 +7468,10 @@ TMDB) are now live — this section is the reference for how the pattern works, 
   `google_books` in both `apps/connect` and `apps/site` to match the already-correct
   `externalSource` convention used by Spotify/TMDB. If Spotify/TMDB search still doesn't work
   after confirming this fix is deployed, check that `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET`/
-  `TMDB_API_KEY` are set on **both** Vercel projects (Site A `apps/site` and Site B
-  `apps/connect` have entirely separate env var configs — web hits `apps/connect`'s own routes,
-  mobile hits `apps/site`'s via `PROXY`) and that a fresh deploy happened *after* adding them —
-  Vercel snapshots env vars per-deployment, so saving them in the dashboard alone doesn't reach
-  an already-running serverless function until the next build.
+  `TMDB_API_KEY` are set on the Vercel project (single project at `themoveee.com` — web hits
+  `apps/connect`'s own routes, mobile hits `apps/site`'s via `PROXY`) and that a fresh deploy
+  happened *after* adding them — Vercel snapshots env vars per-deployment, so saving them in
+  the dashboard alone doesn't reach an already-running serverless function until the next build.
   **Follow-up (September 2026): every credential/upstream failure was completely silent, making
   a real "music search doesn't work, book search does" report undiagnosable from the codebase
   alone.** `getSpotifyToken()` and all four of `/api/external/{spotify,tmdb}/{search,preview}`'s
