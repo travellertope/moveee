@@ -37,7 +37,10 @@ class Culture_Directory {
      * the CULTURE_API_SECRET environment variable on the Next.js side.
      */
     public static function verify_secret( WP_REST_Request $request ) {
-        $secret = get_option( 'culture_api_secret', '' );
+        global $wpdb;
+        $secret = $wpdb->get_var(
+            "SELECT option_value FROM {$wpdb->options} WHERE option_name = 'culture_api_secret'"
+        );
 
         if ( empty( $secret ) ) {
             return new WP_Error(

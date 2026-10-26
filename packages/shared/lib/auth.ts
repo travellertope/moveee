@@ -139,10 +139,8 @@ export const authOptions: NextAuthOptions = {
         // itself, finds-or-creates the account, subscribes it to the given
         // list, and returns the same profile shape as the password branch.
         if ((credentials as any)?.otpEmail && (credentials as any)?.otpCode) {
-          // Fetch step: only catch genuine network failures here.
-          let otpRes: Response;
           try {
-            otpRes = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
+            const res = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -160,24 +158,12 @@ export const authOptions: NextAuthOptions = {
               }),
               cache: "no-store",
             });
-          } catch {
-            return null;
-          }
-          // WP returned a non-2xx — throw the WP error code so NextAuth
-          // surfaces it as result.error in signIn(). The UI maps known codes
-          // (code_expired, too_many_attempts, invalid_code) to copy; anything
-          // else falls through to "CredentialsSignin".
-          if (!otpRes.ok) {
-            let wpErrorCode = "CredentialsSignin";
-            try {
-              const errData = await otpRes.json();
-              wpErrorCode = errData.code ?? "CredentialsSignin";
-            } catch {}
-            throw new Error(wpErrorCode);
-          }
-          const data = await otpRes.json();
-          return {
-            id: String(data.id),
+            if (!res.ok) {
+              return null;
+            }
+            const data = await res.json();
+            return {
+              id: String(data.id),
             name: data.display_name,
             email: data.email,
             username: data.username,
@@ -208,6 +194,9 @@ export const authOptions: NextAuthOptions = {
             passkeyCount: data.passkey_count ?? 0,
             creditsEscrowed: data.credits_escrowed ?? 0,
           };
+          } catch {
+            return null;
+          }
         }
 
         // Magic-link guest RSVP: a one-time token emailed to a non-member so
