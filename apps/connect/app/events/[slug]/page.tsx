@@ -176,7 +176,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     : null;
 
   return (
-    <div className="bg-paper">
+    <div className="bg-paper evt-single-page">
 
       {/* ── DETAIL HERO ── */}
       <section className="evt-detail-hero">

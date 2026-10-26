@@ -515,6 +515,14 @@
   color: var(--evt-ochre);
 }
 
+/* Hide the left nav rail on event single pages so content has full width */
+.cw-shell:has(.evt-single-page) {
+  display: block !important;
+}
+.cw-shell:has(.evt-single-page) .ch-rail {
+  display: none !important;
+}
+
 /* ── DETAIL HERO ── */
 .evt-detail-hero {
   max-width: 1200px;

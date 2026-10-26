@@ -50,6 +50,47 @@ class Culture_REST_API {
         if ( ! $creating ) return;
         if ( 'publish' !== $post->post_status ) return;
 
+        // WP's native REST meta handler silently drops underscore-prefixed keys
+        // in some server configurations even when show_in_rest + auth_callback
+        // are set. Explicitly re-save event/template meta from the raw request
+        // so web-composer event posts get the same stored meta as mobile posts.
+        $req_meta = $request->get_param( 'meta' );
+        if ( is_array( $req_meta ) ) {
+            $safe_meta_keys = array(
+                '_template_type'               => 'string',
+                '_event_date'                  => 'string',
+                '_event_end_date'              => 'string',
+                '_event_venue'                 => 'string',
+                '_event_city'                  => 'string',
+                '_event_address'               => 'string',
+                '_event_admission'             => 'string',
+                '_event_ticket_url'            => 'string',
+                '_event_category'              => 'string',
+                '_culture_event_organiser_id'  => 'int',
+                '_culture_rsvp_enabled'        => 'bool',
+                '_culture_rsvp_capacity'       => 'int',
+                '_culture_rsvp_price'          => 'int',
+                '_culture_rsvp_price_currency' => 'string',
+            );
+            foreach ( $safe_meta_keys as $key => $type ) {
+                if ( ! isset( $req_meta[ $key ] ) ) {
+                    continue;
+                }
+                $val = $req_meta[ $key ];
+                if ( $val === '' || $val === false || $val === null ) {
+                    continue;
+                }
+                if ( $type === 'int' ) {
+                    $val = (int) $val;
+                } elseif ( $type === 'bool' ) {
+                    $val = (bool) $val;
+                } else {
+                    $val = sanitize_text_field( (string) $val );
+                }
+                update_post_meta( $post->ID, $key, $val );
+            }
+        }
+
         $author_id = (int) get_post_meta( $post->ID, 'community_author_id', true );
         if ( ! $author_id ) return;
 
