@@ -71,7 +71,8 @@ export async function encodeProfileJwt(
   profile: Record<string, unknown>
 ): Promise<string> {
   return encode({
-    token: { ...profile, _otp_v: 1 },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    token: { ...profile, _otp_v: 1 } as any,
     secret: getSecret(),
     maxAge: PROFILE_JWT_TTL,
   });
