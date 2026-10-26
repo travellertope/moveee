@@ -1,3 +1,6 @@
+import { NextRequest } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
+
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 
 interface RegisterBody {
@@ -13,9 +16,19 @@ interface RegisterBody {
   directory_disciplines?: string;
   directory_bio?: string;
   next?: string;
+  website?: string;
+  form_loaded_at?: string;
 }
 
-export async function POST(req: Request) {
+const MIN_FORM_FILL_MS = 2500;
+
+export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const { allowed } = await checkRateLimit("register", ip, 5, "1h");
+  if (!allowed) {
+    return Response.json({ success: false, message: "Too many requests. Please try again later." }, { status: 429 });
+  }
+
   let body: RegisterBody;
 
   try {
@@ -25,6 +38,15 @@ export async function POST(req: Request) {
       { success: false, message: "Invalid request body." },
       { status: 400 }
     );
+  }
+
+  if (body.website) {
+    return Response.json({ success: false, message: "Registration failed." }, { status: 400 });
+  }
+
+  const loadedAt = Number(body.form_loaded_at);
+  if (Number.isFinite(loadedAt) && Date.now() - loadedAt < MIN_FORM_FILL_MS) {
+    return Response.json({ success: false, message: "Registration failed." }, { status: 400 });
   }
 
   const { username, email, password } = body;

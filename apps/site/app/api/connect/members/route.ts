@@ -15,12 +15,20 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search") ?? "";
   const discipline = searchParams.get("discipline") ?? "";
   const location = searchParams.get("location") ?? "";
+  const region = searchParams.get("region") ?? "";
+  const sort = searchParams.get("sort") ?? "";
+  const perPage = searchParams.get("per_page") ?? "";
+  const offset = searchParams.get("offset") ?? "";
 
   try {
     const params = new URLSearchParams({ directory: "1" });
     if (search) params.set("search", search);
     if (discipline) params.set("discipline", discipline);
     if (location) params.set("location", location);
+    if (region) params.set("region", region);
+    if (sort) params.set("sort", sort);
+    if (perPage) params.set("per_page", perPage);
+    if (offset) params.set("offset", offset);
 
     const res = await fetch(
       `${WP_URL}/wp-json/culture/v1/members?${params}`,
@@ -47,6 +55,7 @@ export async function GET(request: NextRequest) {
           linkedin: m.directory_linkedin ?? "",
           website: m.directory_website ?? "",
           twitter: m.directory_twitter ?? "",
+          registeredAt: m.registered_at ?? "",
         }))
       : [];
 

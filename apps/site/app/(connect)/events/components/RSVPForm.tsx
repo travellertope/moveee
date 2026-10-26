@@ -175,7 +175,7 @@ const RSVPForm: React.FC<RSVPFormProps> = ({
     }
   };
 
-  // ── Confirmed via Paystack callback ─────────────────────────────────────────
+  // ── Confirmed via Flutterwave callback ──────────────────────────────────────
   if (status === 'ticket_confirmed') {
     return (
       <div className="evt-state-card evt-state-card--confirmed evt-state-card--small">
