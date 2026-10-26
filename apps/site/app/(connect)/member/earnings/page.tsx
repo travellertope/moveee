@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EarningsClient from "./EarningsClient";
-import "../../member.css";
+import "../../../member.css";
 
 export const dynamic = "force-dynamic";
 
