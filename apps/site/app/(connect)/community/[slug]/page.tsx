@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCommunityPostBySlug, getAllCommunitySlugs, getPostComments } from "@/lib/community-wordpress";
 import CommunityPostClient from "./CommunityPostClient";
+import EventPostClient from "@/components/pulse/EventPostClient";
 import "@/app/pulse-layout.css";
 
 // Fully dynamic, not ISR — every fetch this page depends on
@@ -96,7 +97,11 @@ export default async function CommunityPostPage({
 
   // Template meta
   const m = post.meta;
-  const templateType  = m._template_type || "post";
+  // Use community_event_meta as the primary event detector; fall back to
+  // _template_type, then to the presence of _event_date — any of these is
+  // sufficient to use the event layout instead of the generic post view.
+  const isEventPost   = post.community_event_meta != null || m._template_type === "event" || !!m._event_date;
+  const templateType  = isEventPost ? "event" : (m._template_type || "post");
   const starRating    = m._star_rating ? Number(m._star_rating) : undefined;
   const locationName  = m._location_name || undefined;
   const pollOptions   = m._poll_options ? (typeof m._poll_options === "string" ? JSON.parse(m._poll_options) : m._poll_options) : undefined;
@@ -146,6 +151,27 @@ export default async function CommunityPostPage({
   const filmGenres     = m._film_genres ? (typeof m._film_genres === "string" ? JSON.parse(m._film_genres) : m._film_genres) as string[] : undefined;
   const filmCoverUrl   = m._film_cover_url || undefined;
 
+  // Event template fields
+  const eventDate     = m._event_date || undefined;
+  const eventEndDate  = m._event_end_date || undefined;
+  const eventVenue    = m._event_venue || undefined;
+  const eventCity     = m._event_city || undefined;
+  const eventVenueAddress = m._event_address || undefined;
+  const eventAdmission    = m._event_admission || undefined;
+  const eventTicketUrl    = m._event_ticket_url || undefined;
+  const cem = post.community_event_meta;
+  const rsvpEnabled    = cem?.rsvp_enabled ?? false;
+  const rsvpCount      = cem?.rsvp_count ?? 0;
+  const rsvpCapacity   = (cem as any)?.rsvp_capacity != null ? Number((cem as any).rsvp_capacity) : undefined;
+  const organiserName  = cem?.organiser_name || null;
+  const organiserUsername = cem?.organiser_slug || null;
+  const isOwn = !!session?.user && (session.user as any)?.username === (organiserUsername || authorUsername);
+  const eventReactions = {
+    love: Number(m.reaction_love ?? 0),
+    fire: Number(m.reaction_fire ?? 0),
+    clap: Number(m.reaction_clap ?? 0),
+  };
+
   const linkedDirectorySlug = m._linked_directory_slug || undefined;
   const sourceUrl    = m.community_link_url || undefined;
   const source       = sourceUrl ? (() => { try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); } catch { return ""; } })() : undefined;
@@ -191,11 +217,32 @@ export default async function CommunityPostPage({
           {/* ── Main post ── */}
           <main className="pulse-timeline">
           <div className="pulse-timeline-inner">
-            {/* Back link */}
-            <div style={{ padding: "1rem 1rem 0", display: "flex", alignItems: "center" }}>
-            </div>
-
-            {/* Post card */}
+            {/* Post card — event template gets its own full layout */}
+            {templateType === "event" ? (
+              <EventPostClient
+                eventTitle={decodeEntities(post.title.rendered)}
+                bodyText={rawText}
+                image={image}
+                eventDate={eventDate}
+                endDate={eventEndDate}
+                location={eventVenue}
+                city={eventCity}
+                venueAddress={eventVenueAddress}
+                admission={eventAdmission}
+                ticketUrl={eventTicketUrl}
+                rsvpCapacity={rsvpCapacity}
+                authorName={organiserName || author}
+                authorAvatar={authorAvatarUrl || undefined}
+                authorUsername={organiserUsername || authorUsername || undefined}
+                wpId={String(post.id)}
+                slug={post.slug}
+                initialComments={comments}
+                rsvpEnabled={rsvpEnabled}
+                rsvpCount={rsvpCount}
+                isOwn={isOwn}
+                initialReactions={eventReactions}
+              />
+            ) : (
             <article style={{
               background: "#fff",
               border: "1px solid rgba(20,17,13,0.09)",
@@ -352,6 +399,7 @@ export default async function CommunityPostPage({
                 ogImage={ogImage}
               />
             </article>
+            )}
           </div>
           </main>
 
@@ -389,8 +437,6 @@ export default async function CommunityPostPage({
                 )}
               </div>
 
-              {/* apps/connect has no site-wide footer — every page with a
-                  right rail carries this copyright block instead. */}
               <p style={{ margin: "1rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
                 © {new Date().getFullYear()} The Moveee. All Rights Reserved.
                 <br />

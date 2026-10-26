@@ -10,6 +10,7 @@ import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
 import { sanitizeHtml } from "@/lib/sanitize";
+import HideSidebar from "@/components/HideSidebar";
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -177,6 +178,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="bg-paper">
+      <style>{`.ch-rail{display:none!important}.cw-shell{display:block!important}`}</style>
+      <HideSidebar />
 
       {/* ── DETAIL HERO ── */}
       <section className="evt-detail-hero">
