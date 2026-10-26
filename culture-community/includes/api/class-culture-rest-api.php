@@ -3675,16 +3675,21 @@ class Culture_REST_API {
             return new WP_Error( 'server_error', __( 'OTP class unavailable.', 'culture-community' ), array( 'status' => 500 ) );
         }
 
-        $user = Culture_Magic_OTP::find_or_create_user( $email, $referral );
-        if ( is_wp_error( $user ) ) {
-            return $user;
-        }
+        try {
+            $user = Culture_Magic_OTP::find_or_create_user( $email, $referral );
+            if ( is_wp_error( $user ) ) {
+                return $user;
+            }
 
-        if ( '' !== $list && class_exists( 'Culture_Subscribers_DB' ) ) {
-            Culture_Subscribers_DB::subscribe( $email, array( $list ), $user->display_name );
-        }
+            if ( '' !== $list && class_exists( 'Culture_Subscribers_DB' ) ) {
+                Culture_Subscribers_DB::subscribe( $email, array( $list ), $user->display_name );
+            }
 
-        return rest_ensure_response( self::user_profile( $user ) );
+            return rest_ensure_response( self::user_profile( $user ) );
+        } catch ( \Throwable $e ) {
+            error_log( 'OTP find-or-create error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            return new WP_Error( 'otp_internal_error', 'Account lookup failed — please try again.', array( 'status' => 500 ) );
+        }
     }
 
     public static function handle_preview_resolve( $request ) {

@@ -116,10 +116,10 @@ export async function POST(request: NextRequest) {
       }
     );
     if (!wpRes.ok) {
-      const j = await wpRes.json().catch(() => ({}));
+      await wpRes.json().catch(() => ({}));
       return NextResponse.json(
-        { error: j?.message || "Account error — try again.", code: "wp_error" },
-        { status: wpRes.status }
+        { error: "Account error — couldn't complete sign-in. Try again.", code: "wp_error" },
+        { status: 502 }
       );
     }
     wpProfile = await wpRes.json();
