@@ -177,7 +177,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     : null;
 
   return (
-    <div className="bg-paper">
+    <div>
       <style>{`.ch-rail{display:none!important}.cw-shell{display:block!important}`}</style>
       <HideSidebar />
 

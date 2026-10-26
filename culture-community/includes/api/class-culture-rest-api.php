@@ -3723,18 +3723,28 @@ class Culture_REST_API {
 
         try {
             $user = Culture_Magic_OTP::find_or_create_user( $email, $referral );
-            if ( is_wp_error( $user ) ) {
-                return $user;
-            }
+        } catch ( \Throwable $e ) {
+            error_log( 'OTP find-or-create user error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            return new WP_Error( 'otp_user_error', 'Account lookup failed — please try again.', array( 'status' => 500 ) );
+        }
 
-            if ( '' !== $list && class_exists( 'Culture_Subscribers_DB' ) ) {
+        if ( is_wp_error( $user ) ) {
+            return $user;
+        }
+
+        if ( '' !== $list && class_exists( 'Culture_Subscribers_DB' ) ) {
+            try {
                 Culture_Subscribers_DB::subscribe( $email, array( $list ), $user->display_name );
+            } catch ( \Throwable $e ) {
+                error_log( 'OTP subscribe error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
             }
+        }
 
+        try {
             return rest_ensure_response( self::user_profile( $user ) );
         } catch ( \Throwable $e ) {
-            error_log( 'OTP find-or-create error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
-            return new WP_Error( 'otp_internal_error', 'Account lookup failed — please try again.', array( 'status' => 500 ) );
+            error_log( 'OTP user_profile error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            return new WP_Error( 'otp_profile_error', 'Account found but profile could not be loaded — please try again.', array( 'status' => 500 ) );
         }
     }
 

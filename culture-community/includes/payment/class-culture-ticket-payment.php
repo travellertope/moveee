@@ -137,6 +137,15 @@ class Culture_Ticket_Payment {
     // ── Initiate payment ──────────────────────────────────────────────────────
 
     public static function handle_initiate( WP_REST_Request $req ): WP_REST_Response {
+        try {
+            return self::do_initiate( $req );
+        } catch ( \Throwable $e ) {
+            error_log( 'Ticket initiate error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            return self::cors( new WP_REST_Response( [ 'error' => 'internal_error', 'message' => 'Could not initiate payment. Please try again.' ], 500 ) );
+        }
+    }
+
+    private static function do_initiate( WP_REST_Request $req ): WP_REST_Response {
         global $wpdb;
         $t = self::table();
 

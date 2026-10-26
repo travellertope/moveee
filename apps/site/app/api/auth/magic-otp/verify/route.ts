@@ -116,13 +116,31 @@ export async function POST(request: NextRequest) {
       }
     );
     if (!wpRes.ok) {
-      await wpRes.json().catch(() => ({}));
+      let wpBody: Record<string, unknown> = {};
+      try { wpBody = await wpRes.json(); } catch { /* non-JSON body */ }
+      console.error(
+        "[otp/verify] WP find-or-create failed:",
+        wpRes.status,
+        JSON.stringify(wpBody).slice(0, 500)
+      );
+      const friendlyMsg =
+        typeof wpBody?.message === "string" && wpBody.message
+          ? wpBody.message
+          : "Account error — couldn't complete sign-in. Try again.";
+      return NextResponse.json(
+        { error: friendlyMsg, code: "wp_error" },
+        { status: 502 }
+      );
+    }
+    try {
+      wpProfile = await wpRes.json();
+    } catch {
+      console.error("[otp/verify] WP returned non-JSON 200 response");
       return NextResponse.json(
         { error: "Account error — couldn't complete sign-in. Try again.", code: "wp_error" },
         { status: 502 }
       );
     }
-    wpProfile = await wpRes.json();
   } catch {
     return NextResponse.json(
       { error: "Couldn't reach the server — try again.", code: "network_error" },
