@@ -1279,7 +1279,7 @@ export default function FeedCard({
                     <div style={{ flex: 1, minWidth: 0, padding: "10px 12px", backgroundColor: "var(--paper-deep)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                       <div>
                         {evLabel}
-                        {evTitle && <div style={{ fontWeight: 700, fontSize: "2.0rem", color: "var(--ink)", lineHeight: 1.2, marginBottom: "6px" }}>{evTitle}</div>}
+                        {evTitle && <div style={{ fontWeight: 700, fontSize: "clamp(1.3rem, 4vw, 2.0rem)", color: "var(--ink)", lineHeight: 1.2, marginBottom: "6px" }}>{evTitle}</div>}
                         {evDate}
                         {evLocation}
                         {evAdmission}
@@ -1307,7 +1307,7 @@ export default function FeedCard({
                   )}
                   <div style={{ padding: "12px 14px", backgroundColor: "var(--paper-deep)" }}>
                     {evLabel}
-                    {evTitle && <div style={{ fontWeight: 700, fontSize: "2.0rem", color: "var(--ink)", lineHeight: 1.2, marginBottom: "5px" }}>{evTitle}</div>}
+                    {evTitle && <div style={{ fontWeight: 700, fontSize: "clamp(1.3rem, 4vw, 2.0rem)", color: "var(--ink)", lineHeight: 1.2, marginBottom: "5px" }}>{evTitle}</div>}
                     {evBody && (
                       <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", lineHeight: 1.5, marginBottom: "7px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" } as React.CSSProperties}>
                         {evBody}

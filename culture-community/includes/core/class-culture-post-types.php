@@ -225,7 +225,7 @@ class Culture_Post_Types {
         register_rest_field( 'culture_post', 'community_event_meta', array(
             'get_callback' => function ( $post_arr ) {
                 $id = $post_arr['id'];
-                if ( get_post_meta( $id, '_template_type', true ) !== 'event' ) {
+                if ( get_post_meta( $id, '_template_type', true ) !== 'event' && ! get_post_meta( $id, '_event_date', true ) ) {
                     return null;
                 }
                 $organiser_id = (int) get_post_meta( $id, '_culture_event_organiser_id', true );

@@ -149,7 +149,13 @@ function RsvpToggle({ postId, initialCount, isOwn, onManage }: { postId?: string
         }
       } catch { setOtpError("Sign-in failed."); setOtpStep("otp"); }
     } else {
-      setOtpError(result?.error === "CredentialsSignin" ? "Incorrect code." : "Sign-in failed.");
+      const errCode = result?.error ?? "";
+      setOtpError(
+        errCode === "code_expired" ? "That code has expired — request a new one." :
+        errCode === "too_many_attempts" ? "Too many incorrect attempts — request a new code." :
+        errCode === "invalid_code" || errCode === "CredentialsSignin" ? "Incorrect code." :
+        "Sign-in failed — try again."
+      );
       setOtpStep("otp");
     }
   }
@@ -548,12 +554,16 @@ export default function EventPostClient({
         {image && isLandscape && (
           <>
             <div style={{ padding: "1rem 1rem 0", flexShrink: 0 }}>
-              <img
-                src={image}
-                alt=""
-                onClick={() => setLightboxOpen(true)}
-                style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover", borderRadius: "var(--radius-xl)", cursor: "zoom-in" }}
-              />
+              <div style={{ position: "relative", cursor: "zoom-in", borderRadius: "var(--radius-xl)", overflow: "hidden" }} onClick={() => setLightboxOpen(true)}>
+                <img
+                  src={image}
+                  alt=""
+                  style={{ width: "100%", display: "block", maxHeight: "280px", objectFit: "cover" }}
+                />
+                <div style={{ position: "absolute", bottom: "8px", right: "8px", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 8px", borderRadius: "var(--radius-full)", pointerEvents: "none" }}>
+                  Click to Expand
+                </div>
+              </div>
             </div>
             <div style={{ padding: "1rem 1.25rem 0.25rem" }}>
               <div style={{ marginBottom: "0.6rem" }}>{communityBadge}</div>
@@ -571,13 +581,15 @@ export default function EventPostClient({
         {/* PORTRAIT / SQUARE — left image 40%, right column: badge + title + date/location */}
         {image && isPortraitOrSquare && (
           <div style={{ display: "flex", flexDirection: "row", borderBottom: "1px solid var(--rule)", padding: "1rem 0 1rem 1rem", gap: "0.75rem" }}>
-            <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px", borderRadius: "var(--radius-xl)" }}>
+            <div style={{ width: "40%", flexShrink: 0, overflow: "hidden", maxHeight: "280px", borderRadius: "var(--radius-xl)", position: "relative", cursor: "zoom-in" }} onClick={() => setLightboxOpen(true)}>
               <img
                 src={image}
                 alt=""
-                onClick={() => setLightboxOpen(true)}
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               />
+              <div style={{ position: "absolute", bottom: "8px", right: "8px", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: "0.58rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 8px", borderRadius: "var(--radius-full)", pointerEvents: "none" }}>
+                Click to Expand
+              </div>
             </div>
             <div style={{
               flex: 1, padding: "1.1rem", display: "flex",
