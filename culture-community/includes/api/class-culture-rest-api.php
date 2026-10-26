@@ -3626,16 +3626,21 @@ class Culture_REST_API {
         // omits the param entirely (e.g. an older client) gets the GetMeLit
         // default the subscribe widgets were originally built around.
         $list = $request->has_param( 'list' ) ? (string) $request->get_param( 'list' ) : 'getmelit';
-        $user = Culture_Magic_OTP::verify_otp(
-            $request->get_param( 'email' ),
-            $request->get_param( 'code' ),
-            $list,
-            (string) $request->get_param( 'referral' )
-        );
-        if ( is_wp_error( $user ) ) {
-            return $user;
+        try {
+            $user = Culture_Magic_OTP::verify_otp(
+                $request->get_param( 'email' ),
+                $request->get_param( 'code' ),
+                $list,
+                (string) $request->get_param( 'referral' )
+            );
+            if ( is_wp_error( $user ) ) {
+                return $user;
+            }
+            return rest_ensure_response( self::user_profile( $user ) );
+        } catch ( \Throwable $e ) {
+            error_log( 'OTP verify error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            return new WP_Error( 'otp_verify_error', 'Verification failed — please try again.', array( 'status' => 500 ) );
         }
-        return rest_ensure_response( self::user_profile( $user ) );
     }
 
     /**
