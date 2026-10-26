@@ -359,6 +359,7 @@ export default function CommunityPostClient({
         author_name: user?.name ?? user?.displayName ?? "Community Member",
         date: data.date ?? new Date().toISOString(),
         content: { rendered: `<p>${commentText.trim()}</p>` },
+        status: "approved",
       }]);
       setCommentText("");
       setReplyTo(null);
