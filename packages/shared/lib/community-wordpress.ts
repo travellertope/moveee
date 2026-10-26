@@ -159,12 +159,15 @@ export interface WpComment {
   author_name: string;
   date: string;
   content: { rendered: string };
+  status: string;
+  author_avatar_urls?: { [size: string]: string };
+  author_custom_avatar?: string;
 }
 
 export async function getPostComments(postId: number): Promise<WpComment[]> {
   try {
     const res = await fetch(
-      `${BASE}/comments?post=${postId}&per_page=100&order=asc&_fields=id,post,parent,author_name,date,content`,
+      `${BASE}/comments?post=${postId}&per_page=100&order=asc&_fields=id,post,parent,author_name,date,content,status,author_avatar_urls`,
       { cache: "no-store" }
     );
     if (!res.ok) return [];
