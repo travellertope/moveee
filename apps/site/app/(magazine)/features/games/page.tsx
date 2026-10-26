@@ -5,11 +5,11 @@ import FeatureCTA from "@/components/FeatureCTA";
 export const metadata: Metadata = {
   title: "Daily Games — Keep Your Culture IQ Sharp | Moveee",
   description:
-    "Trivia and Who Said It? — two new daily games on Moveee. Two minutes a day, bragging rights forever, and Culture Credits every time you play.",
+    "Daily Culture Trivia on Moveee. Two minutes a day, bragging rights forever, and Culture Credits every time you play.",
   alternates: { canonical: "https://themoveee.com/features/games" },
   openGraph: {
     title: "Daily Games — Keep Your Culture IQ Sharp | Moveee",
-    description: "Trivia and Who Said It? — two minutes a day, bragging rights forever.",
+    description: "Daily Culture Trivia — two minutes a day, bragging rights forever.",
     url: "https://themoveee.com/features/games",
     siteName: "Moveee",
     type: "website",
@@ -18,15 +18,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Daily Games — Keep Your Culture IQ Sharp | Moveee",
-    description: "Trivia and Who Said It? — two minutes a day, bragging rights forever.",
+    description: "Daily Culture Trivia — two minutes a day, bragging rights forever.",
   },
 };
 
 const GAMES = [
   { icon: "🧠", title: "Trivia", body: "A new set of culture trivia questions every day — multiple choice, with an explanation after each answer." },
-  { icon: "💬", title: "Who Said It?", body: "Match the quote to the person who said it. Trickier than it sounds, addictive once you start." },
-  { icon: "🧩", title: "Crossword", body: "Coming soon — a daily culture-themed crossword." },
-  { icon: "🔢", title: "Sudoku", body: "Coming soon — classic number puzzles, Moveee style." },
 ];
 
 export default function GamesPage() {
@@ -44,7 +41,7 @@ export default function GamesPage() {
               Keep your culture IQ <em>sharp.</em>
             </h1>
             <p className="fp-subhead">
-              Two minutes a day. New Trivia and Who Said It? rounds every single day,
+              Two minutes a day. Fresh Culture Trivia every single day,
               plus Culture Credits for playing and bragging rights for getting it right.
             </p>
             <div className="fp-hero-cta">
