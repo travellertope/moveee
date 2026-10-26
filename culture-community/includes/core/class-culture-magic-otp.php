@@ -55,6 +55,28 @@ class Culture_Magic_OTP {
 	}
 
 	/**
+	 * HMAC-SHA256 the code with a stable app-specific secret stored in wp_options.
+	 *
+	 * Using wp_hash() here is unsafe: wp_hash() depends on WordPress secret keys
+	 * (AUTH_KEY etc.) which can be rotated by security plugins or manual wp-config
+	 * updates. A rotation between request_otp() and verify_otp() makes every in-flight
+	 * OTP fail hash_equals, causing "Incorrect code" even for correct codes.
+	 * This secret lives in wp_options and is generated once; it never changes
+	 * unless explicitly deleted from the DB.
+	 */
+	private static function stable_hmac( string $code ): string {
+		static $secret = null;
+		if ( null === $secret ) {
+			$secret = get_option( '_culture_otp_hmac_secret' );
+			if ( ! $secret ) {
+				$secret = bin2hex( random_bytes( 32 ) );
+				add_option( '_culture_otp_hmac_secret', $secret, '', 'no' );
+			}
+		}
+		return hash_hmac( 'sha256', $code, $secret );
+	}
+
+	/**
 	 * Step 1 — generate and email a 6-digit sign-in code.
 	 *
 	 * @param string $email
@@ -96,7 +118,7 @@ class Culture_Magic_OTP {
 		$code    = str_pad( (string) random_int( 0, 999999 ), 6, '0', STR_PAD_LEFT );
 		$otp_opt = self::otp_option_name( $key );
 		$otp_json = wp_json_encode( array(
-			'hash'     => wp_hash( $code ),
+			'hash'     => self::stable_hmac( $code ),
 			'attempts' => 0,
 			'expires'  => time() + self::CODE_TTL,
 		) );
@@ -163,7 +185,7 @@ class Culture_Magic_OTP {
 			$wpdb->delete( $wpdb->options, array( 'option_name' => $otp_opt ) );
 			return new WP_Error( 'too_many_attempts', __( 'Too many incorrect attempts — request a new code.', 'culture-community' ), array( 'status' => 429 ) );
 		}
-		if ( ! hash_equals( $data['hash'], wp_hash( $code ) ) ) {
+		if ( ! hash_equals( $data['hash'], self::stable_hmac( $code ) ) ) {
 			$data['attempts'] = $attempts + 1;
 			$wpdb->update(
 				$wpdb->options,
