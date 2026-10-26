@@ -178,6 +178,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="bg-paper">
+      {/* Inline style hides sidebar immediately during SSR (no flash).
+          HideSidebar handles cleanup on client-side navigation away. */}
+      <style>{`.ch-rail{display:none!important}.cw-shell{display:block!important}`}</style>
       <HideSidebar />
 
       {/* ── DETAIL HERO ── */}
