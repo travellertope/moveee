@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
   OTP_COOKIE,
+  OTP_CODE_TTL,
   MAX_OTP_ATTEMPTS,
   decodeOtpCookie,
   reencodeOtpCookie,
@@ -13,8 +14,12 @@ const WP_BASE_URL =
 const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
 
 /**
- * Step 2 of the magic-code flow for Site A (auth pages + subscribe widgets).
- * See apps/connect/app/api/auth/magic-otp/verify for the full doc comment.
+ * Step 2 of the magic-code sign-in.
+ *
+ * Reads the OTP from the signed HttpOnly cookie set by /request, verifies
+ * the code, then asks WordPress to find-or-create the account. Returns a
+ * short-lived signed profile JWT that signIn("credentials", { otpVerifiedJwt })
+ * exchanges for a real NextAuth session — no WP call needed at that point.
  */
 export async function POST(request: NextRequest) {
   let body: any;
@@ -92,6 +97,7 @@ export async function POST(request: NextRequest) {
     return response;
   }
 
+  // Code is correct — fetch user profile from WP.
   const list = typeof body?.list === "string" ? body.list.trim() : "";
   const referral = typeof body?.referral === "string" ? body.referral.trim() : "";
 
@@ -110,10 +116,10 @@ export async function POST(request: NextRequest) {
       }
     );
     if (!wpRes.ok) {
-      const j = await wpRes.json().catch(() => ({}));
+      await wpRes.json().catch(() => ({}));
       return NextResponse.json(
-        { error: j?.message || "Account error — try again.", code: "wp_error" },
-        { status: wpRes.status }
+        { error: "Account error — couldn't complete sign-in. Try again.", code: "wp_error" },
+        { status: 502 }
       );
     }
     wpProfile = await wpRes.json();
