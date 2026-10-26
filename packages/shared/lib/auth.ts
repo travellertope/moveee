@@ -139,10 +139,6 @@ export const authOptions: NextAuthOptions = {
         // itself, finds-or-creates the account, subscribes it to the given
         // list, and returns the same profile shape as the password branch.
         if ((credentials as any)?.otpEmail && (credentials as any)?.otpCode) {
-          // Two-phase approach: separate network errors (return null → "CredentialsSignin")
-          // from intentional WP API errors (throw → result.error carries the WP code so
-          // the component can show a specific message like "code expired").
-          let _wpCode: string | null = null;
           try {
             const res = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
               method: "POST",
@@ -163,11 +159,7 @@ export const authOptions: NextAuthOptions = {
               cache: "no-store",
             });
             if (!res.ok) {
-              _wpCode = "invalid_code";
-              try {
-                const errBody = await res.json();
-                if (errBody?.code) _wpCode = errBody.code;
-              } catch {}
+              return null;
             } else {
               const data = await res.json();
               return {
@@ -205,12 +197,13 @@ export const authOptions: NextAuthOptions = {
             }
           } catch {
             // Genuine network / parse failure — return null so NextAuth emits
-            // "CredentialsSignin" and the component shows a generic error.
+            // "CredentialsSignin".
             return null;
           }
-          // WP returned an error response — throw so NextAuth propagates the
-          // specific code back through result.error.
-          throw new Error(_wpCode ?? "invalid_code");
+          // WP returned an error response — return null so NextAuth emits
+          // "CredentialsSignin" (throw would be swallowed differently across
+          // NextAuth v4 minor versions and doesn't reliably surface the code).
+          return null;
         }
 
         // Magic-link guest RSVP: a one-time token emailed to a non-member so
