@@ -6,6 +6,7 @@ import RSVPForm from "../components/RSVPForm";
 import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import EventThumb from "../components/EventThumb";
+import HideSidebar from "@/components/HideSidebar";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
