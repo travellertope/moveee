@@ -133,6 +133,7 @@ register_activation_hook( __FILE__, 'culture_community_activate' );
 function culture_community_maybe_upgrade() {
     if ( get_option( 'culture_db_version' ) !== CULTURE_VERSION ) {
         Culture_Activator::create_tables();
+        update_option( 'culture_db_version', CULTURE_VERSION );
     }
 }
 add_action( 'plugins_loaded', 'culture_community_maybe_upgrade' );

@@ -139,8 +139,10 @@ export const authOptions: NextAuthOptions = {
         // itself, finds-or-creates the account, subscribes it to the given
         // list, and returns the same profile shape as the password branch.
         if ((credentials as any)?.otpEmail && (credentials as any)?.otpCode) {
+          // Fetch step: only catch genuine network failures here.
+          let otpRes: Response;
           try {
-            const res = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
+            otpRes = await fetch(`${WP_URL}/wp-json/culture/v1/magic-otp/verify`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -158,52 +160,54 @@ export const authOptions: NextAuthOptions = {
               }),
               cache: "no-store",
             });
-            if (!res.ok) {
-              return null;
-            } else {
-              const data = await res.json();
-              return {
-                id: String(data.id),
-                name: data.display_name,
-                email: data.email,
-                username: data.username,
-                phone: data.phone ?? "",
-                whatsapp: data.whatsapp ?? "",
-                gender: data.gender ?? "",
-                dateOfBirth: data.date_of_birth ?? "",
-                nationality: data.nationality ?? "",
-                countryOfResidence: data.country_of_residence ?? "",
-                city: data.city ?? "",
-                occupation: data.occupation ?? "",
-                registeredAt: data.registered_at ?? 0,
-                tier: data.tier,
-                interests: data.interests ?? [],
-                credits: data.credits ?? 0,
-                reputation: data.reputation ?? data.points ?? 0,
-                reputationTier: data.reputation_tier ?? "member",
-                dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
-                points: data.points ?? 0,
-                badges: data.badges ?? [],
-                referralCode: data.referral_code ?? "",
-                referralCount: data.referral_count ?? 0,
-                visual_downloads_today: data.visual_downloads_today ?? 0,
-                isVendor: data.is_vendor ?? false,
-                vendorSlug: data.vendor_slug ?? "",
-                avatarUrl: data.avatar_url ?? "",
-                hasPasskey: data.has_passkey ?? false,
-                passkeyCount: data.passkey_count ?? 0,
-                creditsEscrowed: data.credits_escrowed ?? 0,
-              };
-            }
           } catch {
-            // Genuine network / parse failure — return null so NextAuth emits
-            // "CredentialsSignin".
             return null;
           }
-          // WP returned an error response — return null so NextAuth emits
-          // "CredentialsSignin" (throw would be swallowed differently across
-          // NextAuth v4 minor versions and doesn't reliably surface the code).
-          return null;
+          // WP returned a non-2xx — throw the WP error code so NextAuth
+          // surfaces it as result.error in signIn(). The UI maps known codes
+          // (code_expired, too_many_attempts, invalid_code) to copy; anything
+          // else falls through to "CredentialsSignin".
+          if (!otpRes.ok) {
+            let wpErrorCode = "CredentialsSignin";
+            try {
+              const errData = await otpRes.json();
+              wpErrorCode = errData.code ?? "CredentialsSignin";
+            } catch {}
+            throw new Error(wpErrorCode);
+          }
+          const data = await otpRes.json();
+          return {
+            id: String(data.id),
+            name: data.display_name,
+            email: data.email,
+            username: data.username,
+            phone: data.phone ?? "",
+            whatsapp: data.whatsapp ?? "",
+            gender: data.gender ?? "",
+            dateOfBirth: data.date_of_birth ?? "",
+            nationality: data.nationality ?? "",
+            countryOfResidence: data.country_of_residence ?? "",
+            city: data.city ?? "",
+            occupation: data.occupation ?? "",
+            registeredAt: data.registered_at ?? 0,
+            tier: data.tier,
+            interests: data.interests ?? [],
+            credits: data.credits ?? 0,
+            reputation: data.reputation ?? data.points ?? 0,
+            reputationTier: data.reputation_tier ?? "member",
+            dailyCreditsRemaining: data.daily_credits_remaining ?? 50,
+            points: data.points ?? 0,
+            badges: data.badges ?? [],
+            referralCode: data.referral_code ?? "",
+            referralCount: data.referral_count ?? 0,
+            visual_downloads_today: data.visual_downloads_today ?? 0,
+            isVendor: data.is_vendor ?? false,
+            vendorSlug: data.vendor_slug ?? "",
+            avatarUrl: data.avatar_url ?? "",
+            hasPasskey: data.has_passkey ?? false,
+            passkeyCount: data.passkey_count ?? 0,
+            creditsEscrowed: data.credits_escrowed ?? 0,
+          };
         }
 
         // Magic-link guest RSVP: a one-time token emailed to a non-member so
