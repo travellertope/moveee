@@ -11,7 +11,6 @@ import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
 import "@/app/events.css";
 import { sanitizeHtml } from "@/lib/sanitize";
-import HideSidebar from "@/components/HideSidebar";
 
 export const revalidate = 300;
 export const dynamicParams = true;
