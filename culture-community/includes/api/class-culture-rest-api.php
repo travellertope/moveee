@@ -3524,7 +3524,10 @@ class Culture_REST_API {
      * @return bool
      */
     public static function verify_bearer_token( $header ) {
-        $stored = get_option( 'culture_api_secret', '' );
+        global $wpdb;
+        $stored = $wpdb->get_var(
+            "SELECT option_value FROM {$wpdb->options} WHERE option_name = 'culture_api_secret'"
+        );
         if ( empty( $stored ) ) {
             return false;
         }
