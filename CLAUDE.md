@@ -50,12 +50,12 @@ stale history.
 
 | Surface | Brand name | Domain |
 |---|---|---|
-| `apps/site` | **Moveee Magazine** | `themoveee.com` |
-| `apps/connect` | **Moveee** | `themoveee.com` |
+| `apps/site` | **Moveee Magazine** + **Moveee** (connect routes) | `themoveee.com` |
 | `apps/mobile` | **Moveee** | iOS / Android |
 
 - `apps/site` is always called **Moveee Magazine** in user-facing copy, metadata, and JSON-LD.
-- `apps/connect` and `apps/mobile` are both just **Moveee** — no sub-brand qualifier.
+- `apps/mobile` is just **Moveee** — no sub-brand qualifier.
+- **`apps/connect` has been deleted.** All community/connect routes live under `apps/site/app/(connect)/`. Do NOT create or reference an `apps/connect` directory.
 - Never use "Moveee Connect" as a product name.
 - Site tagline (Moveee Magazine): **"Best in Culture"**
 - App tagline (Moveee): **"Connect to Culture"**
@@ -90,9 +90,7 @@ Key paths:
   - `components/` — Site A-only components (Header, CartDrawer, HomepageContent…)
   - `lib/fetchHomepageData.ts` — Site A-only homepage fetch
   - `proxy.ts` — edge routing (Next.js 16 replacement for middleware.ts)
-- `apps/connect/` — Site B: Moveee at themoveee.com (Community + Auth)
-  - `app/` — auth, member, community, events, games, directory pages
-  - No local lib/ or components/ — all resolved from packages/shared
+- **`apps/connect/` — DELETED.** All connect/community routes now live in `apps/site/app/(connect)/`.
 - `apps/mobile/` — React Native app (Expo) for iOS + Android
   - `src/` — screens, components, api client, auth store, navigation
   - Self-contained; does NOT import from packages/shared (RN vs DOM)
@@ -110,7 +108,7 @@ Key paths:
 
 **Vercel setup (single project — October 2026):**
 - One Vercel project at `themoveee.com` — `web.themoveee.com` has been retired and
-  merged into it. Both `apps/site` and `apps/connect` deploy under the same project.
+  merged into it. `apps/site` is the only Next.js app and handles all routes.
 - GitHub repo: `travellertope/moveee`
 
 **Shared code resolution:** Both Next.js apps resolve `@/*` via tsconfig paths array:
@@ -118,8 +116,7 @@ Key paths:
 app-local directory. This means zero import changes: `@/lib/wp` just works in both apps,
 resolving to `packages/shared/lib/wp`. App-specific files stay local as the fallback.
 
-**When editing shared files:** Change only `packages/shared/`. Do NOT edit copies in
-apps/site or apps/connect (they don't exist anymore). The mobile app (`apps/mobile`) 
+**When editing shared files:** Change only `packages/shared/`. The mobile app (`apps/mobile`) 
 duplicates some shared TypeScript logic (feed-recommendations, interest-mappings) because 
 React Native can't use the DOM-dependent shared package — edit both when those change.
 
@@ -201,11 +198,11 @@ Literary vertical, see that section below) across `apps/site`, `apps/connect`,
 `packages/shared`, and `apps/mobile`'s `theme.ts` (`colors.ochre`) — this is the
 site-wide heading/accent/CTA color, not just a Literary-section-specific one. `--ochre-deep`
 (hover/pressed shade) changed from `#8a2d10` to `#5c1b15` — reusing `--lit-oxblood-deep`'s
-exact value for the same reason. `apps/connect/app/globals.css`'s dark-mode override block
+exact value for the same reason. `apps/site/app/connect-globals.css`'s dark-mode override block
 (`--ochre`/`--ochre-deep` at a lighter value for legibility against a dark background) was
 recalculated proportionally: `#954f49`/`#7d4944` (was `#d4603a`/`#a83f20`). Every literal
 hex occurrence of the four old values (`#c5491f`, `#8a2d10`, `#d4603a`, `#a83f20`) across
-`apps/site`, `apps/connect`, `apps/mobile`, and `packages/shared` — not just the CSS
+`apps/site`, `apps/mobile`, and `packages/shared` — not just the CSS
 variable definitions — was swept and replaced with its new counterpart, including
 `packages/shared/lib/gemini.ts`'s illustration-generation prompt (which names the brand
 palette literally, so AI-generated art keeps matching the new accent). `--gold` (`#b38238`,
@@ -244,8 +241,7 @@ var(--radius-2xl)   /* 20px — hero panels, prominent CTAs */
 var(--radius-full)  /* 9999px — pills, avatars, dots */
 ```
 
-Defined as CSS custom properties in both `apps/site/app/globals.css` and
-`apps/connect/app/globals.css` `:root`/`@theme` blocks — use `var(--radius-*)`, never a
+Defined as CSS custom properties in `apps/site/app/globals.css` `:root`/`@theme` block — use `var(--radius-*)`, never a
 hardcoded px value, in new or edited CSS. `apps/mobile`'s `theme.ts` `radius` object
 (`sm`(2)/`md`(4)/`lg`(6)/`xl`(12)/`"2xl"`(20)/`full`(9999)) is the source of truth this scale
 mirrors — if the mobile scale ever changes, update both web `globals.css` files to match.

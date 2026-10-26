@@ -9,10 +9,8 @@
   ],
   "scripts": {
     "dev:site": "cd apps/site && npm run dev",
-    "dev:connect": "cd apps/connect && npm run dev",
     "dev:mobile": "cd apps/mobile && npm run start",
     "build:site": "cd apps/site && npm run build",
-    "build:connect": "cd apps/connect && npm run build",
     "build:mobile:android": "cd apps/mobile && npm run build:production"
   },
   "devDependencies": {
