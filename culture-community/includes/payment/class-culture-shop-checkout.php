@@ -174,8 +174,9 @@ class Culture_Shop_Checkout {
             return new WP_Error( 'woocommerce_missing', 'WooCommerce not active', array( 'status' => 503 ) );
         }
 
-        if ( ! $user_id || ! get_userdata( $user_id ) ) {
-            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        // 0 = guest order (allowed). Reject only a nonzero ID that doesn't exist.
+        if ( $user_id > 0 && ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'unauthorized', 'Invalid user', array( 'status' => 401 ) );
         }
 
         $items = self::sanitize_cart_items( $request->get_param( 'cart_items' ) );
@@ -284,8 +285,9 @@ class Culture_Shop_Checkout {
             return new WP_Error( 'woocommerce_missing', 'WooCommerce not active', array( 'status' => 503 ) );
         }
 
-        if ( ! $user_id || ! get_userdata( $user_id ) ) {
-            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        // 0 = guest order (allowed). Reject only a nonzero ID that doesn't exist.
+        if ( $user_id > 0 && ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'unauthorized', 'Invalid user', array( 'status' => 401 ) );
         }
 
         $quote_token = sanitize_text_field( $request->get_param( 'quote_token' ) ?: '' );
@@ -593,12 +595,13 @@ class Culture_Shop_Checkout {
     }
 
     private static function do_get_order( int $user_id, int $order_id ) {
-        if ( ! $user_id || ! get_userdata( $user_id ) ) {
-            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        if ( $user_id > 0 && ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'unauthorized', 'Invalid user', array( 'status' => 401 ) );
         }
 
         $order = wc_get_order( $order_id );
-        if ( ! $order || (int) $order->get_customer_id() !== $user_id ) {
+        // For guests (user_id = 0) arriving via do_get_order_by_reference, ownership already verified by reference.
+        if ( ! $order || ( $user_id > 0 && (int) $order->get_customer_id() !== $user_id ) ) {
             return new WP_Error( 'not_found', 'Order not found', array( 'status' => 404 ) );
         }
 
@@ -645,8 +648,9 @@ class Culture_Shop_Checkout {
     }
 
     private static function do_get_order_by_reference( int $user_id, string $reference ) {
-        if ( ! $user_id || ! get_userdata( $user_id ) ) {
-            return new WP_Error( 'unauthorized', 'Not logged in', array( 'status' => 401 ) );
+        // 0 = guest order (allowed). Reject only a nonzero ID that doesn't exist.
+        if ( $user_id > 0 && ! get_userdata( $user_id ) ) {
+            return new WP_Error( 'unauthorized', 'Invalid user', array( 'status' => 401 ) );
         }
 
         global $wpdb;
@@ -657,6 +661,7 @@ class Culture_Shop_Checkout {
 
         if ( ! $order_id ) {
             $pending = get_transient( 'culture_shop_pay_' . $reference );
+            // For guests (user_id = 0), match any pending quote with user_id 0.
             if ( $pending && (int) $pending['user_id'] === $user_id ) {
                 return rest_ensure_response( array( 'status' => 'pending' ) );
             }
@@ -664,7 +669,8 @@ class Culture_Shop_Checkout {
         }
 
         $order = wc_get_order( (int) $order_id );
-        if ( ! $order || (int) $order->get_customer_id() !== $user_id ) {
+        // For guests (user_id = 0), skip ownership check — reference is the secret.
+        if ( ! $order || ( $user_id > 0 && (int) $order->get_customer_id() !== $user_id ) ) {
             return new WP_Error( 'not_found', 'Order not found', array( 'status' => 404 ) );
         }
 
