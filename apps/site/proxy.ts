@@ -236,6 +236,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(wpMatch.to, request.url), { status })
   }
 
+  // ── /hub archive retired — individual hub pages still work ──
+  if (pathname === '/hub' || pathname === '/hub/') {
+    return NextResponse.redirect(new URL('/feed', request.url), 301)
+  }
+
   // ── WordPress taxonomy archives ──────────────────────────────
   // /category/slug → /magazine?category=slug
   if (pathname.startsWith('/category/')) {

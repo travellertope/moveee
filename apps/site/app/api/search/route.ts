@@ -3,6 +3,7 @@ import { searchCommunityPosts } from '@/lib/community-wordpress';
 
 const WP_GRAPHQL_URL = `${process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com"}/graphql`;
 const WP_REST_URL    = `${process.env.NEXT_PUBLIC_WP_URL ?? 'https://cms.themoveee.com'}/wp-json/wp/v2`;
+const CULTURE_REST   = `${process.env.NEXT_PUBLIC_WP_URL ?? 'https://cms.themoveee.com'}/wp-json/culture/v1`;
 
 async function gql(query: string, variables: object) {
   const res = await fetch(WP_GRAPHQL_URL, {
@@ -83,13 +84,31 @@ async function searchPulseStories(q: string) {
   return res.json().catch(() => []);
 }
 
+async function searchHubs(q: string) {
+  const secret = process.env.CULTURE_API_SECRET;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (secret) headers['Authorization'] = `Bearer ${secret}`;
+  const res = await fetch(
+    `${CULTURE_REST}/hub/discover?q=${encodeURIComponent(q)}&per_page=6&sort=popular`,
+    { headers, cache: 'no-store' }
+  );
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => ({}));
+  return (data.hubs ?? []).map((h: any) => ({
+    id:    String(h.id),
+    title: h.name,
+    slug:  h.slug,
+    meta:  h.memberCount > 0 ? `${h.memberCount.toLocaleString()} members` : `${(h.postCount ?? 0).toLocaleString()} posts`,
+  }));
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.trim();
   if (!q || q.length < 2) {
-    return NextResponse.json({ magazine: [], events: [], origins: [], products: [], quotes: [], directory: [], pulse: [], community: [] });
+    return NextResponse.json({ magazine: [], events: [], origins: [], products: [], quotes: [], directory: [], pulse: [], community: [], hubs: [] });
   }
 
-  const [postsResult, productsResult, quotesResult, directoryResult, pulseResult, communityResult] =
+  const [postsResult, productsResult, quotesResult, directoryResult, pulseResult, communityResult, hubsResult] =
     await Promise.allSettled([
       gql(SEARCH_POSTS, { search: q }),
       gql(SEARCH_PRODUCTS, { search: q }),
@@ -97,6 +116,7 @@ export async function GET(req: NextRequest) {
       gql(SEARCH_DIRECTORY, { search: q }),
       searchPulseStories(q),
       searchCommunityPosts(q),
+      searchHubs(q),
     ]);
 
   const posts: any[] = postsResult.status === 'fulfilled' && postsResult.value ? postsResult.value.posts?.nodes ?? [] : [];
@@ -157,6 +177,8 @@ export async function GET(req: NextRequest) {
       };
     });
 
-  return NextResponse.json({ magazine, events, origins, products, quotes, directory, pulse, community });
+  const hubs: any[] = hubsResult.status === 'fulfilled' ? hubsResult.value : [];
+
+  return NextResponse.json({ magazine, events, origins, products, quotes, directory, pulse, community, hubs });
 }
 
