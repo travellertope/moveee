@@ -211,12 +211,13 @@ function RsvpToggle({ postId, initialCount, isOwn, onManage }: { postId?: string
         {guestListLabel}
         {attendingCount}
         {onManage ? (
-          <button onClick={onManage} style={{
+          <Link href="/member/events" style={{
+            display: "inline-block",
             padding: "5px 14px", borderRadius: "var(--radius-full)",
-            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            fontWeight: 700, fontSize: "0.72rem",
             background: "var(--ink)", color: "#fff",
-            cursor: "pointer", letterSpacing: "0.04em",
-          }}>Manage Event</button>
+            textDecoration: "none", letterSpacing: "0.04em",
+          }}>Manage Event</Link>
         ) : (
           <button disabled style={{
             padding: "5px 14px", borderRadius: "var(--radius-full)",
