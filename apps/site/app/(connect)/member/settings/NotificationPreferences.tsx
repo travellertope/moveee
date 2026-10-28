@@ -71,29 +71,22 @@ export default function NotificationPreferences() {
   }
 
   return (
-    <div className="mem-field-list">
+    <div className="sett-notif-list">
       {NOTIFICATION_TYPES.map((t) => {
         const isOn = prefs[t.id] ?? true;
         const isSaving = saving === t.id;
-        const fb = feedback[t.id];
 
         return (
-          <div key={t.id} className="mem-field mem-field--action">
-            <div>
-              <div className="mem-field-label">{t.name}</div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-              {fb === "saved" && <span className="mem-fb mem-fb--ok">Saved ✓</span>}
-              {fb === "error" && <span className="mem-fb mem-fb--err">Error</span>}
-              <button
-                className={`mem-toggle${isOn ? " mem-toggle--on" : ""}`}
-                onClick={() => toggle(t.id)}
-                disabled={isSaving}
-                aria-label={`${isOn ? "Disable" : "Enable"} ${t.name} notifications`}
-              >
-                {isSaving ? "…" : isOn ? "On" : "Off"}
-              </button>
-            </div>
+          <div key={t.id} className="sett-notif-row">
+            <span className="sett-notif-label">{t.name}</span>
+            <button
+              className={`sett-notif-toggle${isOn ? " sett-notif-toggle--on" : ""}`}
+              onClick={() => toggle(t.id)}
+              disabled={isSaving}
+              aria-label={`${isOn ? "Disable" : "Enable"} ${t.name} notifications`}
+            >
+              {isSaving ? "…" : isOn ? "ON" : "OFF"}
+            </button>
           </div>
         );
       })}

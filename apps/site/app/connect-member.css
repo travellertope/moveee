@@ -1950,7 +1950,256 @@ select.mem-field-input { cursor: pointer; }
   .sett-body { padding: 24px 16px; gap: 20px; }
   .sett-form-grid { grid-template-columns: 1fr; }
   .sett-form-field--full { grid-column: 1; }
+  .sett-interest-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Interests tab ── */
+.sett-interest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.sett-interest-btn {
+  padding: 11px 12px;
+  border: 1.5px solid var(--rule, rgba(20,17,13,0.12));
+  border-radius: var(--radius-lg, 6px);
+  background: var(--paper, #fff);
+  color: var(--ink, #14110d);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+.sett-interest-btn:hover { border-color: var(--ochre, #7a241c); }
+.sett-interest-btn--active {
+  border-color: var(--ochre, #7a241c);
+  background: rgba(122,36,28,0.06);
+  color: var(--ochre, #7a241c);
+}
+.sett-interest-count {
+  font-size: 12px;
+  color: var(--mute);
+  margin-bottom: 12px;
+}
+.sett-interest-count--ok { color: #2e7d32; }
+
+/* ── Notification rows ── */
+.sett-notif-list {
+  border: 1px solid var(--rule, rgba(20,17,13,0.1));
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  background: var(--paper, #fff);
+}
+.sett-notif-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule, rgba(20,17,13,0.08));
+  gap: 12px;
+}
+.sett-notif-row:last-child { border-bottom: none; }
+.sett-notif-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #14110d);
+  letter-spacing: .02em;
+}
+.sett-notif-toggle {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, color 0.15s;
+  min-width: 48px;
+  text-align: center;
+  background: var(--paper-deep, #f2f2f2);
+  color: var(--mute, #7a6f5c);
+}
+.sett-notif-toggle--on {
+  background: var(--ink, #14110d);
+  color: var(--paper, #fff);
+}
+
+/* ── Newsletter rows ── */
+.sett-nl-list {
+  border: 1px solid var(--rule, rgba(20,17,13,0.1));
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  background: var(--paper, #fff);
+}
+.sett-nl-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 1px solid var(--rule, rgba(20,17,13,0.08));
+}
+.sett-nl-row:last-child { border-bottom: none; }
+.sett-nl-info { flex: 1; min-width: 0; }
+.sett-nl-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ochre, #7a241c);
+  margin-bottom: 4px;
+}
+.sett-nl-desc {
+  font-size: 12.5px;
+  color: var(--mute, #7a6f5c);
+  line-height: 1.55;
+}
+.sett-nl-btn {
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: center;
+  border: 1.5px solid var(--ink, #14110d);
+  background: transparent;
+  color: var(--ink, #14110d);
+}
+.sett-nl-btn--subscribed {
+  background: var(--ink, #14110d);
+  color: var(--paper, #fff);
+  border-color: var(--ink, #14110d);
+}
+.sett-nl-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Security cards ── */
+.sett-section-card {
+  background: var(--paper-deep, #f2f2f2);
+  border: 1px solid var(--rule, rgba(20,17,13,0.1));
+  border-radius: var(--radius-xl, 12px);
+  padding: 22px 24px;
+}
+.sett-section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sett-section-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink, #14110d);
+  margin-bottom: 4px;
+}
+.sett-section-card-desc {
+  font-size: 12.5px;
+  color: var(--mute, #7a6f5c);
+  line-height: 1.55;
+}
+.sett-section-card-link {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ochre, #7a241c);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sett-section-card-link:hover { text-decoration: underline; }
+.sett-passkey-empty {
+  font-size: 12px;
+  color: var(--mute);
+  font-style: italic;
+  margin: 14px 0 16px;
+}
+.sett-passkey-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--rule, rgba(20,17,13,0.1));
+  border-radius: var(--radius-md, 4px);
+  overflow: hidden;
+  margin: 14px 0 16px;
+}
+.sett-passkey-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--paper, #fff);
+  gap: 12px;
+}
+.sett-passkey-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sett-passkey-meta {
+  font-size: 11px;
+  color: var(--mute);
+}
+.sett-passkey-remove {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid rgba(198,40,40,.4);
+  color: #c62828;
+  border-radius: var(--radius-md, 4px);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sett-passkey-add-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.sett-passkey-name-input {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--rule, rgba(20,17,13,0.15));
+  border-radius: var(--radius-md, 4px);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--paper, #fff);
+  color: var(--ink);
+}
+.sett-passkey-name-input:focus { border-color: var(--ochre); outline: none; }
+.sett-passkey-add-btn {
+  padding: 8px 18px;
+  background: var(--ink, #14110d);
+  color: var(--paper, #fff);
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.sett-passkey-add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sett-passkey-msg {
+  margin-top: 12px;
+  padding: 10px 14px;
+  font-size: 12px;
+  border-radius: var(--radius-md, 4px);
+}
+.sett-passkey-msg--ok { background: rgba(46,125,50,.06); border: 1px solid rgba(46,125,50,.2); color: #2e7d32; }
+.sett-passkey-msg--err { background: rgba(198,40,40,.06); border: 1px solid rgba(198,40,40,.2); color: #c62828; }
 
 /* ── Cluster share button ── */
 .clu-share-banner {

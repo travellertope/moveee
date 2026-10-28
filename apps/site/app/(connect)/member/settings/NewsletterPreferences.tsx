@@ -83,30 +83,25 @@ export default function NewsletterPreferences({ email }: Props) {
   }
 
   return (
-    <div className="mem-field-list">
+    <div className="sett-nl-list">
       {NEWSLETTERS.map((nl) => {
         const isOn = subscribed[nl.id] ?? true;
         const isSaving = saving === nl.id;
-        const fb = feedback[nl.id];
 
         return (
-          <div key={nl.id} className="mem-field mem-field--action">
-            <div>
-              <div className="mem-field-label">{nl.name}</div>
-              <div className="mem-field-value mem-field-value--muted">{nl.desc}</div>
+          <div key={nl.id} className="sett-nl-row">
+            <div className="sett-nl-info">
+              <div className="sett-nl-name">{nl.name}</div>
+              <div className="sett-nl-desc">{nl.desc}</div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-              {fb === "saved" && <span className="mem-fb mem-fb--ok">Saved ✓</span>}
-              {fb === "error" && <span className="mem-fb mem-fb--err">Error</span>}
-              <button
-                className={`mem-toggle${isOn ? " mem-toggle--on" : ""}`}
-                onClick={() => toggle(nl.id)}
-                disabled={isSaving}
-                aria-label={`${isOn ? "Unsubscribe from" : "Subscribe to"} ${nl.name}`}
-              >
-                {isSaving ? "…" : isOn ? "Subscribed" : "Subscribe"}
-              </button>
-            </div>
+            <button
+              className={`sett-nl-btn${isOn ? " sett-nl-btn--subscribed" : ""}`}
+              onClick={() => toggle(nl.id)}
+              disabled={isSaving}
+              aria-label={`${isOn ? "Unsubscribe from" : "Subscribe to"} ${nl.name}`}
+            >
+              {isSaving ? "…" : isOn ? "SUBSCRIBED" : "SUBSCRIBE"}
+            </button>
           </div>
         );
       })}

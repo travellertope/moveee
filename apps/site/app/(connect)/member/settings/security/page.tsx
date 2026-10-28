@@ -18,26 +18,20 @@ export default async function SecuritySettingsPage() {
 
   return (
     <>
-      <div>
-        <div className="sett-section-label">Password</div>
-        <div className="mem-field-list" style={{ marginTop: 12 }}>
-          <div className="mem-field mem-field--action">
-            <div>
-              <div className="mem-field-label">Change password</div>
-              <div className="mem-field-value mem-field-value--muted">
-                Change your password via email reset
-              </div>
-            </div>
-            <Link
-              href={`/forgot-password?email=${encodeURIComponent(user.email as string)}`}
-              className="mem-field-btn"
-            >
-              Change →
-            </Link>
+      <div className="sett-section-card">
+        <div className="sett-section-card-header">
+          <div>
+            <div className="sett-section-card-title">Password</div>
+            <div className="sett-section-card-desc">Change your password via email reset</div>
           </div>
+          <Link
+            href={`/forgot-password?email=${encodeURIComponent(user.email as string)}`}
+            className="sett-section-card-link"
+          >
+            CHANGE →
+          </Link>
         </div>
       </div>
-      <hr className="sett-divider" />
       <PasskeyManager />
     </>
   );
