@@ -128,21 +128,6 @@ function CheckoutContent() {
     return <div className="chk-wrap" />;
   }
 
-  if (!user) {
-    return (
-      <div className="chk-wrap">
-        <div className="chk-login-gate">
-          <p>Sign in to your Moveee account to check out.</p>
-          <a
-            href={`https://themoveee.com/login?callbackUrl=${encodeURIComponent(currentUrl)}`}
-          >
-            Sign In →
-          </a>
-        </div>
-      </div>
-    );
-  }
-
   if (items.length === 0) {
     return (
       <div className="chk-wrap">
