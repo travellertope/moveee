@@ -6,17 +6,6 @@ import { CountrySelect, CitySelect } from "@/components/LocationSelect";
 
 const GENDERS = ["Prefer not to say", "Male", "Female", "Non-binary", "Other"];
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface Field {
-  key: string;
-  label: string;
-  value: string;
-  type?: "text" | "email" | "date" | "select" | "country" | "city";
-  options?: string[];
-  readOnly?: boolean;
-  readOnlyNote?: string;
-}
-
 interface Props {
   user: {
     displayName: string;
@@ -30,6 +19,7 @@ interface Props {
     countryOfResidence: string;
     city: string;
     occupation: string;
+    bio: string;
     avatarUrl?: string;
   };
 }
@@ -64,207 +54,245 @@ function AvatarUpload({ initial, currentUrl }: { initial: string; currentUrl?: s
   }
 
   return (
-    <div className="mem-field" style={{ alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
-        <div
+    <div className="sett-avatar-row">
+      <div style={{
+        width: 72, height: 72, borderRadius: "50%",
+        background: "var(--paper-deep, #f0ece4)",
+        border: "2px solid #e0d8ce",
+        overflow: "hidden", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {preview ? (
+          <img src={preview} alt="Profile photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ fontSize: "1.7rem", fontWeight: 700, color: "var(--mute, #7a6f5c)" }}>{initial}</span>
+        )}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ink, #14110d)", marginBottom: 4 }}>
+          Profile photo
+        </div>
+        {error && (
+          <div style={{ color: "var(--ochre, #7a241c)", fontSize: "0.75rem", marginBottom: 4 }}>{error}</div>
+        )}
+        <div style={{ fontSize: "12px", color: "var(--mute, #7a6f5c)", marginBottom: 8 }}>
+          JPG, PNG or WebP. Max 5 MB.
+        </div>
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFile} style={{ display: "none" }} />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
           style={{
-            width: 64, height: 64, borderRadius: "50%",
-            background: "#f0ece4", border: "2px solid #e0d8ce",
-            overflow: "hidden", flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "none",
+            border: "1px solid rgba(20,17,13,0.2)",
+            borderRadius: "var(--radius-full, 9999px)",
+            padding: "7px 16px",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "var(--ink, #14110d)",
+            cursor: uploading ? "not-allowed" : "pointer",
+            opacity: uploading ? 0.5 : 1,
+            fontFamily: "inherit",
+            transition: "border-color 0.15s",
           }}
         >
-          {preview ? (
-            <img src={preview} alt="Profile photo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <span style={{ fontSize: "1.4rem", fontWeight: 700, color: "#7a6f5c" }}>{initial}</span>
-          )}
-        </div>
-        <div>
-          <div className="mem-field-label">Profile photo</div>
-          {error && <div style={{ color: "#7a241c", fontSize: "0.75rem", marginTop: "0.2rem" }}>{error}</div>}
-        </div>
+          {uploading ? "Uploading…" : preview ? "Change photo" : "Upload photo"}
+        </button>
       </div>
-      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFile} style={{ display: "none" }} />
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        disabled={uploading}
-        className="mem-field-btn"
-      >
-        {uploading ? "Uploading…" : preview ? "Change photo" : "Upload photo"}
-      </button>
     </div>
   );
 }
 
 // ── ProfileEditor ─────────────────────────────────────────────────────────────
 export default function ProfileEditor({ user }: Props) {
-  // Track country of residence so city combobox always has the latest value
-  const [currentCountry, setCurrentCountry] = useState(user.countryOfResidence);
+  const { update } = useSession();
+  const [form, setForm] = useState({
+    display_name:        user.displayName,
+    phone:               user.phone,
+    whatsapp:            user.whatsapp,
+    gender:              user.gender,
+    date_of_birth:       user.dateOfBirth,
+    nationality:         user.nationality,
+    country_of_residence: user.countryOfResidence,
+    city:                user.city,
+    occupation:          user.occupation,
+    bio:                 user.bio,
+  });
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const initial = user.displayName.charAt(0).toUpperCase() || "?";
 
-  const fields: Array<Field & { onSaved?: (v: string) => void; countryContext?: string }> = [
-    { key: "display_name",         label: "Display name",         value: user.displayName,        type: "text" },
-    { key: "email",                label: "Email address",        value: user.email,              readOnly: true, readOnlyNote: "Contact support to change your email" },
-    { key: "username",             label: "Username",             value: user.username,           readOnly: true, readOnlyNote: "Usernames cannot be changed" },
-    { key: "phone",                label: "Phone",                value: user.phone,              type: "text" },
-    { key: "whatsapp",             label: "WhatsApp",             value: user.whatsapp,           type: "text" },
-    { key: "gender",               label: "Gender",               value: user.gender,             type: "select", options: GENDERS },
-    { key: "date_of_birth",        label: "Date of birth",        value: user.dateOfBirth,        type: "date" },
-    { key: "nationality",          label: "Nationality",          value: user.nationality,        type: "country" },
-    {
-      key: "country_of_residence",
-      label: "Country of residence",
-      value: user.countryOfResidence,
-      type: "country",
-      onSaved: (v) => setCurrentCountry(v),
-    },
-    { key: "city", label: "City", value: user.city, type: "city", countryContext: currentCountry },
-    { key: "occupation",           label: "Occupation",           value: user.occupation,         type: "text" },
-  ];
+  function set(key: string, value: string) {
+    setForm(prev => ({ ...prev, [key]: value }));
+  }
 
-  return (
-    <div className="mem-field-list">
-      <AvatarUpload initial={initial} currentUrl={user.avatarUrl} />
-      {fields.map((f) => (
-        <EditableField
-          key={f.key}
-          field={f}
-          onSaved={f.onSaved}
-          countryContext={f.countryContext}
-        />
-      ))}
-    </div>
-  );
-}
+  function setCountry(value: string) {
+    setForm(prev => ({ ...prev, country_of_residence: value, city: "" }));
+  }
 
-// ── EditableField ─────────────────────────────────────────────────────────────
-function EditableField({
-  field,
-  onSaved,
-  countryContext,
-}: {
-  field: Field;
-  onSaved?: (v: string) => void;
-  countryContext?: string;
-}) {
-  const { update } = useSession();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(field.value);
-  const [current, setCurrent] = useState(field.value);
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-
-  async function save() {
-    if (draft === current) { setEditing(false); return; }
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setStatus("saving");
     try {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field.key]: draft }),
+        body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error();
-      setCurrent(draft);
-      onSaved?.(draft);
-      // Keep the session JWT in sync for fields that are reflected there.
-      if (field.key === "display_name") await update({ name: draft });
+      if (form.display_name !== user.displayName) await update({ name: form.display_name });
       setStatus("saved");
-      setTimeout(() => setStatus("idle"), 2000);
-      setEditing(false);
+      setTimeout(() => setStatus("idle"), 3000);
     } catch {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
     }
   }
 
-  function cancel() {
-    setDraft(current);
-    setEditing(false);
-    setStatus("idle");
-  }
-
-  if (field.readOnly) {
-    return (
-      <div className="mem-field">
-        <div className="mem-field-label">{field.label}</div>
-        <div className="mem-field-value">{current || "—"}</div>
-        {field.readOnlyNote && (
-          <div className="mem-field-value mem-field-value--muted">{field.readOnlyNote}</div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="mem-field mem-field--editable">
-      <div className="mem-field-label">{field.label}</div>
+    <form onSubmit={handleSubmit} className="sett-profile-form">
+      <AvatarUpload initial={initial} currentUrl={user.avatarUrl} />
 
-      {editing ? (
-        <div className="mem-field-edit-row">
-          {field.type === "select" ? (
-            <select
-              className="mem-field-input"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-            >
-              <option value="">— Select —</option>
-              {field.options!.map(o => (
-                <option key={o} value={o}>{o}</option>
-              ))}
-            </select>
-          ) : field.type === "country" ? (
-            <CountrySelect
-              value={draft}
-              onChange={setDraft}
-              inputClassName="mem-field-input"
-            />
-          ) : field.type === "city" ? (
-            <CitySelect
-              country={countryContext ?? ""}
-              value={draft}
-              onChange={setDraft}
-              inputClassName="mem-field-input"
-            />
-          ) : (
-            <input
-              className="mem-field-input"
-              type={field.type ?? "text"}
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
-            />
-          )}
-          <div className="mem-field-edit-actions">
-            <button
-              className="mem-field-btn"
-              onClick={save}
-              disabled={status === "saving"}
-            >
-              {status === "saving" ? "…" : "Save"}
-            </button>
-            <button className="mem-field-btn mem-field-btn--muted" onClick={cancel}>
-              Cancel
-            </button>
-          </div>
+      <div className="sett-form-grid">
+
+        {/* Display name */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Display name</label>
+          <input
+            className="sett-form-input"
+            type="text"
+            value={form.display_name}
+            onChange={e => set("display_name", e.target.value)}
+          />
         </div>
-      ) : (
-        <div className="mem-field-view-row">
-          <div className="mem-field-value">
-            {current || <span className="mem-field-value--muted">Not set</span>}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {status === "saved" && <span className="mem-fb mem-fb--ok">Saved ✓</span>}
-            {status === "error"  && <span className="mem-fb mem-fb--err">Error</span>}
-            <button
-              className="mem-field-btn"
-              onClick={() => { setEditing(true); setStatus("idle"); }}
-            >
-              Edit
-            </button>
-          </div>
+
+        {/* Username — read only */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Username</label>
+          <input className="sett-form-input sett-form-input--readonly" type="text" value={user.username} readOnly />
+          <span className="sett-form-hint">Usernames cannot be changed</span>
         </div>
-      )}
-    </div>
+
+        {/* Email — read only */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Email address</label>
+          <input className="sett-form-input sett-form-input--readonly" type="email" value={user.email} readOnly />
+          <span className="sett-form-hint">Contact support to change your email</span>
+        </div>
+
+        {/* Gender */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Gender</label>
+          <select
+            className="sett-form-input sett-form-select"
+            value={form.gender}
+            onChange={e => set("gender", e.target.value)}
+          >
+            <option value="">— Select —</option>
+            {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </div>
+
+        {/* Phone */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Phone</label>
+          <input
+            className="sett-form-input"
+            type="text"
+            value={form.phone}
+            onChange={e => set("phone", e.target.value)}
+            placeholder="+44 7700 000000"
+          />
+        </div>
+
+        {/* WhatsApp */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">WhatsApp</label>
+          <input
+            className="sett-form-input"
+            type="text"
+            value={form.whatsapp}
+            onChange={e => set("whatsapp", e.target.value)}
+            placeholder="+44 7700 000000"
+          />
+        </div>
+
+        {/* Date of birth */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Date of birth</label>
+          <input
+            className="sett-form-input"
+            type="date"
+            value={form.date_of_birth}
+            onChange={e => set("date_of_birth", e.target.value)}
+          />
+        </div>
+
+        {/* Nationality */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Nationality</label>
+          <CountrySelect
+            value={form.nationality}
+            onChange={v => set("nationality", v)}
+            inputClassName="sett-form-input"
+          />
+        </div>
+
+        {/* Country of residence */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">Country of residence</label>
+          <CountrySelect
+            value={form.country_of_residence}
+            onChange={setCountry}
+            inputClassName="sett-form-input"
+          />
+        </div>
+
+        {/* City */}
+        <div className="sett-form-field">
+          <label className="sett-form-label">City</label>
+          <CitySelect
+            country={form.country_of_residence}
+            value={form.city}
+            onChange={v => set("city", v)}
+            inputClassName="sett-form-input"
+          />
+        </div>
+
+        {/* Occupation — full width */}
+        <div className="sett-form-field sett-form-field--full">
+          <label className="sett-form-label">Occupation</label>
+          <input
+            className="sett-form-input"
+            type="text"
+            value={form.occupation}
+            onChange={e => set("occupation", e.target.value)}
+            placeholder="e.g. Writer, Designer, Engineer…"
+          />
+        </div>
+
+        {/* Bio — full width */}
+        <div className="sett-form-field sett-form-field--full">
+          <label className="sett-form-label">Bio</label>
+          <textarea
+            className="sett-form-input sett-form-textarea"
+            rows={3}
+            value={form.bio}
+            onChange={e => set("bio", e.target.value)}
+            placeholder="Tell the community about yourself…"
+            maxLength={500}
+          />
+        </div>
+
+      </div>
+
+      <div className="sett-save-row">
+        {status === "saved" && <span className="sett-saved-msg">Changes saved ✓</span>}
+        {status === "error"  && <span className="sett-error-msg">Something went wrong. Please try again.</span>}
+        <button type="submit" className="sett-save-btn" disabled={status === "saving"}>
+          {status === "saving" ? "Saving…" : "Save Profile Changes"}
+        </button>
+      </div>
+    </form>
   );
 }

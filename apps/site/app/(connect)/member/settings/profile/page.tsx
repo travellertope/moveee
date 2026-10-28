@@ -19,8 +19,7 @@ export default async function ProfileSettingsPage() {
   const user = session.user as any;
   const displayName = user.displayName || user.name || user.username || "Member";
 
-  // Fetch KYC/contact fields directly — not stored in JWT.
-  let pii = { phone: "", whatsapp: "", gender: "", dateOfBirth: "", nationality: "", countryOfResidence: "" };
+  let pii = { phone: "", whatsapp: "", gender: "", dateOfBirth: "", nationality: "", countryOfResidence: "", bio: "" };
   try {
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/user/profile?user_id=${user.id}`, {
       headers: { Authorization: `Bearer ${API_SECRET}` },
@@ -35,22 +34,20 @@ export default async function ProfileSettingsPage() {
         dateOfBirth: data.date_of_birth ?? "",
         nationality: data.nationality ?? "",
         countryOfResidence: data.country_of_residence ?? "",
+        bio: data.bio ?? "",
       };
     }
   } catch {}
 
   return (
-    <section className="mem-card mem-card--editable">
-      <div className="mem-card-label">Profile</div>
-      <ProfileEditor user={{
-        displayName,
-        email: user.email as string,
-        username: user.username ?? "",
-        ...pii,
-        city: user.city ?? "",
-        occupation: user.occupation ?? "",
-        avatarUrl: user.avatarUrl ?? "",
-      }} />
-    </section>
+    <ProfileEditor user={{
+      displayName,
+      email: user.email as string,
+      username: user.username ?? "",
+      ...pii,
+      city: user.city ?? "",
+      occupation: user.occupation ?? "",
+      avatarUrl: user.avatarUrl ?? "",
+    }} />
   );
 }
