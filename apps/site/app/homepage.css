@@ -1891,6 +1891,58 @@
   }
   .search-result-item:hover .search-result-arrow { color: var(--ochre); }
 
+  /* ── Type badge (flat/unified results) ── */
+  .search-result-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mute);
+    background: var(--paper-deep);
+    border-radius: var(--radius-full);
+    padding: 3px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Filter tabs ── */
+  .search-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 0 56px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .search-tabs::-webkit-scrollbar { display: none; }
+
+  .search-tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-full);
+    color: var(--mute);
+    padding: 5px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .search-tab:hover { color: var(--ink); border-color: var(--ink); }
+  .search-tab--active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ── Flat results list (no section gaps) ── */
+  .search-results--flat {
+    gap: 0;
+    padding-top: 8px;
+  }
+
   .search-empty {
     padding: 36px 56px;
     font-family: 'DM Sans', sans-serif;
@@ -2021,6 +2073,8 @@
     .search-results { padding: 16px 22px 36px; gap: 24px; }
     .search-empty { padding: 28px 22px; }
     .search-hint  { padding: 20px 22px; }
+    .search-tabs { padding: 0 22px 4px; }
+    .search-result-type { display: none; }
   }
 
   /* ==========================================================

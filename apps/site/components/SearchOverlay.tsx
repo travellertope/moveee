@@ -14,8 +14,11 @@ interface SearchResult {
   categories?: { nodes: { name: string; slug: string }[] };
   countries?: { nodes: { name: string; slug: string }[] };
   price?: string;
-  /** Pre-computed subtitle (author for quotes, entry type for directory entries) */
   meta?: string | null;
+  /** Injected client-side to label each result in the unified list */
+  _type?: string;
+  _basePath?: string;
+  _isProduct?: boolean;
 }
 
 interface SearchResults {
@@ -30,19 +33,30 @@ interface SearchResults {
   hubs:      SearchResult[];
 }
 
+type Tab = 'all' | 'hubs' | 'articles' | 'community' | 'quotes' | 'directory' | 'shop';
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const TAB_LABELS: Record<Tab, string> = {
+  all:       'All',
+  hubs:      'Hubs',
+  articles:  'Articles',
+  community: 'Community',
+  quotes:    'Quotes',
+  directory: 'Directory',
+  shop:      'Shop',
+};
+
 export default function SearchOverlay({ isOpen, onClose }: Props) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResults | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [query, setQuery]       = useState('');
+  const [results, setResults]   = useState<SearchResults | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('all');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus on open (mirrors the mockup's own 60ms-delayed focus, needed
-  // since the overlay is still animating in); reset on close.
   useEffect(() => {
     if (isOpen) {
       const t = setTimeout(() => inputRef.current?.focus(), 60);
@@ -51,9 +65,9 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
     setQuery('');
     setResults(null);
     setLoading(false);
+    setActiveTab('all');
   }, [isOpen]);
 
-  // ESC to close
   const handleKey = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose();
   }, [onClose]);
@@ -63,7 +77,6 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [handleKey]);
 
-  // Debounced search — 300 ms
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2) {
@@ -72,6 +85,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
       return;
     }
     setLoading(true);
+    setActiveTab('all');
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
@@ -88,30 +102,61 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
-  const total = results
-    ? (results.magazine?.length ?? 0) +
-      (results.events?.length ?? 0) +
-      (results.origins?.length ?? 0) +
-      (results.products?.length ?? 0) +
-      (results.quotes?.length ?? 0) +
-      (results.directory?.length ?? 0) +
-      (results.pulse?.length ?? 0) +
-      (results.community?.length ?? 0) +
-      (results.hubs?.length ?? 0)
-    : 0;
+  // Build a flat unified list by interleaving results across categories.
+  // Order: hubs → magazine → events → pulse → community → origins → quotes → directory → products
+  const allFlat: SearchResult[] = results ? [
+    ...(results.hubs      ?? []).map(r => ({ ...r, _type: 'Hub',       _basePath: '/hub'       })),
+    ...(results.magazine  ?? []).map(r => ({ ...r, _type: 'Article',   _basePath: '/magazine'  })),
+    ...(results.events    ?? []).map(r => ({ ...r, _type: 'Event',     _basePath: '/events'    })),
+    ...(results.pulse     ?? []).map(r => ({ ...r, _type: 'Pulse',     _basePath: '/pulse'     })),
+    ...(results.community ?? []).map(r => ({ ...r, _type: 'Community', _basePath: '/community' })),
+    ...(results.origins   ?? []).map(r => ({ ...r, _type: 'Origins',   _basePath: '/journeys'  })),
+    ...(results.quotes    ?? []).map(r => ({ ...r, _type: 'Quote',     _basePath: '/quotes'    })),
+    ...(results.directory ?? []).map(r => ({ ...r, _type: 'Directory', _basePath: '/directory' })),
+    ...(results.products  ?? []).map(r => ({ ...r, _type: 'Shop',      _basePath: '/lifestyle', _isProduct: true })),
+  ] : [];
 
-  const hasResults = !!results && total > 0;
-  const noResults  = !!results && total === 0 && !loading;
+  // Per-tab filtered lists
+  const tabItems: SearchResult[] = (() => {
+    if (!results) return [];
+    switch (activeTab) {
+      case 'hubs':      return (results.hubs ?? []).map(r => ({ ...r, _type: 'Hub',       _basePath: '/hub'       }));
+      case 'articles':  return [
+        ...(results.magazine ?? []).map(r => ({ ...r, _type: 'Article', _basePath: '/magazine' })),
+        ...(results.events   ?? []).map(r => ({ ...r, _type: 'Event',   _basePath: '/events'   })),
+        ...(results.origins  ?? []).map(r => ({ ...r, _type: 'Origins', _basePath: '/journeys' })),
+      ];
+      case 'community': return [
+        ...(results.pulse     ?? []).map(r => ({ ...r, _type: 'Pulse',     _basePath: '/pulse'     })),
+        ...(results.community ?? []).map(r => ({ ...r, _type: 'Community', _basePath: '/community' })),
+      ];
+      case 'quotes':    return (results.quotes    ?? []).map(r => ({ ...r, _type: 'Quote',     _basePath: '/quotes'    }));
+      case 'directory': return (results.directory ?? []).map(r => ({ ...r, _type: 'Directory', _basePath: '/directory' }));
+      case 'shop':      return (results.products  ?? []).map(r => ({ ...r, _type: 'Shop',      _basePath: '/lifestyle', _isProduct: true }));
+      default:          return allFlat;
+    }
+  })();
+
+  const displayItems = activeTab === 'all' ? allFlat : tabItems;
+
+  // Which tabs have any results?
+  const activeTabs: Tab[] = ['all'];
+  if (results) {
+    if ((results.hubs ?? []).length > 0) activeTabs.push('hubs');
+    const articleCount = (results.magazine?.length ?? 0) + (results.events?.length ?? 0) + (results.origins?.length ?? 0);
+    if (articleCount > 0) activeTabs.push('articles');
+    const commCount = (results.pulse?.length ?? 0) + (results.community?.length ?? 0);
+    if (commCount > 0) activeTabs.push('community');
+    if ((results.quotes ?? []).length > 0)    activeTabs.push('quotes');
+    if ((results.directory ?? []).length > 0) activeTabs.push('directory');
+    if ((results.products ?? []).length > 0)  activeTabs.push('shop');
+  }
+
+  const total = allFlat.length;
+  const hasResults    = !!results && total > 0;
+  const noResults     = !!results && total === 0 && !loading;
   const showingContent = hasResults || noResults;
 
-  // Shell matches the mockup's #searchOverlay exactly: it reuses the same
-  // .menu-overlay-bar (close · centered logo · decorative search glyph) as
-  // the main menu overlay, then a centered .search-overlay-body holding a
-  // single large serif input with a bottom-border-only underline — no
-  // backdrop-click-to-close panel, same as the menu overlay's own
-  // close-via-X-or-Escape-only convention in Header.tsx. Live results are
-  // additive (the mockup's input is decorative) and only affect the body's
-  // layout mode, not the input/top-bar chrome.
   return (
     <div className="search-overlay">
       <div className="menu-overlay-bar">
@@ -119,8 +164,6 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
           <X size={16} strokeWidth={1.5} />
         </button>
         <Link href="/" className="toolbar-logo" onClick={onClose}>
-          {/* Search overlay body is always the light background — always
-              the dark wordmark, same as the menu overlay's own logo. */}
           <img src="/logo-black.png" alt="Moveee" className="toolbar-logo-img" />
         </Link>
         <span className="toolbar-icon" aria-hidden="true">
@@ -146,22 +189,32 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
 
         {!showingContent && (
           <p className="search-hint">
-            Search across hubs, magazine, events, origins, quotes, culture directory and shop.
+            Search across hubs, articles, events, community posts, quotes, the culture directory and shop.
           </p>
         )}
 
-        {/* ── Results ── */}
+        {/* Filter tabs — only shown when results exist */}
+        {hasResults && activeTabs.length > 1 && (
+          <div className="search-tabs" role="tablist">
+            {activeTabs.map(tab => (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab}
+                className={`search-tab${activeTab === tab ? ' search-tab--active' : ''}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {TAB_LABELS[tab]}
+              </button>
+            ))}
+          </div>
+        )}
+
         {hasResults && (
-          <div className="search-results">
-            <ResultSection label="Hubs"              items={results!.hubs}       basePath="/hub"       onClose={onClose} />
-            <ResultSection label="Pulse"             items={results!.pulse}      basePath="/pulse"     onClose={onClose} />
-            <ResultSection label="Community"         items={results!.community}  basePath="/community" onClose={onClose} />
-            <ResultSection label="Magazine"        items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
-            <ResultSection label="Happenings"        items={results!.events}     basePath="/events"    onClose={onClose} />
-            <ResultSection label="Origins"           items={results!.origins}    basePath="/journeys"  onClose={onClose} />
-            <ResultSection label="Quotes"            items={results!.quotes}     basePath="/quotes"    onClose={onClose} />
-            <ResultSection label="Culture Directory" items={results!.directory}  basePath="/directory" onClose={onClose} />
-            <ResultSection label="Shop"              items={results!.products}   basePath="/lifestyle"      isProduct onClose={onClose} />
+          <div className="search-results search-results--flat">
+            {displayItems.slice(0, activeTab === 'all' ? 14 : 10).map(item => (
+              <FlatResultItem key={`${item._type}-${item.id}`} item={item} onClose={onClose} />
+            ))}
           </div>
         )}
 
@@ -175,49 +228,30 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
   );
 }
 
-/* ─── Result section ─────────────────────────────────────── */
+/* ─── Flat result item ───────────────────────────────────── */
 
-function ResultSection({
-  label,
-  items,
-  basePath,
-  isProduct = false,
-  onClose,
-}: {
-  label: string;
-  items: SearchResult[];
-  basePath: string;
-  isProduct?: boolean;
-  onClose: () => void;
-}) {
-  if (!items || items.length === 0) return null;
+function FlatResultItem({ item, onClose }: { item: SearchResult; onClose: () => void }) {
+  const isProduct = item._isProduct;
+  const title  = isProduct ? item.name : item.title;
+  const imgSrc = isProduct ? item.image?.sourceUrl : item.featuredImage?.node?.sourceUrl;
+  const meta   = isProduct ? item.price : item.meta;
+  const href   = `${item._basePath}/${item.slug}`;
+
   return (
-    <div className="search-section">
-      <p className="search-section-label">{label}</p>
-      {items.slice(0, 4).map(item => {
-        const title  = isProduct ? item.name   : item.title;
-        const imgSrc = isProduct ? item.image?.sourceUrl : item.featuredImage?.node?.sourceUrl;
-        const cat     = !isProduct ? item.categories?.nodes?.[0]?.name : undefined;
-        const country = !isProduct ? item.countries?.nodes?.[0]?.name : undefined;
-        const catAndCountry = [cat, country].filter(Boolean).join(' · ') || undefined;
-        const meta   = isProduct ? item.price : (item.meta ?? catAndCountry);
-        return (
-          <Link key={item.id} href={`${basePath}/${item.slug}`} className="search-result-item" onClick={onClose}>
-            {imgSrc ? (
-              <div className="search-result-thumb">
-                <img src={imgSrc} alt={title ?? ''} />
-              </div>
-            ) : (
-              <div className="search-result-thumb search-result-thumb--empty" />
-            )}
-            <div className="search-result-body">
-              <p className="search-result-title">{title}</p>
-              {meta && <p className="search-result-meta">{meta}</p>}
-            </div>
-            <ArrowUpRight size={14} strokeWidth={1.5} className="search-result-arrow" />
-          </Link>
-        );
-      })}
-    </div>
+    <Link href={href} className="search-result-item" onClick={onClose}>
+      {imgSrc ? (
+        <div className="search-result-thumb">
+          <img src={imgSrc} alt={title ?? ''} />
+        </div>
+      ) : (
+        <div className="search-result-thumb search-result-thumb--empty" />
+      )}
+      <div className="search-result-body">
+        <p className="search-result-title">{title}</p>
+        {meta && <p className="search-result-meta">{meta}</p>}
+      </div>
+      <span className="search-result-type">{item._type}</span>
+      <ArrowUpRight size={14} strokeWidth={1.5} className="search-result-arrow" />
+    </Link>
   );
 }
