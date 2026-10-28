@@ -574,7 +574,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               <div className="pf-section-title-row">
                 <h3 className="pf-section-title">Explore Hubs</h3>
               </div>
-              <Link href="/hub" className="pf-section-see-all">See all</Link>
             </div>
             <div className="pf-hub-chips">
               {Object.entries(SECTION_HUB_SLUGS).map(([name, slug]) => (
