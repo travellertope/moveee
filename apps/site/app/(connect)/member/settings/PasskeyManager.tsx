@@ -97,36 +97,26 @@ export default function PasskeyManager() {
   }
 
   return (
-    <section className="mem-card">
-      <div className="mem-card-label">Passkeys</div>
-      <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 16px", lineHeight: 1.5 }}>
-        Passkeys use your device's biometrics (fingerprint, Face ID) for fast, secure sign-in.
+    <div className="sett-section-card">
+      <div className="sett-section-card-title">Passkeys</div>
+      <p className="sett-section-card-desc" style={{ marginTop: 4 }}>
+        Passkeys use your device&apos;s biometrics (fingerprint, Face ID) for fast, secure sign-in.
         Required to redeem credits and cash out.
       </p>
 
       {loading ? (
-        <p style={{ fontSize: "0.8rem", color: "var(--mute)" }}>Loading…</p>
+        <p className="sett-passkey-empty">Loading…</p>
       ) : (
         <>
           {creds.length === 0 ? (
-            <p style={{ fontSize: "0.8rem", color: "var(--mute)", fontStyle: "italic", marginBottom: 16 }}>
-              No passkeys registered. Add one below.
-            </p>
+            <p className="sett-passkey-empty">No passkeys registered. Add one below.</p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1, background: "rgba(42,36,28,.06)", marginBottom: 16 }}>
+            <div className="sett-passkey-list">
               {creds.map(c => (
-                <div key={c.id} style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "10px 14px",
-                  background: "var(--paper)",
-                }}>
+                <div key={c.id} className="sett-passkey-row">
                   <div>
-                    <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--ink)" }}>
-                      {c.device_name}
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--mute)" }}>
+                    <div className="sett-passkey-name">{c.device_name}</div>
+                    <div className="sett-passkey-meta">
                       Added {timeAgo(c.created_at)}
                       {c.last_used_at !== c.created_at && ` · Used ${timeAgo(c.last_used_at)}`}
                     </div>
@@ -135,16 +125,7 @@ export default function PasskeyManager() {
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deleting === c.id}
-                    style={{
-                      padding: "4px 10px",
-                      background: "transparent",
-                      border: "1px solid rgba(198,40,40,.4)",
-                      color: "#c62828",
-                      borderRadius: 3,
-                      fontSize: "0.72rem",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
+                    className="sett-passkey-remove"
                   >
                     {deleting === c.id ? "Removing…" : "Remove"}
                   </button>
@@ -155,29 +136,20 @@ export default function PasskeyManager() {
 
           {creds.length < 5 && (
             <div>
-              <div style={{ fontSize: "0.76rem", color: "var(--mute)", marginBottom: 6 }}>Device name</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="sett-section-card-desc" style={{ marginBottom: 6 }}>Device name</div>
+              <div className="sett-passkey-add-row">
                 <input
                   type="text"
                   value={deviceName}
                   onChange={e => setDeviceName(e.target.value)}
                   placeholder="e.g. iPhone 15"
-                  style={{
-                    flex: 1,
-                    minWidth: 140,
-                    padding: "8px 12px",
-                    border: "1px solid rgba(42,36,28,.15)",
-                    borderRadius: 4,
-                    fontSize: "0.85rem",
-                    fontFamily: "inherit",
-                  }}
+                  className="sett-passkey-name-input"
                 />
                 <button
                   type="button"
                   onClick={handleAdd}
                   disabled={adding}
-                  className="perk-card-btn"
-                  style={{ whiteSpace: "nowrap" }}
+                  className="sett-passkey-add-btn"
                 >
                   {adding ? "Working…" : "Add Passkey"}
                 </button>
@@ -186,20 +158,12 @@ export default function PasskeyManager() {
           )}
 
           {message && (
-            <div style={{
-              marginTop: 12,
-              padding: "10px 14px",
-              fontSize: "0.8rem",
-              borderRadius: 3,
-              background: message.ok ? "rgba(46,125,50,.06)" : "rgba(198,40,40,.06)",
-              border: `1px solid ${message.ok ? "rgba(46,125,50,.2)" : "rgba(198,40,40,.2)"}`,
-              color: message.ok ? "#2e7d32" : "#c62828",
-            }}>
+            <div className={`sett-passkey-msg sett-passkey-msg--${message.ok ? "ok" : "err"}`}>
               {message.text}
             </div>
           )}
         </>
       )}
-    </section>
+    </div>
   );
 }

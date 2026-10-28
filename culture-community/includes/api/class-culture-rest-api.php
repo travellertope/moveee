@@ -6390,6 +6390,7 @@ class Culture_REST_API {
             '_culture_directory_twitter',
             '_culture_directory_linkedin',
             '_culture_directory_website',
+            '_culture_avatar_url',
         );
         $keys_in   = implode( ',', array_map( fn( $k ) => "'" . esc_sql( $k ) . "'", $meta_keys ) );
         $rows      = $wpdb->get_results(
@@ -6409,6 +6410,7 @@ class Culture_REST_API {
                 'id'                     => $user->ID,
                 'username'               => $user->user_nicename,
                 'display_name'           => $user->display_name,
+                'avatar_url'             => $m['_culture_avatar_url']             ?? '',
                 'occupation'             => $m['_culture_occupation']             ?? '',
                 'city'                   => $m['_culture_city']                   ?? '',
                 'country_of_residence'   => $m['_culture_country_of_residence']   ?? '',
