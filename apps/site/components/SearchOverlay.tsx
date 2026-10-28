@@ -27,6 +27,7 @@ interface SearchResults {
   directory: SearchResult[];
   pulse:     SearchResult[];
   community: SearchResult[];
+  hubs:      SearchResult[];
 }
 
 interface Props {
@@ -95,7 +96,8 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
       (results.quotes?.length ?? 0) +
       (results.directory?.length ?? 0) +
       (results.pulse?.length ?? 0) +
-      (results.community?.length ?? 0)
+      (results.community?.length ?? 0) +
+      (results.hubs?.length ?? 0)
     : 0;
 
   const hasResults = !!results && total > 0;
@@ -144,13 +146,14 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
 
         {!showingContent && (
           <p className="search-hint">
-            Search across magazine, events, origins, quotes, culture directory and shop.
+            Search across hubs, magazine, events, origins, quotes, culture directory and shop.
           </p>
         )}
 
         {/* ── Results ── */}
         {hasResults && (
           <div className="search-results">
+            <ResultSection label="Hubs"              items={results!.hubs}       basePath="/hub"       onClose={onClose} />
             <ResultSection label="Pulse"             items={results!.pulse}      basePath="/pulse"     onClose={onClose} />
             <ResultSection label="Community"         items={results!.community}  basePath="/community" onClose={onClose} />
             <ResultSection label="Magazine"        items={results!.magazine}   basePath="/magazine"  onClose={onClose} />
