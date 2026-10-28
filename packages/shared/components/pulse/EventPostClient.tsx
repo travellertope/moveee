@@ -211,12 +211,13 @@ function RsvpToggle({ postId, initialCount, isOwn, onManage }: { postId?: string
         {guestListLabel}
         {attendingCount}
         {onManage ? (
-          <button onClick={onManage} style={{
+          <Link href="/member/events" style={{
+            display: "inline-block",
             padding: "5px 14px", borderRadius: "var(--radius-full)",
-            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            fontWeight: 700, fontSize: "0.72rem",
             background: "var(--ink)", color: "#fff",
-            cursor: "pointer", letterSpacing: "0.04em",
-          }}>Manage Event</button>
+            textDecoration: "none", letterSpacing: "0.04em",
+          }}>Manage Event</Link>
         ) : (
           <button disabled style={{
             padding: "5px 14px", borderRadius: "var(--radius-full)",
@@ -378,6 +379,12 @@ export default function EventPostClient({
   const canEdit = !!isOwn && isPro;
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 540);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 540);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const orientation = useImageOrientation(image);
 
@@ -435,8 +442,8 @@ export default function EventPostClient({
   const dateFormatted = formatEventDateTime(eventDate);
   const locationDisplay = [location, city].filter(Boolean).join(", ") || null;
 
-  const isLandscape = orientation === "landscape" || orientation === "unknown";
-  const isPortraitOrSquare = orientation === "portrait" || orientation === "square";
+  const isLandscape = orientation === "landscape" || orientation === "unknown" || isMobile;
+  const isPortraitOrSquare = (orientation === "portrait" || orientation === "square") && !isMobile;
 
   const clockIcon = (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

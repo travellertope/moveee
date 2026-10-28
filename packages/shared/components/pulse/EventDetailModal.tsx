@@ -213,12 +213,13 @@ function RsvpToggle({ postId, initialCount, capacity, isOwn, onManage }: { postI
           {count} attending
         </div>
         {onManage ? (
-          <button onClick={onManage} style={{
+          <Link href="/member/events" style={{
+            display: "inline-block",
             padding: "5px 14px", borderRadius: "var(--radius-full)",
-            fontWeight: 700, fontSize: "0.72rem", border: "none",
+            fontWeight: 700, fontSize: "0.72rem",
             background: "var(--ink)", color: "#fff",
-            cursor: "pointer", letterSpacing: "0.04em",
-          }}>Manage Event</button>
+            textDecoration: "none", letterSpacing: "0.04em",
+          }}>Manage Event</Link>
         ) : (
           <button disabled style={{
             padding: "5px 14px", borderRadius: "var(--radius-full)",
@@ -449,8 +450,8 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const authorAvatar = item.communityAuthorAvatar || null;
   const authorUsername = item.communityAuthorUsername || null;
 
-  const isLandscape = orientation === "landscape" || orientation === "unknown";
-  const isPortraitOrSquare = orientation === "portrait" || orientation === "square";
+  const isLandscape = orientation === "landscape" || orientation === "unknown" || isMobile;
+  const isPortraitOrSquare = (orientation === "portrait" || orientation === "square") && !isMobile;
 
   // Clock icon SVG
   const clockIcon = (
