@@ -3710,51 +3710,43 @@ class Culture_REST_API {
      * management and list subscription here.
      */
     public static function handle_otp_find_or_create( $request ) {
-        $email    = $request->get_param( 'email' );
-        $list     = $request->has_param( 'list' ) ? sanitize_title( (string) $request->get_param( 'list' ) ) : '';
+        // Params are pre-sanitized by the route's sanitize_callback definitions.
+        // Avoid has_param() — it was added in WP 5.3 and causes a fatal on older installs.
+        $email    = (string) $request->get_param( 'email' );
+        $list_raw = $request->get_param( 'list' );
+        $list     = ( null !== $list_raw ) ? sanitize_title( (string) $list_raw ) : '';
         $referral = sanitize_key( (string) $request->get_param( 'referral' ) );
-
-        error_log( '[OTP-DBG] A: handler entered email=' . $email );
 
         if ( ! is_email( $email ) ) {
             return new WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'culture-community' ), array( 'status' => 400 ) );
         }
         if ( ! class_exists( 'Culture_Magic_OTP' ) ) {
-            error_log( '[OTP-DBG] Culture_Magic_OTP class missing' );
             return new WP_Error( 'server_error', __( 'OTP class unavailable.', 'culture-community' ), array( 'status' => 500 ) );
         }
 
-        error_log( '[OTP-DBG] B: about to call find_or_create_user' );
         try {
             $user = Culture_Magic_OTP::find_or_create_user( $email, $referral );
-            error_log( '[OTP-DBG] C: find_or_create_user returned type=' . ( is_wp_error( $user ) ? 'WP_Error' : get_class( $user ) ) . ' id=' . ( is_a( $user, 'WP_User' ) ? $user->ID : 'n/a' ) );
         } catch ( \Throwable $e ) {
-            error_log( '[OTP-DBG] find-or-create EXCEPTION: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            error_log( 'OTP find-or-create user error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
             return new WP_Error( 'otp_user_error', 'Account lookup failed — please try again.', array( 'status' => 500 ) );
         }
 
         if ( is_wp_error( $user ) ) {
-            error_log( '[OTP-DBG] D: WP_Error from find_or_create: ' . $user->get_error_message() );
             return $user;
         }
 
         if ( '' !== $list && class_exists( 'Culture_Subscribers_DB' ) ) {
-            error_log( '[OTP-DBG] E: about to subscribe list=' . $list );
             try {
                 Culture_Subscribers_DB::subscribe( $email, array( $list ), $user->display_name );
-                error_log( '[OTP-DBG] F: subscribe OK' );
             } catch ( \Throwable $e ) {
-                error_log( '[OTP-DBG] subscribe EXCEPTION: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+                error_log( 'OTP subscribe error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
             }
         }
 
-        error_log( '[OTP-DBG] G: about to build user_profile for user_id=' . $user->ID );
         try {
-            $profile = self::user_profile( $user );
-            error_log( '[OTP-DBG] H: user_profile built OK' );
-            return rest_ensure_response( $profile );
+            return rest_ensure_response( self::user_profile( $user ) );
         } catch ( \Throwable $e ) {
-            error_log( '[OTP-DBG] user_profile EXCEPTION: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+            error_log( 'OTP user_profile error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
             return new WP_Error( 'otp_profile_error', 'Account found but profile could not be loaded — please try again.', array( 'status' => 500 ) );
         }
     }
