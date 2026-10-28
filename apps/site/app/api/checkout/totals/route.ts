@@ -9,9 +9,6 @@ const API_SECRET = process.env.CULTURE_API_SECRET;
 // Body: cart_items [{id, qty, variation_id?}], country, state, city, postcode, address_1, coupon_code?
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
 
   const body = await req.json();
   const country = typeof body?.country === "string" ? body.country : "";
@@ -23,7 +20,7 @@ export async function POST(req: NextRequest) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${API_SECRET}`,
     },
-    body: JSON.stringify({ ...body, user_id: session.user.id }),
+    body: JSON.stringify({ ...body, user_id: (session?.user as any)?.id ?? 0 }),
     cache: "no-store",
   });
 
