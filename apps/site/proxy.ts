@@ -91,7 +91,6 @@ const APP_ROUTES = new Set([
   'africa',
   // Connect (Site B) — now merged onto themoveee.com
   'feed',
-  'connect',
   'events',
   'community',
   'pulse',
@@ -118,6 +117,7 @@ const APP_ROUTES = new Set([
 // to their canonical Next.js route.
 const ROUTE_ALIASES: Record<string, string> = {
   'tours': '/journeys',
+  'connect': '/feed',
 }
 
 const EDITION_COOKIE = 'moveee-edition'
@@ -125,7 +125,13 @@ const EDITION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const hostname = request.headers.get('host') ?? ''
   const { searchParams } = new URL(request.url)
+
+  // connect.themoveee.com → themoveee.com/feed
+  if (hostname === 'connect.themoveee.com') {
+    return NextResponse.redirect('https://themoveee.com/feed', { status: 301 })
+  }
   // Strip legacy WooCommerce currency param — creates duplicate URL variants
   if (searchParams.has('wmc-currency')) {
     const clean = new URL(request.url)
@@ -306,6 +312,11 @@ export async function proxy(request: NextRequest) {
       new URL('/wp-login.php', 'https://cms.themoveee.com'),
       302
     )
+  }
+
+  // /connect and /connect/* → /feed (subdomain redirect handled above at proxy entry)
+  if (pathname === '/connect' || pathname.startsWith('/connect/')) {
+    return NextResponse.redirect(new URL('/feed', request.url), { status: 301 })
   }
 
   // ── The Moveee Lifestyle renamed from /shop to /lifestyle (Sept 2026) —
