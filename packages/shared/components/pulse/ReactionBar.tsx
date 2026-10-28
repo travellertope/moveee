@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Heart, Bookmark, Share2 } from "lucide-react";
+import { isProfileComplete } from "@/lib/profileComplete";
 
 const BOOKMARK_STORAGE = "moveee_bookmarks";
 const REACTION_STORAGE = "moveee_reactions";
@@ -44,7 +45,7 @@ export default function ReactionBar({
   flagSlot,
   onShare,
 }: ReactionBarProps) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const loggedIn = status === "authenticated";
 
   const [loveCount, setLoveCount] = useState(initialCounts.love);
@@ -53,6 +54,7 @@ export default function ReactionBar({
   const [copied, setCopied] = useState(false);
   const [reactPending, setReactPending] = useState(false);
   const [bookmarkPending, setBookmarkPending] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   // Tracks whether any user action is in flight so the background GET
   // reconciliation does not clobber an optimistic update.
   const actionInFlight = useRef(false);
@@ -86,6 +88,7 @@ export default function ReactionBar({
 
   async function handleLove() {
     if (!loggedIn) { window.dispatchEvent(new Event("open-auth-modal")); return; }
+    if (!isProfileComplete(session)) { setShowProfilePrompt(true); return; }
     if (reactPending) return;
 
     const isRemoving = myReaction === "love";
@@ -193,6 +196,7 @@ export default function ReactionBar({
   const loveActive = myReaction === "love";
 
   return (
+    <>
     <div style={{
       display: "flex",
       alignItems: "center",
@@ -336,5 +340,34 @@ export default function ReactionBar({
 
       </div>
     </div>
+    {showProfilePrompt && (
+      <div style={{
+        marginTop: "0.4rem",
+        padding: "0.55rem 0.9rem",
+        background: "var(--paper-deep, #f8f6f2)",
+        border: "1px solid rgba(122,36,28,0.25)",
+        borderRadius: "var(--radius-lg, 6px)",
+        fontSize: "0.78rem",
+        color: "var(--ink-soft, #5a5248)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "0.75rem",
+      }}>
+        <span>Add a name and photo to react.</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+          <a href="/member/settings/profile" style={{ color: "var(--ochre, #7a241c)", fontWeight: 700, textDecoration: "none", fontSize: "0.75rem" }}>
+            Complete profile →
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowProfilePrompt(false)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--mute, #bbb)", fontSize: "0.9rem", lineHeight: 1, padding: "0 2px" }}
+            aria-label="Dismiss"
+          >×</button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
