@@ -474,7 +474,12 @@ class Culture_REST_API {
                 'list'     => array(
                     'required'          => false,
                     'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_title',
+                    // sanitize_title($title, $fallback_title) returns $fallback_title when $title
+                    // resolves to ''. WP REST passes $request as arg 2, so wrap to avoid storing
+                    // the request object as the sanitized value.
+                    'sanitize_callback' => static function( $value ) {
+                        return sanitize_title( is_string( $value ) ? $value : '' );
+                    },
                 ),
                 'referral' => array(
                     'required'          => false,
@@ -3711,11 +3716,13 @@ class Culture_REST_API {
      */
     public static function handle_otp_find_or_create( $request ) {
         // Params are pre-sanitized by the route's sanitize_callback definitions.
-        // Avoid has_param() — it was added in WP 5.3 and causes a fatal on older installs.
-        $email    = (string) $request->get_param( 'email' );
-        $list_raw = $request->get_param( 'list' );
-        $list     = ( null !== $list_raw ) ? sanitize_title( (string) $list_raw ) : '';
-        $referral = sanitize_key( (string) $request->get_param( 'referral' ) );
+        // Guard with is_string() in case any sanitize_callback ever leaks a non-scalar.
+        $email_raw = $request->get_param( 'email' );
+        $email     = is_string( $email_raw ) ? $email_raw : '';
+        $list_raw  = $request->get_param( 'list' );
+        $list      = is_string( $list_raw ) ? $list_raw : '';
+        $ref_raw   = $request->get_param( 'referral' );
+        $referral  = is_string( $ref_raw ) ? sanitize_key( $ref_raw ) : '';
 
         if ( ! is_email( $email ) ) {
             return new WP_Error( 'invalid_email', __( 'Enter a valid email address.', 'culture-community' ), array( 'status' => 400 ) );
