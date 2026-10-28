@@ -449,8 +449,8 @@ export default function EventDetailModal({ item, onClose }: Props) {
   const authorAvatar = item.communityAuthorAvatar || null;
   const authorUsername = item.communityAuthorUsername || null;
 
-  const isLandscape = orientation === "landscape" || orientation === "unknown";
-  const isPortraitOrSquare = orientation === "portrait" || orientation === "square";
+  const isLandscape = orientation === "landscape" || orientation === "unknown" || isMobile;
+  const isPortraitOrSquare = (orientation === "portrait" || orientation === "square") && !isMobile;
 
   // Clock icon SVG
   const clockIcon = (

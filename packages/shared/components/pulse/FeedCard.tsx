@@ -780,6 +780,14 @@ export default function FeedCard({
       item.templateType === "event" && item.image ? "unknown" : "square"
     );
     // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 540);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      const check = () => setIsMobile(window.innerWidth < 540);
+      window.addEventListener("resize", check);
+      return () => window.removeEventListener("resize", check);
+    }, []);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       if (item.templateType !== "event" || !item.image) return;
       const img = new window.Image();
@@ -1269,7 +1277,7 @@ export default function FeedCard({
                 </div>
               ) : null;
 
-              if (isPortrait && item.image) {
+              if (isPortrait && item.image && !isMobile) {
                 // Portrait / square: image left 38%, content right
                 return (
                   <div style={{ borderRadius: "var(--radius-xl)", overflow: "hidden", border: "1px solid var(--rule)", marginBottom: "0.6rem", display: "flex", flexDirection: "row" }}>

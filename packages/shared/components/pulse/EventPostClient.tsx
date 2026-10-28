@@ -378,6 +378,12 @@ export default function EventPostClient({
   const canEdit = !!isOwn && isPro;
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 540);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 540);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const orientation = useImageOrientation(image);
 
@@ -435,8 +441,8 @@ export default function EventPostClient({
   const dateFormatted = formatEventDateTime(eventDate);
   const locationDisplay = [location, city].filter(Boolean).join(", ") || null;
 
-  const isLandscape = orientation === "landscape" || orientation === "unknown";
-  const isPortraitOrSquare = orientation === "portrait" || orientation === "square";
+  const isLandscape = orientation === "landscape" || orientation === "unknown" || isMobile;
+  const isPortraitOrSquare = (orientation === "portrait" || orientation === "square") && !isMobile;
 
   const clockIcon = (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
