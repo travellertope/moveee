@@ -16,12 +16,12 @@ export default async function InterestsSettingsPage() {
   const user = session.user as any;
 
   return (
-    <section className="mem-card">
-      <div className="mem-card-label">Your Interests</div>
-      <p style={{ fontSize: "0.78rem", color: "var(--mute)", margin: "0 0 14px", lineHeight: 1.5 }}>
+    <div>
+      <div className="sett-section-label">Your Interests</div>
+      <p style={{ fontSize: "0.82rem", color: "var(--mute)", margin: "0 0 20px", lineHeight: 1.5 }}>
         Your interests shape your personalised feed. Select at least 3.
       </p>
       <InterestEditor initialInterests={user.interests ?? []} />
-    </section>
+    </div>
   );
 }

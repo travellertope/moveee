@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import type { WpComment } from "@/lib/pulse-wordpress";
+import { isProfileComplete } from "@/lib/profileComplete";
 
 function formatCommentDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -42,10 +43,12 @@ export default function CommentThread({ postId, initialComments }: CommentThread
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "moderation" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user?.email) return;
+    if (!isProfileComplete(session)) { setShowProfilePrompt(true); return; }
 
     setSubmitting(true);
     setStatus("idle");
@@ -160,8 +163,37 @@ export default function CommentThread({ postId, initialComments }: CommentThread
         </button>
       )}
 
+      {/* Profile completeness prompt */}
+      {authStatus === "authenticated" && showProfilePrompt && (
+        <div style={{
+          padding: "0.75rem 1rem",
+          background: "var(--paper-deep, #f8f6f2)",
+          border: "1px solid rgba(122,36,28,0.25)",
+          borderRadius: "var(--radius-lg, 6px)",
+          fontSize: "0.82rem",
+          color: "var(--ink-soft, #5a5248)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+        }}>
+          <span>Add a name and photo to join the conversation.</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+            <a href="/member/settings/profile" style={{ color: "var(--ochre, #7a241c)", fontWeight: 700, textDecoration: "none", fontSize: "0.79rem" }}>
+              Complete profile →
+            </a>
+            <button
+              type="button"
+              onClick={() => setShowProfilePrompt(false)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--mute, #bbb)", fontSize: "0.9rem", lineHeight: 1, padding: "0 2px" }}
+              aria-label="Dismiss"
+            >×</button>
+          </div>
+        </div>
+      )}
+
       {/* Comment form */}
-      {authStatus === "authenticated" && (
+      {authStatus === "authenticated" && !showProfilePrompt && (
         <div style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start" }}>
           {/* Current user avatar */}
           <div style={{

@@ -3,23 +3,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { label: "Profile",     href: "/member/settings/profile" },
-  { label: "Directory",   href: "/member/settings/directory" },
-  { label: "Interests",   href: "/member/settings/interests" },
-  { label: "Newsletters", href: "/member/settings/newsletters" },
+  { label: "Profile",       href: "/member/settings/profile" },
+  { label: "Interests",     href: "/member/settings/interests" },
+  { label: "Newsletters",   href: "/member/settings/newsletters" },
   { label: "Notifications", href: "/member/settings/notifications" },
-  { label: "Security",    href: "/member/settings/security" },
+  { label: "Security",      href: "/member/settings/security" },
 ];
 
 export default function SettingsTabs() {
   const pathname = usePathname();
   return (
-    <div className="mem-settings-tabs">
+    <div className="sett-tabs-bar">
       {TABS.map(tab => (
         <Link
           key={tab.href}
           href={tab.href}
-          className={`prf-tab${pathname === tab.href ? " prf-tab--active" : ""}`}
+          className={`sett-tab${pathname === tab.href ? " sett-tab--active" : ""}`}
         >
           {tab.label}
         </Link>

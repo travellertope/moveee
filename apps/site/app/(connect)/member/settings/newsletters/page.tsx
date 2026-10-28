@@ -16,9 +16,9 @@ export default async function NewslettersSettingsPage() {
   const user = session.user as any;
 
   return (
-    <section className="mem-card">
-      <div className="mem-card-label">Newsletter Subscriptions</div>
+    <div>
+      <div className="sett-section-label">Newsletter Subscriptions</div>
       <NewsletterPreferences email={user.email as string} />
-    </section>
+    </div>
   );
 }

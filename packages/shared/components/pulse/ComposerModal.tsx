@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { isProfileComplete } from "@/lib/profileComplete";
 import DirectorySearch from "@/components/composer/DirectorySearch";
 import MultiRating from "../composer/MultiRating";
 
@@ -274,6 +275,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [submitting, setSubmitting]       = useState(false);
   const [error, setError]                 = useState("");
+  const [profilePrompt, setProfilePrompt] = useState(false);
 
   // Sync initialTab when it changes (star button sets review)
   useEffect(() => {
@@ -384,6 +386,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   async function handleSubmit() {
     setError("");
+    if (!isProfileComplete(session)) { setProfilePrompt(true); return; }
     setSubmitting(true);
     try {
       if (activeTab === "quote") {
@@ -1390,6 +1393,34 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             </>
           )}
         </div>
+
+        {/* Profile completeness prompt */}
+        {profilePrompt && (
+          <div style={{
+            padding: "0.6rem 1rem",
+            background: "rgba(122,36,28,0.05)",
+            borderTop: "1px solid rgba(122,36,28,0.2)",
+            fontSize: "0.8rem",
+            color: "var(--ink-soft, #5a5248)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+          }}>
+            <span>Add a name and photo to your profile to post.</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+              <a href="/member/settings/profile" style={{ color: "var(--ochre, #7a241c)", fontWeight: 700, textDecoration: "none", fontSize: "0.77rem" }}>
+                Complete profile →
+              </a>
+              <button
+                type="button"
+                onClick={() => setProfilePrompt(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--mute, #bbb)", fontSize: "0.9rem", lineHeight: 1, padding: "0 2px" }}
+                aria-label="Dismiss"
+              >×</button>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="cm-footer">

@@ -14,9 +14,9 @@ export default async function NotificationsSettingsPage() {
   if (!session?.user) redirect("/login?callbackUrl=/member/settings/notifications");
 
   return (
-    <section className="mem-card">
-      <div className="mem-card-label">Notification Preferences</div>
+    <div>
+      <div className="sett-section-label">Notification Preferences</div>
       <NotificationPreferences />
-    </section>
+    </div>
   );
 }

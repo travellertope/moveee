@@ -12,15 +12,14 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login?callbackUrl=/member/settings");
 
-  const user = session.user as any;
-
   return (
-    <div className="acct-page">
-      <div className="acct-wrap">
-        <SettingsTabs />
-
-        <div style={{ maxWidth: 640, display: "flex", flexDirection: "column", gap: 24 }}>
-          {children}
+    <div className="sett-page">
+      <div className="sett-wrap">
+        <div className="sett-shell">
+          <SettingsTabs />
+          <div className="sett-body">
+            {children}
+          </div>
         </div>
       </div>
     </div>
