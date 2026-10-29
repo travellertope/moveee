@@ -288,7 +288,7 @@ class Culture_Flutterwave {
         if ( ! self::is_configured() ) {
             return new WP_Error( 'flutterwave_unconfigured', 'Flutterwave is not configured.', [ 'status' => 503 ] );
         }
-        $response = wp_remote_get( self::API_BASE . '/bills/categories?country=' . strtoupper( $country ), [
+        $response = wp_remote_get( self::API_BASE . '/bill-categories?country=' . strtoupper( $country ), [
             'headers' => [ 'Authorization' => 'Bearer ' . self::secret_key() ],
             'timeout' => 30,
         ] );
