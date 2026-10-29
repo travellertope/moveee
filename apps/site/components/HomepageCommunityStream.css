@@ -19,16 +19,16 @@
   background: var(--ochre);
 }
 
-/* Masonry grid */
+/* Card grid */
 .hcs-masonry {
-  column-count: 4;
-  column-gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
 /* Card base */
 .hcs-card {
-  break-inside: avoid;
-  display: inline-block; /* required for masonry break-inside */
   width: 100%;
   background: var(--paper-deep, #ede5d3);
   border-radius: var(--radius-xl, 12px);
@@ -296,11 +296,11 @@
 
 /* Responsive */
 @media (max-width: 1100px) {
-  .hcs-masonry { column-count: 3; }
+  .hcs-masonry { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 740px) {
-  .hcs-masonry { column-count: 2; }
+  .hcs-masonry { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 500px) {
-  .hcs-masonry { column-count: 1; }
+  .hcs-masonry { grid-template-columns: 1fr; }
 }

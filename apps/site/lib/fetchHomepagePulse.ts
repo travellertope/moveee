@@ -1,7 +1,7 @@
 import { getCommunityPosts } from "@/lib/unified-feed";
 import type { FeedItem } from "@/lib/unified-feed";
 
-const MIN_REACTIONS = 3;
+const MIN_REACTIONS = 1;
 const MAX_CARDS = 12;
 
 export async function fetchHomepagePulse(): Promise<FeedItem[]> {
