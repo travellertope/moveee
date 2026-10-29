@@ -203,18 +203,19 @@ export default function HomepageCommunityStream({ items }: Props) {
       <div className="wrap">
         <div className="arc-hdr">
           <h2>From The <em>Community</em></h2>
-          <div className="hcs-hdr-actions">
-            <button className="hcs-post-btn" onClick={openComposer}>
-              Post an update
-            </button>
-            <a href="/feed" className="arc-viewall">See all →</a>
-          </div>
+          <button className="hcs-post-btn" onClick={openComposer}>
+            Post an update
+          </button>
         </div>
 
         <div className="hcs-masonry">
           {items.map((item) => (
             <StreamCard key={item.id} item={item} onOpen={openItem} />
           ))}
+        </div>
+
+        <div className="hcs-viewmore-row">
+          <a href="/feed" className="hcs-viewmore-btn">View more</a>
         </div>
       </div>
 

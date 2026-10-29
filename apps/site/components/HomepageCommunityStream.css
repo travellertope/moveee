@@ -1,12 +1,6 @@
 /* Community Stream — masonry card grid, homepage */
 
-/* Header row: title left, actions (CTA + view-all) right */
-.hcs-hdr-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
+/* Post an update CTA — right side of section header */
 .hcs-post-btn {
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   font-size: 12px;
@@ -275,15 +269,38 @@
   flex-shrink: 0;
 }
 
+/* View more pill */
+.hcs-viewmore-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+.hcs-viewmore-btn {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius-full, 9999px);
+  padding: 9px 28px;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+  display: inline-block;
+}
+.hcs-viewmore-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
   .hcs-masonry { column-count: 3; }
 }
 @media (max-width: 740px) {
   .hcs-masonry { column-count: 2; }
-  .hcs-hdr-actions { gap: 10px; }
 }
 @media (max-width: 500px) {
   .hcs-masonry { column-count: 1; }
-  .hcs-post-btn { display: none; } /* CTA hides on phone — they can tap through to /feed */
 }
