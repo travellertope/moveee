@@ -440,13 +440,13 @@ class Culture_Gamification {
      * @return int
      */
     public static function get_daily_cap( $user_id = 0 ) {
-        $saved = get_option( 'culture_daily_credit_cap', null );
-        if ( $saved !== null ) return (int) $saved;
-        if ( $user_id ) {
-            $tier = get_user_meta( (int) $user_id, '_culture_membership_tier', true );
-            if ( 'patron' === $tier ) return 100;
+        $tier = $user_id ? get_user_meta( (int) $user_id, '_culture_membership_tier', true ) : '';
+        if ( 'patron' === $tier ) {
+            $saved = get_option( 'culture_patron_daily_cap', null );
+            return $saved !== null ? (int) $saved : 100;
         }
-        return self::DAILY_CREDIT_CAP;
+        $saved = get_option( 'culture_citizen_daily_cap', null );
+        return $saved !== null ? (int) $saved : self::DAILY_CREDIT_CAP;
     }
 
     /**
@@ -532,6 +532,14 @@ class Culture_Gamification {
     public static function award_reputation( $user_id, $amount, $source = '', $source_id = 0 ) {
         if ( $amount <= 0 ) return self::get_reputation( $user_id );
 
+        $tier = get_user_meta( (int) $user_id, '_culture_membership_tier', true );
+        if ( 'patron' === $tier ) {
+            $multiplier = (float) get_option( 'culture_patron_points_multiplier', 2.0 );
+            if ( $multiplier > 1.0 ) {
+                $amount = (int) round( $amount * $multiplier );
+            }
+        }
+
         $current  = self::get_reputation( $user_id );
         $new_total = $current + $amount;
         update_user_meta( $user_id, '_culture_reputation', $new_total );
@@ -589,6 +597,14 @@ class Culture_Gamification {
     public static function award_credits( $user_id, $amount, $source = '', $source_id = 0 ) {
         global $wpdb;
         if ( $amount <= 0 ) return 0;
+
+        $tier = get_user_meta( (int) $user_id, '_culture_membership_tier', true );
+        if ( 'patron' === $tier ) {
+            $multiplier = (float) get_option( 'culture_patron_credits_multiplier', 2.0 );
+            if ( $multiplier > 1.0 ) {
+                $amount = (int) round( $amount * $multiplier );
+            }
+        }
 
         // Advisory mutex prevents concurrent award_credits calls for the same user
         // from racing past the daily-cap check (TOCTOU). Timeout: 3 seconds.
