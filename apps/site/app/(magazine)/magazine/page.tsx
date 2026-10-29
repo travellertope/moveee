@@ -1,6 +1,6 @@
 import React from "react";
-import MagazineArchiveWrapper from "./MagazineArchiveWrapper";
 import { Metadata } from "next";
+import HomepageView from "@/components/HomepageView";
 
 export const revalidate = 300;
 
@@ -25,20 +25,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function MagazinePage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ category?: string, industry?: string, country?: string, series?: string, tag?: string }> 
-}) {
-  const resolvedParams = await searchParams;
-  
-  return (
-    <MagazineArchiveWrapper 
-      category={resolvedParams?.category}
-      industry={resolvedParams?.industry}
-      country={resolvedParams?.country}
-      series={resolvedParams?.series}
-      tag={resolvedParams?.tag}
-    />
-  );
+export default async function MagazinePage() {
+  return <HomepageView edition="global" />;
 }
