@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import SettingsTabs from "./SettingsTabs";
+import RightSidebar from "../../RightSidebar";
 import "../../../connect-member.css";
 
 export const metadata = {
@@ -21,6 +23,9 @@ export default async function SettingsLayout({ children }: { children: React.Rea
             {children}
           </div>
         </div>
+        <Suspense fallback={null}>
+          <RightSidebar />
+        </Suspense>
       </div>
     </div>
   );
