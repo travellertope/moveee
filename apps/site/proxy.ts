@@ -181,21 +181,25 @@ export async function proxy(request: NextRequest) {
     return setCountryCookie(res)
   }
 
-  // Geo-redirect /magazine to edition-specific paths
-  // /newsletter is a global archive listing page — do NOT redirect it
-  if (pathname === '/magazine') {
-    const saved = request.cookies.get(EDITION_COOKIE)?.value
-    if (saved && isValidRegionalSlug(saved)) {
-      return NextResponse.redirect(new URL(`${pathname}/${saved}`, request.url))
-    }
-    const geoCountry = request.headers.get('x-vercel-ip-country') ?? ''
-    const edition = editionFromCountry(geoCountry)
-    if (edition !== 'global') {
-      const res = NextResponse.redirect(new URL(`${pathname}/${edition}`, request.url))
-      res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
-      return res
-    }
-  }
+  // DISABLED: /magazine is now the editorial homepage (HomepageView), not an
+  // edition archive — redirecting to /magazine/africa etc. would send visitors
+  // to the old MagazineArchiveWrapper instead of the new homepage. Edition-aware
+  // filtering on the homepage is handled via the moveee-edition cookie in
+  // (magazine)/magazine/page.tsx itself, not here.
+  //
+  // if (pathname === '/magazine') {
+  //   const saved = request.cookies.get(EDITION_COOKIE)?.value
+  //   if (saved && isValidRegionalSlug(saved)) {
+  //     return NextResponse.redirect(new URL(`${pathname}/${saved}`, request.url))
+  //   }
+  //   const geoCountry = request.headers.get('x-vercel-ip-country') ?? ''
+  //   const edition = editionFromCountry(geoCountry)
+  //   if (edition !== 'global') {
+  //     const res = NextResponse.redirect(new URL(`${pathname}/${edition}`, request.url))
+  //     res.cookies.set(EDITION_COOKIE, edition, { path: '/', maxAge: EDITION_COOKIE_MAX_AGE })
+  //     return res
+  //   }
+  // }
 
   // TEMPORARILY DISABLED (see app/page.tsx): while /magazine is standing in
   // as the front page, we don't want UK/US/Africa visitors geo-redirected
