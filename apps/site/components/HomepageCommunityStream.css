@@ -1,0 +1,289 @@
+/* Community Stream — masonry card grid, homepage */
+
+/* Header row: title left, actions (CTA + view-all) right */
+.hcs-hdr-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hcs-post-btn {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  padding: 7px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.hcs-post-btn:hover {
+  background: var(--ochre);
+}
+
+/* Masonry grid */
+.hcs-masonry {
+  column-count: 4;
+  column-gap: 16px;
+}
+
+/* Card base */
+.hcs-card {
+  break-inside: avoid;
+  display: inline-block; /* required for masonry break-inside */
+  width: 100%;
+  background: var(--paper-deep, #ede5d3);
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  border: 1px solid transparent;
+}
+.hcs-card:hover {
+  box-shadow: 0 4px 20px rgba(20, 17, 13, 0.1);
+  transform: translateY(-1px);
+}
+.hcs-card:focus-visible {
+  outline: 2px solid var(--ochre);
+  outline-offset: 2px;
+}
+
+/* Quote cards: distinct accent treatment */
+.hcs-card--quote {
+  background: var(--ochre, #7a241c);
+  color: var(--paper, #f3ece0);
+  border-color: transparent;
+}
+.hcs-card--quote .hcs-card__tag,
+.hcs-card--quote .hcs-card__time,
+.hcs-card--quote .hcs-card__author-name,
+.hcs-card--quote .hcs-card__quote-src {
+  color: rgba(243, 236, 224, 0.75);
+}
+.hcs-card--quote .hcs-card__text {
+  color: var(--paper, #f3ece0);
+}
+.hcs-card--quote .hcs-card__avatar-placeholder {
+  background: rgba(243, 236, 224, 0.2);
+  color: var(--paper, #f3ece0);
+}
+
+/* Image at top of card */
+.hcs-card__img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.hcs-card__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Body padding */
+.hcs-card__body {
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Tag + time row */
+.hcs-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hcs-card__tag {
+  font-family: "JetBrains Mono", "Courier New", monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ochre, #7a241c);
+  background: rgba(122, 36, 28, 0.08);
+  border-radius: var(--radius-sm, 2px);
+  padding: 2px 5px;
+}
+.hcs-card--quote .hcs-card__tag {
+  background: rgba(243, 236, 224, 0.15);
+  color: var(--paper, #f3ece0);
+}
+.hcs-card__time {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--mute);
+}
+
+/* Star rating */
+.hcs-stars {
+  font-size: 13px;
+  color: var(--gold, #b38238);
+  letter-spacing: 1px;
+}
+
+/* Review subject */
+.hcs-card__subject {
+  font-family: "Fraunces", "Georgia", serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.hcs-card__subject-by {
+  font-weight: 400;
+  color: var(--mute);
+}
+
+/* Body text */
+.hcs-card__text {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-soft, var(--ink));
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Quotes get a tighter clamp and serif treatment */
+.hcs-card__text--quote {
+  font-family: "Fraunces", "Georgia", serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-line-clamp: 6;
+}
+.hcs-card__text:not(.hcs-card__text--quote) {
+  -webkit-line-clamp: 4;
+}
+.hcs-card__ldquo,
+.hcs-card__rdquo {
+  font-size: 18px;
+  line-height: 0;
+  vertical-align: -0.25em;
+  opacity: 0.5;
+}
+
+/* Quote attribution */
+.hcs-card__quote-src {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--mute);
+  margin: 0;
+}
+
+/* Poll option list */
+.hcs-card__poll {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hcs-card__poll li {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-soft, var(--ink));
+  background: rgba(20, 17, 13, 0.05);
+  border-radius: var(--radius-md, 4px);
+  padding: 5px 10px;
+}
+.hcs-card__poll-more {
+  font-size: 11px !important;
+  color: var(--mute) !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Event card */
+.hcs-card__event-name {
+  font-family: "Fraunces", serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.35;
+}
+.hcs-card__event-loc {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  color: var(--mute);
+  margin: 0;
+}
+
+/* Footer: author + reactions */
+.hcs-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(20, 17, 13, 0.07);
+}
+.hcs-card--quote .hcs-card__footer {
+  border-top-color: rgba(243, 236, 224, 0.2);
+}
+
+.hcs-card__author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.hcs-card__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.hcs-card__avatar-placeholder {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(20, 17, 13, 0.12);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.hcs-card__author-name {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft, var(--ink));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hcs-card__reactions {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--mute);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .hcs-masonry { column-count: 3; }
+}
+@media (max-width: 740px) {
+  .hcs-masonry { column-count: 2; }
+  .hcs-hdr-actions { gap: 10px; }
+}
+@media (max-width: 500px) {
+  .hcs-masonry { column-count: 1; }
+  .hcs-post-btn { display: none; } /* CTA hides on phone — they can tap through to /feed */
+}

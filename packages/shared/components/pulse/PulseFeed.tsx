@@ -325,14 +325,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
     setVisibleCount(20);
   };
 
-  // Suggested users for "Users to Follow" sidebar section
-  const [suggestedUsers, setSuggestedUsers] = useState<{ id: string; displayName: string; username: string; occupation?: string }[]>([]);
-  useEffect(() => {
-    fetch("/api/connect/members?per_page=4&sort=recent")
-      .then(res => res.ok ? res.json() : null)
-      .then(data => { if (data?.members) setSuggestedUsers(data.members.slice(0, 4)); })
-      .catch(() => {});
-  }, []);
 
   return (
     <div style={{ background: "var(--feed-bg, #f7f8fb)" }}>
@@ -583,30 +575,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
               ))}
             </div>
           </div>
-
-          {/* Users to Follow */}
-          {suggestedUsers.length > 0 && (
-            <div className="pf-sidebar-section">
-              <div className="pf-section-header">
-                <div className="pf-section-title-row">
-                  <h3 className="pf-section-title">Writers to Follow</h3>
-                </div>
-                <Link href="/discover" className="pf-section-see-all">See all</Link>
-              </div>
-              {suggestedUsers.map(user => (
-                <div key={user.id} className="pf-follow-row">
-                  <div className="pf-follow-avatar">
-                    {(user.displayName || user.username || "?").charAt(0).toUpperCase()}
-                  </div>
-                  <div className="pf-follow-info">
-                    <p className="pf-follow-name">{user.displayName || user.username}</p>
-                    {user.occupation && <p className="pf-follow-sub">{user.occupation}</p>}
-                  </div>
-                  <Link href={`/connect/${user.username}`} className="pf-follow-btn">Follow</Link>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Trending hint for users with interests who are on All Posts */}
           {hasInterests && !forYou && !followingFilter && (
