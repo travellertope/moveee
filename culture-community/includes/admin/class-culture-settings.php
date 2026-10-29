@@ -321,6 +321,8 @@ class Culture_Settings {
         }
         register_setting( 'culture_settings_credits', 'culture_citizen_daily_cap', $int );
         register_setting( 'culture_settings_credits', 'culture_patron_daily_cap', $int );
+        register_setting( 'culture_settings_credits', 'culture_patron_credits_multiplier', [ 'type' => 'number', 'sanitize_callback' => fn( $v ) => max( 1.0, (float) $v ) ] );
+        register_setting( 'culture_settings_credits', 'culture_patron_points_multiplier',  [ 'type' => 'number', 'sanitize_callback' => fn( $v ) => max( 1.0, (float) $v ) ] );
         register_setting( 'culture_settings_credits', 'culture_credits_per_gbp', $int );
         register_setting( 'culture_settings_credits', 'culture_credits_per_usd', $int );
         register_setting( 'culture_settings_credits', 'culture_credits_per_ngn', $int );
@@ -936,7 +938,29 @@ class Culture_Settings {
                 </td>
             </tr>
         </table>
+        </details>
 
+        <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;color:#1d2327;"><?php esc_html_e( 'Pro Member Earning Multiplier', 'culture-community' ); ?></summary>
+        <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Pro members earn this multiple of the base credits and points per action. Set to 1 to disable the bonus.', 'culture-community' ); ?></p>
+        <table class="form-table" style="margin-top:4px;">
+            <tr>
+                <th scope="row"><label for="culture_patron_credits_multiplier"><?php esc_html_e( 'Credits Multiplier', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_patron_credits_multiplier" name="culture_patron_credits_multiplier"
+                           value="<?php echo esc_attr( get_option( 'culture_patron_credits_multiplier', 2.0 ) ); ?>" min="1" max="10" step="0.1" class="small-text" />
+                    <span class="description"><?php esc_html_e( '× credits per action for Pro members (default: 2)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_patron_points_multiplier"><?php esc_html_e( 'Points Multiplier', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_patron_points_multiplier" name="culture_patron_points_multiplier"
+                           value="<?php echo esc_attr( get_option( 'culture_patron_points_multiplier', 2.0 ) ); ?>" min="1" max="10" step="0.1" class="small-text" />
+                    <span class="description"><?php esc_html_e( '× reputation points per action for Pro members (default: 2)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+        </table>
         </details>
 
         <details open style="margin-bottom:16px;border:1px solid #ddd;border-radius:4px;padding:12px 16px;">
