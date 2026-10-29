@@ -134,6 +134,7 @@ class Culture_Settings {
         'culture_grace_period_days'    => 7,
         'culture_patron_label'         => 'Patron',
         'culture_citizen_label'        => 'Citizen',
+        'culture_lit_label'            => 'Lit',
 
         // General.
         'culture_registration_page'    => '',
@@ -367,6 +368,7 @@ class Culture_Settings {
         register_setting( 'culture_settings_membership', 'culture_grace_period_days', $int );
         register_setting( 'culture_settings_membership', 'culture_patron_label', $text );
         register_setting( 'culture_settings_membership', 'culture_citizen_label', $text );
+        register_setting( 'culture_settings_membership', 'culture_lit_label', $text );
 
         // General.
         register_setting( 'culture_settings_general', 'culture_registration_page', $text );
@@ -1161,6 +1163,14 @@ class Culture_Settings {
                 </td>
             </tr>
             <tr>
+                <th scope="row"><label for="culture_lit_label"><?php esc_html_e( 'Literary Tier Label', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="text" id="culture_lit_label" name="culture_lit_label"
+                           value="<?php echo esc_attr( self::get( 'culture_lit_label' ) ); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e( 'Display name for the Literary-only membership tier (internally stored as "lit").', 'culture-community' ); ?></p>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row"><label for="culture_grace_period_days"><?php esc_html_e( 'Grace Period', 'culture-community' ); ?></label></th>
                 <td>
                     <input type="number" id="culture_grace_period_days" name="culture_grace_period_days"
@@ -1179,18 +1189,20 @@ class Culture_Settings {
                 <tr>
                     <th><?php esc_html_e( 'Feature', 'culture-community' ); ?></th>
                     <th><?php echo esc_html( self::get( 'culture_citizen_label' ) ); ?> (<?php esc_html_e( 'Free', 'culture-community' ); ?>)</th>
+                    <th><?php echo esc_html( self::get( 'culture_lit_label' ) ); ?> (<?php esc_html_e( 'Literary', 'culture-community' ); ?>)</th>
                     <th><?php echo esc_html( self::get( 'culture_patron_label' ) ); ?> (<?php esc_html_e( 'Paid', 'culture-community' ); ?>)</th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td><?php esc_html_e( 'Virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Physical &amp; virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'GetMeLit &amp; Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Cash out credits', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Daily credit cap', 'culture-community' ); ?></td><td>50</td><td>100</td></tr>
-                <tr><td><?php esc_html_e( 'Games plays per day', 'culture-community' ); ?></td><td>1</td><td>5</td></tr>
-                <tr><td><?php esc_html_e( 'Points &amp; badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Physical &amp; virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'GetMeLit &amp; Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'The Moveee Literary access', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Cash out credits', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Daily credit cap', 'culture-community' ); ?></td><td>50</td><td>50</td><td>100</td></tr>
+                <tr><td><?php esc_html_e( 'Games plays per day', 'culture-community' ); ?></td><td>1</td><td>1</td><td>5</td></tr>
+                <tr><td><?php esc_html_e( 'Points &amp; badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+                <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
             </tbody>
         </table>
         </details>
