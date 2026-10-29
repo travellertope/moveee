@@ -1226,13 +1226,23 @@ class Culture_Settings {
                     <th><?php echo esc_html( self::get( 'culture_patron_label' ) ); ?> (<?php esc_html_e( 'Paid', 'culture-community' ); ?>)</th>
                 </tr>
             </thead>
+            <?php
+            $citizen_cap       = (int) get_option( 'culture_citizen_daily_cap', 50 );
+            $patron_cap        = (int) get_option( 'culture_patron_daily_cap', 100 );
+            $credits_mult      = (float) get_option( 'culture_patron_credits_multiplier', 2.0 );
+            $points_mult       = (float) get_option( 'culture_patron_points_multiplier', 2.0 );
+            $credits_mult_str  = rtrim( rtrim( number_format( $credits_mult, 1 ), '0' ), '.' ) . '×';
+            $points_mult_str   = rtrim( rtrim( number_format( $points_mult, 1 ), '0' ), '.' ) . '×';
+            ?>
             <tbody>
                 <tr><td><?php esc_html_e( 'Virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Physical &amp; virtual events', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'GetMeLit &amp; Culture Drop', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'The Moveee Literary access', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Cash out credits', 'culture-community' ); ?></td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td></tr>
-                <tr><td><?php esc_html_e( 'Daily credit cap', 'culture-community' ); ?></td><td>50</td><td>50</td><td>100</td></tr>
+                <tr><td><?php esc_html_e( 'Daily credit cap', 'culture-community' ); ?></td><td><?php echo esc_html( $citizen_cap ); ?></td><td><?php echo esc_html( $citizen_cap ); ?></td><td><?php echo esc_html( $patron_cap ); ?></td></tr>
+                <tr><td><?php esc_html_e( 'Credits earned per action', 'culture-community' ); ?></td><td>1×</td><td>1×</td><td><?php echo esc_html( $credits_mult_str ); ?></td></tr>
+                <tr><td><?php esc_html_e( 'Points earned per action', 'culture-community' ); ?></td><td>1×</td><td>1×</td><td><?php echo esc_html( $points_mult_str ); ?></td></tr>
                 <tr><td><?php esc_html_e( 'Games plays per day', 'culture-community' ); ?></td><td>1</td><td>1</td><td>5</td></tr>
                 <tr><td><?php esc_html_e( 'Points &amp; badges', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
                 <tr><td><?php esc_html_e( 'Referral system', 'culture-community' ); ?></td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>

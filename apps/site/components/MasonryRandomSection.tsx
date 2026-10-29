@@ -22,7 +22,7 @@ export default function MasonryRandomSection({
   viewAllHref,
   viewAllLabel = "More →",
   stories,
-  max = 8,
+  max = 4,
 }: MasonrySectionProps) {
   // Drop null/undefined entries before anything reads off them — a single
   // bad node in a CMS response shouldn't be able to crash the section.
