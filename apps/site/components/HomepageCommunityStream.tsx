@@ -193,7 +193,10 @@ export default function HomepageCommunityStream({ items }: Props) {
 
   const openItem = useCallback((item: FeedItem) => setActiveItem(item), []);
   const closeItem = useCallback(() => setActiveItem(null), []);
-  const openComposer = useCallback(() => setComposerOpen(true), []);
+  const openComposer = useCallback(() => {
+    if (!session) { window.location.href = "/login?redirect=/"; return; }
+    setComposerOpen(true);
+  }, [session]);
   const closeComposer = useCallback(() => setComposerOpen(false), []);
 
   if (items.length === 0) return null;
