@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import type { FeedItem } from "@/lib/unified-feed";
 import "./HomepageCommunityStream.css";
+import "@/app/pulse-layout.css";
 
 const CommunityDetailModal = dynamic(
   () => import("@/components/pulse/CommunityDetailModal"),
