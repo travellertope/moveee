@@ -440,13 +440,13 @@ class Culture_Gamification {
      * @return int
      */
     public static function get_daily_cap( $user_id = 0 ) {
-        $saved = get_option( 'culture_daily_credit_cap', null );
-        if ( $saved !== null ) return (int) $saved;
-        if ( $user_id ) {
-            $tier = get_user_meta( (int) $user_id, '_culture_membership_tier', true );
-            if ( 'patron' === $tier ) return 100;
+        $tier = $user_id ? get_user_meta( (int) $user_id, '_culture_membership_tier', true ) : '';
+        if ( 'patron' === $tier ) {
+            $saved = get_option( 'culture_patron_daily_cap', null );
+            return $saved !== null ? (int) $saved : 100;
         }
-        return self::DAILY_CREDIT_CAP;
+        $saved = get_option( 'culture_citizen_daily_cap', null );
+        return $saved !== null ? (int) $saved : self::DAILY_CREDIT_CAP;
     }
 
     /**

@@ -319,7 +319,8 @@ class Culture_Settings {
         foreach ( $credit_keys as $key ) {
             register_setting( 'culture_settings_credits', $key, $int );
         }
-        register_setting( 'culture_settings_credits', 'culture_daily_credit_cap', $int );
+        register_setting( 'culture_settings_credits', 'culture_citizen_daily_cap', $int );
+        register_setting( 'culture_settings_credits', 'culture_patron_daily_cap', $int );
         register_setting( 'culture_settings_credits', 'culture_credits_per_gbp', $int );
         register_setting( 'culture_settings_credits', 'culture_credits_per_usd', $int );
         register_setting( 'culture_settings_credits', 'culture_credits_per_ngn', $int );
@@ -919,11 +920,19 @@ class Culture_Settings {
         <p class="description" style="margin-top:10px;"><?php esc_html_e( 'Maximum credits a member can earn in a single calendar day, across all actions.', 'culture-community' ); ?></p>
         <table class="form-table" style="margin-top:4px;">
             <tr>
-                <th scope="row"><label for="culture_daily_credit_cap"><?php esc_html_e( 'Daily Cap', 'culture-community' ); ?></label></th>
+                <th scope="row"><label for="culture_citizen_daily_cap"><?php esc_html_e( 'Citizen Daily Cap', 'culture-community' ); ?></label></th>
                 <td>
-                    <input type="number" id="culture_daily_credit_cap" name="culture_daily_credit_cap"
-                           value="<?php echo esc_attr( get_option( 'culture_daily_credit_cap', 50 ) ); ?>" min="1" step="1" class="small-text" />
-                    <span class="description"><?php esc_html_e( 'credits per day (default: 50)', 'culture-community' ); ?></span>
+                    <input type="number" id="culture_citizen_daily_cap" name="culture_citizen_daily_cap"
+                           value="<?php echo esc_attr( get_option( 'culture_citizen_daily_cap', 50 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits per day for free members (default: 50)', 'culture-community' ); ?></span>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><label for="culture_patron_daily_cap"><?php esc_html_e( 'Pro Daily Cap', 'culture-community' ); ?></label></th>
+                <td>
+                    <input type="number" id="culture_patron_daily_cap" name="culture_patron_daily_cap"
+                           value="<?php echo esc_attr( get_option( 'culture_patron_daily_cap', 100 ) ); ?>" min="1" step="1" class="small-text" />
+                    <span class="description"><?php esc_html_e( 'credits per day for Pro members (default: 100)', 'culture-community' ); ?></span>
                 </td>
             </tr>
         </table>
