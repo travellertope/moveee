@@ -2,13 +2,17 @@ import React from "react";
 import { type EditionSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
+import { fetchHomepagePulse } from "@/lib/fetchHomepagePulse";
 import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
 import MasonryRandomSection from "@/components/MasonryRandomSection";
 import CultureNewsSection from "@/components/CultureNewsSection";
+import HomepageCommunityStream from "@/components/HomepageCommunityStream";
 import ShopRail from "@/components/ShopRail";
 import JoinSection from "@/components/JoinSection";
 import KafartSection from "@/components/KafartSection";
+
+import type { FeedItem } from "@/lib/unified-feed";
 
 interface HomeSections {
   coverStory: any;
@@ -21,6 +25,7 @@ interface HomeSections {
   opinionStories: any[];
   featureStory: any | null;
   kafartStories: any[];
+  communityItems: FeedItem[];
 }
 
 const EMPTY: HomeSections = {
@@ -34,14 +39,16 @@ const EMPTY: HomeSections = {
   opinionStories: [],
   featureStory: null,
   kafartStories: [],
+  communityItems: [],
 };
 
 async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
   try {
-    const [homepageData, sections, newsletters] = await Promise.all([
+    const [homepageData, sections, newsletters, communityItems] = await Promise.all([
       fetchHomepageData(),
       getMagazineSections("global"),
       getNewslettersWithFallback(10).catch(() => []),
+      fetchHomepagePulse().catch(() => []),
     ]);
 
     const { coverStory, featuredPool: heroPlusFeatured, products, kafartStories: rawKafart } = homepageData;
@@ -87,6 +94,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       opinionStories: dedup(opinionStories),
       featureStory,
       kafartStories: rawKafart || [],
+      communityItems,
     };
   } catch (err: any) {
     console.error("[HomepageView] loadHomeSections failed:", err?.message || err);
@@ -106,6 +114,7 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     opinionStories,
     featureStory,
     kafartStories,
+    communityItems,
   } = await loadHomeSections(edition);
 
   return (
@@ -119,6 +128,8 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
       </section>
 
       <CultureNewsSection stories={editorialStories} />
+
+      <HomepageCommunityStream items={communityItems} />
 
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Front</em> Page</>}
