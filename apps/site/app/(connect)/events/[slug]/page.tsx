@@ -58,6 +58,10 @@ const CATEGORY_SLUGS: Record<string, { name: string; icon: string; desc: string 
   "event-community":     { name: "Community",           icon: "◇", desc: "Gatherings, panels & community events" },
 };
 
+function toICSDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -150,6 +154,24 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   const endObj = event.endDate ? new Date(event.endDate) : null;
   const endFormatted = (endObj && !isNaN(endObj.getTime())) ? endObj.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : null;
 
+  // "Add to calendar" — a real .ics file, built server-side as a data URI (no client JS needed).
+  const icsEscape = (s: string) => s.replace(/[\n,;]/g, " ").trim();
+  const icsEndDate = (endObj && !isNaN(endObj.getTime())) ? endObj : new Date(dateValid.getTime() + 2 * 60 * 60 * 1000);
+  const icsContent = [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT",
+    `UID:${event.slug}@themoveee.com`,
+    `DTSTAMP:${toICSDate(new Date())}`,
+    `DTSTART:${toICSDate(dateValid)}`,
+    `DTEND:${toICSDate(icsEndDate)}`,
+    `SUMMARY:${icsEscape(event.title || "")}`,
+    `LOCATION:${icsEscape(event.location || "")}`,
+    `DESCRIPTION:${icsEscape(event.tagline || "")}`,
+    "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n");
+  const icsHref = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
+  const shareUrl = `https://themoveee.com/events/${event.slug}`;
+  const mailtoHref = `mailto:?subject=${encodeURIComponent(event.title || "Moveee Event")}&body=${encodeURIComponent(`Check out this event: ${shareUrl}`)}`;
+
   const now = new Date();
   const eventStatus = dateValid > now ? "Upcoming" : (endObj && endObj > now ? "Current" : "Past");
 
@@ -176,179 +198,168 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     ? Object.entries(CITY_SLUGS).find(([, v]) => v.name.toLowerCase() === event.city?.toLowerCase())?.[0]
     : null;
 
+  const calendarBtn = (
+    <a href={icsHref} download={`${event.slug}.ics`} className="evt-icon-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v6M9 17h6"/></svg>
+      Add to calendar
+    </a>
+  );
+  const shareBtn = (
+    <a href={mailtoHref} className="evt-icon-btn evt-icon-btn--round" aria-label="Share this event">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/></svg>
+    </a>
+  );
+
   return (
     <div>
       <style>{`.ch-rail{display:none!important}.cw-shell{display:block!important}`}</style>
       <HideSidebar />
 
-      {/* ── DETAIL HERO ── */}
-      <section className="evt-detail-hero">
-        <div className="evt-detail-img-col">
-          <div className="evt-detail-img">
-            {citySlug && (
-              <Link href={`/events/${citySlug}`} className="evt-detail-featured-pill">
-                ↗ Featured in {event.city}
-              </Link>
-            )}
-            <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={56} priority />
-          </div>
-        </div>
-
-        <div className="evt-detail-info-col">
-          <Link href="/events" className="evt-detail-back">← Happenings</Link>
-
-          <div className="evt-detail-badges">
-            <span className="evt-detail-cat-pill">{cat}</span>
-            <span className="evt-detail-status">
-              <span className="evt-status-dot" />
-              {eventStatus}
-            </span>
+      <div className="evt-page-bg">
+        <div className="evt-shell">
+          <div className="evt-topbar">
+            <Link href="/events" className="evt-detail-back">← Happenings</Link>
           </div>
 
-          <h1 className="evt-detail-title">{event.title}</h1>
-          {event.tagline && <p className="evt-detail-tagline">{event.tagline}</p>}
-
-          {/* Date row */}
-          <div className="evt-meta-row">
-            <div className="evt-meta-icon-box">
-              <span className="evt-meta-icon-month">{monthShort}</span>
-              <span className="evt-meta-icon-day">{dayNum}</span>
-            </div>
-            <div>
-              <p className="evt-meta-text-main">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
-              <p className="evt-meta-text-sub">{timeFormatted || event.openingHours || "Time TBA"}</p>
-            </div>
-          </div>
-
-          {/* Venue row */}
-          <div className="evt-meta-row">
-            <div className="evt-meta-icon-box">
-              <span style={{ fontSize: "18px" }}>📍</span>
-            </div>
-            <div>
-              <p className="evt-meta-text-main">{event.location || "Venue TBA"}</p>
-              {venueAddress && <p className="evt-meta-text-sub">{venueAddress}</p>}
-            </div>
-          </div>
-
-          {/* Registration box */}
-          <div className="evt-register-box">
-            <div>
-              <div className="evt-register-label">Event Details</div>
-              {event.ticketingUrl ? (
-                <p className="evt-register-note">{event.admission || "Paid Entry"} · {event.location}</p>
-              ) : (
-                <p className="evt-register-note">Secure your place below.</p>
+          {/* ── FLOATING EVENT CARD ── */}
+          <div className="evt-card">
+            <div className="evt-cover">
+              {citySlug && (
+                <Link href={`/events/${citySlug}`} className="evt-detail-featured-pill">
+                  ↗ Featured in {event.city}
+                </Link>
               )}
+              <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={48} priority />
             </div>
-            {event.ticketingUrl ? (
-              <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="evt-register-btn">
-                Find Out More →
-              </a>
-            ) : (
-              <a href="#rsvp-section" className="evt-register-btn">RSVP Now →</a>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* ── DETAIL TICKER ── */}
-      <div className="evt-detail-ticker">
-        <div className="evt-ticker-container">
-          {["a", "b"].map((variant) => (
-            <div key={variant} className={`evt-ticker-track${variant === "b" ? " evt-ticker-track--b" : ""}`} aria-hidden={variant === "b"}>
-              <span className="evt-ticker-item evt-ticker-item--bold">{event.title}</span>
-              <span className="evt-ticker-item evt-ticker-item--gold">★</span>
-              {host?.title && <span className="evt-ticker-item">{host.title}</span>}
-              {host?.title && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
-              {event.location && <span className="evt-ticker-item">{event.location}</span>}
-              {event.location && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
-              <span className="evt-ticker-item evt-ticker-item--bold">{dateFormatted}</span>
-              <span className="evt-ticker-item evt-ticker-item--gold">★</span>
-              {hasShowcase ? <span className="evt-ticker-item">{event.showcase.length} Works</span> : <span className="evt-ticker-item">Culture Archive</span>}
-              <span className="evt-ticker-item evt-ticker-item--gold">★</span>
-              {event.rsvpCapacity ? <span className="evt-ticker-item">Limited Capacity — {event.rsvpCapacity} Spots</span> : null}
-              {event.rsvpCapacity && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
-              {membersNote && <span className="evt-ticker-item evt-ticker-item--gold">Members: early access</span>}
-              {membersNote && <span className="evt-ticker-item evt-ticker-item--gold">★</span>}
-              <span className="evt-ticker-item">{event.admission || "Free Admission"}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── BODY ── */}
-      <main className="evt-body">
-        {/* LEFT COLUMN */}
-        <div className="evt-body-left">
-          <div className="evt-section-label">{aboutLabel}</div>
-          <div className="evt-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content || "<p>Event details coming soon.</p>") }} />
-
-          {event.tagline && (
-            <div className="evt-pull-quote">
-              <blockquote>"{event.tagline}"</blockquote>
-              {(host?.title || event.attribution) && <cite>— {host?.title || event.attribution}</cite>}
-            </div>
-          )}
-
-          {hasShowcase && (
-            <div className="evt-works-section">
-              <div className="evt-section-label" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                {showcaseLabel ? <span>{showcaseLabel}</span> : <span>Selected <em>works</em></span>}
-                <small style={{ fontWeight: 400, textTransform: "none" }}>Preview · {event.showcase.length} items</small>
+            <div className="evt-card-pad">
+              <div className="evt-detail-badges">
+                <span className="evt-detail-cat-pill">{cat}</span>
+                <span className="evt-detail-status">
+                  <span className="evt-status-dot" />
+                  {eventStatus}
+                </span>
               </div>
-              <ShowcaseGallery items={event.showcase} />
-            </div>
-          )}
 
-          {hasSchedule && (
-            <div className="evt-programme" id="programme-section">
-              <div className="evt-section-label">Programme</div>
-              {event.schedule.map((item: any, i: number) => (
-                <div key={i} className="evt-prog-row">
-                  <div className="evt-prog-time">{item.time}</div>
-                  <div className="evt-prog-body">
-                    <div className="evt-prog-title-row">
-                      <span className="evt-prog-title">{item.title}</span>
-                      <span className={`evt-prog-tag ${item.access === "members_only" ? "evt-prog-tag--members" : "evt-prog-tag--open"}`}>
-                        {item.access?.replace("_", " ")}
-                      </span>
+              <h1 className="evt-detail-title">{event.title}</h1>
+              {event.tagline && <p className="evt-detail-tagline">{event.tagline}</p>}
+
+              <div className="evt-hostrow" style={!hasHost ? { justifyContent: "flex-end" } : undefined}>
+                {hasHost && (
+                  <div className="evt-hostrow-who">
+                    <span className="evt-host-avatar">
+                      {host.featuredImage?.node?.sourceUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={host.featuredImage.node.sourceUrl} alt={host.title} />
+                      ) : (
+                        (host.title || "?").slice(0, 2).toUpperCase()
+                      )}
+                    </span>
+                    <div>
+                      <span className="evt-eyebrow">Hosted By</span>
+                      <span className="evt-host-name">{host.title}</span>
                     </div>
-                    <div className="evt-prog-desc">{item.description}</div>
+                  </div>
+                )}
+                <div className="evt-hostrow-actions">
+                  {calendarBtn}
+                  {shareBtn}
+                </div>
+              </div>
+
+              {/* Date + location + registration */}
+              <div className="evt-info-card" id="rsvp-section">
+                <div className="evt-meta-row">
+                  <div className="evt-meta-icon-box">
+                    <span className="evt-meta-icon-month">{monthShort}</span>
+                    <span className="evt-meta-icon-day">{dayNum}</span>
+                  </div>
+                  <div>
+                    <p className="evt-meta-text-main">{weekday}, {dateFormatted}{endFormatted ? ` — ${endFormatted}` : ""}</p>
+                    <p className="evt-meta-text-sub">{timeFormatted || event.openingHours || "Time TBA"}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* SIDEBAR */}
-        <aside className="evt-body-sidebar">
-          <div className="evt-sidebar-card" id="rsvp-section">
-            {event.ticketingUrl ? (
-              <>
-                <h3 className="evt-rsvp-heading">More <em>details</em></h3>
-                <p className="evt-meta-text-sub" style={{ marginBottom: "20px" }}>{event.location} · {event.admission || "Paid Entry"}</p>
-                <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="evt-submit-btn" style={{ display: "flex", textDecoration: "none" }}>
-                  Find Out More →
-                </a>
-                <p className="evt-rsvp-members-note">Opens external partner site</p>
-              </>
-            ) : (
-              <RSVPForm
-                eventSlug={event.slug} eventTitle={event.title}
-                capacity={event.rsvpCapacity ?? undefined}
-                spotsRemaining={event.spotsRemaining ?? undefined}
-                ticketTypes={rsvpTicketTypes} membersNote={membersNote || undefined}
-              />
-            )}
+                <div className="evt-info-divider" />
+
+                <div className="evt-meta-row">
+                  <div className="evt-meta-icon-box evt-meta-icon-box--pin">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </div>
+                  <div>
+                    <p className="evt-meta-text-main">{event.location || "Venue TBA"}</p>
+                    {venueAddress && <p className="evt-meta-text-sub">{venueAddress}</p>}
+                  </div>
+                </div>
+
+                <div className="evt-info-divider" />
+
+                {event.ticketingUrl ? (
+                  <>
+                    <span className="evt-eyebrow" style={{ marginBottom: "6px" }}>Registration</span>
+                    <p className="evt-register-note">{event.admission || "Paid Entry"} · {event.location}</p>
+                    <a href={event.ticketingUrl} target="_blank" rel="noopener noreferrer" className="evt-submit-btn" style={{ textDecoration: "none" }}>
+                      Find Out More →
+                    </a>
+                  </>
+                ) : (
+                  <RSVPForm
+                    eventSlug={event.slug} eventTitle={event.title}
+                    capacity={event.rsvpCapacity ?? undefined}
+                    spotsRemaining={event.spotsRemaining ?? undefined}
+                    ticketTypes={rsvpTicketTypes} membersNote={membersNote || undefined}
+                  />
+                )}
+              </div>
+
+              <div className="evt-section-label">{aboutLabel}</div>
+              <div className="evt-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.content || "<p>Event details coming soon.</p>") }} />
+
+              {event.tagline && (
+                <div className="evt-pull-quote">
+                  <blockquote>"{event.tagline}"</blockquote>
+                  {(host?.title || event.attribution) && <cite>— {host?.title || event.attribution}</cite>}
+                </div>
+              )}
+
+              {hasShowcase && (
+                <div className="evt-works-section">
+                  <div className="evt-section-label" style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                    {showcaseLabel ? <span>{showcaseLabel}</span> : <span>Selected works</span>}
+                    <small style={{ fontWeight: 400, textTransform: "none", color: "var(--evt-mute)" }}>Preview · {event.showcase.length} items</small>
+                  </div>
+                  <ShowcaseGallery items={event.showcase} />
+                </div>
+              )}
+
+              {hasSchedule && (
+                <div className="evt-programme" id="programme-section">
+                  <div className="evt-section-label">Programme</div>
+                  {event.schedule.map((item: any, i: number) => (
+                    <div key={i} className="evt-prog-row">
+                      <div className="evt-prog-time">{item.time}</div>
+                      <div className="evt-prog-body">
+                        <div className="evt-prog-title-row">
+                          <span className="evt-prog-title">{item.title}</span>
+                          <span className={`evt-prog-tag ${item.access === "members_only" ? "evt-prog-tag--members" : "evt-prog-tag--open"}`}>
+                            {item.access?.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="evt-prog-desc">{item.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* ── SECONDARY CARDS ── */}
           {event.organiserName && (
-            <div className="evt-sidebar-card evt-sidebar-card--organiser">
-              <span className="evt-sidebar-eyebrow" style={{ color: "#3c3489" }}>Organised by</span>
+            <div className="evt-card evt-card--compact">
+              <span className="evt-eyebrow" style={{ marginBottom: "10px" }}>Organised by</span>
               {event.organiserSlug ? (
-                <Link href={`/directory/${event.organiserSlug}`} className="evt-organiser-row" style={{ justifyContent: "space-between", textDecoration: "none" }}>
+                <Link href={`/directory/${event.organiserSlug}`} className="evt-organiser-row">
                   <span className="evt-organiser-name">{event.organiserName}</span>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--evt-mute)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
                 </Link>
@@ -359,8 +370,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
           )}
 
           {event.associatedJourney && (
-            <div className="evt-sidebar-card evt-sidebar-card--dark">
-              <span className="evt-sidebar-eyebrow">★ {event.associatedJourney.title}</span>
+            <div className="evt-card evt-card--compact evt-card--dark">
+              <span className="evt-eyebrow">★ {event.associatedJourney.title}</span>
               <h4>Join the exclusive journey</h4>
               <Link href={`/origins/${event.associatedJourney.slug}`} className="evt-outline-pill">
                 View Journey →
@@ -368,8 +379,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
 
-          <div className="evt-sidebar-card evt-sidebar-card--press">
-            <span className="evt-sidebar-eyebrow">{event.pressDetails?.eyebrow || "Press & Media"}</span>
+          <div className="evt-card evt-card--compact evt-card--press">
+            <span className="evt-eyebrow">{event.pressDetails?.eyebrow || "Press & Media"}</span>
             <h4>{event.pressDetails?.title || "Press enquiries"}</h4>
             <p>
               {event.pressDetails?.content
@@ -381,38 +392,35 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             )}
           </div>
 
-          {/* apps/connect has no site-wide footer — every page with a
-              right rail carries this copyright block instead. */}
-          <p style={{ margin: "1rem 0 0", padding: "0 4px", fontSize: "0.68rem", color: "var(--evt-mute, #7a6f5c)", lineHeight: 1.7 }}>
+          {hasHost && (
+            <div className="evt-card evt-card--compact">
+              <div className="evt-artist-card">
+                <div className="evt-artist-avatar">
+                  <EventThumb src={host.featuredImage?.node?.sourceUrl} title={host.title} fontSize={16} />
+                </div>
+                <div>
+                  <span className="evt-artist-eyebrow">{artistSectionLabel}</span>
+                  <h3 className="evt-artist-name">{host.title?.split(" ")[0] || "Featured"} <em>{host.title?.split(" ").slice(1).join(" ") || "Artist"}</em></h3>
+                  <p className="evt-artist-excerpt" dangerouslySetInnerHTML={{ __html: sanitizeHtml(host.excerpt) }} />
+                  <Link href={`/directory/${host.slug}`} className="evt-artist-link">
+                    {artistLinkLabel} →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p style={{ textAlign: "center", fontSize: "12px", color: "rgba(243,236,224,.5)", lineHeight: 1.7, margin: "24px 0 0" }}>
             © {new Date().getFullYear()} The Moveee. All Rights Reserved.
             <br />
-            <Link href="/terms" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Terms</Link>
+            <Link href="/terms" style={{ color: "inherit" }}>Terms</Link>
             {" · "}
-            <Link href="/privacy" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Privacy</Link>
+            <Link href="/privacy" style={{ color: "inherit" }}>Privacy</Link>
             {" · "}
-            <Link href="/contact" style={{ color: "var(--evt-mute, #7a6f5c)" }}>Contact</Link>
+            <Link href="/contact" style={{ color: "inherit" }}>Contact</Link>
           </p>
-        </aside>
-      </main>
-
-      {/* ARTIST STRIP */}
-      {hasHost && (
-        <section className="evt-artist-strip">
-          <div className="evt-artist-card">
-            <div className="evt-artist-avatar" style={{ position: "relative", overflow: "hidden" }}>
-              <EventThumb src={host.featuredImage?.node?.sourceUrl} title={host.title} fontSize={20} />
-            </div>
-            <div>
-              <span className="evt-artist-eyebrow">{artistSectionLabel}</span>
-              <h3 className="evt-artist-name">{host.title?.split(" ")[0] || "Featured"} <em>{host.title?.split(" ").slice(1).join(" ") || "Artist"}</em></h3>
-              <p className="evt-artist-excerpt" dangerouslySetInnerHTML={{ __html: sanitizeHtml(host.excerpt) }} />
-              <Link href={`/directory/${host.slug}`} className="evt-artist-link">
-                {artistLinkLabel} →
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
