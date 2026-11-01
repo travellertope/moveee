@@ -1346,6 +1346,53 @@
   .evt-artist-card { flex-wrap: wrap; }
 }
 
+/* ── DESKTOP: two-column layout (image left, content right) — Luma's own
+   desktop pattern. Below this width the page stays the single centered
+   floating card (unchanged from the original build). .evt-cover and
+   .evt-card-pad are already direct sibling children of .evt-card, so this
+   is a pure CSS reflow — no JSX changes needed: the image becomes column 1
+   and the whole card-pad content block (badges, title, host row, info
+   card, about, showcase, programme) becomes column 2, in the exact same
+   internal order it already renders in on mobile. ── */
+@media (min-width: 900px) {
+  .evt-shell { max-width: 1080px; }
+
+  .evt-card {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    column-gap: 40px;
+    padding: 40px;
+    /* .evt-cover's overflow:hidden still clips its own gradient/image —
+       this only lifts the clip that was blocking position:sticky below. */
+    overflow: visible;
+    align-items: start;
+  }
+
+  .evt-cover {
+    aspect-ratio: 3 / 4;
+    border-radius: 20px;
+    position: sticky;
+    top: 24px;
+  }
+
+  .evt-card-pad {
+    padding: 0;
+  }
+
+  .evt-detail-title { font-size: 44px; }
+
+  /* Organiser / Journey / Press — a column of three narrow cards reads as
+     an afterthought at 1080px wide; a row makes the extra width feel used
+     on purpose, the way Luma's own sidebar meta blocks do. */
+  .evt-secondary-row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 20px;
+  }
+  .evt-secondary-row > .evt-card { flex: 1 1 0; margin-bottom: 0; }
+}
+
 /* ── DISCOVERED EVENT PAGE ── */
 .evt-disc-page {
   max-width: 1140px;
