@@ -6745,7 +6745,7 @@ class Culture_REST_API {
      * get_userdata() is cached in WP's object cache, so repeated calls within
      * a single feed request for the same user_id are free.
      */
-    private static function resolve_author_name( int $pid ): string {
+    public static function resolve_author_name( int $pid ): string {
         $author_id = (int) get_post_meta( $pid, 'community_author_id', true );
         if ( $author_id ) {
             $user = get_userdata( $author_id );
@@ -6761,7 +6761,7 @@ class Culture_REST_API {
      * Resolve the current avatar for a post's author.
      * Always reads from the live user meta so avatar changes are reflected immediately.
      */
-    private static function resolve_author_avatar( int $pid ): string {
+    public static function resolve_author_avatar( int $pid ): string {
         $author_id = (int) get_post_meta( $pid, 'community_author_id', true );
         if ( $author_id ) {
             $avatar = get_user_meta( $author_id, '_culture_avatar_url', true ) ?: '';

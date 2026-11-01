@@ -65,6 +65,9 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   const [externalLoading, setExternalLoading] = useState(false);
   const [creatingExternalId, setCreatingExternalId] = useState<string | null>(null);
   const externalTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Was silently swallowed before (see selectExternal()'s bare catch) — a
+  // failed pick looked identical to a working tap, with zero feedback.
+  const [externalError, setExternalError] = useState("");
 
   useEffect(() => {
     if (query.length < 2) { setResults([]); return; }
@@ -103,6 +106,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
     setShowCityInput(false);
     setCityInput("");
     setAboutInput("");
+    setExternalError("");
   }
 
   async function quickCreate() {
@@ -139,7 +143,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           body: JSON.stringify({ id: data.id, title: data.title, entry_type: typeFilter || "place" }),
         }).catch(() => {});
       } else {
-        setCreateError("Couldn't create entry. Please try again.");
+        const err = await res.json().catch(() => ({}));
+        setCreateError(err?.error || "Couldn't create entry. Please try again.");
       }
     } catch {
       setCreateError("Couldn't create entry. Please try again.");
@@ -150,6 +155,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   async function selectExternal(r: ExternalResult) {
     if (!externalSource) return;
     setCreatingExternalId(r.externalId);
+    setExternalError("");
     try {
       // iTunes only — album search results carry no track data, so the
       // 30s preview clip is resolved lazily here, just for the picked
@@ -195,8 +201,13 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           previewUrl: data.previewUrl ?? previewUrl ?? null,
           genres: r.genres,
         });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setExternalError(err?.error || "Couldn't add this — please try again.");
       }
-    } catch {}
+    } catch {
+      setExternalError("Couldn't reach the server. Check your connection and try again.");
+    }
     setCreatingExternalId(null);
   }
 
@@ -226,7 +237,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
       <input
         type="text"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); setAboutInput(""); setCreateError(""); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setShowCityInput(false); setCityInput(""); setAboutInput(""); setCreateError(""); setExternalError(""); }}
         onFocus={() => setOpen(true)}
         placeholder={placeholder ?? "Search the directory..."}
         className="composer-dir-input"
@@ -285,6 +296,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
               </button>
             </div>
           )}
+
+          {externalError && <div className="composer-dir-create-error">{externalError}</div>}
         </div>
       )}
 

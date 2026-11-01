@@ -78,8 +78,16 @@
 }
 
 /* ── Pulse Feed section ── */
+/* Was hardcoded #ffffff with no dark-mode handling at all. .pulse-timeline
+   (PulseFeed's own content wrapper) has background: transparent, so this
+   white showed through everywhere not directly covered by a card — inter-
+   card gaps, the area below the last card, the sidebar column on desktop —
+   making the whole page read as "white" even though individual cards
+   correctly went dark. This section renders inside .cw-shell, so
+   var(--bg-page) already resolves to .cw-shell's dark override
+   (connect-globals.css) for free — no extra dark-mode rule needed here. */
 .mco-feed-section {
-  background: #ffffff;
+  background: var(--bg-page, #ffffff);
 }
 .mco-feed-loading {
   text-align: center;

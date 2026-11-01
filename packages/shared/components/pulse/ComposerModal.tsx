@@ -27,6 +27,20 @@ const QUOTE_SOURCE_TYPES: Record<string, { type: string; label: string; about: s
 };
 
 const EVENT_CATEGORIES = ["Art", "Music", "Fashion", "Food", "Film", "Literature", "Sport", "Design", "Tech", "Talk", "Workshop", "Community"];
+
+// Splits/rejoins the single datetime-local value (YYYY-MM-DDTHH:mm) the Event
+// form stores and submits — kept as one combined string so the payload shape
+// (event_date/event_end_date) never changes — into separate date+time inputs.
+// A single datetime-local input renders as one wide field that, on a narrow
+// modal, fills the entire row; two side-by-side inputs read as a compact pair.
+function splitDT(v: string): [string, string] {
+  const [d = "", t = ""] = v.split("T");
+  return [d, t];
+}
+function joinDT(datePart: string, timePart: string): string {
+  if (!datePart && !timePart) return "";
+  return `${datePart}T${timePart || "00:00"}`;
+}
 const SHOWCASE_MEDIUMS = ["Photography", "Film", "Digital Art", "Illustration", "Music", "Writing", "Mixed Media"];
 const ITINERARY_BUDGETS = ["£", "££", "£££", "££££"];
 const ITINERARY_DURATIONS = ["Day trip", "Weekend", "3–4 days", "1 week", "2 weeks", "1 month+"];
@@ -1213,34 +1227,54 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Category <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills cm-pills-wrap">
+                {/* Single-select, so a dropdown reads clearer than a 12-pill row */}
+                <select
+                  className="cm-input"
+                  value={evCategory}
+                  onChange={e => setEvCategory(e.target.value)}
+                  aria-label="Category"
+                >
+                  <option value="">Choose a category</option>
                   {EVENT_CATEGORIES.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={`cm-pill${evCategory === c ? " cm-pill--active" : ""}`}
-                      onClick={() => setEvCategory(evCategory === c ? "" : c)}
-                    >{c}</button>
+                    <option key={c} value={c}>{c}</option>
                   ))}
-                </div>
+                </select>
               </div>
-              <div className="cm-grid-2">
-                <div className="cm-field">
-                  <label className="cm-label">Start date &amp; time</label>
+              <div className="cm-field">
+                <label className="cm-label">Start date &amp; time</label>
+                {/* Always 2 columns (unlike .cm-grid-2, which collapses to 1 at
+                    500px) — a date + time pair should stay compact and
+                    side-by-side even on a narrow phone, not stack into two
+                    full-width fields. */}
+                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
                   <input
                     className="cm-input"
-                    type="datetime-local"
-                    value={evDate}
-                    onChange={e => setEvDate(e.target.value)}
+                    type="date"
+                    value={splitDT(evDate)[0]}
+                    onChange={e => setEvDate(joinDT(e.target.value, splitDT(evDate)[1]))}
+                  />
+                  <input
+                    className="cm-input"
+                    type="time"
+                    value={splitDT(evDate)[1]}
+                    onChange={e => setEvDate(joinDT(splitDT(evDate)[0], e.target.value))}
                   />
                 </div>
-                <div className="cm-field">
-                  <label className="cm-label">End date &amp; time <span className="cm-label-opt">(optional)</span></label>
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">End date &amp; time <span className="cm-label-opt">(optional)</span></label>
+                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
                   <input
                     className="cm-input"
-                    type="datetime-local"
-                    value={evEndDate}
-                    onChange={e => setEvEndDate(e.target.value)}
+                    type="date"
+                    value={splitDT(evEndDate)[0]}
+                    onChange={e => setEvEndDate(joinDT(e.target.value, splitDT(evEndDate)[1]))}
+                  />
+                  <input
+                    className="cm-input"
+                    type="time"
+                    value={splitDT(evEndDate)[1]}
+                    onChange={e => setEvEndDate(joinDT(splitDT(evEndDate)[0], e.target.value))}
                   />
                 </div>
               </div>

@@ -1806,7 +1806,7 @@ function createStyles(c: ColorPalette) {
       borderWidth: 1,
       borderColor: c.ghost + "60",
       borderRadius: 8,
-      backgroundColor: "#fff",
+      backgroundColor: c.paperWarm,
       marginBottom: 12,
     },
     bookCover: {

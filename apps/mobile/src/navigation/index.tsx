@@ -8,7 +8,7 @@ import * as Sentry from "@sentry/react-native";
 
 import { useAuthStore } from "../auth/authStore";
 import { useNotificationCount } from "../features/notifications/useNotificationCount";
-import { colors } from "../theme";
+import { useColors } from "../hooks/useColors";
 import type { FeedItem } from "../types";
 
 // Created once at module scope so App.tsx can pass it into Sentry.init()'s
@@ -314,6 +314,10 @@ function MemberStack() {
 function MainTabs() {
   const { unread } = useNotificationCount();
   const isTablet = useIsTablet();
+  // Was a static `import { colors } from "../theme"` (always the light
+  // palette) — the bottom tab bar, visible on every screen of the app,
+  // never responded to dark mode. useColors() reads the live theme instead.
+  const c = useColors();
 
   return (
     <Tab.Navigator
@@ -323,11 +327,11 @@ function MainTabs() {
       tabBar={isTablet ? (props) => <TabletRail {...props} /> : undefined}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor:   colors.gold,
+        tabBarActiveTintColor:   c.gold,
         tabBarInactiveTintColor: "#9e9e9e",
         tabBarStyle: {
-          backgroundColor: colors.paperWarm,
-          borderTopColor: "#e0d8cc",
+          backgroundColor: c.paperWarm,
+          borderTopColor: c.rule,
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
@@ -368,7 +372,7 @@ function MainTabs() {
                   justifyContent: "center",
                   paddingHorizontal: 2,
                   borderWidth: 1.5,
-                  borderColor: colors.paperWarm,
+                  borderColor: c.paperWarm,
                 }}>
                   <Text style={{
                     fontFamily: "JetBrainsMono_700Bold",
