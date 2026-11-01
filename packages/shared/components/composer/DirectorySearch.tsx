@@ -143,7 +143,8 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           body: JSON.stringify({ id: data.id, title: data.title, entry_type: typeFilter || "place" }),
         }).catch(() => {});
       } else {
-        setCreateError("Couldn't create entry. Please try again.");
+        const err = await res.json().catch(() => ({}));
+        setCreateError(err?.error || "Couldn't create entry. Please try again.");
       }
     } catch {
       setCreateError("Couldn't create entry. Please try again.");
