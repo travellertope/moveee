@@ -201,6 +201,17 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
     // frozen at the moment the post was created and goes stale the instant
     // the author renames or re-avatars.
     const liveAuthor = post.community_author_meta as { name?: string; avatar?: string } | null | undefined;
+    // A YouTube URL typed directly into a post's body (as opposed to going
+    // through the Pro-only inline link-preview UI, which separately saves
+    // community_link_url/_video_url) never populates either of those meta
+    // fields — WordPress's own oEmbed auto-embed expands the bare URL into
+    // an <iframe> within content.rendered instead, which stripHtml() below
+    // then deletes entirely while building the plain-text title, with
+    // nothing left over for the FeedCard/CommunityDetailModal video-embed
+    // detection to find. Recovering the video ID from that auto-embedded
+    // iframe here, before stripping, so the embed isn't silently lost.
+    const ytEmbedMatch = raw.match(/youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{6,})/);
+    const recoveredVideoUrl = ytEmbedMatch ? `https://www.youtube.com/watch?v=${ytEmbedMatch[1]}` : undefined;
     // Preserve paragraph breaks before stripping HTML tags
     const withBreaks = raw
       .replace(/<!--[\s\S]*?-->/g, "")
@@ -253,7 +264,7 @@ export async function getCommunityPosts(): Promise<FeedItem[]> {
       pollOptions: m._poll_options ? (typeof m._poll_options === "string" ? (() => { try { return JSON.parse(m._poll_options); } catch { return undefined; } })() : m._poll_options) : undefined,
       pollExpiresAt: m._poll_expires_at || undefined,
       galleryImages: m._gallery_images ? (typeof m._gallery_images === "string" ? (() => { try { return JSON.parse(m._gallery_images); } catch { return undefined; } })() : m._gallery_images) : undefined,
-      videoUrl: m._video_url || undefined,
+      videoUrl: m._video_url || recoveredVideoUrl || undefined,
       itineraryStops: m._itinerary_stops ? (typeof m._itinerary_stops === "string" ? (() => { try { return JSON.parse(m._itinerary_stops); } catch { return undefined; } })() : m._itinerary_stops) : undefined,
       foodDishName: m._food_dish_name || undefined,
       foodRatingTaste: m._food_rating_taste ? Number(m._food_rating_taste) : undefined,
