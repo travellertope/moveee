@@ -350,6 +350,16 @@ body:has(.cw-shell) {
 body.hide-sidebar .cw-shell { display: block !important; }
 body.hide-sidebar .ch-rail  { display: none  !important; }
 body.hide-sidebar .cw-shell-aside { display: none !important; }
+/* .cw-shell's own max-width: 1280px + padding: 0 32px (desktop, above)
+   still applied even with display: block — on a viewport wider than
+   ~1344px that left a visible gutter at the sides where body's own
+   background (var(--bg-page-connect), a cool off-white) showed through
+   instead of the hide-sidebar page's own full-bleed background, a subtly
+   different shade from its content. Currently only used by the event
+   detail page's .evt-page-bg, which needs to span the full viewport. */
+@media (min-width: 860px) {
+  body.hide-sidebar .cw-shell { max-width: none; padding: 0; }
+}
 
 /* ── Utility: hide scrollbar on carousels ── */
 .hide-scrollbar {
