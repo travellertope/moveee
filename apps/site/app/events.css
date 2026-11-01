@@ -477,7 +477,7 @@
 /* ── DETAIL HERO ── */
 /* ── LUMA-STYLE SHELL (single floating card on a dark "stage" backdrop) ── */
 .evt-page-bg {
-  background: var(--evt-paper-deep);
+  background: var(--evt-paper);
   padding: 48px 20px 88px;
 }
 
@@ -496,6 +496,20 @@
 
 .evt-card--compact {
   padding: 24px 28px;
+}
+
+/* Main content wrapper (cover image + card-pad) — the page background
+   now matches .evt-card's own (var(--evt-paper) on both), so the boxed-
+   card-floating-on-a-different-colour-page look is gone; this just turns
+   off the chrome that made it read as a separate box (radius/overflow
+   stay, since .evt-cover still relies on them to clip its own corners at
+   mobile — see its own comment). The secondary compact cards
+   (Organiser/Journey/Press/artist bio) keep the full boxed .evt-card
+   look unchanged. */
+.evt-card--main {
+  background: transparent;
+  box-shadow: none;
+  margin-bottom: 0;
 }
 
 .evt-card--dark {
@@ -1344,7 +1358,11 @@
 @media (min-width: 900px) {
   .evt-shell { max-width: 1080px; }
 
-  .evt-card {
+  /* Scoped to --main specifically (not bare .evt-card) — the secondary
+     compact cards share the .evt-card class too, and previously picked up
+     this same display:grid/padding:40px at this width with nothing to
+     override it, silently breaking their own stacked layout. */
+  .evt-card--main {
     display: grid;
     grid-template-columns: 400px 1fr;
     column-gap: 40px;

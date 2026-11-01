@@ -218,7 +218,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       <div className="evt-page-bg">
         <div className="evt-shell">
           {/* ── FLOATING EVENT CARD ── */}
-          <div className="evt-card">
+          <div className="evt-card evt-card--main">
             <div className="evt-cover">
               {citySlug && (
                 <Link href={`/events/${citySlug}`} className="evt-detail-featured-pill">
