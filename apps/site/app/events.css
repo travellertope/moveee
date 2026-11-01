@@ -477,7 +477,7 @@
 /* ── DETAIL HERO ── */
 /* ── LUMA-STYLE SHELL (single floating card on a dark "stage" backdrop) ── */
 .evt-page-bg {
-  background: radial-gradient(ellipse 1100px 600px at 50% -10%, #6e2a1f 0%, #3a1711 42%, #170d0a 78%, #110a08 100%);
+  background: var(--evt-paper-deep);
   padding: 48px 20px 88px;
 }
 
@@ -486,29 +486,11 @@
   margin: 0 auto;
 }
 
-.evt-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.evt-detail-back {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(243, 236, 224, 0.65);
-  text-decoration: none;
-}
-
-.evt-detail-back:hover {
-  color: var(--evt-paper);
-}
-
 .evt-card {
   background: var(--evt-paper);
   border-radius: 28px;
   overflow: hidden;
-  box-shadow: 0 40px 90px rgba(10, 5, 3, 0.4);
+  box-shadow: var(--evt-shadow-card);
   margin-bottom: 20px;
 }
 
@@ -560,6 +542,11 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   background: var(--evt-paper-deep);
+  /* Clips to its own radius rather than relying on the parent .evt-card's
+     overflow:hidden — needed because the desktop rule below sets
+     .evt-card to overflow: visible (required for position: sticky), which
+     would otherwise remove the rounding this element clips to. */
+  overflow: hidden;
 }
 
 .evt-detail-featured-pill {

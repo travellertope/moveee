@@ -6,6 +6,7 @@ import RSVPForm from "../components/RSVPForm";
 import ShowcaseGallery from "../components/ShowcaseGallery";
 import DiscoveredEventPage from "../components/DiscoveredEventPage";
 import EventThumb from "../components/EventThumb";
+import EventCoverImage from "../components/EventCoverImage";
 import HideSidebar from "@/components/HideSidebar";
 import CityArchive from "./city-archive";
 import CategoryArchive from "./category-archive";
@@ -136,7 +137,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }
 
   const img          = event.featuredImage?.node?.sourceUrl || event.eventImageUrl;
-  const cat          = event.cultureInterests?.nodes?.[0]?.name || "Happening";
   const catSlug      = event.cultureInterests?.nodes?.[0]?.slug || "";
   const dateRaw      = event.eventDate || event.date || new Date().toISOString();
   const dateObj      = new Date(dateRaw);
@@ -217,10 +217,6 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
       <div className="evt-page-bg">
         <div className="evt-shell">
-          <div className="evt-topbar">
-            <Link href="/events" className="evt-detail-back">← Happenings</Link>
-          </div>
-
           {/* ── FLOATING EVENT CARD ── */}
           <div className="evt-card">
             <div className="evt-cover">
@@ -229,12 +225,11 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                   ↗ Featured in {event.city}
                 </Link>
               )}
-              <EventThumb src={img} title={event.title} categorySlug={catSlug} fontSize={48} priority />
+              <EventCoverImage src={img} title={event.title} categorySlug={catSlug} />
             </div>
 
             <div className="evt-card-pad">
               <div className="evt-detail-badges">
-                <span className="evt-detail-cat-pill">{cat}</span>
                 <span className="evt-detail-status">
                   <span className="evt-status-dot" />
                   {eventStatus}
@@ -413,7 +408,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
 
-          <p style={{ textAlign: "center", fontSize: "12px", color: "rgba(243,236,224,.5)", lineHeight: 1.7, margin: "24px 0 0" }}>
+          <p style={{ textAlign: "center", fontSize: "12px", color: "var(--evt-mute)", lineHeight: 1.7, margin: "24px 0 0" }}>
             © {new Date().getFullYear()} The Moveee. All Rights Reserved.
             <br />
             <Link href="/terms" style={{ color: "inherit" }}>Terms</Link>
