@@ -354,42 +354,45 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </div>
           </div>
 
-          {/* ── SECONDARY CARDS ── */}
-          {event.organiserName && (
-            <div className="evt-card evt-card--compact">
-              <span className="evt-eyebrow" style={{ marginBottom: "10px" }}>Organised by</span>
-              {event.organiserSlug ? (
-                <Link href={`/directory/${event.organiserSlug}`} className="evt-organiser-row">
-                  <span className="evt-organiser-name">{event.organiserName}</span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--evt-mute)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+          {/* ── SECONDARY CARDS — a row at desktop width, stacked on mobile
+              (see .evt-secondary-row's desktop-only flex rule) ── */}
+          <div className="evt-secondary-row">
+            {event.organiserName && (
+              <div className="evt-card evt-card--compact">
+                <span className="evt-eyebrow" style={{ marginBottom: "10px" }}>Organised by</span>
+                {event.organiserSlug ? (
+                  <Link href={`/directory/${event.organiserSlug}`} className="evt-organiser-row">
+                    <span className="evt-organiser-name">{event.organiserName}</span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--evt-mute)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9L9 3M4 3h5v5"/></svg>
+                  </Link>
+                ) : (
+                  <p className="evt-organiser-name">{event.organiserName}</p>
+                )}
+              </div>
+            )}
+
+            {event.associatedJourney && (
+              <div className="evt-card evt-card--compact evt-card--dark">
+                <span className="evt-eyebrow">★ {event.associatedJourney.title}</span>
+                <h4>Join the exclusive journey</h4>
+                <Link href={`/origins/${event.associatedJourney.slug}`} className="evt-outline-pill">
+                  View Journey →
                 </Link>
-              ) : (
-                <p className="evt-organiser-name">{event.organiserName}</p>
+              </div>
+            )}
+
+            <div className="evt-card evt-card--compact evt-card--press">
+              <span className="evt-eyebrow">{event.pressDetails?.eyebrow || "Press & Media"}</span>
+              <h4>{event.pressDetails?.title || "Press enquiries"}</h4>
+              <p>
+                {event.pressDetails?.content
+                  ? event.pressDetails.content.replace(/<[^>]*>/g, "")
+                  : "For accreditation, image requests, and interview coordination, contact Moveee PR."}
+              </p>
+              {event.pressDetails?.link && (
+                <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
               )}
             </div>
-          )}
-
-          {event.associatedJourney && (
-            <div className="evt-card evt-card--compact evt-card--dark">
-              <span className="evt-eyebrow">★ {event.associatedJourney.title}</span>
-              <h4>Join the exclusive journey</h4>
-              <Link href={`/origins/${event.associatedJourney.slug}`} className="evt-outline-pill">
-                View Journey →
-              </Link>
-            </div>
-          )}
-
-          <div className="evt-card evt-card--compact evt-card--press">
-            <span className="evt-eyebrow">{event.pressDetails?.eyebrow || "Press & Media"}</span>
-            <h4>{event.pressDetails?.title || "Press enquiries"}</h4>
-            <p>
-              {event.pressDetails?.content
-                ? event.pressDetails.content.replace(/<[^>]*>/g, "")
-                : "For accreditation, image requests, and interview coordination, contact Moveee PR."}
-            </p>
-            {event.pressDetails?.link && (
-              <a href={event.pressDetails.link}>{event.pressDetails.link.replace(/^mailto:/, "")} →</a>
-            )}
           </div>
 
           {hasHost && (

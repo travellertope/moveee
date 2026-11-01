@@ -1808,7 +1808,7 @@ class Culture_Mobile_API {
 
         $tier = get_user_meta( $user_id, '_culture_membership_tier', true ) ?: 'citizen';
         if ( 'citizen' === $tier && preg_match( '/https?:\/\//i', $content ) ) {
-            return new WP_Error( 'links_not_allowed', 'Moveee Citizen members cannot post links.', array( 'status' => 403 ) );
+            return new WP_Error( 'links_not_allowed', 'Links aren\'t allowed in community posts on Moveee Citizen. Upgrade to Moveee Pro to post links.', array( 'status' => 403 ) );
         }
 
         $rl_key   = 'culture_post_rate_' . $user_id;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import type { WpComment } from "@/lib/pulse-wordpress";
 import { isProfileComplete } from "@/lib/profileComplete";
+import { renderMessageWithUpgradeLink } from "@/lib/linkifyUpgrade";
 
 function formatCommentDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", {
@@ -245,7 +246,7 @@ export default function CommentThread({ postId, initialComments }: CommentThread
             </p>
           )}
           {status === "error" && (
-            <p style={{ color: "var(--ochre, #7a241c)", fontSize: "0.78rem", margin: 0 }}>{errorMsg}</p>
+            <p style={{ color: "var(--ochre, #7a241c)", fontSize: "0.78rem", margin: 0 }}>{renderMessageWithUpgradeLink(errorMsg)}</p>
           )}
 
           <div style={{ display: "flex", justifyContent: "flex-end" }}>

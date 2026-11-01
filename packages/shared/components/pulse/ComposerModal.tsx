@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { isProfileComplete } from "@/lib/profileComplete";
+import { renderMessageWithUpgradeLink } from "@/lib/linkifyUpgrade";
 import DirectorySearch from "@/components/composer/DirectorySearch";
 import MultiRating from "../composer/MultiRating";
 
@@ -626,7 +627,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
         {/* Body */}
         <div className="cm-body">
-          {error && <p className="cm-error">{error}</p>}
+          {error && <p className="cm-error">{renderMessageWithUpgradeLink(error)}</p>}
 
           {/* ── UPDATE ── */}
           {activeTab === "update" && (
