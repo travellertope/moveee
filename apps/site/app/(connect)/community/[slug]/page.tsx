@@ -107,7 +107,16 @@ export default async function CommunityPostPage({
   const pollOptions   = m._poll_options ? (typeof m._poll_options === "string" ? JSON.parse(m._poll_options) : m._poll_options) : undefined;
   const pollExpiresAt = m._poll_expires_at || undefined;
   const galleryImages = m._gallery_images ? (typeof m._gallery_images === "string" ? JSON.parse(m._gallery_images) : m._gallery_images) : undefined;
-  const videoUrl      = m._video_url || undefined;
+  // A YouTube URL typed directly into a post's body (as opposed to going
+  // through the Pro-only inline link-preview UI, which separately saves
+  // _video_url) never populates that meta field — WordPress's own oEmbed
+  // auto-embed expands the bare URL into an <iframe> within content.rendered
+  // instead, which rawText above then strips entirely, with nothing left
+  // for EventPostClient's video-embed rendering to find. Recovered from
+  // that auto-embedded iframe here instead (same fix as unified-feed.ts's
+  // getCommunityPosts(), used by the feed/modal view of the same post).
+  const ytEmbedMatch  = post.content.rendered.match(/youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{6,})/);
+  const videoUrl      = m._video_url || (ytEmbedMatch ? `https://www.youtube.com/watch?v=${ytEmbedMatch[1]}` : undefined);
   const itineraryStops = m._itinerary_stops ? (typeof m._itinerary_stops === "string" ? JSON.parse(m._itinerary_stops) : m._itinerary_stops) : undefined;
   const foodDishName  = m._food_dish_name || undefined;
   const foodRatingTaste = m._food_rating_taste ? Number(m._food_rating_taste) : undefined;
