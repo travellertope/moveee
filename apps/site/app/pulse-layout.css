@@ -753,19 +753,24 @@
 .cm-textarea {
   width: 100%;
   background: var(--paper-deep, #ece6d8);
-  border: 1px solid var(--rule, rgba(20,17,13,0.1));
+  /* No border line by design — the filled background alone marks the
+     field; a border previously appeared here only because .cw-shell's
+     scoped --rule token (connect-globals.css) doesn't reach this modal
+     when it's opened from TopBar/BottomNav, which render as siblings of
+     .cw-shell rather than descendants of it, so it fell back to the
+     var(--rule, …) fallback value instead of being genuinely absent. */
+  border: none;
   border-radius: var(--radius-xl);
   padding: 9px 12px;
   font-family: var(--font-inter, 'Inter', sans-serif);
   font-size: 0.85rem;
   color: var(--ink);
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s;
   box-sizing: border-box;
 }
 .cm-input:focus,
 .cm-textarea:focus {
-  border-color: rgba(122,36,28,0.45);
   background: var(--paper);
 }
 .cm-input::placeholder,
@@ -784,7 +789,7 @@
 .cm-currency-select {
   flex-shrink: 0;
   background: var(--paper-deep, #ece6d8);
-  border: 1px solid var(--rule, rgba(20,17,13,0.1));
+  border: none;
   border-radius: var(--radius-md, 4px);
   color: var(--ink);
   font-family: inherit;
