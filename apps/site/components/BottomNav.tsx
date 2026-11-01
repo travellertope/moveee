@@ -5,6 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import ComposerModal from "@/components/pulse/ComposerModal";
+// Same reasoning as TopBar.tsx's identical import — BottomNav's "+" button
+// is the other global entry point that always renders ComposerModal,
+// regardless of which page's own CSS is loaded.
+import "@/app/pulse-layout.css";
 import "./bottom-nav.css";
 
 function NavIcon({ name }: { name: string }) {
