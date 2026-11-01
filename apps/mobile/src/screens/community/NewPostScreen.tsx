@@ -472,6 +472,7 @@ export default function NewPostScreen() {
   const [eventAdmission, setEventAdmission] = useState("");
   const [eventTicketUrl, setEventTicketUrl] = useState("");
   const [eventCategory, setEventCategory] = useState("");
+  const [eventCategorySheetOpen, setEventCategorySheetOpen] = useState(false);
   const [eventOrganiser, setEventOrganiser] = useState<DirectoryEntry | null>(null);
   const [rsvpEnabled, setRsvpEnabled] = useState(false);
   const [rsvpCapacity, setRsvpCapacity] = useState("");
@@ -1802,20 +1803,35 @@ const uploadImages = async (): Promise<string[]> => {
             </View>
           </View>
 
-          {/* Category chips */}
-          <View style={[styles.chipRow, { marginTop: space[3] }]}>
-            {EVENT_CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[styles.sectionTag, eventCategory === cat.id && styles.sectionTagActive]}
-                onPress={() => setEventCategory(eventCategory === cat.id ? "" : cat.id)}
-              >
-                <Text style={[styles.sectionTagText, eventCategory === cat.id && styles.sectionTagTextActive]}>
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          {/* Category — single-select, so a dropdown reads clearer than a pill row */}
+          <View style={[styles.fieldGroup, { marginTop: space[3] }]}>
+            <Text style={styles.fieldLabel}>Category (optional)</Text>
+            <TouchableOpacity style={styles.eventCategoryField} onPress={() => setEventCategorySheetOpen(true)}>
+              <Text style={[styles.eventCategoryFieldText, !eventCategory && { color: c.ghost }]}>
+                {eventCategory ? EVENT_CATEGORIES.find((cat) => cat.id === eventCategory)?.label : "Choose a category"}
+              </Text>
+              <Text style={styles.sectionDropdownChevron}>▾</Text>
+            </TouchableOpacity>
           </View>
+          <BottomSheet visible={eventCategorySheetOpen} onClose={() => setEventCategorySheetOpen(false)}>
+            <Text style={styles.sectionSheetTitle}>Choose a category</Text>
+            {EVENT_CATEGORIES.map((cat) => {
+              const active = eventCategory === cat.id;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={styles.sectionSheetItem}
+                  onPress={() => {
+                    setEventCategory(active ? "" : cat.id);
+                    setEventCategorySheetOpen(false);
+                  }}
+                >
+                  <Text style={[styles.sectionSheetItemText, active && styles.sectionSheetItemTextActive]}>{cat.label}</Text>
+                  {active && <Text style={styles.sectionSheetCheck}>✓</Text>}
+                </TouchableOpacity>
+              );
+            })}
+          </BottomSheet>
 
           {/* Organiser */}
           <View style={{ marginTop: space[3] }}>
@@ -2252,6 +2268,13 @@ function createStyles(c: ColorPalette) {
     },
     prefixIcon: { fontSize: fontSize.md, color: c.mute },
     prefixedInput: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
+
+    eventCategoryField: {
+      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+      height: 44, borderWidth: 0, borderBottomWidth: 1, borderColor: c.rule,
+      paddingHorizontal: 2, backgroundColor: "transparent",
+    },
+    eventCategoryFieldText: { fontFamily: fonts.sans, fontSize: fontSize.base, color: c.ink },
 
     // Creative Showcase upload zone
     showcaseUploadZone: {
