@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api, CULTURE_API } from "../../api/client";
+import { api, CULTURE_API, ApiError } from "../../api/client";
 import AudioPreviewButton from "../ui/AudioPreviewButton";
 
 const PROXY = "https://themoveee.com/api";
@@ -74,6 +74,14 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
   const [externalLoading, setExternalLoading] = useState(false);
   const [creatingExternalId, setCreatingExternalId] = useState<string | null>(null);
 
+  // Was silently swallowed before (see handleSelectExternal/handleCreate) —
+  // a failed pick looked identical to a working tap, with zero feedback.
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const describeError = (err: unknown) =>
+    err instanceof ApiError
+      ? err.message || "Something went wrong. Please try again."
+      : "Could not reach the server. Check your connection and try again.";
+
   const search = useCallback((q: string) => {
     clearTimeout(debounceTimer);
     if (!q.trim()) { setResults([]); setShowList(false); return; }
@@ -118,6 +126,7 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
 
   const handleChange = (v: string) => {
     setQuery(v);
+    setErrorMsg(null);
     search(v);
     searchExternal(v);
   };
@@ -128,11 +137,13 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
     setResults([]);
     setExternalResults([]);
     setShowList(false);
+    setErrorMsg(null);
   };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
     setLoading(true);
+    setErrorMsg(null);
     try {
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: newName.trim(),
@@ -146,8 +157,8 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
       setNewName("");
       setNewCity("");
       setNewAbout("");
-    } catch {
-      // silent
+    } catch (err) {
+      setErrorMsg(describeError(err));
     } finally {
       setLoading(false);
     }
@@ -156,6 +167,7 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
   const handleSelectExternal = async (r: ExternalResult) => {
     if (!externalSource) return;
     setCreatingExternalId(r.externalId);
+    setErrorMsg(null);
     try {
       // Spotify only — album search results carry no track data, so the
       // 30s preview clip is resolved lazily here, just for the picked
@@ -196,8 +208,8 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
         preview_url: previewUrl || undefined,
       });
       handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null, genres: r.genres });
-    } catch {
-      // silent
+    } catch (err) {
+      setErrorMsg(describeError(err));
     } finally {
       setCreatingExternalId(null);
     }
@@ -256,6 +268,12 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
             <Text style={styles.cancelBtnText}>Cancel</Text>
           </TouchableOpacity>
         </View>
+        {errorMsg && (
+          <View style={styles.errorRow}>
+            <Ionicons name="alert-circle-outline" size={14} color={colors.error} />
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          </View>
+        )}
       </View>
     );
   }
@@ -327,6 +345,12 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
               <Text style={styles.addNewLink}>Add manually</Text>
             </TouchableOpacity>
           )}
+          {errorMsg && (
+            <View style={styles.errorRow}>
+              <Ionicons name="alert-circle-outline" size={14} color={colors.error} />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -369,6 +393,9 @@ const styles = StyleSheet.create({
 
   addNewRow:  { flexDirection: "row", alignItems: "center", gap: 4, padding: space[3] },
   addNewLink: { fontFamily: fonts.mono, fontSize: fontSize.xs, color: colors.gold },
+
+  errorRow:  { flexDirection: "row", alignItems: "flex-start", gap: 6, padding: space[3], paddingTop: 0 },
+  errorText: { flex: 1, fontFamily: fonts.sans, fontSize: fontSize.xs, color: colors.error, lineHeight: 16 },
 
   // selected
   selectedRow: {
