@@ -279,12 +279,37 @@
   border-radius: 2px;
 }
 
-/* ── Dark mode ── */
+/* ── Dark mode ──
+   TopBar renders as a sibling BEFORE .cw-shell (see (connect)/layout.tsx),
+   not inside it, so it never saw .cw-shell's dark --paper/--ink overrides
+   (connect-globals.css) — every var() in this file (background, border,
+   text, icon colours) silently kept resolving to its light value even
+   with dark theme active, so the whole bar just never left light mode:
+   a white bar sitting above an otherwise-dark feed below it. Locally
+   redefining the same tokens here, scoped to .tb-bar (TopBar's one root
+   element, so every var() in this file inherits it via normal cascade),
+   mirrors connect-globals.css's .cw-shell dark palette for consistency —
+   this also means the pre-existing background: color-mix(var(--paper)…)
+   line below now correctly resolves dark instead of needing a rewrite. */
 [data-theme="dark"] .tb-bar {
+  --paper: #242018;
+  --paper-deep: #2d2820;
+  --ink: #f3ece0;
+  --ink-soft: #d4c9b8;
+  --mute: #9e9288;
+  --rule: rgba(61, 53, 48, 0.6);
+  --rule-dark: #3d3530;
   background: color-mix(in srgb, var(--paper) 94%, transparent);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .tb-bar {
+    --paper: #242018;
+    --paper-deep: #2d2820;
+    --ink: #f3ece0;
+    --ink-soft: #d4c9b8;
+    --mute: #9e9288;
+    --rule: rgba(61, 53, 48, 0.6);
+    --rule-dark: #3d3530;
     background: color-mix(in srgb, var(--paper) 94%, transparent);
   }
 }
