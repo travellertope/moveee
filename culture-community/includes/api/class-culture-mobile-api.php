@@ -4145,6 +4145,23 @@ class Culture_Mobile_API {
             $raw         = wpautop( $post->post_content );
             $with_breaks = preg_replace( '/<\/p>\s*<p[^>]*>/i', "\n\n", $raw );
             $with_breaks = preg_replace( '/<br\s*\/?>/i', "\n", $with_breaks );
+
+            // A YouTube URL typed directly into the post body (as opposed to
+            // going through the Pro-only inline link-preview UI, which
+            // separately saves community_link_url/_video_url) has neither of
+            // those meta fields set — detect it here so videoUrl isn't just
+            // empty. Deliberately NOT removed from $with_breaks/$body_text:
+            // FeedItemCard.tsx's BasicPostCard already has its own working
+            // client-side fallback (extractYoutubeFromText()) that finds this
+            // same URL directly in item.body and strips it from the
+            // *displayed* text itself at render time — it doesn't read
+            // videoUrl at all. Stripping it here would silently break that
+            // already-working path for the sake of a field nothing reads yet.
+            $inline_video_url = '';
+            if ( preg_match( '#https?://(?:www\.)?(?:youtube\.com/watch\?[^\s<]*v=[A-Za-z0-9_-]+[^\s<]*|youtu\.be/[A-Za-z0-9_-]+[^\s<]*)#i', $with_breaks, $yt_inline_match ) ) {
+                $inline_video_url = $yt_inline_match[0];
+            }
+
             $body_text   = trim( wp_strip_all_tags( $with_breaks ) );
             $link_url    = get_post_meta( $post->ID, 'community_link_url', true ) ?: '';
             $source      = '';
@@ -4209,7 +4226,7 @@ class Culture_Mobile_API {
                 'pollExpiresAt'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
                 'pollDescription'         => get_post_meta( $post->ID, '_poll_description', true ) ?: '',
                 'galleryImages'           => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
-                'videoUrl'                => get_post_meta( $post->ID, '_video_url', true ) ?: '',
+                'videoUrl'                => get_post_meta( $post->ID, '_video_url', true ) ?: $inline_video_url,
                 'itineraryStops'          => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
                 'itineraryTitle'          => get_post_meta( $post->ID, '_itinerary_title', true ) ?: '',
                 'itineraryCity'           => get_post_meta( $post->ID, '_itinerary_city', true ) ?: '',
@@ -4635,6 +4652,18 @@ class Culture_Mobile_API {
         // Preserve paragraph breaks (same logic as format_community_feed_item).
         $body_html  = wpautop( $post->post_content );
         $body_text  = preg_replace( '/<\/p>\s*<p[^>]*>/i', "\n\n", $body_html );
+
+        // Same inline-YouTube-URL recovery as format_community_feed_item() —
+        // see its comment for why this is needed (wpautop() never runs
+        // WordPress's oEmbed auto-embed, so a bare URL typed into the body
+        // is still plain text here) and why it's deliberately not removed
+        // from body_text (an existing client-side fallback elsewhere relies
+        // on finding this same URL in the body text itself).
+        $inline_video_url = '';
+        if ( preg_match( '#https?://(?:www\.)?(?:youtube\.com/watch\?[^\s<]*v=[A-Za-z0-9_-]+[^\s<]*|youtu\.be/[A-Za-z0-9_-]+[^\s<]*)#i', $body_text, $yt_inline_match ) ) {
+            $inline_video_url = $yt_inline_match[0];
+        }
+
         $body_text  = wp_strip_all_tags( $body_text );
 
         return array(
@@ -4668,7 +4697,7 @@ class Culture_Mobile_API {
             'poll_expires_at'           => get_post_meta( $post->ID, '_poll_expires_at', true ) ?: '',
             'poll_description'          => get_post_meta( $post->ID, '_poll_description', true ) ?: '',
             'gallery_images'            => json_decode( get_post_meta( $post->ID, '_gallery_images', true ) ?: '[]', true ),
-            'video_url'                 => get_post_meta( $post->ID, '_video_url', true ) ?: '',
+            'video_url'                 => get_post_meta( $post->ID, '_video_url', true ) ?: $inline_video_url,
             'itinerary_stops'           => json_decode( get_post_meta( $post->ID, '_itinerary_stops', true ) ?: '[]', true ),
             'itinerary_title'           => get_post_meta( $post->ID, '_itinerary_title', true ) ?: '',
             'itinerary_city'            => get_post_meta( $post->ID, '_itinerary_city', true ) ?: '',
