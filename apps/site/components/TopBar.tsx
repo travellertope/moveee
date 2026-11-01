@@ -7,6 +7,15 @@ import { onOpenSearchModal } from "@/lib/searchModalBus";
 import SearchModal from "@/components/SearchModal";
 import NotificationBell from "@/components/NotificationBell";
 import ComposerModal from "@/components/pulse/ComposerModal";
+// TopBar renders the global "New Post" trigger on every page (it's mounted
+// once in (connect)/layout.tsx), so ComposerModal can open from a page that
+// never itself imports pulse-layout.css — the stylesheet holding every
+// cm-* class the modal's markup uses. Without it the modal renders as
+// completely unstyled raw text (same root cause as the earlier homepage
+// ComposerModal bug, now hit again from an event page's "New Post" button).
+// Importing it here, at the one place that always renders the modal,
+// fixes it for every page at once instead of patching page by page.
+import "@/app/pulse-layout.css";
 import "./top-bar.css";
 
 export default function TopBar() {
