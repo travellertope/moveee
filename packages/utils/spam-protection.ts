@@ -155,7 +155,7 @@ export function checkPostSpam(userId: string, text: string, tier: string): SpamC
   if (!allowLinks && URL_PATTERN.test(text)) {
     return {
       allowed: false,
-      reason:  "Links are not allowed in community posts. Share the title or topic instead.",
+      reason:  "Links aren't allowed in community posts on Moveee Citizen. Share the title or topic instead, or upgrade to Moveee Pro to post links.",
       status:  400,
     };
   }
@@ -202,7 +202,7 @@ export function checkCommentSpam(userId: string, text: string, tier: string): Sp
   if (!allowLinks && URL_PATTERN.test(text)) {
     return {
       allowed: false,
-      reason:  "Links are not allowed in comments.",
+      reason:  "Links aren't allowed in comments on Moveee Citizen. Upgrade to Moveee Pro to post links.",
       status:  400,
     };
   }
