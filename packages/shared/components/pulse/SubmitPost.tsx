@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { renderMessageWithUpgradeLink } from "@/lib/linkifyUpgrade";
 import SourcePreviewCard from "./SourcePreviewCard";
 import StarRating from "@/components/composer/StarRating";
 import MultiRating from "@/components/composer/MultiRating";
@@ -1820,7 +1821,7 @@ export default function SubmitPost({ onPosted, lockedTag, initialTemplate, initi
                 </button>
               )}
             </div>
-            {error && <p className="composer-error">{error}</p>}
+            {error && <p className="composer-error">{renderMessageWithUpgradeLink(error)}</p>}
           </div>
         </div>
       </form>

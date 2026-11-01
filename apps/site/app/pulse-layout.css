@@ -1065,6 +1065,13 @@
 @media (max-width: 500px) { .cm-grid-2 { grid-template-columns: 1fr; } }
 
 /* Error */
+.upgrade-inline-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .cm-error {
   font-family: var(--font-inter, 'Inter', sans-serif);
   font-size: 0.75rem;

@@ -826,7 +826,20 @@ const uploadImages = async (): Promise<string[]> => {
         nav.navigate("ConnectFeed", { justPosted: Date.now() });
       }
     } catch (err: any) {
-      Alert.alert("Error", err?.message ?? "Could not submit post.");
+      const message = err?.message ?? "Could not submit post.";
+      // Alert.alert has no way to embed a tappable link (unlike the web
+      // composer's inline "Moveee Pro" link — see linkifyUpgrade.tsx) — an
+      // extra button that navigates to the upgrade screen is the native
+      // equivalent, offered only when this is actually the tier-restriction
+      // rejection (matches the same "Moveee Pro" marker the web helper uses).
+      if (message.includes("Moveee Pro")) {
+        Alert.alert("Error", message, [
+          { text: "Not now", style: "cancel" },
+          { text: "Upgrade", onPress: () => nav.navigate("Membership") },
+        ]);
+      } else {
+        Alert.alert("Error", message);
+      }
     } finally {
       setSubmitting(false);
     }
