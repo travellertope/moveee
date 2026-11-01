@@ -218,6 +218,35 @@ class Culture_Post_Types {
             ) );
         }
 
+        // Live-resolved author name/avatar. The raw community_author_name/
+        // community_author_avatar postmeta is a snapshot frozen at the moment
+        // the post was created — so a member who later changes their display
+        // name or photo kept showing the OLD name/avatar on every past post
+        // across the website (unified-feed.ts reads that raw meta directly).
+        // Culture_REST_API::resolve_author_name()/resolve_author_avatar() already
+        // solve this correctly (read live from community_author_id, falling back
+        // to the snapshot only for very old posts with no author ID) for the
+        // custom mobile feed route — this exposes the same resolution as a
+        // REST field here too, so every consumer of this CPT's REST response
+        // (web and mobile alike) sees the member's current name/photo instead
+        // of a stale one.
+        $resolve_author_meta_cb = function ( $post_arr ) {
+            if ( ! class_exists( 'Culture_REST_API' ) ) return null;
+            $id = $post_arr['id'];
+            return array(
+                'name'   => Culture_REST_API::resolve_author_name( $id ),
+                'avatar' => Culture_REST_API::resolve_author_avatar( $id ),
+            );
+        };
+        register_rest_field( 'culture_post', 'community_author_meta', array(
+            'get_callback' => $resolve_author_meta_cb,
+            'schema'       => null,
+        ) );
+        register_rest_field( 'post', 'community_author_meta', array( // legacy
+            'get_callback' => $resolve_author_meta_cb,
+            'schema'       => null,
+        ) );
+
         // Resolved organiser + RSVP fields for community-organiser events, mirroring
         // culture_event_meta above. Kept as a single REST field (rather than raw meta)
         // so the Next.js feed mapper doesn't need a second request per event to resolve
