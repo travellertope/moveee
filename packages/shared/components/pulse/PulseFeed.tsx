@@ -7,9 +7,8 @@ import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
 import { interestsToTagSet } from "@/lib/interest-mappings";
 import { rankFeed, matchesInterests } from "@/lib/feed-recommendations";
-import { getSpotlightEvents, isEventItem } from "@/lib/event-spotlight";
+import { isEventItem } from "@/lib/event-spotlight";
 import FeedCard from "./FeedCard";
-import EventSpotlightCarousel from "./EventSpotlightCarousel";
 import StoopReminderCard from "./StoopReminderCard";
 import ComposerModal, { type ComposerTab } from "./ComposerModal";
 import StoopsNearYouWidget from "./StoopsNearYouWidget";
@@ -228,7 +227,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTab, setComposerTab] = useState<ComposerTab>("update");
 
-  const spotlightEvents = useMemo(() => getSpotlightEvents(items), [items]);
 
   // Writers to follow — derive from feed items already in memory; no new API call needed.
   const writersToFollow = useMemo(() => {
@@ -510,7 +508,6 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
                   onDelete={(id) => setItems(prev => prev.filter(i => i.id !== id))}
                 />
               ))}
-              {visible.length > 5 && <EventSpotlightCarousel events={spotlightEvents} />}
               {visible.length > 5 && session?.user && <StoopReminderCard />}
               {visible.slice(5).map(item => (
                 <FeedCard
