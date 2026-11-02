@@ -2827,6 +2827,9 @@ const QUOTE_FIELDS_FRAGMENT = `
         slug
       }
     }
+    communityAuthor
+    communityAuthorUsername
+    communityAuthorAvatar
   }
 `;
 

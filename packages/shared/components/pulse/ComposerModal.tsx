@@ -664,18 +664,18 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             <>
               <div className="cm-field">
                 <label className="cm-label">Review type</label>
-                <div className="cm-review-pills">
+                <select
+                  className="cm-input"
+                  value={revSubtype}
+                  onChange={e => { const sub = e.target.value as ReviewSubtype; setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGalleryUrls([]); }}
+                  aria-label="Review type"
+                >
                   {(["place", "food", "music", "book", "film"] as ReviewSubtype[]).map(sub => (
-                    <button
-                      key={sub}
-                      type="button"
-                      className={`cm-pill${revSubtype === sub ? " cm-pill--active" : ""}`}
-                      onClick={() => { setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGalleryUrls([]); }}
-                    >
-                      {{ place: "📍 Place", food: "🍽 Food", music: "🎵 Music", book: "📚 Book", film: "🎬 Film" }[sub]}
-                    </button>
+                    <option key={sub} value={sub}>
+                      {{ place: "Place", food: "Food", music: "Music", book: "Book", film: "Film" }[sub]}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
               <div className="cm-field">
                 <>
@@ -779,7 +779,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                       <button
                         key={p}
                         type="button"
-                        className={`cm-pill${foodPriceRange === p ? " cm-pill--active" : ""}`}
+                        className={`cm-pill cm-pill--flush${foodPriceRange === p ? " cm-pill--active" : ""}`}
                         onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
                       >{p}</button>
                     ))}
@@ -795,7 +795,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                         <button
                           key={p}
                           type="button"
-                          className={`cm-pill${placePriceRange === p ? " cm-pill--active" : ""}`}
+                          className={`cm-pill cm-pill--flush${placePriceRange === p ? " cm-pill--active" : ""}`}
                           onClick={() => setPlacePriceRange(placePriceRange === p ? "" : p)}
                         >{p}</button>
                       ))}
@@ -893,16 +893,16 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Medium <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills">
+                <select
+                  className="cm-input"
+                  value={showcaseMedium}
+                  onChange={e => setShowcaseMedium(e.target.value)}
+                >
+                  <option value="">Choose a medium</option>
                   {SHOWCASE_MEDIUMS.map(m => (
-                    <button
-                      key={m}
-                      type="button"
-                      className={`cm-pill${showcaseMedium === m ? " cm-pill--active" : ""}`}
-                      onClick={() => setShowcaseMedium(showcaseMedium === m ? "" : m)}
-                    >{m}</button>
+                    <option key={m} value={m}>{m}</option>
                   ))}
-                </div>
+                </select>
               </div>
               <div className="cm-field">
                 <label className="cm-label">Curator&rsquo;s note</label>
@@ -1001,18 +1001,17 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {/* Quote type — at the top so the source picker below adapts immediately */}
               <div className="cm-field">
                 <label className="cm-label">Quote type <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills">
+                <select
+                  className="cm-input"
+                  value={qType}
+                  onChange={e => { setQType(e.target.value); setQSourceEntry(null); }}
+                  aria-label="Quote type"
+                >
+                  <option value="">Choose a type</option>
                   {QUOTE_TYPES.map(qt => (
-                    <button
-                      key={qt}
-                      type="button"
-                      className={`cm-pill${qType === qt ? " cm-pill--active" : ""}`}
-                      onClick={() => { setQType(qType === qt ? "" : qt); setQSourceEntry(null); }}
-                    >
-                      {{ Person: "👤 Person", Book: "📚 Book", Film: "🎬 Film", Speech: "🎤 Speech", Song: "🎵 Song" }[qt]}
-                    </button>
+                    <option key={qt} value={qt}>{qt}</option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {/* The quote */}
@@ -1099,16 +1098,17 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Duration <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills cm-pills-wrap">
+                <select
+                  className="cm-input"
+                  value={iDurationPick}
+                  onChange={e => setIDurationPick(e.target.value)}
+                  aria-label="Duration"
+                >
+                  <option value="">Choose a duration</option>
                   {ITINERARY_DURATIONS.map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      className={`cm-pill${iDurationPick === d ? " cm-pill--active" : ""}`}
-                      onClick={() => setIDurationPick(iDurationPick === d ? "" : d)}
-                    >{d}</button>
+                    <option key={d} value={d}>{d}</option>
                   ))}
-                </div>
+                </select>
               </div>
               <div className="cm-field">
                 <label className="cm-label">Budget <span className="cm-label-opt">(optional)</span></label>
@@ -1117,7 +1117,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     <button
                       key={b}
                       type="button"
-                      className={`cm-pill${iBudget === b ? " cm-pill--active" : ""}`}
+                      className={`cm-pill cm-pill--flush${iBudget === b ? " cm-pill--active" : ""}`}
                       onClick={() => setIBudget(iBudget === b ? "" : b)}
                     >{b}</button>
                   ))}
@@ -1243,20 +1243,26 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Start date &amp; time</label>
-                {/* Always 2 columns (unlike .cm-grid-2, which collapses to 1 at
-                    500px) — a date + time pair should stay compact and
-                    side-by-side even on a narrow phone, not stack into two
-                    full-width fields. */}
-                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
+                {/* A compact flex pair, not a full-width grid — .cm-input's
+                    own width: 100% was stretching each field to fill its
+                    whole share of the row even though a native date/time
+                    picker only needs a small box to show its content, which
+                    read as oversized next to every other field. Fixed
+                    widths here override that and let the two sit side by
+                    side at their natural size, with flexShrink: 0 so a
+                    narrow phone can't squash them. */}
+                <div style={{ display: "flex", gap: 8 }}>
                   <input
                     className="cm-input"
                     type="date"
+                    style={{ width: "150px", flexShrink: 0 }}
                     value={splitDT(evDate)[0]}
                     onChange={e => setEvDate(joinDT(e.target.value, splitDT(evDate)[1]))}
                   />
                   <input
                     className="cm-input"
                     type="time"
+                    style={{ width: "110px", flexShrink: 0 }}
                     value={splitDT(evDate)[1]}
                     onChange={e => setEvDate(joinDT(splitDT(evDate)[0], e.target.value))}
                   />
@@ -1264,16 +1270,18 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">End date &amp; time <span className="cm-label-opt">(optional)</span></label>
-                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <input
                     className="cm-input"
                     type="date"
+                    style={{ width: "150px", flexShrink: 0 }}
                     value={splitDT(evEndDate)[0]}
                     onChange={e => setEvEndDate(joinDT(e.target.value, splitDT(evEndDate)[1]))}
                   />
                   <input
                     className="cm-input"
                     type="time"
+                    style={{ width: "110px", flexShrink: 0 }}
                     value={splitDT(evEndDate)[1]}
                     onChange={e => setEvEndDate(joinDT(splitDT(evEndDate)[0], e.target.value))}
                   />
@@ -1355,7 +1363,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   </div>
                 </div>
                 <div className="cm-field">
-                  <label className="cm-label">Ticket / RSVP link <span className="cm-label-opt">(optional)</span></label>
+                  <label className="cm-label">External Ticket/RSVP link <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
                     type="url"
@@ -1366,7 +1374,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                <label className="cm-label">Enable RSVP</label>
+                <label className="cm-label">Manage RSVP/Ticket</label>
                 <div className="cm-review-pills">
                   <button
                     type="button"
