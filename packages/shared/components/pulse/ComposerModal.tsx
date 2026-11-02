@@ -1243,20 +1243,26 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Start date &amp; time</label>
-                {/* Always 2 columns (unlike .cm-grid-2, which collapses to 1 at
-                    500px) — a date + time pair should stay compact and
-                    side-by-side even on a narrow phone, not stack into two
-                    full-width fields. */}
-                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
+                {/* A compact flex pair, not a full-width grid — .cm-input's
+                    own width: 100% was stretching each field to fill its
+                    whole share of the row even though a native date/time
+                    picker only needs a small box to show its content, which
+                    read as oversized next to every other field. Fixed
+                    widths here override that and let the two sit side by
+                    side at their natural size, with flexShrink: 0 so a
+                    narrow phone can't squash them. */}
+                <div style={{ display: "flex", gap: 8 }}>
                   <input
                     className="cm-input"
                     type="date"
+                    style={{ width: "150px", flexShrink: 0 }}
                     value={splitDT(evDate)[0]}
                     onChange={e => setEvDate(joinDT(e.target.value, splitDT(evDate)[1]))}
                   />
                   <input
                     className="cm-input"
                     type="time"
+                    style={{ width: "110px", flexShrink: 0 }}
                     value={splitDT(evDate)[1]}
                     onChange={e => setEvDate(joinDT(splitDT(evDate)[0], e.target.value))}
                   />
@@ -1264,16 +1270,18 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">End date &amp; time <span className="cm-label-opt">(optional)</span></label>
-                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <input
                     className="cm-input"
                     type="date"
+                    style={{ width: "150px", flexShrink: 0 }}
                     value={splitDT(evEndDate)[0]}
                     onChange={e => setEvEndDate(joinDT(e.target.value, splitDT(evEndDate)[1]))}
                   />
                   <input
                     className="cm-input"
                     type="time"
+                    style={{ width: "110px", flexShrink: 0 }}
                     value={splitDT(evEndDate)[1]}
                     onChange={e => setEvEndDate(joinDT(splitDT(evEndDate)[0], e.target.value))}
                   />
