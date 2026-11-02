@@ -779,7 +779,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                       <button
                         key={p}
                         type="button"
-                        className={`cm-pill${foodPriceRange === p ? " cm-pill--active" : ""}`}
+                        className={`cm-pill cm-pill--flush${foodPriceRange === p ? " cm-pill--active" : ""}`}
                         onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
                       >{p}</button>
                     ))}
@@ -795,7 +795,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                         <button
                           key={p}
                           type="button"
-                          className={`cm-pill${placePriceRange === p ? " cm-pill--active" : ""}`}
+                          className={`cm-pill cm-pill--flush${placePriceRange === p ? " cm-pill--active" : ""}`}
                           onClick={() => setPlacePriceRange(placePriceRange === p ? "" : p)}
                         >{p}</button>
                       ))}
