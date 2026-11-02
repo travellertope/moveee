@@ -1374,7 +1374,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                <label className="cm-label">Manage RSVP and Ticket</label>
+                <label className="cm-label">Manage RSVP/Ticket</label>
                 <div className="cm-review-pills">
                   <button
                     type="button"
