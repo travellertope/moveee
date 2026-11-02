@@ -1477,7 +1477,7 @@ h1, h2, h3, h4 {
   transition: color 0.1s, transform 0.1s;
 }
 .composer-star:hover { transform: scale(1.15); }
-.composer-star--active { color: var(--ochre, #7a241c); }
+.composer-star--active { color: var(--gold, #b38238); }
 
 /* Multi-rating */
 .composer-multi-rating {
