@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import FeedCard from "@/components/pulse/FeedCard";
-import ComposerModal from "@/components/pulse/ComposerModal";
+import ComposerModal, { type ComposerTab } from "@/components/pulse/ComposerModal";
 // Guarantee pulse-layout.css (every cm-* class ComposerModal uses) is
 // loaded wherever this component renders, rather than relying on it
 // coming along implicitly via (connect)/layout.tsx's TopBar/BottomNav —
@@ -32,10 +33,31 @@ export default function HubFeed({
   sort?: string;
 }) {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyWpId, setBusyWpId] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerTab, setComposerTab] = useState<ComposerTab>("update");
+
+  // Auto-open the composer on ?compose=1[&tab=...] — same deep-link
+  // contract PulseFeed.tsx honours, so the retired /hub/[slug]/post/new
+  // page can redirect here instead of 404ing. Strips both params after.
+  useEffect(() => {
+    if (searchParams.get("compose") !== "1") return;
+    const tab = searchParams.get("tab") as ComposerTab | null;
+    const VALID_TABS: ComposerTab[] = ["update", "review", "art", "poll", "quote", "itinerary", "event"];
+    setComposerTab(tab && VALID_TABS.includes(tab) ? tab : "update");
+    setComposerOpen(true);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("compose");
+    next.delete("tab");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -107,7 +129,7 @@ export default function HubFeed({
             <button
               type="button"
               className="composer-box-placeholder"
-              onClick={() => setComposerOpen(true)}
+              onClick={() => { setComposerTab("update"); setComposerOpen(true); }}
             >
               Share something with this Hub…
             </button>
@@ -161,6 +183,7 @@ export default function HubFeed({
         open={composerOpen}
         onClose={() => setComposerOpen(false)}
         hubId={hubId}
+        initialTab={composerTab}
         onSuccess={load}
       />
     </div>

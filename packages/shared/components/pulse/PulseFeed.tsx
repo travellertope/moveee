@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { FeedItem, FeedItemType } from "@/lib/unified-feed";
@@ -53,6 +53,7 @@ interface PulseFeedProps {
 export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
 
@@ -227,6 +228,24 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerTab, setComposerTab] = useState<ComposerTab>("update");
 
+  // Auto-open the composer on ?compose=1[&tab=update|review|art|poll|quote|
+  // itinerary|event] — the deep-link contract the retired /post/new page
+  // now redirects into, so a bookmarked "new post" link still pulls up the
+  // composer modal instead of 404ing. Strips both params afterward so a
+  // refresh doesn't keep reopening it.
+  useEffect(() => {
+    if (searchParams.get("compose") !== "1") return;
+    const tab = searchParams.get("tab") as ComposerTab | null;
+    const VALID_TABS: ComposerTab[] = ["update", "review", "art", "poll", "quote", "itinerary", "event"];
+    setComposerTab(tab && VALID_TABS.includes(tab) ? tab : "update");
+    setComposerOpen(true);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("compose");
+    next.delete("tab");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Writers to follow — derive from feed items already in memory; no new API call needed.
   const writersToFollow = useMemo(() => {
