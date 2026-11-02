@@ -1016,7 +1016,6 @@ h1, h2, h3, h4 {
 
 /* Shared input base */
 .composer-input,
-.composer-dir-input,
 .composer-poll-input,
 .composer-itinerary-input,
 .composer-itinerary-note,
@@ -1033,16 +1032,34 @@ h1, h2, h3, h4 {
   transition: border-color 0.15s;
 }
 .composer-input::placeholder,
-.composer-dir-input::placeholder,
 .composer-poll-input::placeholder,
 .composer-itinerary-input::placeholder,
 .composer-itinerary-note::placeholder { color: var(--mute, #7a6f5c); }
 .composer-input:focus,
-.composer-dir-input:focus,
 .composer-poll-input:focus,
 .composer-itinerary-input:focus,
 .composer-itinerary-note:focus {
   border-color: var(--ochre, #7a241c);
+}
+
+/* Directory search input — no border line, matching the rest of the
+   composer's zero-border-everywhere fields (cm-input/cm-textarea in
+   pulse-layout.css). Kept out of the shared bordered block above. */
+.composer-dir-input {
+  background: var(--paper, #fff);
+  border: none;
+  border-radius: 4px;
+  color: var(--ink, #14110d);
+  font-size: 14px;
+  font-family: var(--font-dm-sans, "DM Sans", sans-serif);
+  padding: 8px 10px;
+  outline: none;
+  width: 100%;
+  transition: background 0.15s;
+}
+.composer-dir-input::placeholder { color: var(--mute, #7a6f5c); }
+.composer-dir-input:focus {
+  background: var(--paper-deep, #ece6d8);
 }
 
 /* Main textarea */
