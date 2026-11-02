@@ -158,78 +158,83 @@ export default function QuoteDetailModal({ item, onClose }: Props) {
             )}
           </div>
 
-          {/* Sharing reason */}
-          {item.quoteSharingReason && (
+          {/* Posted by + sharing reason — one container, member details
+              first (secondary to the quote above, so smaller/muted rather
+              than a normal post's own leading header), the comment after.
+              Falls back to a plain centered date when there's no real
+              submitter (pre-backfill system-authored quotes) and no
+              sharing reason. */}
+          {(item.communityAuthor || item.quoteSharingReason) ? (
             <div style={{
               marginTop: "1.25rem", padding: "1rem",
               background: "var(--paper-deep)", borderRadius: "12px",
               boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-              color: "var(--ink-soft)", fontSize: "0.85rem", lineHeight: 1.5,
             }}>
-              💬 {item.quoteSharingReason}
-            </div>
-          )}
-
-          {/* Posted by — secondary to the quote itself, so a smaller/muted
-              treatment than a normal post's own header, placed below the
-              quote rather than leading it. Folds the date into this row
-              instead of a separate centered date line. */}
-          {item.communityAuthor ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "1.25rem" }}>
-            {item.communityAuthorUsername ? (
-              <Link href={`/connect/${item.communityAuthorUsername}`} style={{ flexShrink: 0 }}>
-                <div style={{
-                  width: "26px", height: "26px", borderRadius: "50%",
-                  background: "var(--cat-community-bg)", color: "var(--cat-community-fg)",
-                  fontSize: "0.55rem", fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden",
-                }}>
-                  {item.communityAuthorAvatar ? (
-                    <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              {item.communityAuthor ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: item.quoteSharingReason ? "0.85rem" : 0 }}>
+                  {item.communityAuthorUsername ? (
+                    <Link href={`/connect/${item.communityAuthorUsername}`} style={{ flexShrink: 0 }}>
+                      <div style={{
+                        width: "26px", height: "26px", borderRadius: "50%",
+                        background: "var(--cat-community-bg)", color: "var(--cat-community-fg)",
+                        fontSize: "0.55rem", fontWeight: 700,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        overflow: "hidden",
+                      }}>
+                        {item.communityAuthorAvatar ? (
+                          <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          (item.communityAuthor || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+                        )}
+                      </div>
+                    </Link>
                   ) : (
-                    (item.communityAuthor || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+                    <div style={{
+                      width: "26px", height: "26px", borderRadius: "50%",
+                      background: "var(--cat-community-bg)", color: "var(--cat-community-fg)",
+                      fontSize: "0.55rem", fontWeight: 700,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      overflow: "hidden", flexShrink: 0,
+                    }}>
+                      {item.communityAuthorAvatar ? (
+                        <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        (item.communityAuthor || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
+                      )}
+                    </div>
                   )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1px", minWidth: 0 }}>
+                    {item.communityAuthorUsername ? (
+                      <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink-soft)", fontSize: "0.76rem", fontWeight: 600, textDecoration: "none" }}>
+                        {item.communityAuthor}
+                      </Link>
+                    ) : (
+                      <span style={{ color: "var(--ink-soft)", fontSize: "0.76rem", fontWeight: 600 }}>
+                        {item.communityAuthor}
+                      </span>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                      {item.communityAuthorUsername && (
+                        <span style={{ color: "var(--mute)", fontSize: "0.66rem" }}>@{item.communityAuthorUsername}</span>
+                      )}
+                      {item.communityAuthorUsername && <span style={{ color: "var(--mute)", fontSize: "0.66rem" }}>·</span>}
+                      <span style={{ color: "var(--mute)", fontSize: "0.66rem", fontFamily: "monospace" }}>
+                        {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </Link>
-            ) : (
-              <div style={{
-                width: "26px", height: "26px", borderRadius: "50%",
-                background: "var(--cat-community-bg)", color: "var(--cat-community-fg)",
-                fontSize: "0.55rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                overflow: "hidden", flexShrink: 0,
-              }}>
-                {item.communityAuthorAvatar ? (
-                  <img src={item.communityAuthorAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  (item.communityAuthor || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?"
-                )}
-              </div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1px", minWidth: 0 }}>
-              {item.communityAuthor && (
-                item.communityAuthorUsername ? (
-                  <Link href={`/connect/${item.communityAuthorUsername}`} style={{ color: "var(--ink-soft)", fontSize: "0.76rem", fontWeight: 600, textDecoration: "none" }}>
-                    {item.communityAuthor}
-                  </Link>
-                ) : (
-                  <span style={{ color: "var(--ink-soft)", fontSize: "0.76rem", fontWeight: 600 }}>
-                    {item.communityAuthor}
-                  </span>
-                )
-              )}
-              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                {item.communityAuthorUsername && (
-                  <span style={{ color: "var(--mute)", fontSize: "0.66rem" }}>@{item.communityAuthorUsername}</span>
-                )}
-                {item.communityAuthorUsername && <span style={{ color: "var(--mute)", fontSize: "0.66rem" }}>·</span>}
-                <span style={{ color: "var(--mute)", fontSize: "0.66rem", fontFamily: "monospace" }}>
+              ) : (
+                <div style={{ fontFamily: "monospace", fontSize: "0.66rem", color: "var(--mute)", marginBottom: item.quoteSharingReason ? "0.85rem" : 0 }}>
                   {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                </span>
-              </div>
+                </div>
+              )}
+              {item.quoteSharingReason && (
+                <p style={{ margin: 0, color: "var(--ink-soft)", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                  {item.quoteSharingReason}
+                </p>
+              )}
             </div>
-          </div>
           ) : (
             <div style={{ fontFamily: "monospace", fontSize: "0.68rem", color: "var(--mute)", marginTop: "1.25rem", textAlign: "center", display: "block", width: "100%" }}>
               {new Date(item.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
