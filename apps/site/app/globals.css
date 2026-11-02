@@ -1046,7 +1046,7 @@ h1, h2, h3, h4 {
    composer's zero-border-everywhere fields (cm-input/cm-textarea in
    pulse-layout.css). Kept out of the shared bordered block above. */
 .composer-dir-input {
-  background: var(--paper, #fff);
+  background: var(--paper-deep, #ece6d8);
   border: none;
   border-radius: 4px;
   color: var(--ink, #14110d);
@@ -1059,7 +1059,7 @@ h1, h2, h3, h4 {
 }
 .composer-dir-input::placeholder { color: var(--mute, #7a6f5c); }
 .composer-dir-input:focus {
-  background: var(--paper-deep, #ece6d8);
+  background: var(--paper, #fff);
 }
 
 /* Main textarea */
