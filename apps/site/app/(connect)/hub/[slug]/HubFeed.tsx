@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import FeedCard from "@/components/pulse/FeedCard";
 import ComposerModal from "@/components/pulse/ComposerModal";
+// Guarantee pulse-layout.css (every cm-* class ComposerModal uses) is
+// loaded wherever this component renders, rather than relying on it
+// coming along implicitly via (connect)/layout.tsx's TopBar/BottomNav —
+// the same fragile-dependency bug fixed for those two entry points.
+import "@/app/pulse-layout.css";
 import type { FeedItem } from "@/lib/unified-feed";
 
 /**
