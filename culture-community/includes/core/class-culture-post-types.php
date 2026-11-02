@@ -439,6 +439,35 @@ class Culture_Post_Types {
             ) );
         }
 
+        // 1b. Quotes — community submitter identity (post_author). Mirrors
+        // the exact resolution mobile's REST get_quote_feed_items() already
+        // uses (display_name/user_login/_culture_avatar_url off post_author),
+        // so the web quote drawer can show who submitted a culture_quote the
+        // same way every other feed item type already does.
+        register_graphql_field( 'CultureQuote', 'communityAuthor', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $author_id = (int) get_post_field( 'post_author', $post->databaseId );
+                $author    = $author_id ? get_userdata( $author_id ) : false;
+                return $author ? $author->display_name : '';
+            },
+        ) );
+        register_graphql_field( 'CultureQuote', 'communityAuthorUsername', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $author_id = (int) get_post_field( 'post_author', $post->databaseId );
+                $author    = $author_id ? get_userdata( $author_id ) : false;
+                return $author ? $author->user_login : '';
+            },
+        ) );
+        register_graphql_field( 'CultureQuote', 'communityAuthorAvatar', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $author_id = (int) get_post_field( 'post_author', $post->databaseId );
+                return $author_id ? (string) get_user_meta( $author_id, '_culture_avatar_url', true ) : '';
+            },
+        ) );
+
         // 2. Events & Posts
         $event_fields = array(
             'location'      => array( 'type' => 'String',  'meta_key' => 'location' ),

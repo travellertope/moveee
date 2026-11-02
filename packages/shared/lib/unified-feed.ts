@@ -434,6 +434,9 @@ export async function getUnifiedFeed(): Promise<FeedItem[]> {
         quoteAuthor: quote.quoteAuthors?.nodes?.[0]?.name ?? "",
         quoteSharingReason: quote.quoteSharingReason ?? "",
         quoteType: quote.quoteType ?? "",
+        communityAuthor: quote.communityAuthor || "",
+        communityAuthorUsername: quote.communityAuthorUsername || undefined,
+        communityAuthorAvatar: quote.communityAuthorAvatar || undefined,
       });
     }
   }
