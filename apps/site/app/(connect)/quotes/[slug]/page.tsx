@@ -139,25 +139,91 @@ export default async function IndividualQuotePage({ params }: QuotePageProps) {
                 )}
               </div>
 
-              {quote.quoteSharingReason && (
+              {/* Posted by + sharing reason — one container, member details
+                  first, comment after (matches QuoteDetailModal.tsx's
+                  in-feed drawer). Falls back to a plain date line when
+                  there's no real submitter and no sharing reason. */}
+              {(quote.communityAuthor || quote.quoteSharingReason) ? (
                 <div style={{
                   marginTop: '1.5rem', padding: '1rem',
                   background: 'var(--paper-deep)', borderRadius: '12px',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                  color: 'var(--ink-soft)', fontSize: '0.9rem', lineHeight: 1.5,
                 }}>
-                  💬 {quote.quoteSharingReason}
+                  {quote.communityAuthor ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: quote.quoteSharingReason ? '0.85rem' : 0 }}>
+                      {quote.communityAuthorUsername ? (
+                        <Link href={`/connect/${quote.communityAuthorUsername}`} style={{ flexShrink: 0 }}>
+                          <div style={{
+                            width: '26px', height: '26px', borderRadius: '50%',
+                            background: 'var(--cat-community-bg)', color: 'var(--cat-community-fg)',
+                            fontSize: '0.55rem', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            overflow: 'hidden',
+                          }}>
+                            {quote.communityAuthorAvatar ? (
+                              <img src={quote.communityAuthorAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              (quote.communityAuthor || '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() || '?'
+                            )}
+                          </div>
+                        </Link>
+                      ) : (
+                        <div style={{
+                          width: '26px', height: '26px', borderRadius: '50%',
+                          background: 'var(--cat-community-bg)', color: 'var(--cat-community-fg)',
+                          fontSize: '0.55rem', fontWeight: 700,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          overflow: 'hidden', flexShrink: 0,
+                        }}>
+                          {quote.communityAuthorAvatar ? (
+                            <img src={quote.communityAuthorAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            (quote.communityAuthor || '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() || '?'
+                          )}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                        {quote.communityAuthorUsername ? (
+                          <Link href={`/connect/${quote.communityAuthorUsername}`} style={{ color: 'var(--ink-soft)', fontSize: '0.76rem', fontWeight: 600, textDecoration: 'none' }}>
+                            {quote.communityAuthor}
+                          </Link>
+                        ) : (
+                          <span style={{ color: 'var(--ink-soft)', fontSize: '0.76rem', fontWeight: 600 }}>
+                            {quote.communityAuthor}
+                          </span>
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          {quote.communityAuthorUsername && (
+                            <span style={{ color: 'var(--mute)', fontSize: '0.66rem' }}>@{quote.communityAuthorUsername}</span>
+                          )}
+                          {quote.communityAuthorUsername && <span style={{ color: 'var(--mute)', fontSize: '0.66rem' }}>·</span>}
+                          <span style={{ color: 'var(--mute)', fontSize: '0.66rem', fontFamily: 'monospace' }}>
+                            {new Date(quote.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.66rem', color: 'var(--mute)', marginBottom: quote.quoteSharingReason ? '0.85rem' : 0 }}>
+                      {new Date(quote.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
+                  )}
+                  {quote.quoteSharingReason && (
+                    <p style={{ margin: 0, color: 'var(--ink-soft)', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                      {quote.quoteSharingReason}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  fontFamily: 'monospace', fontSize: '0.72rem',
+                  color: 'var(--mute)', marginTop: '1.5rem',
+                }}>
+                  {new Date(quote.date).toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'long', year: 'numeric',
+                  })}
                 </div>
               )}
-
-              <div style={{
-                fontFamily: 'monospace', fontSize: '0.72rem',
-                color: 'var(--mute)', marginTop: '1.5rem',
-              }}>
-                {new Date(quote.date).toLocaleDateString('en-GB', {
-                  day: 'numeric', month: 'long', year: 'numeric',
-                })}
-              </div>
 
               <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--rule)' }}>
                 <QuoteActions
