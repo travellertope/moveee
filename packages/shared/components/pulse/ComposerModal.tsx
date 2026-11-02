@@ -1098,16 +1098,17 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Duration <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills cm-pills-wrap">
+                <select
+                  className="cm-input"
+                  value={iDurationPick}
+                  onChange={e => setIDurationPick(e.target.value)}
+                  aria-label="Duration"
+                >
+                  <option value="">Choose a duration</option>
                   {ITINERARY_DURATIONS.map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      className={`cm-pill${iDurationPick === d ? " cm-pill--active" : ""}`}
-                      onClick={() => setIDurationPick(iDurationPick === d ? "" : d)}
-                    >{d}</button>
+                    <option key={d} value={d}>{d}</option>
                   ))}
-                </div>
+                </select>
               </div>
               <div className="cm-field">
                 <label className="cm-label">Budget <span className="cm-label-opt">(optional)</span></label>
