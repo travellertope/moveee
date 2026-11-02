@@ -893,16 +893,16 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <label className="cm-label">Medium <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills">
+                <select
+                  className="cm-input"
+                  value={showcaseMedium}
+                  onChange={e => setShowcaseMedium(e.target.value)}
+                >
+                  <option value="">Choose a medium</option>
                   {SHOWCASE_MEDIUMS.map(m => (
-                    <button
-                      key={m}
-                      type="button"
-                      className={`cm-pill${showcaseMedium === m ? " cm-pill--active" : ""}`}
-                      onClick={() => setShowcaseMedium(showcaseMedium === m ? "" : m)}
-                    >{m}</button>
+                    <option key={m} value={m}>{m}</option>
                   ))}
-                </div>
+                </select>
               </div>
               <div className="cm-field">
                 <label className="cm-label">Curator&rsquo;s note</label>
