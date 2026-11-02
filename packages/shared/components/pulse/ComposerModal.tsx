@@ -664,18 +664,18 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             <>
               <div className="cm-field">
                 <label className="cm-label">Review type</label>
-                <div className="cm-review-pills">
+                <select
+                  className="cm-input"
+                  value={revSubtype}
+                  onChange={e => { const sub = e.target.value as ReviewSubtype; setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGalleryUrls([]); }}
+                  aria-label="Review type"
+                >
                   {(["place", "food", "music", "book", "film"] as ReviewSubtype[]).map(sub => (
-                    <button
-                      key={sub}
-                      type="button"
-                      className={`cm-pill${revSubtype === sub ? " cm-pill--active" : ""}`}
-                      onClick={() => { setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGalleryUrls([]); }}
-                    >
-                      {{ place: "📍 Place", food: "🍽 Food", music: "🎵 Music", book: "📚 Book", film: "🎬 Film" }[sub]}
-                    </button>
+                    <option key={sub} value={sub}>
+                      {{ place: "Place", food: "Food", music: "Music", book: "Book", film: "Film" }[sub]}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
               <div className="cm-field">
                 <>
@@ -1001,18 +1001,17 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {/* Quote type — at the top so the source picker below adapts immediately */}
               <div className="cm-field">
                 <label className="cm-label">Quote type <span className="cm-label-opt">(optional)</span></label>
-                <div className="cm-review-pills">
+                <select
+                  className="cm-input"
+                  value={qType}
+                  onChange={e => { setQType(e.target.value); setQSourceEntry(null); }}
+                  aria-label="Quote type"
+                >
+                  <option value="">Choose a type</option>
                   {QUOTE_TYPES.map(qt => (
-                    <button
-                      key={qt}
-                      type="button"
-                      className={`cm-pill${qType === qt ? " cm-pill--active" : ""}`}
-                      onClick={() => { setQType(qType === qt ? "" : qt); setQSourceEntry(null); }}
-                    >
-                      {{ Person: "👤 Person", Book: "📚 Book", Film: "🎬 Film", Speech: "🎤 Speech", Song: "🎵 Song" }[qt]}
-                    </button>
+                    <option key={qt} value={qt}>{qt}</option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {/* The quote */}
