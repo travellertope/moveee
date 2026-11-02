@@ -1363,7 +1363,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   </div>
                 </div>
                 <div className="cm-field">
-                  <label className="cm-label">Ticket / RSVP link <span className="cm-label-opt">(optional)</span></label>
+                  <label className="cm-label">External Ticket/RSVP link <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
                     type="url"
@@ -1374,7 +1374,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                <label className="cm-label">Enable RSVP</label>
+                <label className="cm-label">Manage RSVP and Ticket</label>
                 <div className="cm-review-pills">
                   <button
                     type="button"
