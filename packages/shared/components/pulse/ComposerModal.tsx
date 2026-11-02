@@ -1117,7 +1117,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     <button
                       key={b}
                       type="button"
-                      className={`cm-pill${iBudget === b ? " cm-pill--active" : ""}`}
+                      className={`cm-pill cm-pill--flush${iBudget === b ? " cm-pill--active" : ""}`}
                       onClick={() => setIBudget(iBudget === b ? "" : b)}
                     >{b}</button>
                   ))}

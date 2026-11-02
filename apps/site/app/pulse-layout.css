@@ -817,10 +817,10 @@
   transition: all 0.12s;
 }
 .cm-pill--active { background: var(--ochre, #7a241c); color: #fff; border-color: var(--ochre, #7a241c); }
-/* Price Range pills (£/££/£££/££££) — no border line, matching the rest
-   of the composer's zero-border-everywhere fields. Scoped to this
-   modifier only; other cm-pill rows (Yes/No, Book Status, Poll Duration)
-   keep their border. */
+/* £-symbol pills (Review's Price Range, Itinerary's Budget) — no border
+   line, matching the rest of the composer's zero-border-everywhere
+   fields. Scoped to this modifier only; other cm-pill rows (Yes/No,
+   Book Status, Poll Duration) keep their border. */
 .cm-pill--flush { border: none; }
 .cm-pill--flush.cm-pill--active { border: none; }
 
