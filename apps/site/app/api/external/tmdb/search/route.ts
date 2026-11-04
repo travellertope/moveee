@@ -64,6 +64,9 @@ export async function GET(req: NextRequest) {
       genres: Array.isArray(m.genre_ids)
         ? Array.from(new Set(m.genre_ids.map((id: number) => TMDB_GENRE_MAP[id]).filter(Boolean)))
         : undefined,
+      // TMDB's search/movie endpoint already returns this on every result —
+      // no extra request needed (unlike director, which needs /credits).
+      description: typeof m.overview === "string" && m.overview.trim() ? m.overview : undefined,
     }));
 
   return NextResponse.json(results);

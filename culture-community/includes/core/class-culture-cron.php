@@ -71,6 +71,7 @@ class Culture_Cron {
         add_action( self::HOOK_LITERATI_ATTENDANCE,      array( __CLASS__, 'sweep_literati_attendance' ) );
 
         self::maybe_clear_retired_jobs();
+        self::maybe_reschedule_directory_seed();
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -131,7 +132,7 @@ class Culture_Cron {
     public static function schedule() {
         $jobs = array(
             self::HOOK_GRACE_CHECK      => 'daily',
-            self::HOOK_SEED_DIRECTORY   => 'weekly',
+            self::HOOK_SEED_DIRECTORY   => 'daily',
             self::HOOK_REFRESH_PULSE    => 'daily',
             'culture_check_perk_expiry'        => 'hourly',
             self::HOOK_CLUSTER_SWEEP           => 'daily',
@@ -200,6 +201,39 @@ class Culture_Cron {
         }
 
         update_option( 'culture_cron_retired_jobs_cleared', '2' );
+    }
+
+    /**
+     * One-time migration: directory seed moved from weekly to daily
+     * (November 2026). wp_schedule_event() never changes an *already*
+     * scheduled event's recurrence — only schedule()'s own
+     * `if ( ! wp_next_scheduled( $hook ) )` guard, which does nothing once
+     * a row already exists — so changing the interval above alone would
+     * silently keep firing weekly forever on any site where this job was
+     * already scheduled. Clears the existing row so the next schedule()
+     * call (same request, right after this) re-registers it with the new
+     * interval. Same one-time-migration shape as maybe_clear_retired_jobs().
+     */
+    private static function maybe_reschedule_directory_seed() {
+        if ( get_option( 'culture_cron_directory_seed_daily', '' ) ) {
+            return;
+        }
+
+        $timestamp = wp_next_scheduled( self::HOOK_SEED_DIRECTORY );
+        if ( $timestamp ) {
+            wp_unschedule_event( $timestamp, self::HOOK_SEED_DIRECTORY );
+        }
+
+        // Reschedule immediately in the same request, rather than leaving it
+        // to schedule()/maybe_schedule() — that one only runs on admin_init,
+        // which a wp-cron.php run (the real trigger, every 30 min via the
+        // Lightsail server crontab) never fires. Leaving it to admin_init
+        // would mean the job sits unscheduled until someone next opens WP
+        // Admin, exactly the kind of silent gap this whole pass is trying
+        // to close, not reintroduce.
+        wp_schedule_event( time(), 'daily', self::HOOK_SEED_DIRECTORY );
+
+        update_option( 'culture_cron_directory_seed_daily', '1' );
     }
 
     // ── Job handlers ──────────────────────────────────────────────────────
@@ -285,13 +319,20 @@ class Culture_Cron {
 
     /**
      * Trigger the Culture Directory AI seeder on Next.js.
-     * Runs weekly. Sends a small batch to stay within Vercel execution limits.
+     * Runs daily (was weekly — see maybe_reschedule_directory_seed()).
+     * Sends a small batch to stay within Vercel execution limits. Blocking,
+     * unlike every other call_nextjs() caller here — this job's own
+     * fire-and-forget history (wp_remote_post with blocking=false) is the
+     * reason a total, months-long failure never showed up anywhere: the
+     * response was never looked at, so a 403 (bad/missing secret) or 503
+     * (missing GEMINI_API_KEY) from Next.js logged identically to success.
+     * See auto-populate/route.ts's own docblock for the full checklist.
      */
     public static function seed_directory() {
         self::call_nextjs( '/api/directory/auto-populate', array(
-            'batchSize'      => 3,
+            'batchSize'      => 5,
             'generateImages' => true,
-        ) );
+        ), true );
     }
 
     /**
@@ -633,19 +674,35 @@ class Culture_Cron {
      * @param string $path  API path, e.g. '/api/pulse/refresh'.
      * @param array  $body  Optional JSON body parameters.
      */
-    private static function call_nextjs( $path, $body = array() ) {
+    /**
+     * @param bool $blocking When true, waits for the actual response and
+     *     logs its real status + a body excerpt — both to error_log() and to
+     *     the 'culture_cron_last_{basename($path)}' option, so a failure is
+     *     checkable from WP Admin (Tools → Site Health → Info → or any
+     *     get_option() call) without server log access. When false (the
+     *     default, every other caller), stays fire-and-forget exactly as
+     *     before — $response is always `true`, nothing to log beyond a
+     *     send-side WP_Error.
+     */
+    private static function call_nextjs( $path, $body = array(), $blocking = false ) {
         $frontend_url = rtrim( Culture_Settings::get( 'culture_frontend_url' ), '/' );
         $cron_secret  = Culture_Settings::get( 'culture_cron_secret' );
 
         if ( empty( $frontend_url ) || empty( $cron_secret ) ) {
-            error_log( '[Culture Cron] ' . $path . ' — Frontend URL or Cron Secret not set in Culture Community → Settings → General.' );
+            $msg = $path . ' — Frontend URL or Cron Secret not set in Culture Community → Settings → General.';
+            error_log( '[Culture Cron] ' . $msg );
+            if ( $blocking ) {
+                update_option( 'culture_cron_last_' . trim( basename( $path ), '/' ), array(
+                    'at' => current_time( 'mysql' ), 'ok' => false, 'detail' => $msg,
+                ) );
+            }
             return;
         }
 
         $url      = $frontend_url . $path;
         $response = wp_remote_post( $url, array(
             'timeout'     => 60, // generous; Vercel Hobby caps at 10s but won't hang WP
-            'blocking'    => false, // fire-and-forget; WP doesn't need the response
+            'blocking'    => $blocking,
             'headers'     => array(
                 'Content-Type'  => 'application/json',
                 'Authorization' => 'Bearer ' . $cron_secret,
@@ -653,12 +710,29 @@ class Culture_Cron {
             'body'        => wp_json_encode( $body ),
         ) );
 
-        // blocking=false means $response is always true, but log if misconfigured.
-        if ( is_wp_error( $response ) ) {
-            error_log( '[Culture Cron] ' . $path . ' error: ' . $response->get_error_message() );
-        } else {
-            error_log( '[Culture Cron] Fired ' . $path );
+        if ( ! $blocking ) {
+            // $response is always true with blocking=false — log if misconfigured.
+            if ( is_wp_error( $response ) ) {
+                error_log( '[Culture Cron] ' . $path . ' error: ' . $response->get_error_message() );
+            } else {
+                error_log( '[Culture Cron] Fired ' . $path );
+            }
+            return;
         }
+
+        if ( is_wp_error( $response ) ) {
+            $detail = $response->get_error_message();
+            error_log( '[Culture Cron] ' . $path . ' request failed: ' . $detail );
+            $result = array( 'at' => current_time( 'mysql' ), 'ok' => false, 'detail' => $detail );
+        } else {
+            $status = wp_remote_retrieve_response_code( $response );
+            $body_excerpt = mb_substr( wp_remote_retrieve_body( $response ), 0, 500 );
+            $ok = $status >= 200 && $status < 300;
+            error_log( '[Culture Cron] ' . $path . ' responded ' . $status . ': ' . $body_excerpt );
+            $result = array( 'at' => current_time( 'mysql' ), 'ok' => $ok, 'status' => $status, 'detail' => $body_excerpt );
+        }
+
+        update_option( 'culture_cron_last_' . trim( basename( $path ), '/' ), $result );
     }
 
     // ── Legacy accessor (used by Culture_Settings UI) ─────────────────────

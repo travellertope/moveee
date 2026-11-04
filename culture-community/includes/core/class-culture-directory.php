@@ -357,6 +357,14 @@ class Culture_Directory {
         $image_title       = sanitize_text_field( $request->get_param( 'image_title' ) ?: '' );
         $image_description = sanitize_textarea_field( $request->get_param( 'image_description' ) ?: '' );
         $image_alt         = sanitize_text_field( $request->get_param( 'image_alt' ) ?: '' );
+        // Set only when auto-populate matched this entry to a real Google
+        // Books/TMDB record instead of generating an Imagen image — lets a
+        // later quick-create for the same external ID (e.g. a real user
+        // reviewing the same book/film) find-and-reuse this entry via the
+        // same _external_source/_external_id dedup check handle_quick_create
+        // already does, instead of creating a duplicate.
+        $external_source = sanitize_key( $request->get_param( 'external_source' ) ?: '' );
+        $external_id      = sanitize_text_field( $request->get_param( 'external_id' ) ?: '' );
 
         if ( ! $post_id || ! $image_url ) {
             return new WP_Error(
@@ -376,9 +384,19 @@ class Culture_Directory {
             );
         }
 
-        // Store the R2 URL as post meta — no WordPress media attachment needed.
+        // Store the R2/external URL as post meta — no WordPress media
+        // attachment needed. _external_cover_url is the key handle_browse()/
+        // handle_search() actually read for the thumbnail fallback chain —
+        // _culture_dir_image_url is kept alongside it (now also read by
+        // both, see that fallback chain) purely for back-compat with
+        // existing AI-generated entries already carrying only that key.
         update_post_meta( $post_id, '_culture_dir_image_url', $image_url );
+        update_post_meta( $post_id, '_external_cover_url', $image_url );
         update_post_meta( $post_id, '_culture_dir_image_alt', $image_alt );
+        if ( $external_source && $external_id ) {
+            update_post_meta( $post_id, '_external_source', $external_source );
+            update_post_meta( $post_id, '_external_id', $external_id );
+        }
 
         return rest_ensure_response( array(
             'success' => true,
@@ -532,10 +550,18 @@ class Culture_Directory {
             $type_terms = get_the_terms( $post->ID, 'culture_dir_type' );
             $type_slug  = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
             // Falls back to the external API's cover/poster URL (Google
-            // Books/iTunes/TMDB quick-create) when there's no real WP
-            // featured image — see _external_cover_url in handle_quick_create().
+            // Books/iTunes/TMDB quick-create — see _external_cover_url in
+            // handle_quick_create()), then to the AI-generated/R2 image URL
+            // (auto-populate's generateDirectoryImage() — see
+            // _culture_dir_image_url in handle_attach_image()) when there's
+            // no real WP featured image. The second fallback was missing
+            // entirely until now — every AI-seeded directory entry's
+            // generated image was uploaded to R2 and attached successfully,
+            // but never actually displayed anywhere, since nothing read the
+            // meta key it was stored under.
             $thumb      = get_the_post_thumbnail_url( $post->ID, 'thumbnail' )
-                ?: ( get_post_meta( $post->ID, '_external_cover_url', true ) ?: false );
+                ?: ( get_post_meta( $post->ID, '_external_cover_url', true )
+                    ?: ( get_post_meta( $post->ID, '_culture_dir_image_url', true ) ?: false ) );
 
             $results[] = array(
                 'id'        => $post->ID,
@@ -741,7 +767,17 @@ class Culture_Directory {
                 'type'          => $type_slug,
                 'subtype'       => $subtype,
                 'excerpt'       => $excerpt,
-                'thumbnail'     => isset( $thumb_map[ $post->ID ] ) ? $thumb_map[ $post->ID ] : null,
+                // Falls back to the external API's cover/poster URL (Google
+                // Books/iTunes/TMDB quick-create — see _external_cover_url in
+                // handle_quick_create()), then to the AI-generated/R2 image
+                // URL (auto-populate's generateDirectoryImage() — see
+                // _culture_dir_image_url in handle_attach_image()) when
+                // there's no real WP featured image. update_meta_cache()
+                // already primed both keys above, so these are cache hits,
+                // not new queries — no N+1 reintroduced.
+                'thumbnail'     => $thumb_map[ $post->ID ]
+                    ?? ( get_post_meta( $post->ID, '_external_cover_url', true )
+                        ?: ( get_post_meta( $post->ID, '_culture_dir_image_url', true ) ?: null ) ),
                 'city'          => get_post_meta( $post->ID, '_entry_city', true ) ?: '',
                 'averageRating' => (float) get_post_meta( $post->ID, '_average_rating', true ) ?: null,
                 'reviewCount'   => (int) get_post_meta( $post->ID, '_community_review_count', true ),
@@ -795,6 +831,12 @@ class Culture_Directory {
         // iTunes 30s track preview URL (Music Review only) — same "plain
         // URL, no re-hosting" treatment as the cover art.
         $preview_url = esc_url_raw( $request->get_param( 'preview_url' ) );
+        // Real synopsis from the external catalog (Google Books' description,
+        // TMDB's overview) — previously discarded entirely, so every
+        // external-catalog quick-create had a title and a cover but no body
+        // text at all. iTunes has no equivalent field, so this is empty for
+        // Music quick-creates.
+        $excerpt = sanitize_textarea_field( $request->get_param( 'excerpt' ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -819,10 +861,12 @@ class Culture_Directory {
         }
 
         $post_id = wp_insert_post( array(
-            'post_type'   => 'culture_directory',
-            'post_title'  => $title,
-            'post_status' => 'publish',
-            'post_author' => $user_id,
+            'post_type'    => 'culture_directory',
+            'post_title'   => $title,
+            'post_status'  => 'publish',
+            'post_author'  => $user_id,
+            'post_excerpt' => $excerpt,
+            'post_content' => $excerpt,
         ), true );
 
         if ( is_wp_error( $post_id ) ) {

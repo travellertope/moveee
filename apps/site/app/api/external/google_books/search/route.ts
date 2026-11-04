@@ -42,6 +42,11 @@ export async function GET(req: NextRequest) {
         coverUrl: info.imageLinks?.thumbnail
           ? String(info.imageLinks.thumbnail).replace(/^http:/, "https:")
           : null,
+        // Real synopsis — previously discarded even though Google Books
+        // always returns it. Used by quick-create's excerpt and by the
+        // directory auto-populate job when it matches a seeded book topic
+        // to a real volume, instead of an AI-written blurb.
+        description: typeof info.description === "string" ? info.description : undefined,
       };
     });
 
