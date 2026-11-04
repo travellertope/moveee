@@ -13,9 +13,11 @@
   font-weight: 500;
   color: var(--ink);
   text-decoration: none;
+  cursor: pointer;
   padding: 0.4rem 0.9rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--rule-dark);
+  background: none;
   transition: background 0.15s;
   white-space: nowrap;
 }
@@ -28,6 +30,8 @@
   color: var(--paper);
   background: var(--ink);
   text-decoration: none;
+  cursor: pointer;
+  border: none;
   padding: 0.4rem 0.9rem;
   border-radius: var(--radius-lg);
   transition: opacity 0.15s;

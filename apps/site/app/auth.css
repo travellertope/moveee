@@ -23,7 +23,7 @@
   max-width: 440px;
   width: 100%;
   background: var(--paper, #fff);
-  border-radius: var(--radius-xl, 12px);
+  border-radius: var(--radius-2xl, 20px);
   box-shadow: var(--shadow-card);
   padding: 40px 36px 32px;
   color: var(--ink);
@@ -423,11 +423,11 @@
 
 /* ── Global sign-in modal (GlobalAuthModal/AuthModal.tsx) ───────────────────
    Opens over whatever page the viewer is already on (e.g. a "Write a review"
-   click while signed out), so unlike /login and /register it can't assume a
-   full .auth-page shell. Reuses every .auth-* token above for the form
-   itself; adds only the overlay/card chrome and the horizontal icon-only
-   row for Google/passkey/password-toggle that those dedicated pages don't
-   need (they use full-width .auth-btn-secondary buttons with text instead). */
+   click while signed out), so unlike /login it can't assume a full
+   .auth-page shell. The actual sign-in form (SignInPanel.tsx — heading,
+   code/password/forgot modes, icon row) is shared with /login itself, so
+   this only adds the overlay + card chrome around it. .auth-card already
+   carries the --radius-2xl corner radius both places share. */
 .auth-modal-overlay {
   position: fixed;
   inset: 0;
@@ -443,7 +443,6 @@
   position: relative;
   max-height: 90vh;
   overflow-y: auto;
-  border-radius: var(--radius-2xl, 20px);
 }
 .auth-modal-close {
   position: absolute;
@@ -468,7 +467,8 @@
   background: var(--paper-deep);
   color: var(--ink);
 }
-.auth-modal-eyebrow {
+/* SignInPanel's own bold heading — shared by /login and the modal. */
+.auth-panel-heading {
   font-size: 17px;
   font-weight: 700;
   color: var(--ink);
