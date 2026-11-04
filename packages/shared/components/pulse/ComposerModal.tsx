@@ -116,6 +116,11 @@ interface InitialQuote {
   quoteType?: string;
 }
 
+interface InitialReview {
+  subtype: ReviewSubtype;
+  entry: { id: number; title: string; slug?: string; thumbnail?: string | null; city?: string; about?: string };
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -123,6 +128,7 @@ interface Props {
   initialTab?: ComposerTab;
   hubId?: number;
   initialQuote?: InitialQuote;
+  initialReview?: InitialReview;
 }
 
 function averageRating(vals: Record<string, number>): number {
@@ -194,7 +200,7 @@ function MultiImageUpload({ urls, onUpload, onRemove, uploading, max = 4 }: {
   );
 }
 
-export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId, initialQuote }: Props) {
+export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId, initialQuote, initialReview }: Props) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
@@ -299,8 +305,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
       if (initialQuote?.authorEntry) setQAuthorEntry(initialQuote.authorEntry);
       if (initialQuote?.sourceEntry) setQSourceEntry(initialQuote.sourceEntry);
       if (initialQuote?.quoteType)   setQType(initialQuote.quoteType);
+      if (initialReview) {
+        setRevSubtype(initialReview.subtype);
+        setRevEntry(initialReview.entry);
+        setRevTitle(initialReview.entry.title);
+      }
     }
-  }, [open, initialTab, initialQuote]);
+  }, [open, initialTab, initialQuote, initialReview]);
 
   // Auto-infer hubs from content + #hashtags (all in background)
   useEffect(() => {

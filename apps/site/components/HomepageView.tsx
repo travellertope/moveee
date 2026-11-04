@@ -3,8 +3,10 @@ import { type EditionSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
 import { fetchHomepagePulse } from "@/lib/fetchHomepagePulse";
+import { fetchTrendingDirectory, type TrendingCategory } from "@/lib/fetchTrendingDirectory";
 import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
+import DirectoryDiscovery from "@/components/DirectoryDiscovery";
 import MasonryRandomSection from "@/components/MasonryRandomSection";
 import CultureNewsSection from "@/components/CultureNewsSection";
 import HomepageCommunityStream from "@/components/HomepageCommunityStream";
@@ -26,6 +28,7 @@ interface HomeSections {
   featureStory: any | null;
   kafartStories: any[];
   communityItems: FeedItem[];
+  trendingCategories: TrendingCategory[];
 }
 
 const EMPTY: HomeSections = {
@@ -40,15 +43,17 @@ const EMPTY: HomeSections = {
   featureStory: null,
   kafartStories: [],
   communityItems: [],
+  trendingCategories: [],
 };
 
 async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
   try {
-    const [homepageData, sections, newsletters, communityItems] = await Promise.all([
+    const [homepageData, sections, newsletters, communityItems, trendingCategories] = await Promise.all([
       fetchHomepageData(),
       getMagazineSections("global"),
       getNewslettersWithFallback(10).catch(() => []),
       fetchHomepagePulse().catch(() => []),
+      fetchTrendingDirectory().catch(() => []),
     ]);
 
     const { coverStory, featuredPool: heroPlusFeatured, products, kafartStories: rawKafart } = homepageData;
@@ -95,6 +100,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       featureStory,
       kafartStories: rawKafart || [],
       communityItems,
+      trendingCategories,
     };
   } catch (err: any) {
     console.error("[HomepageView] loadHomeSections failed:", err?.message || err);
@@ -115,6 +121,7 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     featureStory,
     kafartStories,
     communityItems,
+    trendingCategories,
   } = await loadHomeSections(edition);
 
   return (
@@ -126,6 +133,8 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
           <HeroCarousel stories={carouselStories} />
         </div>
       </section>
+
+      <DirectoryDiscovery categories={trendingCategories} />
 
       <CultureNewsSection stories={editorialStories} />
 

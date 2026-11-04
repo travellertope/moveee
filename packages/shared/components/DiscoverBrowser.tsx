@@ -39,6 +39,7 @@ export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: s
   book:        { emoji: "📚", label: "BOOK",      color: "#78350F" },
   film:        { emoji: "🎬", label: "FILM",      color: "#1976D2" },
   genre:       { emoji: "🎵", label: "GENRE",     color: "#6B48A8" },
+  album:       { emoji: "🎵", label: "ALBUM",     color: "#6B48A8" },
   movement:    { emoji: "🌊", label: "MOVEMENT",  color: "#6B48A8" },
   artwork:     { emoji: "🎨", label: "ARTWORK",   color: "#1976D2" },
   concept:     { emoji: "💡", label: "CONCEPT",   color: "#3A342B" },

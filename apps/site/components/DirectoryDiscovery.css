@@ -1,0 +1,79 @@
+/* Builds on homepage-v2.css's .arc-section/.arc-hdr/.arc-viewall/.arc-card/
+   .arc-card-img/.arc-cta — loaded site-wide via (magazine)/layout.tsx —
+   same reuse convention that file's own header comment asks for. Only
+   what those classes don't already cover lives here. */
+
+.dd-hdr { align-items: flex-end; }
+.dd-hdr-copy { max-width: 640px; }
+.dd-sub { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft, var(--mute)); }
+
+.dd-rail-group { margin-top: 36px; }
+.dd-rail-group:first-of-type { margin-top: 8px; }
+.dd-rail-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.dd-rail-hdr h3 {
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 19px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.dd-rail { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 8px; }
+.dd-rail::-webkit-scrollbar { display: none; }
+
+.dd-card-wrap { flex: 0 0 auto; width: clamp(200px, 19vw, 258px); display: flex; flex-direction: column; }
+.dd-card-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+.dd-card-trending {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(20, 17, 13, 0.55);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-full, 9999px);
+  backdrop-filter: blur(2px);
+}
+.dd-card-city { margin-top: -2px; }
+.dd-card-rating { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+.dd-card-stars { color: var(--gold); font-size: 13px; letter-spacing: 1px; }
+.dd-card-meta { font-size: 11px; color: var(--mute); }
+.dd-card-cta { background: none; border: none; text-align: left; padding: 8px 0 0; cursor: pointer; }
+
+.dd-cta-banner {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: var(--ink);
+  border-radius: var(--radius-2xl, 20px);
+  padding: 32px 36px;
+}
+.dd-cta-banner h3 { font-family: "Fraunces", serif; font-weight: 600; font-size: 21px; color: var(--paper); margin: 0; }
+.dd-cta-banner p { font-size: 14px; color: rgba(243, 236, 224, 0.6); margin: 6px 0 0; }
+.dd-cta-banner-btn {
+  flex-shrink: 0;
+  background: var(--ochre);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 13px 26px;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  cursor: pointer;
+}
+.dd-cta-banner-btn:hover { background: var(--ochre-deep, #5c1b15); }
+
+@media (max-width: 560px) {
+  .dd-cta-banner { padding: 24px; }
+}
