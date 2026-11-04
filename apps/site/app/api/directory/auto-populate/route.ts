@@ -8,9 +8,32 @@
  *   3. If pending topics remain, generates up to `batchSize` stubs via Gemini.
  *   4. If ALL topics are exhausted, asks Gemini to suggest 20 new ones,
  *      saves them to WordPress, and runs the first batch immediately.
+ *   5. For a "book" or "film" stub, tries a real Google Books/TMDB match on
+ *      the resolved title (+ year, when Gemini's infobox has one) before
+ *      falling back to an Imagen-generated image — real cover art + real
+ *      synopsis beats an AI illustration and AI-written blurb when the real
+ *      thing is one API call away. Every other entry type (person, place,
+ *      concept, genre, …) is unaffected — there's no equivalent external
+ *      catalog for those, so they keep the Imagen path exactly as before.
  *
  * Auth: requires Authorization: Bearer {CRON_SECRET} header.
- * Configured in vercel.json to run every Monday at 03:00 UTC.
+ *
+ * Trigger: there is no Vercel-native cron in this project (apps/site/
+ * vercel.json is `{}`) — this route is called by WP-Cron
+ * (Culture_Cron::seed_directory(), culture-community/includes/core/
+ * class-culture-cron.php), itself driven by a real Lightsail server
+ * crontab hitting wp-cron.php every 30 minutes. A previous version of this
+ * comment claimed "configured in vercel.json" — that was never true (see
+ * CLAUDE.md's "Cron / scheduled jobs" section, which calls out exactly this
+ * stale phrasing). If this job appears not to be running, check in order:
+ * (1) WP Admin → Culture Community → Settings → General has both
+ * "Frontend URL" and "Cron Secret" set (Culture_Settings::get() returning
+ * empty makes Culture_Cron::call_nextjs() silently no-op — nothing is even
+ * sent); (2) that Cron Secret matches this deployment's CRON_SECRET env var
+ * exactly; (3) GEMINI_API_KEY is set. None of these failures are visible
+ * from the WordPress side — the WP call is fire-and-forget
+ * (wp_remote_post(..., ['blocking' => false, ...])) by design, so a 403/503
+ * here never surfaces as an error anywhere in WP Admin.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -26,6 +49,127 @@ export const maxDuration = 300;
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const WP_GRAPHQL = `${WP_URL}/graphql`;
+
+// ── Real-catalog cover/description lookup (book, film, place, food) ────────
+// Google Books/TMDB mirror what /api/external/{google_books,tmdb}/search
+// already proxy for the reactive composer flow — called directly here
+// (server-to-server, not through those routes) since this is a background
+// job, not a browser request. Google Places has no equivalent description
+// field, and — unlike Books/TMDB cover URLs, which are already-public CDN
+// links safe to hotlink — its Photo endpoint only serves an image when the
+// request carries the API key, so that key would otherwise end up baked
+// into a URL stored forever in the database and sent to every visitor's
+// browser. findRealPlaceCover() fetches the photo bytes server-side (key
+// never leaves this function) and re-hosts them on R2, same as the existing
+// Imagen path already does for generated images.
+
+const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY ?? "";
+const TMDB_API_KEY = process.env.TMDB_API_KEY ?? "";
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY ?? "";
+
+interface RealCatalogMatch {
+  externalId: string;
+  coverUrl: string;
+  description?: string;
+}
+
+async function findRealBookCover(title: string, yearPublished?: string): Promise<RealCatalogMatch | null> {
+  try {
+    const params = new URLSearchParams({ q: `intitle:${title}`, maxResults: "3" });
+    if (GOOGLE_BOOKS_API_KEY) params.set("key", GOOGLE_BOOKS_API_KEY);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const items: any[] = Array.isArray(data?.items) ? data.items : [];
+    // Prefer a result whose publication year matches Gemini's infobox, when
+    // we have one to check against; otherwise take the top hit.
+    const match =
+      (yearPublished && items.find((i) => String(i?.volumeInfo?.publishedDate ?? "").startsWith(yearPublished))) ||
+      items[0];
+    const info = match?.volumeInfo;
+    const cover = info?.imageLinks?.thumbnail;
+    if (!match?.id || !cover) return null;
+    return {
+      externalId: match.id,
+      coverUrl: String(cover).replace(/^http:/, "https:"),
+      description: typeof info.description === "string" ? info.description : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function findRealFilmCover(title: string, year?: string): Promise<RealCatalogMatch | null> {
+  if (!TMDB_API_KEY) return null;
+  try {
+    const params = new URLSearchParams({ api_key: TMDB_API_KEY, query: title, include_adult: "false" });
+    if (year) params.set("year", year);
+    const res = await fetch(`https://api.themoviedb.org/3/search/movie?${params}`);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const items: any[] = Array.isArray(data?.results) ? data.results : [];
+    const match = items[0];
+    if (!match?.id || !match?.poster_path) return null;
+    return {
+      externalId: String(match.id),
+      coverUrl: `https://image.tmdb.org/t/p/w500${match.poster_path}`,
+      description: typeof match.overview === "string" && match.overview.trim() ? match.overview : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function findRealPlaceCover(title: string, city?: string, postId?: number): Promise<RealCatalogMatch | null> {
+  if (!GOOGLE_PLACES_API_KEY) return null;
+  try {
+    const query = city ? `${title}, ${city}` : title;
+    const params = new URLSearchParams({ query, key: GOOGLE_PLACES_API_KEY });
+    const res = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?${params}`);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const place = (Array.isArray(data?.results) ? data.results : [])[0];
+    const photoRef = place?.photos?.[0]?.photo_reference;
+    if (!place?.place_id || !photoRef) return null;
+
+    // Fetch the actual photo bytes with the key server-side, then re-host on
+    // R2 — see the block comment above for why this can't just hotlink the
+    // googleapis.com photo URL the way Books/TMDB covers do.
+    const photoParams = new URLSearchParams({ maxwidth: "640", photoreference: photoRef, key: GOOGLE_PLACES_API_KEY });
+    const photoRes = await fetch(`https://maps.googleapis.com/maps/api/place/photo?${photoParams}`);
+    if (!photoRes.ok) return null;
+    const photoBuffer = Buffer.from(await photoRes.arrayBuffer());
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+    const r2Url = await uploadToR2(`directory/${slug}-${postId ?? Date.now()}.jpg`, photoBuffer, "image/jpeg");
+
+    return { externalId: place.place_id, coverUrl: r2Url };
+  } catch {
+    return null;
+  }
+}
+
+/** Looks up a real cover (+ description, for book/film) for the entry types
+ * that have an equivalent external catalog here. Every other entryType
+ * (person, movement, genre, concept, artwork, fashion, tv-series) returns
+ * null immediately and keeps the existing Imagen-generated image. */
+async function findRealCover(
+  stub: any,
+  postId?: number
+): Promise<{ source: "google_books" | "tmdb" | "google_places"; match: RealCatalogMatch } | null> {
+  if (stub.entryType === "book") {
+    const match = await findRealBookCover(stub.title, stub.infobox?.yearPublished);
+    return match ? { source: "google_books", match } : null;
+  }
+  if (stub.entryType === "film") {
+    const match = await findRealFilmCover(stub.title, stub.infobox?.year);
+    return match ? { source: "tmdb", match } : null;
+  }
+  if (stub.entryType === "place" || stub.entryType === "food") {
+    const match = await findRealPlaceCover(stub.title, stub.infobox?.originCity, postId);
+    return match ? { source: "google_places", match } : null;
+  }
+  return null;
+}
 
 // ── Hardcoded seed list ────────────────────────────────────────────────────
 const SEED_TOPICS = [
@@ -249,32 +393,75 @@ async function submitEntry(
 
   if (generateImage && postId) {
     try {
-      const image = await generateDirectoryImage(
-        stub.title,
-        stub.entryType,
-        stub.excerpt
-      );
-      const slug = stub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
-      const key = `directory/${slug}-${postId}.jpg`;
-      const imageBuffer = Buffer.from(image.data, "base64");
-      const imageUrl = await uploadToR2(key, imageBuffer, "image/jpeg");
+      // Try the real catalog first for book/film/place/food — a real cover
+      // photo + real synopsis beats an AI illustration and AI-written
+      // blurb, and skips the Imagen call + R2 upload entirely when it
+      // matches (Places still uses R2, but only once, for the one photo
+      // actually picked — not for Imagen generation).
+      const real = await findRealCover(stub, postId);
 
-      // Save the R2 URL as post meta on the directory entry
-      await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
-        },
-        body: JSON.stringify({
-          post_id: postId,
-          image_url: imageUrl,
-          image_title: image.title,
-          image_description: image.description,
-          image_alt: image.altText,
-        }),
-        cache: "no-store",
-      });
+      if (real) {
+        const sourceLabel = { google_books: "Google Books", tmdb: "TMDB", google_places: "Google Places" }[real.source];
+        await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${secret}`,
+          },
+          body: JSON.stringify({
+            post_id: postId,
+            image_url: real.match.coverUrl,
+            image_title: stub.title,
+            image_description: `Real photo/cover art from ${sourceLabel}.`,
+            image_alt: stub.title,
+            external_source: real.source,
+            external_id: real.match.externalId,
+          }),
+          cache: "no-store",
+        });
+
+        if (real.match.description) {
+          await fetch(`${WP_URL}/wp-json/culture/v1/directory/${postId}/enrich`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${secret}`,
+            },
+            body: JSON.stringify({
+              content: real.match.description,
+              excerpt: real.match.description,
+            }),
+            cache: "no-store",
+          }).catch(() => {});
+        }
+      } else {
+        const image = await generateDirectoryImage(
+          stub.title,
+          stub.entryType,
+          stub.excerpt
+        );
+        const slug = stub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+        const key = `directory/${slug}-${postId}.jpg`;
+        const imageBuffer = Buffer.from(image.data, "base64");
+        const imageUrl = await uploadToR2(key, imageBuffer, "image/jpeg");
+
+        // Save the R2 URL as post meta on the directory entry
+        await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${secret}`,
+          },
+          body: JSON.stringify({
+            post_id: postId,
+            image_url: imageUrl,
+            image_title: image.title,
+            image_description: image.description,
+            image_alt: image.altText,
+          }),
+          cache: "no-store",
+        });
+      }
     } catch {
       // Image failure is best-effort; never blocks the entry.
     }

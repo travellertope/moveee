@@ -30,6 +30,9 @@ interface ExternalResult {
   year?: string;
   coverUrl?: string | null;
   genres?: string[];
+  /** Real synopsis/overview from the upstream API (Google Books, TMDB) —
+   * absent for sources that don't return one (iTunes). */
+  description?: string;
 }
 
 interface Props {
@@ -187,6 +190,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           external_id: r.externalId,
           cover_image_url: r.coverUrl || undefined,
           preview_url: previewUrl || undefined,
+          excerpt: r.description || undefined,
         }),
       });
       if (res.ok) {

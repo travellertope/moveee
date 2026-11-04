@@ -22,15 +22,16 @@ export interface TrendingCategory {
   entries: TrendingDirectoryEntry[];
 }
 
+// Render order: Film, Music, Places, Books, Food.
 const CATEGORY_DEFS: Omit<TrendingCategory, "entries">[] = [
-  { key: "place", label: "Places", type: "place", reviewSubtype: "place" },
-  { key: "food",  label: "Food",   type: "food",  reviewSubtype: "food" },
-  { key: "book",  label: "Books",  type: "book",  reviewSubtype: "book" },
   { key: "film",  label: "Film",   type: "film",  reviewSubtype: "film" },
   // Directory entries reviewed via the composer's Music subtype are linked
   // as type "album" (DirectorySearch.tsx's typeFilter map), not "genre" —
   // "genre" is a separate, broader topic entry (e.g. "Afrobeats").
   { key: "music", label: "Music",  type: "album", reviewSubtype: "music" },
+  { key: "place", label: "Places", type: "place", reviewSubtype: "place" },
+  { key: "book",  label: "Books",  type: "book",  reviewSubtype: "book" },
+  { key: "food",  label: "Food",   type: "food",  reviewSubtype: "food" },
 ];
 
 const PER_CATEGORY = 6;

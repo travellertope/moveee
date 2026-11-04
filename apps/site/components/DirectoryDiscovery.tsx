@@ -42,7 +42,6 @@ export default function DirectoryDiscovery({ categories }: Props) {
         <div className="arc-hdr dd-hdr">
           <div className="dd-hdr-copy">
             <h2>What the community is <em>discovering</em> right now</h2>
-            <p className="dd-sub">Places, food, books, film and music people are talking about this week. Find something new — then tell everyone what you thought.</p>
           </div>
           <Link href="/discover" className="arc-viewall">See the full directory →</Link>
         </div>
@@ -68,7 +67,6 @@ export default function DirectoryDiscovery({ categories }: Props) {
                           ) : (
                             <span className="dd-card-fallback" style={{ background: badge.color }}>{badge.emoji}</span>
                           )}
-                          <span className="dd-card-trending">🔥 Trending</span>
                         </div>
                         <h3>{entry.title}</h3>
                         {entry.city && <p className="dd-card-city">{entry.city}</p>}
