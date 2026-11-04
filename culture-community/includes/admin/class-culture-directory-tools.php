@@ -60,6 +60,7 @@ class Culture_Directory_Tools {
     public static function init() {
         add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
         add_action( 'wp_ajax_culture_dir_run_seeder',         array( __CLASS__, 'ajax_run_seeder' ) );
+        add_action( 'wp_ajax_culture_dir_run_bulk_seed_real', array( __CLASS__, 'ajax_run_bulk_seed_real' ) );
         add_action( 'wp_ajax_culture_import_quotes',         array( __CLASS__, 'ajax_import_quotes' ) );
         add_action( 'wp_ajax_culture_dir_generate_image',     array( __CLASS__, 'ajax_generate_image' ) );
         add_action( 'wp_ajax_culture_dir_save_extra_topics',    array( __CLASS__, 'ajax_save_extra_topics' ) );
@@ -181,6 +182,51 @@ class Culture_Directory_Tools {
 
         if ( $code !== 200 ) {
             wp_send_json_error( array( 'message' => $body['error'] ?? "HTTP $code from seeder." ) );
+        }
+
+        wp_send_json_success( $body );
+    }
+
+    /**
+     * AJAX handler for the "Bulk Seed Real Entries" panel — each click calls
+     * /api/directory/bulk-seed-real exactly once (one bounded chunk of one
+     * category; see that route's own docblock), so this never needs the
+     * admin to have or paste CRON_SECRET anywhere — it's read from the same
+     * stored WP option the Seeder panel above already uses. The page's own
+     * JS calls this repeatedly (with a short pause between calls) until the
+     * response reports done:true or the admin clicks Stop.
+     */
+    public static function ajax_run_bulk_seed_real() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        if ( ! self::is_configured() ) {
+            wp_send_json_error( array( 'message' => 'Frontend URL or Cron Secret not configured. Go to Settings → General.' ) );
+        }
+
+        $response = wp_remote_post(
+            self::get_frontend_url() . '/api/directory/bulk-seed-real',
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . self::get_cron_secret(),
+                    'Content-Type'  => 'application/json',
+                ),
+                'body'    => '{}',
+                'timeout' => 115, // matches that route's own maxDuration (120s) with margin
+            )
+        );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( array( 'message' => $response->get_error_message() ) );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 ) {
+            wp_send_json_error( array( 'message' => $body['error'] ?? "HTTP $code from bulk-seed-real." ) );
         }
 
         wp_send_json_success( $body );
@@ -438,6 +484,19 @@ class Culture_Directory_Tools {
         $seeded_count   = 0;
         $remaining      = array();
 
+        // Bulk-seed-real progress — the same option
+        // apps/site/app/api/directory/bulk-seed-real/route.ts reads/writes
+        // via GET/POST /culture/v1/directory/bulk-seed-state. Read directly
+        // here (no Next.js round trip needed just to display it).
+        $bulk_state_raw   = get_option( 'culture_dir_bulk_seed_state', '{}' );
+        $bulk_state       = json_decode( $bulk_state_raw, true );
+        $bulk_film        = (int) ( $bulk_state['film']['created'] ?? 0 );
+        $bulk_music       = (int) ( $bulk_state['music']['created'] ?? 0 );
+        $bulk_book        = (int) ( $bulk_state['book']['created'] ?? 0 );
+        $bulk_total       = $bulk_film + $bulk_music + $bulk_book;
+        $bulk_target_each = array( 'film' => 334, 'music' => 333, 'book' => 333 );
+        $bulk_pct         = round( ( $bulk_total / 1000 ) * 100 );
+
         // Load extra (admin-added + AI-generated) topics.
         $extra_topics_raw  = get_option( 'culture_dir_extra_topics', '[]' );
         $extra_topics      = json_decode( $extra_topics_raw, true );
@@ -533,6 +592,45 @@ class Culture_Directory_Tools {
                 </p>
 
                 <div id="cdt-seeder-result" class="cdt-result" style="display:none;"></div>
+            </div>
+
+            <?php /* ── BULK SEED REAL ENTRIES PANEL ── */ ?>
+            <div class="cdt-panel">
+                <h2><?php esc_html_e( 'Bulk Seed Real Entries', 'culture-community' ); ?></h2>
+                <p class="description">
+                    <?php esc_html_e( 'One-time import of 1000 real (not AI-generated) directory entries — ~334 film, ~333 music, ~333 book — sourced from TMDB (trending/top-rated/latest), Apple\'s music charts, and Google Books. Click Start, then leave this page open: it keeps calling itself a few seconds apart, one small batch at a time, until the target is reached. You can stop and resume any time — progress is saved after every call.', 'culture-community' ); ?>
+                </p>
+
+                <div class="cdt-progress-block">
+                    <div class="cdt-progress-label">
+                        <strong id="cbsr-total"><?php echo esc_html( $bulk_total ); ?></strong>
+                        <?php esc_html_e( ' of 1000 created', 'culture-community' ); ?>
+                        <span class="cdt-pct" id="cbsr-pct"><?php echo esc_html( $bulk_pct ); ?>%</span>
+                    </div>
+                    <div class="cdt-progress-bar">
+                        <div class="cdt-progress-fill" id="cbsr-fill" style="width:<?php echo esc_attr( $bulk_pct ); ?>%"></div>
+                    </div>
+                    <p class="description" style="margin-top:6px;">
+                        <?php esc_html_e( 'Film: ', 'culture-community' ); ?><strong id="cbsr-film"><?php echo esc_html( $bulk_film ); ?></strong>/<?php echo esc_html( $bulk_target_each['film'] ); ?>
+                        &nbsp;·&nbsp;
+                        <?php esc_html_e( 'Music: ', 'culture-community' ); ?><strong id="cbsr-music"><?php echo esc_html( $bulk_music ); ?></strong>/<?php echo esc_html( $bulk_target_each['music'] ); ?>
+                        &nbsp;·&nbsp;
+                        <?php esc_html_e( 'Book: ', 'culture-community' ); ?><strong id="cbsr-book"><?php echo esc_html( $bulk_book ); ?></strong>/<?php echo esc_html( $bulk_target_each['book'] ); ?>
+                    </p>
+                </div>
+
+                <p>
+                    <button id="cbsr-start" class="button button-primary" <?php echo $configured ? '' : 'disabled'; ?>>
+                        <?php esc_html_e( 'Start', 'culture-community' ); ?>
+                    </button>
+                    <button id="cbsr-stop" class="button" style="display:none;">
+                        <?php esc_html_e( 'Stop', 'culture-community' ); ?>
+                    </button>
+                    <span id="cbsr-spinner" class="spinner" style="float:none;vertical-align:middle;display:none;"></span>
+                </p>
+
+                <div id="cbsr-status" class="cdt-result" style="display:none;"></div>
+                <div id="cbsr-log" style="display:none;max-height:180px;overflow-y:auto;font-family:monospace;font-size:12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px;padding:8px 10px;margin-top:10px;"></div>
             </div>
 
             <?php /* ── BULK QUOTE IMPORTER PANEL ── */ ?>
@@ -740,6 +838,83 @@ class Culture_Directory_Tools {
                     $btn.prop('disabled', false);
                     $spinner.hide();
                 });
+            });
+
+            /* ── Bulk seed real entries ── */
+            var cbsrRunning = false;
+
+            function cbsrLog(text, isError) {
+                var $log = $('#cbsr-log').show();
+                var color = isError ? '#d63638' : '#3c434a';
+                $log.append('<div style="color:' + color + ';">' + $('<span>').text(text).html() + '</div>');
+                $log.scrollTop($log[0].scrollHeight);
+            }
+
+            function cbsrUpdateProgress(progress) {
+                var total = progress.total || 0;
+                var pct = Math.round((total / 1000) * 100);
+                $('#cbsr-total').text(total);
+                $('#cbsr-pct').text(pct + '%');
+                $('#cbsr-fill').css('width', pct + '%');
+                $('#cbsr-film').text(progress.film || 0);
+                $('#cbsr-music').text(progress.music || 0);
+                $('#cbsr-book').text(progress.book || 0);
+            }
+
+            function cbsrTick() {
+                if (!cbsrRunning) { return; }
+
+                $.post(ajaxUrl, {
+                    action: 'culture_dir_run_bulk_seed_real',
+                    nonce:  nonce,
+                })
+                .done(function(res) {
+                    if (!cbsrRunning) { return; }
+
+                    if (!res.success) {
+                        cbsrLog('Error: ' + (res.data && res.data.message ? res.data.message : 'unknown error'), true);
+                        cbsrStop();
+                        return;
+                    }
+
+                    var d = res.data;
+                    cbsrUpdateProgress(d.progress);
+                    cbsrLog((d.category || '?') + ': +' + d.createdThisCall + ' new' + (d.note ? ' (' + d.note + ')' : ''));
+
+                    if (d.done) {
+                        cbsrLog('Done — target reached or sources exhausted.');
+                        cbsrStop();
+                        return;
+                    }
+
+                    setTimeout(cbsrTick, 1500);
+                })
+                .fail(function() {
+                    cbsrLog('Request failed — retrying in 5s.', true);
+                    setTimeout(cbsrTick, 5000);
+                });
+            }
+
+            function cbsrStop() {
+                cbsrRunning = false;
+                $('#cbsr-start').show().prop('disabled', false);
+                $('#cbsr-stop').hide();
+                $('#cbsr-spinner').hide();
+            }
+
+            $('#cbsr-start').on('click', function() {
+                cbsrRunning = true;
+                $('#cbsr-status').hide();
+                $(this).hide();
+                $('#cbsr-stop').show();
+                $('#cbsr-spinner').show();
+                cbsrLog('Starting…');
+                cbsrTick();
+            });
+
+            $('#cbsr-stop').on('click', function() {
+                cbsrLog('Stopped by user. Click Start again any time to resume.');
+                cbsrStop();
             });
 
             /* ── Single image generate ── */
