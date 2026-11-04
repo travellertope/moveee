@@ -53,6 +53,23 @@ const REGION_LABELS: Record<string, string> = {
 
 const PER_PAGE = 20;
 
+// Card shape follows the real cover-art shape for each directory type —
+// film/book covers are portrait, an album/song cover is square, a place or
+// food photo is landscape. Types with no fixed real-world cover shape
+// (person, movement, genre, concept, artwork, fashion, tv-series) keep the
+// old cycling pattern below for visual variety in the mixed masonry.
+const TYPE_ASPECT: Record<string, string> = {
+  film: "2/3",
+  book: "2/3",
+  album: "1/1",
+  place: "4/3",
+  food: "4/3",
+};
+// Types in TYPE_ASPECT are narrower (portrait) or no wider (square) than
+// this — a single-type filter on one of them can afford a narrower masonry
+// column, fitting more cards per row, without the mixed/mismatched-width
+// problem a narrower column would cause for landscape place/food cards.
+const NARROW_COLUMN_TYPES = new Set(["film", "book", "album"]);
 const MASONRY_RATIOS = ["4/3", "1/1", "4/5", "16/9", "3/4", "4/3", "1/1", "16/9"];
 
 const AZ_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").concat(["0–9"]);
@@ -372,12 +389,12 @@ export default function DiscoverBrowser({
             </div>
           ) : (
             <>
-              <div className="disc-masonry">
+              <div className={`disc-masonry${type && NARROW_COLUMN_TYPES.has(type) ? " disc-masonry--narrow" : ""}`}>
                 {filteredEntries.map((e, i) => (
                   <DiscoverCard
                     key={e.id}
                     entry={e}
-                    aspectRatio={MASONRY_RATIOS[i % MASONRY_RATIOS.length]}
+                    aspectRatio={TYPE_ASPECT[e.type] ?? MASONRY_RATIOS[i % MASONRY_RATIOS.length]}
                   />
                 ))}
               </div>

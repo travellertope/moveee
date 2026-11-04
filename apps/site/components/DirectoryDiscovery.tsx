@@ -54,7 +54,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                 <Link href={`/discover?type=${cat.type}`} className="arc-viewall">See all {cat.label} →</Link>
               </div>
 
-              <div className="dd-rail">
+              <div className={`dd-rail dd-rail--${cat.key}`}>
                 {cat.entries.map((entry) => {
                   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7a6f5c" };
                   return (
