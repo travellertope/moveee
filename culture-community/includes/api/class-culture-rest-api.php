@@ -1119,6 +1119,22 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Real-data bulk importer's progress state (apps/site/app/api/
+        // directory/bulk-seed-real/route.ts) — arbitrary JSON blob, shape
+        // owned entirely by the importer.
+        register_rest_route( 'culture/v1', '/directory/bulk-seed-state', array(
+            array(
+                'methods'             => 'GET',
+                'callback'            => array( 'Culture_Directory', 'handle_get_bulk_seed_state' ),
+                'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+            ),
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( 'Culture_Directory', 'handle_post_bulk_seed_state' ),
+                'permission_callback' => array( 'Culture_Directory', 'verify_secret' ),
+            ),
+        ) );
+
         // AI events seeder — create a culture_event post.
         register_rest_route( 'culture/v1', '/events/submit', array(
             'methods'             => 'POST',

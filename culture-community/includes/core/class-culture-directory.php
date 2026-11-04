@@ -341,6 +341,40 @@ class Culture_Directory {
     }
 
     /**
+     * GET /culture/v1/directory/bulk-seed-state
+     *
+     * Returns the real-data bulk importer's progress state (per-category
+     * cursors/counts + the cached Apple Music candidate queue) as an
+     * arbitrary JSON blob — the importer (apps/site/app/api/directory/
+     * bulk-seed-real/route.ts) owns the shape entirely; this is just
+     * storage, same "generic small JSON option" role extra-topics/
+     * processed-topics play for the Gemini seeder above.
+     */
+    public static function handle_get_bulk_seed_state( WP_REST_Request $request ) {
+        $raw   = get_option( 'culture_dir_bulk_seed_state', '{}' );
+        $state = json_decode( $raw, true );
+        if ( ! is_array( $state ) ) {
+            $state = new stdClass();
+        }
+        return rest_ensure_response( $state );
+    }
+
+    /**
+     * POST /culture/v1/directory/bulk-seed-state
+     *
+     * Overwrites the stored state with the supplied JSON body in full (not
+     * merged — the importer always sends its complete current state).
+     */
+    public static function handle_post_bulk_seed_state( WP_REST_Request $request ) {
+        $body = $request->get_json_params();
+        if ( ! is_array( $body ) ) {
+            $body = array();
+        }
+        update_option( 'culture_dir_bulk_seed_state', wp_json_encode( $body ), false );
+        return rest_ensure_response( array( 'success' => true ) );
+    }
+
+    /**
      * POST /culture/v1/directory/attach-image
      *
      * Accepts a base64-encoded JPEG image, uploads it to the WordPress
@@ -806,6 +840,14 @@ class Culture_Directory {
      */
     public static function handle_quick_create( WP_REST_Request $request ) {
         $user_id      = (int) $request->get_param( 'user_id' );
+        // Set by the real-data bulk importer (apps/site/app/api/directory/
+        // bulk-seed-real/route.ts) instead of a real user_id — resolved
+        // here rather than requiring the caller to look the ID up via a
+        // separate round-trip first. Same system user seeded quotes already
+        // use (Culture_System_Author — "Moveee", login-disabled).
+        if ( $user_id <= 0 && (bool) $request->get_param( 'use_system_author' ) && class_exists( 'Culture_System_Author' ) ) {
+            $user_id = (int) Culture_System_Author::get_id();
+        }
         $title        = sanitize_text_field( $request->get_param( 'title' ) );
         $entry_type   = sanitize_key( $request->get_param( 'entry_type' ) );
         $location_name = sanitize_text_field( $request->get_param( 'location_name' ) );
@@ -837,6 +879,8 @@ class Culture_Directory {
         // text at all. iTunes has no equivalent field, so this is empty for
         // Music quick-creates.
         $excerpt = sanitize_textarea_field( $request->get_param( 'excerpt' ) );
+        // Set by the real-data bulk importer only — see is_new above.
+        $skip_gamification = (bool) $request->get_param( 'skip_gamification' );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
@@ -856,6 +900,10 @@ class Culture_Directory {
                     'thumbnail'  => get_the_post_thumbnail_url( $existing->ID, 'thumbnail' )
                         ?: ( get_post_meta( $existing->ID, '_external_cover_url', true ) ?: null ),
                     'previewUrl' => get_post_meta( $existing->ID, '_external_preview_url', true ) ?: null,
+                    // Lets a bulk importer (re-run safely, idempotent) tell a
+                    // genuine create apart from a dedup hit on an already-
+                    // seeded entry, to track real progress toward a target count.
+                    'is_new'     => false,
                 ) );
             }
         }
@@ -901,8 +949,10 @@ class Culture_Directory {
             update_post_meta( $post_id, '_external_preview_url', $preview_url );
         }
 
-        // Award reputation for creating a directory entry.
-        if ( class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
+        // Award reputation for creating a directory entry — skipped for a
+        // system-authored bulk import (no real member did anything to
+        // "earn" it; see $skip_gamification below).
+        if ( ! $skip_gamification && class_exists( 'Culture_Gamification' ) && $user_id > 0 ) {
             Culture_Gamification::award_reputation( $user_id, Culture_Gamification::get_point_value( 'directory_entry' ), 'directory_entry', $post_id );
             Culture_Gamification::award_credits( $user_id, Culture_Gamification::get_credit_bonus( 'directory_entry' ), 'directory_entry', $post_id );
         }
@@ -916,6 +966,7 @@ class Culture_Directory {
             'author'     => $about_value, // back-compat alias, see get_first_about_field()
             'thumbnail'  => $cover_image_url ?: null,
             'previewUrl' => $preview_url ?: null,
+            'is_new'     => true,
         ) );
     }
 
