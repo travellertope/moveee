@@ -443,24 +443,35 @@
   position: relative;
   max-height: 90vh;
   overflow-y: auto;
+  border-radius: var(--radius-2xl, 20px);
 }
 .auth-modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  font-size: 16px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 15px;
   color: var(--mute);
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 0;
   line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.auth-modal-close:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
 }
 .auth-modal-eyebrow {
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--mute);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
   margin: 0 0 18px;
 }
 .auth-icon-row {
@@ -487,3 +498,16 @@
 }
 .auth-icon-btn:hover:not(:disabled) { border-color: var(--ochre); color: var(--ochre); }
 .auth-icon-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.auth-icon-spinner {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--rule);
+  border-top-color: var(--ochre);
+  border-radius: var(--radius-full, 9999px);
+  animation: auth-icon-spin 0.7s linear infinite;
+}
+@keyframes auth-icon-spin {
+  to { transform: rotate(360deg); }
+}
