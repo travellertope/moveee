@@ -5,7 +5,6 @@
 
 .dd-hdr { align-items: flex-end; }
 .dd-hdr-copy { max-width: 640px; }
-.dd-sub { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft, var(--mute)); }
 
 .dd-rail-group { margin-top: 36px; }
 .dd-rail-group:first-of-type { margin-top: 8px; }
