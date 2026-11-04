@@ -67,7 +67,6 @@ export default function DirectoryDiscovery({ categories }: Props) {
                           ) : (
                             <span className="dd-card-fallback" style={{ background: badge.color }}>{badge.emoji}</span>
                           )}
-                          <span className="dd-card-trending">🔥 Trending</span>
                         </div>
                         <h3>{entry.title}</h3>
                         {entry.city && <p className="dd-card-city">{entry.city}</p>}
