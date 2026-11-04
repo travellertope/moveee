@@ -420,3 +420,70 @@
   cursor: default;
 }
 .auth-code-actions .auth-footer-btn:disabled:hover { text-decoration: none; }
+
+/* ── Global sign-in modal (GlobalAuthModal/AuthModal.tsx) ───────────────────
+   Opens over whatever page the viewer is already on (e.g. a "Write a review"
+   click while signed out), so unlike /login and /register it can't assume a
+   full .auth-page shell. Reuses every .auth-* token above for the form
+   itself; adds only the overlay/card chrome and the horizontal icon-only
+   row for Google/passkey/password-toggle that those dedicated pages don't
+   need (they use full-width .auth-btn-secondary buttons with text instead). */
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 13, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+.auth-modal-card {
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.auth-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--mute);
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+}
+.auth-modal-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 18px;
+}
+.auth-icon-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.auth-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  padding: 0;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+.auth-icon-btn:hover:not(:disabled) { border-color: var(--ochre); color: var(--ochre); }
+.auth-icon-btn:disabled { opacity: 0.6; cursor: not-allowed; }
