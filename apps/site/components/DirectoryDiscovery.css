@@ -5,16 +5,6 @@
 
 .dd-hdr { align-items: flex-end; }
 .dd-hdr-copy { max-width: 640px; }
-.dd-eyebrow {
-  display: block;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ochre);
-  margin-bottom: 8px;
-}
 .dd-sub { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft, var(--mute)); }
 
 .dd-rail-group { margin-top: 36px; }
@@ -27,16 +17,13 @@
   flex-wrap: wrap;
   margin-bottom: 14px;
 }
-.dd-rail-hdr-left { display: flex; align-items: center; gap: 10px; }
-.dd-rail-hdr-left h3 {
+.dd-rail-hdr h3 {
   font-family: "Fraunces", serif;
   font-weight: 600;
   font-size: 19px;
   margin: 0;
   color: var(--ink);
 }
-.dd-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.dd-rail-count { font-size: 12px; color: var(--mute); }
 
 .dd-rail { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 8px; }
 .dd-rail::-webkit-scrollbar { display: none; }
