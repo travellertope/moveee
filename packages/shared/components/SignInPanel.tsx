@@ -66,6 +66,10 @@ interface SignInPanelProps {
   /** Called when the "Create an account" link is clicked (e.g. to close a
    * modal before the navigation happens). */
   onRegisterLinkClick?: () => void;
+  /** Skip the built-in "New here? Create an account" footer — for a caller
+   * (e.g. /login) that renders its own .auth-crosslink box outside the
+   * card instead. */
+  hideFooter?: boolean;
 }
 
 export default function SignInPanel({
@@ -74,6 +78,7 @@ export default function SignInPanel({
   codeIntro = "Enter your email and we'll send you a 6-digit code. No password needed.",
   onAuthenticated,
   onRegisterLinkClick,
+  hideFooter = false,
 }: SignInPanelProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("code");
@@ -262,7 +267,7 @@ export default function SignInPanel({
         </>
       )}
 
-      {mode !== "forgot" && (
+      {mode !== "forgot" && !hideFooter && (
         <div className="auth-footer">
           <p>
             New here?{" "}

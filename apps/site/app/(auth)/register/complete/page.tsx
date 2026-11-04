@@ -194,24 +194,22 @@ function CompleteProfileForm() {
   // ── Verifying screen ──────────────────────────────────────────────────────
   if (step === "verify") {
     return (
-      <div className="auth-page">
-        <div className="auth-card auth-card--center">
-          {verifyError ? (
-            <>
-              <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
-              <h1 className="auth-heading auth-heading--sm" style={{ marginBottom: 12 }}>Link problem</h1>
-              <p className="auth-sub" style={{ marginBottom: 24 }}>{verifyError}</p>
-              <Link href="/register" className="auth-btn-primary" style={{ display: "inline-flex" }}>
-                Back to register
-              </Link>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
-              <p className="auth-sub" style={{ marginBottom: 0 }}>Verifying your email…</p>
-            </>
-          )}
-        </div>
+      <div className="auth-card auth-card--center">
+        {verifyError ? (
+          <>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+            <h1 className="auth-heading auth-heading--sm" style={{ marginBottom: 12 }}>Link problem</h1>
+            <p className="auth-sub" style={{ marginBottom: 24 }}>{verifyError}</p>
+            <Link href="/register" className="auth-btn-primary" style={{ display: "inline-flex" }}>
+              Back to register
+            </Link>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 32, marginBottom: 16 }}>⏳</div>
+            <p className="auth-sub" style={{ marginBottom: 0 }}>Verifying your email…</p>
+          </>
+        )}
       </div>
     );
   }
@@ -223,9 +221,8 @@ function CompleteProfileForm() {
   // ── About You (Step 2) ────────────────────────────────────────────────────
   if (step === "about") {
     return (
-      <div className="auth-page">
-        <div className="auth-card auth-card--wide">
-          <h1 className="auth-heading">Welcome, {displayName || username}!</h1>
+      <div className="auth-card auth-card--wide">
+        <h1 className="auth-heading">Welcome, {displayName || username}!</h1>
 
           <ProgressBar labels={stepLabels} currentIdx={currentStepIdx} percent={progressPercent} />
 
@@ -308,7 +305,6 @@ function CompleteProfileForm() {
               </button>
             </div>
           </form>
-        </div>
       </div>
     );
   }
@@ -316,9 +312,8 @@ function CompleteProfileForm() {
   // ── Interests (Step 2) ───────────────────────────────────────────────────
   if (step === "interests") {
     return (
-      <div className="auth-page">
-        <div className="auth-card auth-card--wide">
-          <h1 className="auth-heading">What moves you?</h1>
+      <div className="auth-card auth-card--wide">
+        <h1 className="auth-heading">What moves you?</h1>
 
           <ProgressBar labels={stepLabels} currentIdx={currentStepIdx} percent={progressPercent} />
 
@@ -361,18 +356,16 @@ function CompleteProfileForm() {
               </button>
             </div>
           </form>
-        </div>
       </div>
     );
   }
 
   // ── Membership (Step 3) ───────────────────────────────────────────────────
   return (
-    <div className="auth-page">
-      <div className="auth-card auth-card--wide">
-        <h1 className="auth-heading">
-          {isUpgrade ? `Upgrade to Moveee ${upgradeTier === "lit" ? "Lit" : "Pro"}` : "One last thing"}
-        </h1>
+    <div className="auth-card auth-card--wide">
+      <h1 className="auth-heading">
+        {isUpgrade ? `Upgrade to Moveee ${upgradeTier === "lit" ? "Lit" : "Pro"}` : "One last thing"}
+      </h1>
 
         {!isUpgrade && (
           <p className="auth-sub auth-sub--tight">
@@ -475,7 +468,6 @@ function CompleteProfileForm() {
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 }

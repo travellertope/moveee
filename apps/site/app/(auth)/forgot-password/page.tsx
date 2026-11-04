@@ -78,10 +78,8 @@ function ForgotPasswordForm() {
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="auth-page">
-      <Suspense>
-        <ForgotPasswordForm />
-      </Suspense>
-    </div>
+    <Suspense>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }
