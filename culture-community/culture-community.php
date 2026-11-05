@@ -176,26 +176,31 @@ function culture_community_init() {
     Culture_NL_Analytics_Admin::init();
     Culture_Newsletter_Importer::init();
     Culture_Settings::init();
-    Culture_Directory_Tools::init();
     Culture_Analytics::init();
     Culture_Email_Templates::init();
     Culture_Templates::init();
     Culture_Redirects::init();
     Culture_Event_RSVP::init();
-    Culture_RSVP_Admin::init();
-    Culture_RSVP_Admin::init_post_handlers();
+    // Parent menus must be registered (via admin_menu hook) before any class
+    // that adds a submenu under them — get_plugin_page_hookname() computes a
+    // different hookname depending on whether $admin_page_hooks[$parent] is
+    // already set, so a submenu registered before its parent gets the wrong
+    // hookname and WP can't find its callback → 404.
+    Culture_Content_Admin::init();   // parent: culture-content-manager
+    Culture_Directory_Tools::init(); // submenu of culture-content-manager
     Culture_Clusters_Admin::init();
     Culture_Clusters_Admin::init_post_handlers();
     Culture_Hubs_Admin::init();
-    Culture_Content_Admin::init();
     Culture_Perks_Admin::init();
     Culture_Ticket_Payment::init();
     Culture_Community_RSVP_Payment::init();
     Culture_Flutterwave::init();
     Culture_Shop_Checkout::init();
     Culture_Services_Payment::init();
-    Culture_Tickets_Admin::init();
-    Culture_Payouts_Admin::init();
+    Culture_Tickets_Admin::init();   // parent: culture-ticket-sales
+    Culture_RSVP_Admin::init();      // submenu of culture-ticket-sales
+    Culture_RSVP_Admin::init_post_handlers();
+    Culture_Payouts_Admin::init();   // submenu of culture-ticket-sales
     Culture_Notifications::init();
     Culture_Follows::init();
     Culture_Directory_Follows::init();
