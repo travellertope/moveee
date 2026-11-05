@@ -60,7 +60,8 @@ class Culture_Directory_Tools {
     public static function init() {
         add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
         add_action( 'wp_ajax_culture_dir_run_seeder',         array( __CLASS__, 'ajax_run_seeder' ) );
-        add_action( 'wp_ajax_culture_dir_run_bulk_seed_real', array( __CLASS__, 'ajax_run_bulk_seed_real' ) );
+        add_action( 'wp_ajax_culture_dir_run_bulk_seed_real',      array( __CLASS__, 'ajax_run_bulk_seed_real' ) );
+        add_action( 'wp_ajax_culture_dir_reset_bulk_seed_state',   array( __CLASS__, 'ajax_reset_bulk_seed_state' ) );
         add_action( 'wp_ajax_culture_import_quotes',         array( __CLASS__, 'ajax_import_quotes' ) );
         add_action( 'wp_ajax_culture_dir_generate_image',     array( __CLASS__, 'ajax_generate_image' ) );
         add_action( 'wp_ajax_culture_dir_save_extra_topics',    array( __CLASS__, 'ajax_save_extra_topics' ) );
@@ -230,6 +231,19 @@ class Culture_Directory_Tools {
         }
 
         wp_send_json_success( $body );
+    }
+
+    /**
+     * AJAX handler: clear the bulk-seed-real progress counters so the seeder
+     * starts fresh. Does NOT delete any directory entries already imported.
+     */
+    public static function ajax_reset_bulk_seed_state() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+        delete_option( 'culture_dir_bulk_seed_state' );
+        wp_send_json_success( array( 'message' => 'Seed state cleared.' ) );
     }
 
     /**
@@ -626,6 +640,9 @@ class Culture_Directory_Tools {
                     <button id="cbsr-stop" class="button" style="display:none;">
                         <?php esc_html_e( 'Stop', 'culture-community' ); ?>
                     </button>
+                    <button id="cbsr-reset" class="button" style="margin-left:12px;">
+                        <?php esc_html_e( 'Reset Seed State', 'culture-community' ); ?>
+                    </button>
                     <span id="cbsr-spinner" class="spinner" style="float:none;vertical-align:middle;display:none;"></span>
                 </p>
 
@@ -915,6 +932,28 @@ class Culture_Directory_Tools {
             $('#cbsr-stop').on('click', function() {
                 cbsrLog('Stopped by user. Click Start again any time to resume.');
                 cbsrStop();
+            });
+
+            $('#cbsr-reset').on('click', function() {
+                if (!confirm('Reset seed state? This clears the progress counters so the seeder starts fresh. It does NOT delete any directory entries that were already imported.')) return;
+                var $btn = $(this);
+                $btn.prop('disabled', true).text('Resetting…');
+                $.post(ajaxUrl, { action: 'culture_dir_reset_bulk_seed_state', nonce: nonce })
+                .done(function(res) {
+                    if (res.success) {
+                        $('#cbsr-total').text('0');
+                        $('#cbsr-film').text('0');
+                        $('#cbsr-music').text('0');
+                        $('#cbsr-book').text('0');
+                        $('#cbsr-pct').text('0%');
+                        $('#cbsr-fill').css('width', '0%');
+                        $('#cbsr-status').show().html('<span style="color:#00a32a;">&#10003; Seed state reset. You can now Start a fresh import.</span>');
+                    } else {
+                        $('#cbsr-status').show().html('<span style="color:#d63638;">Reset failed: ' + $('<span>').text((res.data && res.data.message) || 'Unknown error').html() + '</span>');
+                    }
+                })
+                .fail(function() { $('#cbsr-status').show().html('<span style="color:#d63638;">Request failed.</span>'); })
+                .always(function() { $btn.prop('disabled', false).text('Reset Seed State'); });
             });
 
             /* ── Single image generate ── */
