@@ -226,10 +226,13 @@
 
 /* ── Sign in / Join buttons ── */
 .tb-btn-ghost {
+  font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
   text-decoration: none;
+  cursor: pointer;
+  background: none;
   padding: 7px 12px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--rule);
@@ -240,11 +243,14 @@
 .tb-btn-ghost:hover { background: var(--paper-deep); }
 
 .tb-btn-solid {
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   color: var(--paper);
   background: var(--ink);
   text-decoration: none;
+  cursor: pointer;
+  border: none;
   padding: 7px 12px;
   border-radius: var(--radius-lg);
   white-space: nowrap;

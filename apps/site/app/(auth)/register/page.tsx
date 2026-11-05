@@ -104,29 +104,27 @@ function RegisterForm() {
 
   if (view === "check-email") {
     return (
-      <div className="auth-page">
-        <div className="auth-card auth-card--center">
-          <span className="auth-check-icon">✉</span>
-          <h1 className="auth-heading auth-heading--sm">Check your inbox</h1>
-          <p className="auth-sub" style={{ marginBottom: 8 }}>We sent a verification link to</p>
-          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", margin: "0 0 20px" }}>{email}</p>
-          <p className="auth-sub">
-            Click the link in that email to verify your address and finish setting up.
-            The link expires in 24 hours.
-          </p>
-          <p style={{ fontSize: 13, color: "var(--mute)" }}>
-            Wrong address?{" "}
-            <button type="button" onClick={() => setView("form")} className="auth-footer-btn">
-              Go back
-            </button>
-          </p>
-        </div>
+      <div className="auth-card auth-card--center">
+        <span className="auth-check-icon">✉</span>
+        <h1 className="auth-heading auth-heading--sm">Check your inbox</h1>
+        <p className="auth-sub" style={{ marginBottom: 8 }}>We sent a verification link to</p>
+        <p style={{ fontSize: 16, fontWeight: 600, color: "var(--ink)", margin: "0 0 20px" }}>{email}</p>
+        <p className="auth-sub">
+          Click the link in that email to verify your address and finish setting up.
+          The link expires in 24 hours.
+        </p>
+        <p style={{ fontSize: 13, color: "var(--mute)" }}>
+          Wrong address?{" "}
+          <button type="button" onClick={() => setView("form")} className="auth-footer-btn">
+            Go back
+          </button>
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="auth-page">
+    <>
       <div className="auth-card">
         <h1 className="auth-heading">Join Moveee</h1>
         <p className="auth-sub auth-sub--tight">
@@ -244,14 +242,14 @@ function RegisterForm() {
           {usePassword ? "Join with a code instead" : "Set a username and password"}
         </button>
 
-        <div className="auth-footer">
-          <p>Already a member? <Link href="/login" className="auth-link">Sign in</Link></p>
-          <p className="auth-footer-sub">
-            You can add your city, interests and a paid plan later &mdash; none of it is needed to join.
-          </p>
-        </div>
+        <p className="auth-footer-sub" style={{ textAlign: "center", marginTop: 18 }}>
+          You can add your city, interests and a paid plan later &mdash; none of it is needed to join.
+        </p>
       </div>
-    </div>
+      <div className="auth-crosslink">
+        Already a member? <Link href="/login">Sign in</Link>
+      </div>
+    </>
   );
 }
 

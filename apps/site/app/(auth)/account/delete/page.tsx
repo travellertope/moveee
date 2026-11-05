@@ -20,24 +20,22 @@ export default async function DeleteAccountPage() {
   const user = session?.user as any;
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-heading auth-heading--sm">Delete your account</h1>
-        {user ? (
-          <DeleteAccountClient email={user.email ?? ""} />
-        ) : (
-          <>
-            <p className="auth-sub">
-              Log in to request deletion of your Moveee account. If you can&rsquo;t log in, email{" "}
-              <a href="mailto:privacy@themoveee.com">privacy@themoveee.com</a> from the address on
-              your account and we&rsquo;ll process the request manually.
-            </p>
-            <Link href="/login?callbackUrl=/account/delete" className="auth-btn-primary">
-              Log in
-            </Link>
-          </>
-        )}
-      </div>
+    <div className="auth-card">
+      <h1 className="auth-heading auth-heading--sm">Delete your account</h1>
+      {user ? (
+        <DeleteAccountClient email={user.email ?? ""} />
+      ) : (
+        <>
+          <p className="auth-sub">
+            Log in to request deletion of your Moveee account. If you can&rsquo;t log in, email{" "}
+            <a href="mailto:privacy@themoveee.com">privacy@themoveee.com</a> from the address on
+            your account and we&rsquo;ll process the request manually.
+          </p>
+          <Link href="/login?callbackUrl=/account/delete" className="auth-btn-primary">
+            Log in
+          </Link>
+        </>
+      )}
     </div>
   );
 }

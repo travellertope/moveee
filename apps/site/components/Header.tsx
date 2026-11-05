@@ -351,18 +351,20 @@ const Header = () => {
                     ) : (
                       <div className="tpp-guest">
                         <p className="tpp-guest-copy">Join Moveee to post, earn Culture Credits, and unlock Pro perks.</p>
-                        <a
-                          href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                        <button
+                          type="button"
                           className="tpp-btn tpp-btn--primary"
+                          onClick={() => { setProfileOpen(false); window.dispatchEvent(new Event("open-auth-modal")); }}
                         >
                           Join →
-                        </a>
-                        <a
-                          href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                        </button>
+                        <button
+                          type="button"
                           className="tpp-btn"
+                          onClick={() => { setProfileOpen(false); window.dispatchEvent(new Event("open-auth-modal")); }}
                         >
                           Sign in
-                        </a>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -470,18 +472,20 @@ const Header = () => {
               ) : status === "unauthenticated" ? (
                 <div className="menu-account-card menu-account-card--guest">
                   <p className="menu-account-guest-copy">Join Moveee to post, earn Culture Credits, and unlock Pro perks.</p>
-                  <a
-                    href={`${CONNECT_URL}/register?next=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                  <button
+                    type="button"
                     className="menu-guest-btn menu-guest-btn--primary"
+                    onClick={() => { setMenuOpen(false); window.dispatchEvent(new Event("open-auth-modal")); }}
                   >
                     Join →
-                  </a>
-                  <a
-                    href={`${CONNECT_URL}/login?callbackUrl=${encodeURIComponent("https://themoveee.com" + pathname)}`}
+                  </button>
+                  <button
+                    type="button"
                     className="menu-guest-btn"
+                    onClick={() => { setMenuOpen(false); window.dispatchEvent(new Event("open-auth-modal")); }}
                   >
                     Sign in
-                  </a>
+                  </button>
                 </div>
               ) : (
                 <div className="menu-account-card menu-account-card--loading" />

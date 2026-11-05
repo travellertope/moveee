@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -28,11 +28,28 @@ interface Props {
 export default function DirectoryDiscovery({ categories }: Props) {
   const { data: session } = useSession();
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
+  // Set when "Write a review" is clicked while signed out — opens the
+  // review composer automatically once sign-in completes, instead of
+  // losing the click entirely behind a full-page redirect to /login.
+  const [pendingTarget, setPendingTarget] = useState<ReviewTarget | null>(null);
 
   const openReview = useCallback((target: ReviewTarget) => {
-    if (!session) { window.location.href = "/login?redirect=/"; return; }
+    if (!session) {
+      setPendingTarget(target);
+      // GlobalAuthModal (rendered in (magazine)/layout.tsx) listens for
+      // this — opens sign-in in place rather than navigating away.
+      window.dispatchEvent(new Event("open-auth-modal"));
+      return;
+    }
     setReviewTarget(target);
   }, [session]);
+
+  useEffect(() => {
+    if (session && pendingTarget) {
+      setReviewTarget(pendingTarget);
+      setPendingTarget(null);
+    }
+  }, [session, pendingTarget]);
 
   if (categories.length === 0) return null;
 
@@ -54,7 +71,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                 <Link href={`/discover?type=${cat.type}`} className="arc-viewall">See all {cat.label} →</Link>
               </div>
 
-              <div className="dd-rail">
+              <div className={`dd-rail dd-rail--${cat.key}`}>
                 {cat.entries.map((entry) => {
                   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7a6f5c" };
                   return (

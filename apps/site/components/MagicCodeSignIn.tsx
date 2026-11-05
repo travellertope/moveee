@@ -27,12 +27,19 @@ export default function MagicCodeSignIn({
   emailLabel = "Email",
   submitLabel = "Continue",
   autoFocus = false,
+  onSuccess,
 }: {
   callbackUrl: string;
   referral?: string;
   emailLabel?: string;
   submitLabel?: string;
   autoFocus?: boolean;
+  /** When provided, called instead of navigating to callbackUrl — lets a
+   * caller that isn't a dedicated auth page (e.g. a modal opened over
+   * whatever page the viewer was already on) close itself and refresh in
+   * place rather than redirecting away. /login and /register don't pass
+   * this, so their existing navigate-on-success behavior is unchanged. */
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const [stage, setStage] = useState<"email" | "code">("email");
@@ -59,6 +66,10 @@ export default function MagicCodeSignIn({
   }, [resendIn]);
 
   function finish() {
+    if (onSuccess) {
+      onSuccess();
+      return;
+    }
     // A callbackUrl from another origin (e.g. themoveee.com/stoop) can't be
     // handed to the client router — same check the password path uses.
     if (callbackUrl.startsWith("http")) {

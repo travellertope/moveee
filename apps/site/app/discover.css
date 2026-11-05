@@ -375,6 +375,14 @@
 @media (min-width: 720px) {
   .disc-masonry { columns: 200px; }
 }
+/* Narrower columns when filtered to a single portrait/square-cover type
+   (film/book/album) — fits more cards per row since they're no wider than
+   square, without the mismatched-width problem this would cause if mixed
+   with landscape place/food cards in the same masonry. */
+.disc-masonry--narrow { columns: 2 150px; }
+@media (min-width: 720px) {
+  .disc-masonry--narrow { columns: 150px; }
+}
 
 /* ── Loading / empty / load-more ── */
 .disc-loading {

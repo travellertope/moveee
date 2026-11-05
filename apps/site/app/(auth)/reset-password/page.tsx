@@ -108,10 +108,8 @@ function ResetForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="auth-page">
-      <Suspense>
-        <ResetForm />
-      </Suspense>
-    </div>
+    <Suspense>
+      <ResetForm />
+    </Suspense>
   );
 }

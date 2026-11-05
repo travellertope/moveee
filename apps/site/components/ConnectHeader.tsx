@@ -291,8 +291,20 @@ export default function ConnectHeader() {
             </Link>
           ) : status === "unauthenticated" ? (
             <div className="ch-mobile-auth">
-              <Link href="/login" className="ch-btn-ghost">Sign in</Link>
-              <Link href="/register" className="ch-btn-solid">Join</Link>
+              <button
+                type="button"
+                className="ch-btn-ghost"
+                onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("open-auth-modal")); }}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                className="ch-btn-solid"
+                onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("open-auth-modal")); }}
+              >
+                Join
+              </button>
             </div>
           ) : null}
         </div>

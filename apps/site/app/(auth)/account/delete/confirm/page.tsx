@@ -89,13 +89,11 @@ function ConfirmDeletionForm() {
 
 export default function ConfirmDeletePage() {
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-heading auth-heading--sm">Confirm account deletion</h1>
-        <Suspense>
-          <ConfirmDeletionForm />
-        </Suspense>
-      </div>
+    <div className="auth-card">
+      <h1 className="auth-heading auth-heading--sm">Confirm account deletion</h1>
+      <Suspense>
+        <ConfirmDeletionForm />
+      </Suspense>
     </div>
   );
 }

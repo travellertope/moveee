@@ -240,7 +240,7 @@
 
 .menu-account-card--guest { text-align: center; padding: 28px 22px; }
 .menu-account-guest-copy { font-size: 14px; color: var(--ink-soft); line-height: 1.55; margin-bottom: 18px; }
-.menu-guest-btn { display: block; border-radius: var(--radius-full); padding: 13px 22px; font-family: "DM Sans", sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 10px; transition: opacity 0.15s; }
+.menu-guest-btn { display: block; width: 100%; border: none; background: none; cursor: pointer; border-radius: var(--radius-full); padding: 13px 22px; font-family: "DM Sans", sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 10px; transition: opacity 0.15s; }
 .menu-guest-btn--primary { background: var(--ink); color: var(--paper); }
 .menu-guest-btn:not(.menu-guest-btn--primary) { border: 1px solid var(--rule); color: var(--ink); }
 .menu-guest-btn:hover { opacity: 0.85; }
@@ -338,6 +338,10 @@
 .tpp-guest-copy { font-size: 13px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 14px; }
 .tpp-btn {
   display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
   border-radius: var(--radius-full);
   padding: 10px 18px;
   font-family: "DM Sans", sans-serif;
