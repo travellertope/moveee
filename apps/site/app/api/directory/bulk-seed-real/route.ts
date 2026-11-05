@@ -52,11 +52,28 @@ const TARGET = { film: 334, music: 333, book: 333 };
 const BATCH = { film: 20, music: 15, book: 15 };
 const TMDB_LANES = ["trending", "top_rated", "now_playing"] as const;
 const APPLE_STOREFRONTS = ["us", "gb", "ng", "za"];
+// Book queries — focused on contemporary literary, fiction, memoir, and
+// nonfiction. Scoped to after:1990 (or later) so old public-domain texts and
+// historical political biographies never appear. Broad subjects like
+// "biography" and "history" were removed: Google Books surfaces Plutarch,
+// Barbara Bush, and Zachary Taylor first under those — off-brand and visually
+// poor (old scan thumbnails). Cover thumbnails are required at fetch time, so
+// entries without art are silently skipped.
 const BOOK_QUERIES = [
-  "subject:fiction", "subject:african+literature", "subject:biography",
-  "subject:history", "subject:poetry", "subject:fantasy",
-  "subject:science+fiction", "subject:memoir", "subject:young+adult",
-  "bestseller", "subject:nigeria", "subject:black+history",
+  "subject:literary+fiction+after:2010",
+  "subject:african+fiction+after:2000",
+  "subject:african+literature+after:2000",
+  "subject:literary+memoir+after:2005",
+  "subject:contemporary+fiction+after:2015",
+  "subject:debut+novel+after:2015",
+  "subject:literary+nonfiction+after:2010",
+  "subject:caribbean+fiction+after:1995",
+  "subject:black+british+fiction+after:2000",
+  "subject:afrofuturism+after:2000",
+  "subject:diaspora+fiction+after:2005",
+  "subject:speculative+fiction+after:2010",
+  "subject:graphic+novel+after:2010",
+  "subject:short+stories+after:2010",
 ];
 
 interface Candidate {
@@ -153,7 +170,13 @@ async function fetchGoogleBooksPage(
   startIndex: number
 ): Promise<{ items: Candidate[]; exhausted: boolean; rateLimited: boolean }> {
   const query = BOOK_QUERIES[queryIdx % BOOK_QUERIES.length];
-  const params = new URLSearchParams({ q: query, startIndex: String(startIndex), maxResults: "20", orderBy: "relevance" });
+  const params = new URLSearchParams({
+    q: query,
+    startIndex: String(startIndex),
+    maxResults: "40",
+    orderBy: "newest",
+    printType: "books",
+  });
   if (GOOGLE_BOOKS_API_KEY) params.set("key", GOOGLE_BOOKS_API_KEY);
   const res = await fetch(`https://www.googleapis.com/books/v1/volumes?${params}`).catch(() => null);
   if (!res) return { items: [], exhausted: false, rateLimited: false };
@@ -161,23 +184,40 @@ async function fetchGoogleBooksPage(
   if (!res.ok) return { items: [], exhausted: true, rateLimited: false };
 
   const data = await res.json().catch(() => null);
-  const items: any[] = Array.isArray(data?.items) ? data.items : [];
+  const rawItems: any[] = Array.isArray(data?.items) ? data.items : [];
+  const items = rawItems
+    .filter((b) => {
+      if (!b?.id || !b?.volumeInfo?.title) return false;
+      // Require a cover thumbnail — entries without art look blank in the directory.
+      if (!b.volumeInfo?.imageLinks?.thumbnail) return false;
+      // Skip very old books (public domain texts, ancient classics).
+      const pub = String(b.volumeInfo?.publishedDate ?? "");
+      const year = parseInt(pub.slice(0, 4), 10);
+      if (year && year < 1950) return false;
+      return true;
+    })
+    .map((b) => {
+      const info = b.volumeInfo;
+      const ids: any[] = info.industryIdentifiers ?? [];
+      const isbn =
+        ids.find((i) => i.type === "ISBN_13")?.identifier ||
+        ids.find((i) => i.type === "ISBN_10")?.identifier ||
+        b.id;
+      const description = typeof info.description === "string" && info.description.trim()
+        ? info.description.trim()
+        : undefined;
+      return {
+        externalId: isbn,
+        title: info.title as string,
+        about: Array.isArray(info.authors) ? info.authors.join(", ") : undefined,
+        coverUrl: String(info.imageLinks.thumbnail).replace(/^http:/, "https:"),
+        description,
+      };
+    });
+
   return {
-    items: items
-      .filter((b) => b?.id && b?.volumeInfo?.title)
-      .map((b) => {
-        const info = b.volumeInfo;
-        const ids: any[] = info.industryIdentifiers ?? [];
-        const isbn = ids.find((i) => i.type === "ISBN_13")?.identifier || ids.find((i) => i.type === "ISBN_10")?.identifier || b.id;
-        return {
-          externalId: isbn,
-          title: info.title as string,
-          about: Array.isArray(info.authors) ? info.authors.join(", ") : undefined,
-          coverUrl: info.imageLinks?.thumbnail ? String(info.imageLinks.thumbnail).replace(/^http:/, "https:") : null,
-          description: typeof info.description === "string" ? info.description : undefined,
-        };
-      }),
-    exhausted: items.length < 20,
+    items,
+    exhausted: rawItems.length < 20,
     rateLimited: false,
   };
 }
