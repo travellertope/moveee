@@ -236,6 +236,15 @@
   color: var(--dir-ink);
 }
 
+.dir-card-author {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dir-muted);
+  margin: 3px 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .dir-card-excerpt {
   font-size: 13px;
   line-height: 1.6;

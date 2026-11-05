@@ -339,6 +339,16 @@ function mapRestDirectoryToFrontendShape(item: any) {
     partnerPerk: item?.meta?._partner_perk_template ?? null,
     communityReviewCount: item?.meta?._community_review_count ?? 0,
     averageRating: item?.meta?._average_rating ? Number(item.meta._average_rating) : null,
+    aboutValue: (() => {
+      const raw = item?.meta?._about_fields;
+      if (raw) {
+        try {
+          const fields = JSON.parse(raw);
+          if (Array.isArray(fields) && fields[0]?.value) return String(fields[0].value);
+        } catch {}
+      }
+      return null;
+    })(),
     selectedWorks: [],
     infobox: null,
   };
@@ -1801,6 +1811,7 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     partnerPerk
     communityReviewCount
     averageRating
+    aboutValue
     selectedWorks {
       title
       imageUrl

@@ -62,6 +62,7 @@ class Culture_Directory_Tools {
         add_action( 'wp_ajax_culture_dir_run_seeder',         array( __CLASS__, 'ajax_run_seeder' ) );
         add_action( 'wp_ajax_culture_dir_run_bulk_seed_real',      array( __CLASS__, 'ajax_run_bulk_seed_real' ) );
         add_action( 'wp_ajax_culture_dir_reset_bulk_seed_state',   array( __CLASS__, 'ajax_reset_bulk_seed_state' ) );
+        add_action( 'wp_ajax_culture_dir_delete_imported_books',   array( __CLASS__, 'ajax_delete_imported_books' ) );
         add_action( 'wp_ajax_culture_import_quotes',         array( __CLASS__, 'ajax_import_quotes' ) );
         add_action( 'wp_ajax_culture_dir_generate_image',     array( __CLASS__, 'ajax_generate_image' ) );
         add_action( 'wp_ajax_culture_dir_save_extra_topics',    array( __CLASS__, 'ajax_save_extra_topics' ) );
@@ -244,6 +245,38 @@ class Culture_Directory_Tools {
         }
         delete_option( 'culture_dir_bulk_seed_state' );
         wp_send_json_success( array( 'message' => 'Seed state cleared.' ) );
+    }
+
+    /**
+     * AJAX handler: permanently delete all book entries imported by the
+     * bulk-seed-real seeder (external_source = 'google_books').
+     * Does NOT touch AI-generated entries or manually added books.
+     */
+    public static function ajax_delete_imported_books() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        global $wpdb;
+        // Find all culture_directory posts where _external_source = 'google_books'
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta}
+             WHERE meta_key = '_external_source' AND meta_value = %s",
+            'google_books'
+        ) );
+
+        $deleted = 0;
+        foreach ( $ids as $post_id ) {
+            if ( wp_delete_post( (int) $post_id, true ) ) {
+                $deleted++;
+            }
+        }
+
+        wp_send_json_success( array(
+            'deleted' => $deleted,
+            'message' => "Deleted {$deleted} imported book entr" . ( $deleted === 1 ? 'y' : 'ies' ) . '.',
+        ) );
     }
 
     /**
@@ -643,6 +676,9 @@ class Culture_Directory_Tools {
                     <button id="cbsr-reset" class="button" style="margin-left:12px;">
                         <?php esc_html_e( 'Reset Seed State', 'culture-community' ); ?>
                     </button>
+                    <button id="cbsr-delete-books" class="button" style="margin-left:12px;color:#d63638;border-color:#d63638;">
+                        <?php esc_html_e( 'Delete Imported Books', 'culture-community' ); ?>
+                    </button>
                     <span id="cbsr-spinner" class="spinner" style="float:none;vertical-align:middle;display:none;"></span>
                 </p>
 
@@ -954,6 +990,23 @@ class Culture_Directory_Tools {
                 })
                 .fail(function() { $('#cbsr-status').show().html('<span style="color:#d63638;">Request failed.</span>'); })
                 .always(function() { $btn.prop('disabled', false).text('Reset Seed State'); });
+            });
+
+            $('#cbsr-delete-books').on('click', function() {
+                if (!confirm('Delete ALL books imported by the real-data seeder (google_books source)? This is permanent and cannot be undone. AI-generated and manually added entries are NOT affected.')) return;
+                var $btn = $(this);
+                $btn.prop('disabled', true).text('Deleting…');
+                $.post(ajaxUrl, { action: 'culture_dir_delete_imported_books', nonce: nonce })
+                .done(function(res) {
+                    if (res.success) {
+                        $('#cbsr-book').text('0');
+                        $('#cbsr-status').show().html('<span style="color:#00a32a;">&#10003; ' + $('<span>').text(res.data.message).html() + '</span>');
+                    } else {
+                        $('#cbsr-status').show().html('<span style="color:#d63638;">Delete failed: ' + $('<span>').text((res.data && res.data.message) || 'Unknown error').html() + '</span>');
+                    }
+                })
+                .fail(function() { $('#cbsr-status').show().html('<span style="color:#d63638;">Request failed.</span>'); })
+                .always(function() { $btn.prop('disabled', false).text('Delete Imported Books'); });
             });
 
             /* ── Single image generate ── */

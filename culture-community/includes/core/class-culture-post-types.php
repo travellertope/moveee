@@ -812,6 +812,25 @@ class Culture_Post_Types {
         }
 
         // 8. Directory Profile Extensions
+
+        // aboutValue — first value from _about_fields (Author for books, Artist for
+        // albums, Director for films) stored by the seeder and the quick-create flow.
+        // Falls back to dir_infobox_author so AI-seeded book entries also return a value.
+        register_graphql_field( 'CultureDirectory', 'aboutValue', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $raw = get_post_meta( $post->databaseId, '_about_fields', true );
+                if ( $raw ) {
+                    $fields = json_decode( $raw, true );
+                    if ( is_array( $fields ) && ! empty( $fields[0]['value'] ) ) {
+                        return (string) $fields[0]['value'];
+                    }
+                }
+                // Fall back to infobox author (AI-seeded entries)
+                return (string) get_post_meta( $post->databaseId, 'dir_infobox_author', true );
+            },
+        ) );
+
         register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
             'type'    => 'String',
             'resolve' => function( $post ) {

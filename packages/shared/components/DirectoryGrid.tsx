@@ -21,6 +21,8 @@ interface DirectoryEntry {
   isPartner?: boolean;
   communityReviewCount?: number;
   averageRating?: number;
+  aboutValue?: string | null;
+  infobox?: { author?: string | null; [key: string]: any } | null;
 }
 
 interface Props {
@@ -91,6 +93,9 @@ export default function DirectoryGrid({ entries, types, initialType = null }: Pr
             const rawExcerpt = (typeof entry.excerpt === 'string' ? entry.excerpt : '').replace(/<[^>]*>/g, '').trim();
             const excerpt = rawExcerpt.length > 120 ? rawExcerpt.slice(0, 120) + '…' : rawExcerpt;
 
+            const typeSlug = type?.slug ?? '';
+            const authorName = entry.aboutValue || entry.infobox?.author || null;
+
             return (
               <Link key={entry.slug} href={`/directory/${entry.slug}`} className={`dir-card${entry.isPartner ? ' dir-card--partner' : ''}`}>
                 <div className={`dir-card-img${img ? '' : ' dir-card-img--placeholder'}`}>
@@ -117,6 +122,9 @@ export default function DirectoryGrid({ entries, types, initialType = null }: Pr
                     ) : null}
                   </div>
                   <h3 className="dir-card-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
+                  {authorName && (typeSlug === 'book' || typeSlug === 'album') && (
+                    <p className="dir-card-author">{authorName}</p>
+                  )}
                   {excerpt && <p className="dir-card-excerpt">{excerpt}</p>}
                   {entry.cultureInterests?.nodes?.length ? (
                     <div className="dir-card-tags">
