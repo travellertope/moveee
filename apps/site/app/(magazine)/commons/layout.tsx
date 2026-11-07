@@ -15,15 +15,19 @@ const newsreader = Newsreader({
   variable: "--font-comm-display",
   display: "swap",
 });
+// IBM Plex Sans: omit weight to request the variable font from Google Fonts,
+// avoiding a Turbopack bug in Next.js 16 where multi-weight non-variable fonts
+// generate multiple CSS module entries that Turbopack can't resolve.
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-comm-sans",
   display: "swap",
 });
+// IBM Plex Mono has no variable font on Google Fonts; single weight avoids
+// the same Turbopack multi-entry issue.
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400",
   variable: "--font-comm-mono",
   display: "swap",
 });
