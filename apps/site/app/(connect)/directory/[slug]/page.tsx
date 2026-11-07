@@ -319,22 +319,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             )}
           </div>
 
-          {/* Star rating */}
-          <div className="dir-entry-rating-row">
-            {[1,2,3,4,5].map(n => (
-              <span key={n} className={n <= ratingStars ? "dir-entry-star dir-entry-star--filled" : "dir-entry-star"}>
-                {n <= ratingStars ? "★" : "☆"}
-              </span>
-            ))}
-          </div>
-          {reviewCount > 0 ? (
-            <p className="dir-entry-review-count">
-              {avgRating?.toFixed(1)} based on {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
-            </p>
-          ) : (
-            <p className="dir-entry-review-count">New · 0 reviews</p>
-          )}
-
           {/* Social proof + follow */}
           {entry.databaseId && (
             <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
