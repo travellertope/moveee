@@ -429,19 +429,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             </div>
           )}
 
-          {/* Save a line CTA */}
-          {(typeSlug === "person" || !!quoteLinkType) && entry.databaseId && (
-            <div className="dir-entry-save-line">
-              <SaveLineButton
-                directoryId={entry.databaseId}
-                entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
-                quoteLinkRole={quoteLinkRole}
-                quoteLinkType={quoteLinkType || undefined}
-                label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
-              />
-            </div>
-          )}
-
           {/* Selected Works */}
           {works.length > 0 && (
             <div className="dir-entry-works">
@@ -630,6 +617,15 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           </div>
         )}
 
+        {/* ── Improve CTA ── */}
+        <div className="dir-wiki-improve" style={{ marginTop: "2rem" }}>
+          <div className="dir-wiki-improve-label">Community Wiki</div>
+          <p>Know more? Help improve this entry.</p>
+          <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
+            Improve →
+          </Link>
+        </div>
+
         {/* ── Related entries ── */}
         <div className="dir-entry-related">
           <h3 className="dir-entry-related-heading">More {typeLabel}s</h3>
@@ -654,15 +650,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               See all {typeLabel}s →
             </Link>
           </div>
-        </div>
-
-        {/* ── Improve CTA ── */}
-        <div className="dir-wiki-improve" style={{ marginTop: "2rem" }}>
-          <div className="dir-wiki-improve-label">Community Wiki</div>
-          <p>Know more? Help improve this entry.</p>
-          <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
-            Improve →
-          </Link>
         </div>
 
         {/* Footer links */}
