@@ -99,6 +99,16 @@ export default function EntryActionBar({
     ? "Person"
     : (quoteLinkType ? QUOTE_TYPE_MAP[quoteLinkType] : undefined);
 
+  const REVIEW_SUBTYPE_MAP: Record<string, "place" | "food" | "music" | "book" | "film"> = {
+    book: "book",
+    film: "film",
+    album: "music",
+  };
+  const reviewSubtype = quoteLinkType ? REVIEW_SUBTYPE_MAP[quoteLinkType] : undefined;
+  const initialReview = reviewSubtype
+    ? { subtype: reviewSubtype, entry: { id: directoryId, title: entryTitle, slug } }
+    : undefined;
+
   return (
     <div className="dir-action-bar" ref={wrapRef}>
       <div className="dir-action-row">
@@ -212,6 +222,8 @@ export default function EntryActionBar({
       <ComposerModal
         open={reviewOpen}
         onClose={() => setReviewOpen(false)}
+        initialTab="review"
+        initialReview={initialReview}
       />
     </div>
   );
