@@ -1673,28 +1673,6 @@
   padding-bottom: 80px;
 }
 
-/* ── Breadcrumb ── */
-.dir-entry-breadcrumb {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 28px 32px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.dir-entry-bc-link {
-  color: var(--dir-muted);
-  text-decoration: none;
-  transition: color 0.12s;
-}
-.dir-entry-bc-link:hover { color: var(--ochre, #7a241c); }
-.dir-entry-bc-sep { color: var(--dir-muted); opacity: 0.5; }
-.dir-entry-bc-current { color: var(--dir-ink); }
 
 /* ── Main two-column grid ── */
 .dir-entry-grid {
@@ -1933,11 +1911,11 @@
   opacity: 0.6;
 }
 
-/* ── Lower section (community + related, full width) ── */
+/* ── Lower section (community + related) — now inside the right column ── */
 .dir-entry-lower {
-  max-width: 1200px;
-  margin: 48px auto 0;
-  padding: 0 32px;
+  margin-top: 56px;
+  padding-top: 48px;
+  border-top: 1px solid var(--dir-border);
 }
 
 /* ── Related entries ── */
@@ -1992,12 +1970,6 @@
     max-width: 300px;
     margin: 0 auto;
     width: 100%;
-  }
-  .dir-entry-lower {
-    padding: 0 20px;
-  }
-  .dir-entry-breadcrumb {
-    padding: 20px 20px 0;
   }
 }
 @media (max-width: 480px) {

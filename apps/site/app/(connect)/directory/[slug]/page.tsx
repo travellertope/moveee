@@ -303,15 +303,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   return (
     <div className="dir-entry-page">
 
-      {/* ── Breadcrumb ── */}
-      <nav className="dir-entry-breadcrumb">
-        <Link href="/discover" className="dir-entry-bc-link">Directory</Link>
-        <span className="dir-entry-bc-sep">/</span>
-        <Link href={`/discover?type=${typeSlug}`} className="dir-entry-bc-link">{typeLabel}</Link>
-        <span className="dir-entry-bc-sep">/</span>
-        <span className="dir-entry-bc-current" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
-      </nav>
-
       {/* ── Main two-column grid ── */}
       <div className="dir-entry-grid">
 
@@ -473,11 +464,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           {/* Added date */}
           {date && <p className="dir-entry-added-date">Added to directory {date}</p>}
 
-        </div>
-      </div>
-
-      {/* ── Below-the-fold: community + related (full width) ── */}
-      <div className="dir-entry-lower">
+          {/* ── Community reviews, quotes, events & related ── */}
+          <div className="dir-entry-lower">
 
         {/* Community Reviews & Takes */}
         {communitySummary.total_posts > 0 && (
@@ -687,7 +675,10 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           {" · "}
           <Link href="/contact" style={{ color: "#7a6f5c" }}>Contact</Link>
         </p>
-      </div>
+          </div>{/* end dir-entry-lower */}
+
+        </div>{/* end dir-entry-details-col */}
+      </div>{/* end dir-entry-grid */}
 
     </div>
   );
