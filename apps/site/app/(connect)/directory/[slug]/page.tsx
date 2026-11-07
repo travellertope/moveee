@@ -12,7 +12,6 @@ import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
 import EntryActionBar from "./EntryActionBar";
 import SocialProofLine from "./SocialProofLine";
-import SaveLineButton from "./SaveLineButton";
 import DirectoryFollowButton from "./DirectoryFollowButton";
 import StoopProximityBanner from "./StoopProximityBanner";
 import { decodeHtml } from "@/lib/decode-html";
@@ -565,15 +564,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               ))}
             </div>
 
-            {entry.databaseId && (
-              <SaveLineButton
-                directoryId={entry.databaseId}
-                entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
-                quoteLinkRole={quoteLinkRole}
-                quoteLinkType={quoteLinkType || undefined}
-                label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
-              />
-            )}
           </div>
         )}
 
@@ -625,15 +615,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             </div>
           </div>
         )}
-
-        {/* ── Improve CTA ── */}
-        <div className="dir-wiki-improve" style={{ marginTop: "2rem" }}>
-          <div className="dir-wiki-improve-label">Community Wiki</div>
-          <p>Know more? Help improve this entry.</p>
-          <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
-            Improve →
-          </Link>
-        </div>
 
         {/* ── Related entries ── */}
         <div className="dir-entry-related">
