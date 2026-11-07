@@ -1,1 +1,3 @@
-{}
+{
+  "ignoreCommand": "[ \"$VERCEL_ENV\" = \"preview\" ] && ! echo \"$VERCEL_GIT_PULL_REQUEST_ID\" | grep -qE '^[0-9]+$'"
+}

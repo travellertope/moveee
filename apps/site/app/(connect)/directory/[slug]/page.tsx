@@ -12,7 +12,6 @@ import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
 import EntryActionBar from "./EntryActionBar";
 import SocialProofLine from "./SocialProofLine";
-import SaveLineButton from "./SaveLineButton";
 import DirectoryFollowButton from "./DirectoryFollowButton";
 import StoopProximityBanner from "./StoopProximityBanner";
 import { decodeHtml } from "@/lib/decode-html";
@@ -320,22 +319,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             )}
           </div>
 
-          {/* Star rating */}
-          <div className="dir-entry-rating-row">
-            {[1,2,3,4,5].map(n => (
-              <span key={n} className={n <= ratingStars ? "dir-entry-star dir-entry-star--filled" : "dir-entry-star"}>
-                {n <= ratingStars ? "★" : "☆"}
-              </span>
-            ))}
-          </div>
-          {reviewCount > 0 ? (
-            <p className="dir-entry-review-count">
-              {avgRating?.toFixed(1)} based on {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
-            </p>
-          ) : (
-            <p className="dir-entry-review-count">New · 0 reviews</p>
-          )}
-
           {/* Social proof + follow */}
           {entry.databaseId && (
             <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
@@ -565,15 +548,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               ))}
             </div>
 
-            {entry.databaseId && (
-              <SaveLineButton
-                directoryId={entry.databaseId}
-                entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
-                quoteLinkRole={quoteLinkRole}
-                quoteLinkType={quoteLinkType || undefined}
-                label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
-              />
-            )}
           </div>
         )}
 
@@ -625,15 +599,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             </div>
           </div>
         )}
-
-        {/* ── Improve CTA ── */}
-        <div className="dir-wiki-improve" style={{ marginTop: "2rem" }}>
-          <div className="dir-wiki-improve-label">Community Wiki</div>
-          <p>Know more? Help improve this entry.</p>
-          <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
-            Improve →
-          </Link>
-        </div>
 
         {/* ── Related entries ── */}
         <div className="dir-entry-related">
