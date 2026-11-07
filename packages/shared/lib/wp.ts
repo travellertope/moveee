@@ -1812,6 +1812,7 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     communityReviewCount
     averageRating
     aboutValue
+    externalCoverUrl
     selectedWorks {
       title
       imageUrl
@@ -1828,6 +1829,7 @@ const DIRECTORY_FIELDS_FRAGMENT = `
       foodType mainIngredients alsoKnownAs culturalContext
       origin era keyDesigners materials culturalSignificance
       creator network seasons years
+      tracks
     }
   }
 `;

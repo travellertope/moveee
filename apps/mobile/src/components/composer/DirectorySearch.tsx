@@ -34,6 +34,9 @@ interface ExternalResult {
   year?: string;
   coverUrl?: string | null;
   genres?: string[];
+  description?: string;
+  /** Structured infobox fields — stored as dir_infobox_* meta via quick-create. */
+  infobox?: Record<string, string>;
 }
 
 interface Props {
@@ -183,18 +186,19 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
         } catch { /* preview is optional */ }
       }
 
-      // TMDB only — search results carry no crew data, so the director is
-      // resolved lazily here, just for the picked film, same reasoning as
-      // Spotify's preview lookup above.
+      // TMDB only — search results carry no crew data, so the director and
+      // runtime are resolved lazily here, just for the picked film.
       let about = r.about;
+      const infobox: Record<string, string> = { ...(r.infobox ?? {}) };
       if (externalSource === "tmdb") {
         try {
-          const credits = await api.get<{ director: string | null }>(
+          const credits = await api.get<{ director: string | null; runtime: string | null }>(
             `${PROXY}/external/tmdb/credits?movieId=${encodeURIComponent(r.externalId)}`,
             false
           );
-          about = credits?.director ?? undefined;
-        } catch { /* director is optional */ }
+          if (credits?.director) about = credits.director;
+          if (credits?.runtime) infobox.runtime = credits.runtime;
+        } catch { /* director/runtime optional */ }
       }
 
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
@@ -206,6 +210,8 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
         external_id: r.externalId,
         cover_image_url: r.coverUrl || undefined,
         preview_url: previewUrl || undefined,
+        excerpt: r.description || undefined,
+        infobox: Object.keys(infobox).length ? infobox : undefined,
       });
       handleSelect({ ...entry, thumbnail: entry.thumbnail ?? r.coverUrl ?? null, previewUrl: entry.previewUrl ?? previewUrl ?? null, genres: r.genres });
     } catch (err) {

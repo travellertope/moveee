@@ -31,6 +31,7 @@ const TYPE_LABELS: Record<string, string> = {
   fashion:  "Fashion",
   film:     "Film",
   book:     "Book",
+  album:    "Music",
   "tv-series": "TV Series",
 };
 
@@ -67,13 +68,10 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const typeNode = entry.cultureDirectoryTypes?.nodes?.[0];
   const typeSlug = typeNode?.slug ?? "";
   const typeLabel = TYPE_LABELS[typeSlug] ?? typeNode?.name ?? "Entry";
-  const img = entry.featuredImage?.node?.sourceUrl;
+  // Seeder-created entries store cover in _external_cover_url (not in WP media),
+  // so externalCoverUrl is the fallback when no WP featured image attachment exists.
+  const img = entry.featuredImage?.node?.sourceUrl || entry.externalCoverUrl || null;
 
-  // "Save a line from this" — which of the quote's two optional directory
-  // links this entry fills. A person is the speaker; a work is the source.
-  // Offered on the types lines actually come from, plus any entry that
-  // already has one, so a restaurant doesn't grow a quote composer it has no
-  // use for.
   const LINE_SOURCE_TYPES: Record<string, string> = { book: "book", film: "film", album: "album", "tv-series": "film" };
   const quoteLinkRole = typeSlug === "person" ? "author" : "source";
   const quoteLinkType = typeSlug === "person" ? "" : LINE_SOURCE_TYPES[typeSlug] ?? "";
@@ -84,16 +82,11 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     ? new Date(entry.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  // Fetch related entries by pulling the full pool and scoring by type + shared interests.
-  // This mirrors the proven approach used by the directory archive page and avoids
-  // unreliable taxQuery GraphQL filtering on custom taxonomies.
   let relatedEntries: any[] = [];
   const interestSlugs = new Set(interests.map((i: any) => i.slug));
 
   try {
     const allEntries = await getDirectoryEntriesWithFallback(200);
-
-    // Score each entry: 2 pts for same type, 1 pt per shared interest
     const scored: { entry: any; score: number }[] = allEntries
       .filter((e: any) => e.slug !== slug)
       .map((e: any) => {
@@ -106,7 +99,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
       })
       .filter(({ score }: { score: number }) => score > 0)
       .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
-
     relatedEntries = scored.slice(0, 5).map(({ entry }) => entry);
   } catch (err) {
     console.error("[directory] related fetch failed:", err);
@@ -117,7 +109,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const twitterHandle   = entry.twitterHandle   ?? "";
   const infobox: Record<string, string> = entry.infobox ?? {};
 
-  // Community posts + events linked to this entry
   const [communityData, directoryEvents] = await Promise.all([
     entry.databaseId
       ? getDirectoryPosts(entry.databaseId)
@@ -127,7 +118,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
       : Promise.resolve([] as DirectoryEvent[]),
   ]);
   const { posts: communityPosts, summary: communitySummary } = communityData;
-  // Absent from an un-redeployed plugin's response, hence the fallback.
   const directoryQuotes = communityData.quotes ?? [];
 
   type InfoboxField = { label: string; key: string };
@@ -198,6 +188,11 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
       { label: "Pages",          key: "pages" },
       { label: "ISBN",           key: "isbn" },
     ],
+    album: [
+      { label: "Artist", key: "artist" },
+      { label: "Year",   key: "year" },
+      { label: "Genre",  key: "genre" },
+    ],
     artwork: [
       { label: "Artist",           key: "artist" },
       { label: "Year",             key: "year" },
@@ -223,91 +218,234 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
       { label: "Cultural Significance", key: "culturalSignificance" },
     ],
     "tv-series": [
-      { label: "Created By",        key: "creator" },
-      { label: "Network / Platform",key: "network" },
-      { label: "Seasons",           key: "seasons" },
-      { label: "Years",             key: "years" },
-      { label: "Country",           key: "country" },
-      { label: "Language",          key: "language" },
-      { label: "Genre",             key: "genre" },
-      { label: "Starring",          key: "starring" },
+      { label: "Created By",         key: "creator" },
+      { label: "Network / Platform", key: "network" },
+      { label: "Seasons",            key: "seasons" },
+      { label: "Years",              key: "years" },
+      { label: "Country",            key: "country" },
+      { label: "Language",           key: "language" },
+      { label: "Genre",              key: "genre" },
+      { label: "Starring",           key: "starring" },
     ],
   };
   const infoboxFields = INFOBOX_DEFS[typeSlug] ?? [];
 
+  // ── Derived display values ────────────────────────────────
+  // Cover aspect ratio: square for music/album, portrait (2:3) for everything else
+  const coverAspect = typeSlug === "album" ? "square" : "portrait";
+
+  // Subtitle line below the title — varies by type
+  const creatorLine = (() => {
+    if (typeSlug === "book") return entry.aboutValue || infobox["author"] || null;
+    if (typeSlug === "album") return entry.aboutValue || infobox["artist"] || null;
+    if (typeSlug === "film") {
+      const parts: string[] = [];
+      if (infobox["director"]) parts.push(`Directed by ${infobox["director"]}`);
+      if (infobox["year"]) parts.push(infobox["year"]);
+      return parts.join(", ") || null;
+    }
+    if (typeSlug === "tv-series") {
+      const parts: string[] = [];
+      if (infobox["creator"]) parts.push(`Created by ${infobox["creator"]}`);
+      if (infobox["years"] || infobox["year"]) parts.push(infobox["years"] || infobox["year"]);
+      return parts.join(", ") || null;
+    }
+    if (typeSlug === "person") {
+      return [infobox["nationality"], infobox["occupation"]].filter(Boolean).join(" · ") || null;
+    }
+    return null;
+  })();
+
+  // Which fields go in the type-specific details section
+  const DETAILS_SECTION_LABEL: Record<string, string> = {
+    book:        "Publication Info",
+    film:        "Details",
+    "tv-series": "Details",
+    album:       "Details",
+    person:      "About",
+    place:       "About",
+    movement:    "About",
+    genre:       "About",
+    concept:     "About",
+    artwork:     "About",
+    food:        "About",
+    fashion:     "About",
+  };
+  const detailsHeading = DETAILS_SECTION_LABEL[typeSlug] ?? "About";
+
+  // For the star rating display
+  const avgRating = communitySummary.average_rating;
+  const reviewCount = communitySummary.total_posts;
+  const ratingStars = avgRating ? Math.round(avgRating) : 0;
+
+  // Tag pills: interests + select infobox quick-facts
+  const tagPills: string[] = [];
+  if (typeSlug === "book") {
+    if (infobox["genre"]) tagPills.push(infobox["genre"]);
+    if (infobox["yearPublished"]) tagPills.push(infobox["yearPublished"]);
+    if (infobox["pages"]) tagPills.push(`${infobox["pages"]} pages`);
+  } else if (typeSlug === "film") {
+    if (infobox["genre"] || interests[0]?.name) tagPills.push(infobox["genre"] || interests[0]?.name);
+    if (infobox["year"]) tagPills.push(infobox["year"]);
+    if (infobox["runtime"]) tagPills.push(infobox["runtime"]);
+  } else if (typeSlug === "album") {
+    if (infobox["genre"] || interests[0]?.name) tagPills.push(infobox["genre"] || interests[0]?.name);
+    if (infobox["year"]) tagPills.push(infobox["year"]);
+    if (infobox["tracks"]) tagPills.push(`${infobox["tracks"]} tracks`);
+  } else if (typeSlug === "tv-series") {
+    if (infobox["genre"]) tagPills.push(infobox["genre"]);
+    if (infobox["seasons"]) tagPills.push(`${infobox["seasons"]} seasons`);
+    if (infobox["years"] || infobox["year"]) tagPills.push(infobox["years"] || infobox["year"]);
+  } else {
+    interests.slice(0, 4).forEach((t: any) => tagPills.push(t.name));
+  }
+
   return (
-    <div className="dir-wiki-page">
-      {/* ── Back link ── */}
-      <div className="dir-wiki-topbar">
-        <Link href="/discover" className="dir-back">← Discover</Link>
-      </div>
+    <div className="dir-entry-page">
 
-      {/* ── Main + right rail layout (see the CSS comment above
-          .dir-wiki-layout for why this collapsed from 3 in-page columns
-          to 2) ── */}
-      <div className="dir-wiki-layout">
+      {/* ── Main two-column grid ── */}
+      <div className="dir-entry-grid">
 
-        {/* CENTRE — Main article */}
-        <article className="dir-wiki-main">
-          <div className="dir-wiki-article-header">
-            <span className="dir-single-type">{typeLabel}</span>
-            <h1 className="dir-wiki-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
-            {entry.excerpt && (
-              <p className="dir-wiki-lead" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
+        {/* LEFT — Cover image + rating + actions */}
+        <div className="dir-entry-image-col">
+          <div className={`dir-entry-cover dir-entry-cover--${coverAspect}${typeSlug === "book" ? " dir-entry-cover--book" : ""}`}>
+            {img ? (
+              <DirectoryLightboxImage className="dir-entry-cover-lightbox" src={img} alt={entry.title ?? ""}>
+                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 400px" />
+              </DirectoryLightboxImage>
+            ) : (
+              <div className="dir-entry-cover-placeholder">
+                <span>{typeLabel}</span>
+              </div>
             )}
-            {date && <div className="dir-wiki-date">Added to directory {date}</div>}
           </div>
 
-          {/* Follow this person/place ("Log-First" pass) */}
-          {entry.databaseId && (
-            <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
+          {/* Star rating */}
+          <div className="dir-entry-rating-row">
+            {[1,2,3,4,5].map(n => (
+              <span key={n} className={n <= ratingStars ? "dir-entry-star dir-entry-star--filled" : "dir-entry-star"}>
+                {n <= ratingStars ? "★" : "☆"}
+              </span>
+            ))}
+          </div>
+          {reviewCount > 0 ? (
+            <p className="dir-entry-review-count">
+              {avgRating?.toFixed(1)} based on {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
+            </p>
+          ) : (
+            <p className="dir-entry-review-count">New · 0 reviews</p>
           )}
 
-          {/* Shelve and rate it from the entry itself, rather than having to
-              find it again from /member/reading's own add-a-thing modal.
-              Renders nothing for an entry with no shelf (person, movement,
-              concept — anything TYPE_MEDIA_MAP maps to 'other'). */}
+          {/* Log/shelf + follow */}
           {entry.databaseId && (
             <EntryLogControl directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
           {entry.databaseId && (
             <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
+          {entry.databaseId && (
+            <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
+          )}
 
-          {/* Stoop proximity banner (places only, "Log-First" pass) */}
+          {/* Book mood/pace (books only) */}
+          {typeSlug === "book" && entry.databaseId && (
+            <BookMoodPace directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
+          )}
+
+          {/* Stoop proximity (places only) */}
           {entry.databaseId && typeSlug === "place" && (
             <StoopProximityBanner directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
 
-          {/* Body content */}
-          <div className="dir-wiki-divider" />
+          {/* External links */}
+          {(websiteUrl || instagramHandle || twitterHandle) && (
+            <div className="dir-entry-ext-links">
+              {websiteUrl && (
+                <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="dir-entry-ext-link">
+                  {websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                </a>
+              )}
+              {instagramHandle && (
+                <a href={`https://instagram.com/${instagramHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="dir-entry-ext-link">
+                  @{instagramHandle.replace(/^@/, "")}
+                </a>
+              )}
+              {twitterHandle && (
+                <a href={`https://x.com/${twitterHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="dir-entry-ext-link">
+                  @{twitterHandle.replace(/^@/, "")} ↗
+                </a>
+              )}
+            </div>
+          )}
+        </div>
 
+        {/* RIGHT — Entry details */}
+        <div className="dir-entry-details-col">
+          <span className="dir-entry-type-label">{typeLabel}</span>
+          <h1 className="dir-entry-title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.title) }} />
+          {creatorLine && (
+            <p className="dir-entry-creator">{creatorLine}</p>
+          )}
+
+          {/* Tag pills */}
+          {tagPills.length > 0 && (
+            <div className="dir-entry-tags">
+              {tagPills.map((pill, i) => (
+                <span key={i} className="dir-entry-tag">{pill}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Excerpt / description */}
+          {entry.excerpt && (
+            <div className={`dir-entry-description${typeSlug === "book" ? " dir-entry-description--dropcap" : ""}`}>
+              <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
+            </div>
+          )}
+
+          {/* Full body content (gated if needed) */}
           {canView ? (
             entry.content ? (
               <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content) }} />
-            ) : (
-              <p className="dir-wiki-no-content">Full article coming soon. Know this subject? Help us build it.</p>
-            )
+            ) : null
           ) : (
             <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
           )}
 
-          {/* Interests / tags */}
-          {interests.length > 0 && (
-            <div className="dir-single-tags" style={{ marginTop: "32px" }}>
-              <div className="dir-tags-label">Topics</div>
-              <div className="dir-tags-list">
-                {interests.map((t: any) => (
-                  <span key={t.slug} className="dir-tag">{t.name}</span>
-                ))}
+          {/* Type-specific details section */}
+          {infoboxFields.some(f => infobox[f.key]) && (
+            <div className="dir-entry-specifics">
+              <h3 className="dir-entry-specifics-heading">{detailsHeading}</h3>
+              <div className="dir-entry-info-grid">
+                {infoboxFields.map(({ label, key }) =>
+                  infobox[key] ? (
+                    <div key={key} className="dir-entry-info-cell">
+                      <span className="dir-entry-info-label">{label}</span>
+                      <span className="dir-entry-info-value">{infobox[key]}</span>
+                    </div>
+                  ) : null
+                )}
               </div>
+            </div>
+          )}
+
+          {/* Save a line CTA */}
+          {(typeSlug === "person" || !!quoteLinkType) && entry.databaseId && (
+            <div className="dir-entry-save-line">
+              <SaveLineButton
+                directoryId={entry.databaseId}
+                entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
+                quoteLinkRole={quoteLinkRole}
+                quoteLinkType={quoteLinkType || undefined}
+                label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
+              />
             </div>
           )}
 
           {/* Selected Works */}
           {works.length > 0 && (
-            <div className="dir-wiki-works">
-              <h2 className="dir-wiki-section-heading">Selected Works</h2>
+            <div className="dir-entry-works">
+              <h3 className="dir-entry-specifics-heading">Selected Works</h3>
               <div className="dir-wiki-works-grid">
                 {works.map((w, i) => (
                   <div key={i} className="dir-wiki-work-card">
@@ -323,320 +461,225 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             </div>
           )}
 
-          {/* Community Reviews & Takes (Phase 3) */}
-          {communitySummary.total_posts > 0 && (
-            <div className="dir-community-section">
-              <div className="dir-community-header">
-                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Community Reviews &amp; Takes</h2>
-                {communitySummary.average_rating && (
-                  <div className="dir-community-rating">
-                    <span className="dir-community-stars">{"★".repeat(Math.round(communitySummary.average_rating))}{"☆".repeat(5 - Math.round(communitySummary.average_rating))}</span>
-                    <span className="dir-community-rating-num">{communitySummary.average_rating.toFixed(1)}</span>
-                    <span className="dir-community-rating-count">({communitySummary.total_posts} {communitySummary.total_posts === 1 ? "review" : "reviews"})</span>
-                  </div>
-                )}
-              </div>
+          {/* Added date */}
+          {date && <p className="dir-entry-added-date">Added to directory {date}</p>}
 
-              <div className="dir-community-posts">
-                {communityPosts.map((post) => (
-                  <div key={post.id} className={`dir-community-card dir-community-card--${post.template_type}`}>
-                    <div className="dir-community-card-header">
-                      <DirectoryLightboxImage
-                        src={post.author.avatar}
-                        alt={post.author.name}
-                        style={{ display: "inline-block", width: 32, height: 32, flexShrink: 0 }}
-                      >
-                        <img
-                          src={post.author.avatar}
-                          alt=""
-                          className="dir-community-avatar"
-                          width={32}
-                          height={32}
-                        />
-                      </DirectoryLightboxImage>
-                      <div className="dir-community-card-meta">
-                        <span className="dir-community-author">{post.author.name}</span>
-                        {post.author.tier === "patron" && (
-                          <span className="dir-community-pro-badge">Pro</span>
-                        )}
-                        <span className="dir-community-date">
-                          · {new Date(post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                        </span>
-                      </div>
-                      {post.star_rating && (
-                        <div className="dir-community-star-rating">
-                          {"★".repeat(post.star_rating)}{"☆".repeat(5 - post.star_rating)}
-                        </div>
-                      )}
-                    </div>
-                    <p className="dir-community-content">{post.content}</p>
-                    <div className="dir-community-card-footer">
-                      {Object.keys(post.reactions ?? {}).length > 0 && (
-                        <div className="dir-community-reactions">
-                          {Object.entries(post.reactions).map(([emoji, count]) =>
-                            count > 0 ? (
-                              <span key={emoji} className="dir-community-reaction">
-                                {emoji} {count}
-                              </span>
-                            ) : null
-                          )}
-                        </div>
-                      )}
-                      {post.slug && (
-                        <a href={`/community/${post.slug}`} className="dir-community-read-more">
-                          Read full post →
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* ── Community reviews, quotes, events & related ── */}
+          <div className="dir-entry-lower">
 
-          {/* Lines saved from this entry — quotes linked to it, either
-              because they came from this work or because this person said
-              them. Sits alongside reviews rather than in its own tab: both
-              are "what members recorded about this thing". */}
-          {(directoryQuotes.length > 0 || typeSlug === "person" || !!quoteLinkType) && (
-            <div className="dir-community-section" style={{ marginTop: "2rem" }}>
-              <div className="dir-community-header">
-                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
-                  {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
-                </h2>
-                {directoryQuotes.length > 0 && (
-                  <span className="dir-community-rating-count">
-                    {directoryQuotes.length} {directoryQuotes.length === 1 ? "line" : "lines"}
-                  </span>
-                )}
-              </div>
-              <div className="dir-quotes">
-                {directoryQuotes.length === 0 && (
-                  <p className="dir-quotes-empty">No lines saved yet.</p>
-                )}
-                {directoryQuotes.map((q) => (
-                  <figure key={q.id} className="dir-quote-card">
-                    <blockquote className="dir-quote-text">{q.text}</blockquote>
-                    <figcaption className="dir-quote-meta">
-                      {/* On a person's own page their name is the page title,
-                          so repeating it on every line is noise — show the
-                          source instead, when there is one. */}
-                      {typeSlug === "person"
-                        ? q.source && <span className="dir-quote-source">{q.source}</span>
-                        : q.author && <span className="dir-quote-source">{q.author}</span>}
-                      <span className="dir-quote-saved">Saved by {q.saved_by.name}</span>
-                      <a href={q.href} className="dir-community-read-more">Open →</a>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-
-              {entry.databaseId && (
-                <SaveLineButton
-                  directoryId={entry.databaseId}
-                  entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
-                  quoteLinkRole={quoteLinkRole}
-                  quoteLinkType={quoteLinkType || undefined}
-                  label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
-                />
+        {/* Community Reviews & Takes */}
+        {communitySummary.total_posts > 0 && (
+          <div className="dir-community-section">
+            <div className="dir-community-header">
+              <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Community Reviews &amp; Takes</h2>
+              {communitySummary.average_rating && (
+                <div className="dir-community-rating">
+                  <span className="dir-community-stars">{"★".repeat(Math.round(communitySummary.average_rating))}{"☆".repeat(5 - Math.round(communitySummary.average_rating))}</span>
+                  <span className="dir-community-rating-num">{communitySummary.average_rating.toFixed(1)}</span>
+                  <span className="dir-community-rating-count">({communitySummary.total_posts} {communitySummary.total_posts === 1 ? "review" : "reviews"})</span>
+                </div>
               )}
             </div>
-          )}
 
-          {/* Upcoming Events organised by this entry */}
-          {directoryEvents.length > 0 && (
-            <div className="dir-community-section" style={{ marginTop: "2rem" }}>
-              <div className="dir-community-header">
-                <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Upcoming Events</h2>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "1rem" }}>
-                {directoryEvents.map((ev) => {
-                  const evDate = ev.event_date
-                    ? new Date(ev.event_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                    : null;
-                  const endDate = ev.end_date
-                    ? new Date(ev.end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-                    : null;
-                  return (
-                    <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "var(--paper, #f3ece0)", border: "1px solid var(--rule, #e8e2d8)", borderRadius: "8px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
-                      {ev.image && (
-                        <DirectoryLightboxImage
-                          src={ev.image}
-                          alt={ev.title}
-                          style={{ width: "72px", height: "72px", borderRadius: "4px", flexShrink: 0, overflow: "hidden" }}
-                        >
-                          <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-                        </DirectoryLightboxImage>
+            <div className="dir-community-posts">
+              {communityPosts.map((post) => (
+                <div key={post.id} className={`dir-community-card dir-community-card--${post.template_type}`}>
+                  <div className="dir-community-card-header">
+                    <DirectoryLightboxImage
+                      src={post.author.avatar}
+                      alt={post.author.name}
+                      style={{ display: "inline-block", width: 32, height: 32, flexShrink: 0 }}
+                    >
+                      <img
+                        src={post.author.avatar}
+                        alt=""
+                        className="dir-community-avatar"
+                        width={32}
+                        height={32}
+                      />
+                    </DirectoryLightboxImage>
+                    <div className="dir-community-card-meta">
+                      <span className="dir-community-author">{post.author.name}</span>
+                      {post.author.tier === "patron" && (
+                        <span className="dir-community-pro-badge">Pro</span>
                       )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.3rem" }}>
-                          <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "999px" }}>Happening</span>
-                          {evDate && (
-                            <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600 }}>
-                              {evDate}{endDate && endDate !== evDate ? ` — ${endDate}` : ""}
+                      <span className="dir-community-date">
+                        · {new Date(post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                    {post.star_rating && (
+                      <div className="dir-community-star-rating">
+                        {"★".repeat(post.star_rating)}{"☆".repeat(5 - post.star_rating)}
+                      </div>
+                    )}
+                  </div>
+                  <p className="dir-community-content">{post.content}</p>
+                  <div className="dir-community-card-footer">
+                    {Object.keys(post.reactions ?? {}).length > 0 && (
+                      <div className="dir-community-reactions">
+                        {Object.entries(post.reactions).map(([emoji, count]) =>
+                          count > 0 ? (
+                            <span key={emoji} className="dir-community-reaction">
+                              {emoji} {count}
                             </span>
-                          )}
-                        </div>
-                        <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "#14110d", lineHeight: 1.35 }}>{ev.title}</p>
-                        {(ev.location || ev.city) && (
-                          <p style={{ margin: "0.2rem 0 0", fontSize: "0.75rem", color: "#7a6f5c" }}>
-                            {[ev.location, ev.city].filter(Boolean).join(", ")}
-                            {ev.admission ? ` · ${ev.admission}` : ""}
-                          </p>
+                          ) : null
                         )}
                       </div>
-                    </Link>
-                  );
-                })}
-              </div>
+                    )}
+                    {post.slug && (
+                      <a href={`/community/${post.slug}`} className="dir-community-read-more">
+                        Read full post →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Quotes / Lines */}
+        {(directoryQuotes.length > 0 || typeSlug === "person" || !!quoteLinkType) && (
+          <div className="dir-community-section" style={{ marginTop: "2rem" }}>
+            <div className="dir-community-header">
+              <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
+                {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
+              </h2>
+              {directoryQuotes.length > 0 && (
+                <span className="dir-community-rating-count">
+                  {directoryQuotes.length} {directoryQuotes.length === 1 ? "line" : "lines"}
+                </span>
+              )}
+            </div>
+            <div className="dir-quotes">
+              {directoryQuotes.length === 0 && (
+                <p className="dir-quotes-empty">No lines saved yet.</p>
+              )}
+              {directoryQuotes.map((q) => (
+                <figure key={q.id} className="dir-quote-card">
+                  <blockquote className="dir-quote-text">{q.text}</blockquote>
+                  <figcaption className="dir-quote-meta">
+                    {typeSlug === "person"
+                      ? q.source && <span className="dir-quote-source">{q.source}</span>
+                      : q.author && <span className="dir-quote-source">{q.author}</span>}
+                    <span className="dir-quote-saved">Saved by {q.saved_by.name}</span>
+                    <a href={q.href} className="dir-community-read-more">Open →</a>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+
+            {entry.databaseId && (
+              <SaveLineButton
+                directoryId={entry.databaseId}
+                entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
+                quoteLinkRole={quoteLinkRole}
+                quoteLinkType={quoteLinkType || undefined}
+                label={typeSlug === "person" ? "Save a line from them →" : "Save a line from this →"}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Upcoming Events */}
+        {directoryEvents.length > 0 && (
+          <div className="dir-community-section" style={{ marginTop: "2rem" }}>
+            <div className="dir-community-header">
+              <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>Upcoming Events</h2>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "1rem" }}>
+              {directoryEvents.map((ev) => {
+                const evDate = ev.event_date
+                  ? new Date(ev.event_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                const endDate = ev.end_date
+                  ? new Date(ev.end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+                  : null;
+                return (
+                  <Link key={ev.id} href={ev.href} style={{ display: "flex", gap: "0.85rem", alignItems: "flex-start", background: "var(--paper, #f3ece0)", border: "1px solid var(--rule, #e8e2d8)", borderRadius: "8px", padding: "0.85rem 1rem", textDecoration: "none", color: "inherit" }}>
+                    {ev.image && (
+                      <DirectoryLightboxImage
+                        src={ev.image}
+                        alt={ev.title}
+                        style={{ width: "72px", height: "72px", borderRadius: "4px", flexShrink: 0, overflow: "hidden" }}
+                      >
+                        <img src={ev.image} alt={ev.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                      </DirectoryLightboxImage>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.3rem" }}>
+                        <span style={{ background: "#eeedfe", color: "#3c3489", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "0.15rem 0.4rem", borderRadius: "999px" }}>Happening</span>
+                        {evDate && (
+                          <span style={{ fontSize: "0.62rem", color: "#3c3489", fontWeight: 600 }}>
+                            {evDate}{endDate && endDate !== evDate ? ` — ${endDate}` : ""}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 600, color: "#14110d", lineHeight: 1.35 }}>{ev.title}</p>
+                      {(ev.location || ev.city) && (
+                        <p style={{ margin: "0.2rem 0 0", fontSize: "0.75rem", color: "#7a6f5c" }}>
+                          {[ev.location, ev.city].filter(Boolean).join(", ")}
+                          {ev.admission ? ` · ${ev.admission}` : ""}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Related entries ── */}
+        <div className="dir-entry-related">
+          <h3 className="dir-entry-related-heading">More {typeLabel}s</h3>
+          {relatedEntries.length === 0 ? (
+            <p className="dir-wiki-sidebar-empty">No related entries yet.</p>
+          ) : (
+            <div className="dir-entry-related-grid">
+              {relatedEntries.map((e: any) => (
+                <Link key={e.slug} href={`/directory/${e.slug}`} className="dir-entry-related-card">
+                  {e.featuredImage?.node?.sourceUrl && (
+                    <div className="dir-entry-related-thumb">
+                      <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
+                    </div>
+                  )}
+                  <span className="dir-entry-related-title">{e.title}</span>
+                </Link>
+              ))}
             </div>
           )}
-        </article>
-
-        {/* RIGHT SIDEBAR — Infobox */}
-        <aside className="dir-wiki-right">
-          <div className="dir-wiki-infobox">
-            {/* Featured image */}
-            {img && (
-              <DirectoryLightboxImage className="dir-wiki-infobox-img" src={img} alt={entry.title ?? ""}>
-                <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "contain" }} />
-              </DirectoryLightboxImage>
-            )}
-
-            {/* Title inside infobox */}
-            <div className="dir-wiki-infobox-name">{entry.title}</div>
-
-            {/* Type row */}
-            <div className="dir-wiki-infobox-row">
-              <span className="dir-wiki-infobox-label">Type</span>
-              <span className="dir-wiki-infobox-value">{typeLabel}</span>
-            </div>
-
-            {/* Interests */}
-            {interests.length > 0 && (
-              <div className="dir-wiki-infobox-row">
-                <span className="dir-wiki-infobox-label">Category</span>
-                <span className="dir-wiki-infobox-value">{interests.map((t: any) => t.name).join(", ")}</span>
-              </div>
-            )}
-
-            {/* Added date */}
-            {date && (
-              <div className="dir-wiki-infobox-row">
-                <span className="dir-wiki-infobox-label">Added</span>
-                <span className="dir-wiki-infobox-value">{date}</span>
-              </div>
-            )}
-
-            {/* Per-type infobox fields */}
-            {infoboxFields.length > 0 && infoboxFields.some(f => infobox[f.key]) && (
-              <div className="dir-wiki-infobox-divider" />
-            )}
-            {infoboxFields.map(({ label, key }) =>
-              infobox[key] ? (
-                <div key={key} className="dir-wiki-infobox-row">
-                  <span className="dir-wiki-infobox-label">{label}</span>
-                  <span className="dir-wiki-infobox-value">{infobox[key]}</span>
-                </div>
-              ) : null
-            )}
-
-            {/* Mood/pace (books only) — Phase 3, see docs/reading-tracker-plan.md §1.3/§3.4 */}
-            {typeSlug === "book" && entry.databaseId && (
-              <>
-                <div className="dir-wiki-infobox-divider" />
-                <BookMoodPace directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
-              </>
-            )}
-
-            {/* External links */}
-            {(websiteUrl || instagramHandle || twitterHandle) && (
-              <>
-                <div className="dir-wiki-infobox-divider" />
-                {websiteUrl && (
-                  <div className="dir-wiki-infobox-row">
-                    <span className="dir-wiki-infobox-label">Website</span>
-                    <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="dir-wiki-infobox-link">
-                      {websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                    </a>
-                  </div>
-                )}
-                {instagramHandle && (
-                  <div className="dir-wiki-infobox-row">
-                    <span className="dir-wiki-infobox-label">Instagram</span>
-                    <a href={`https://instagram.com/${instagramHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="dir-wiki-infobox-link">
-                      @{instagramHandle.replace(/^@/, "")}
-                    </a>
-                  </div>
-                )}
-                {twitterHandle && (
-                  <div className="dir-wiki-infobox-row">
-                    <span className="dir-wiki-infobox-label">X / Twitter</span>
-                    <a href={`https://x.com/${twitterHandle.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="dir-wiki-infobox-link">
-                      @{twitterHandle.replace(/^@/, "")}
-                    </a>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Related entries — moved here from the old standalone left
-              sidebar (see the CSS comment above .dir-wiki-layout). */}
-          <div className="dir-wiki-sidebar-card">
-            <div className="dir-wiki-sidebar-heading">Related {typeLabel}s</div>
-            {relatedEntries.length === 0 ? (
-              <p className="dir-wiki-sidebar-empty">No related entries yet.</p>
-            ) : (
-              <ul className="dir-wiki-related-list">
-                {relatedEntries.map((e: any) => (
-                  <li key={e.slug}>
-                    <Link href={`/directory/${e.slug}`} className="dir-wiki-related-link">
-                      {e.featuredImage?.node?.sourceUrl && (
-                        <DirectoryLightboxImage
-                          className="dir-wiki-related-thumb"
-                          src={e.featuredImage.node.sourceUrl}
-                          alt={e.title}
-                        >
-                          <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
-                        </DirectoryLightboxImage>
-                      )}
-                      <span className="dir-wiki-related-title">{e.title}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="dir-wiki-sidebar-footer">
-              <Link href={`/discover?type=${typeSlug}`} className="dir-wiki-see-all">
-                See all {typeLabel}s →
-              </Link>
-            </div>
-          </div>
-
-          {/* Improve CTA */}
-          <div className="dir-wiki-improve">
-            <div className="dir-wiki-improve-label">★ Community Wiki</div>
-            <p>Know more? Help improve this entry.</p>
-            <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
-              Improve →
+          <div style={{ marginTop: "12px" }}>
+            <Link href={`/discover?type=${typeSlug}`} className="dir-wiki-see-all">
+              See all {typeLabel}s →
             </Link>
           </div>
+        </div>
 
-          {/* apps/connect has no site-wide footer — every page with a
-              right rail carries this copyright block instead. */}
-          <p style={{ margin: "1rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
-            © {new Date().getFullYear()} The Moveee. All Rights Reserved.
-            <br />
-            <Link href="/terms" style={{ color: "#7a6f5c" }}>Terms</Link>
-            {" · "}
-            <Link href="/privacy" style={{ color: "#7a6f5c" }}>Privacy</Link>
-            {" · "}
-            <Link href="/contact" style={{ color: "#7a6f5c" }}>Contact</Link>
-          </p>
-        </aside>
+        {/* ── Improve CTA ── */}
+        <div className="dir-wiki-improve" style={{ marginTop: "2rem" }}>
+          <div className="dir-wiki-improve-label">★ Community Wiki</div>
+          <p>Know more? Help improve this entry.</p>
+          <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
+            Improve →
+          </Link>
+        </div>
 
-      </div>
+        {/* Footer links */}
+        <p style={{ margin: "1.5rem 0 0", fontSize: "0.68rem", color: "#7a6f5c", lineHeight: 1.7 }}>
+          © {new Date().getFullYear()} The Moveee. All Rights Reserved.
+          <br />
+          <Link href="/terms" style={{ color: "#7a6f5c" }}>Terms</Link>
+          {" · "}
+          <Link href="/privacy" style={{ color: "#7a6f5c" }}>Privacy</Link>
+          {" · "}
+          <Link href="/contact" style={{ color: "#7a6f5c" }}>Contact</Link>
+        </p>
+          </div>{/* end dir-entry-lower */}
+
+        </div>{/* end dir-entry-details-col */}
+      </div>{/* end dir-entry-grid */}
+
     </div>
   );
 }

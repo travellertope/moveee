@@ -37,16 +37,25 @@ export async function GET(req: NextRequest) {
   const seen = new Set<string>();
   const results = items
     .filter((a) => a?.collectionId && a?.collectionName)
-    .map((a) => ({
-      externalId: `itunes:${a.collectionId}`,
-      title: a.collectionName as string,
-      about: a.artistName as string | undefined,
-      year: a.releaseDate ? String(a.releaseDate).slice(0, 4) : undefined,
-      // artworkUrl100 is 100×100; replace with 600×600 for better quality
-      coverUrl: a.artworkUrl100
-        ? String(a.artworkUrl100).replace("100x100bb", "600x600bb")
-        : null,
-    }))
+    .map((a) => {
+      const year = a.releaseDate ? String(a.releaseDate).slice(0, 4) : undefined;
+
+      const infobox: Record<string, string> = {};
+      if (year) infobox.year = year;
+      if (a.trackCount) infobox.tracks = String(a.trackCount);
+      if (a.primaryGenreName) infobox.genre = String(a.primaryGenreName);
+
+      return {
+        externalId: `itunes:${a.collectionId}`,
+        title: a.collectionName as string,
+        about: a.artistName as string | undefined,
+        year,
+        coverUrl: a.artworkUrl100
+          ? String(a.artworkUrl100).replace("100x100bb", "600x600bb")
+          : null,
+        infobox: Object.keys(infobox).length ? infobox : undefined,
+      };
+    })
     .filter((a) => {
       const key = `${a.title}||${a.about}`;
       if (seen.has(key)) return false;

@@ -33,6 +33,8 @@ interface ExternalResult {
   /** Real synopsis/overview from the upstream API (Google Books, TMDB) —
    * absent for sources that don't return one (iTunes). */
   description?: string;
+  /** Structured infobox fields — stored as dir_infobox_* meta via quick-create. */
+  infobox?: Record<string, string>;
 }
 
 interface Props {
@@ -169,13 +171,17 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
         if (previewRes?.ok) previewUrl = (await previewRes.json())?.previewUrl ?? null;
       }
 
-      // TMDB only — search results carry no crew data, so the director is
-      // resolved lazily here, just for the picked film, same reasoning as
-      // iTunes preview lookup above.
+      // TMDB only — search results carry no crew data, so the director and
+      // runtime are resolved lazily here, just for the picked film.
       let about = r.about;
+      const infobox: Record<string, string> = { ...(r.infobox ?? {}) };
       if (externalSource === "tmdb") {
         const creditsRes = await fetch(`/api/external/tmdb/credits?movieId=${encodeURIComponent(r.externalId)}`).catch(() => null);
-        if (creditsRes?.ok) about = (await creditsRes.json())?.director ?? undefined;
+        if (creditsRes?.ok) {
+          const creditsData = await creditsRes.json();
+          if (creditsData?.director) about = creditsData.director;
+          if (creditsData?.runtime) infobox.runtime = creditsData.runtime;
+        }
       }
 
       const res = await fetch("/api/directory/quick-create", {
@@ -191,6 +197,7 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
           cover_image_url: r.coverUrl || undefined,
           preview_url: previewUrl || undefined,
           excerpt: r.description || undefined,
+          infobox: Object.keys(infobox).length ? infobox : undefined,
         }),
       });
       if (res.ok) {
