@@ -696,9 +696,23 @@ class Culture_Directory {
             $args['orderby']  = 'meta_value_num';
             $args['order']    = 'DESC';
         } elseif ( $sort === 'trending' ) {
-            $args['meta_key'] = '_community_review_count';
-            $args['orderby']  = 'meta_value_num';
-            $args['order']    = 'DESC';
+            // Use meta_query with relation OR + NOT EXISTS so entries without
+            // _community_review_count (never reviewed) still appear in results
+            // — a plain meta_key filter silently excludes them entirely, which
+            // caused the homepage "Trending Music" rail to show only 1 album.
+            $args['meta_query'] = array(
+                'relation'      => 'OR',
+                'review_count'  => array(
+                    'key'     => '_community_review_count',
+                    'compare' => 'EXISTS',
+                ),
+                'no_review_count' => array(
+                    'key'     => '_community_review_count',
+                    'compare' => 'NOT EXISTS',
+                ),
+            );
+            $args['orderby'] = array( 'review_count' => 'DESC', 'date' => 'DESC' );
+            $args['order']   = 'DESC';
         } elseif ( $sort === 'random' ) {
             // Seeded MySQL RAND() — a single seed value keeps ordering stable
             // across paginated requests within one Discover visit, while a
