@@ -1661,3 +1661,356 @@
   color: var(--dir-ochre);
   text-decoration: none;
 }
+
+/* ═══════════════════════════════════════════════════════
+   ENTRY DETAIL PAGE — new editorial layout (2026)
+   Replaces the old dir-wiki-layout sidebar pattern.
+   ═══════════════════════════════════════════════════════ */
+
+.dir-entry-page {
+  background: var(--dir-paper);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* ── Breadcrumb ── */
+.dir-entry-breadcrumb {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 32px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.dir-entry-bc-link {
+  color: var(--dir-muted);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.dir-entry-bc-link:hover { color: var(--ochre, #7a241c); }
+.dir-entry-bc-sep { color: var(--dir-muted); opacity: 0.5; }
+.dir-entry-bc-current { color: var(--dir-ink); }
+
+/* ── Main two-column grid ── */
+.dir-entry-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 48px 56px;
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding: 0 32px;
+  align-items: start;
+}
+
+/* ── Image column ── */
+.dir-entry-image-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 100px;
+}
+
+.dir-entry-cover {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 6px);
+  background: color-mix(in srgb, var(--dir-ink) 8%, transparent);
+  box-shadow: 0 8px 32px -6px rgba(20,17,13,0.18);
+  width: 100%;
+}
+.dir-entry-cover--portrait { aspect-ratio: 2/3; }
+.dir-entry-cover--square   { aspect-ratio: 1/1; }
+
+/* Book spine shadow */
+.dir-entry-cover--book::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 20px;
+  background: linear-gradient(to right, rgba(0,0,0,0.3), transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.dir-entry-cover-lightbox {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.dir-entry-cover-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dir-muted);
+}
+
+/* ── Star rating ── */
+.dir-entry-rating-row {
+  display: flex;
+  gap: 3px;
+  font-size: 20px;
+  color: #c9963f;
+  margin-top: 8px;
+}
+.dir-entry-star { color: #c9963f; }
+.dir-entry-star--filled { color: #c9963f; }
+
+.dir-entry-review-count {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--dir-muted);
+  margin: 0;
+}
+
+/* ── External links ── */
+.dir-entry-ext-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dir-border);
+}
+.dir-entry-ext-link {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--dir-muted);
+  text-decoration: none;
+  transition: color 0.12s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dir-entry-ext-link:hover { color: var(--ochre, #7a241c); }
+
+/* ── Details column ── */
+.dir-entry-details-col {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.dir-entry-type-label {
+  display: inline-block;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ochre, #7a241c);
+  margin-bottom: 10px;
+}
+
+.dir-entry-title {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-size: clamp(36px, 5vw, 68px);
+  font-weight: 700;
+  line-height: 1.04;
+  color: var(--dir-ink);
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+
+.dir-entry-creator {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--dir-muted);
+  margin: 0 0 20px;
+}
+
+/* ── Tag pills ── */
+.dir-entry-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+.dir-entry-tag {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dir-muted);
+  border: 1px solid var(--dir-border);
+  border-radius: var(--radius-full, 9999px);
+  padding: 4px 12px;
+}
+
+/* ── Description ── */
+.dir-entry-description {
+  font-size: 16px;
+  line-height: 1.72;
+  color: var(--dir-ink);
+  margin-bottom: 28px;
+  max-width: 68ch;
+}
+.dir-entry-description p { margin: 0 0 1em; }
+.dir-entry-description p:last-child { margin-bottom: 0; }
+
+/* Drop cap for books */
+.dir-entry-description--dropcap p:first-child::first-letter {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-size: 4em;
+  font-weight: 700;
+  line-height: 0.8;
+  float: left;
+  margin: 0.06em 0.08em 0 0;
+  color: var(--dir-ink);
+}
+
+/* ── Type-specific details section ── */
+.dir-entry-specifics {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--dir-border);
+}
+.dir-entry-specifics-heading {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dir-ink);
+  margin: 0 0 20px;
+}
+
+/* Publication / details info grid */
+.dir-entry-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 20px 24px;
+}
+.dir-entry-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dir-entry-info-label {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dir-muted);
+}
+.dir-entry-info-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dir-ink);
+}
+
+/* ── Save line CTA ── */
+.dir-entry-save-line {
+  margin-top: 24px;
+}
+
+/* ── Works ── */
+.dir-entry-works {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--dir-border);
+}
+
+/* ── Added date ── */
+.dir-entry-added-date {
+  margin-top: 32px;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--dir-muted);
+  opacity: 0.6;
+}
+
+/* ── Lower section (community + related, full width) ── */
+.dir-entry-lower {
+  max-width: 1200px;
+  margin: 48px auto 0;
+  padding: 0 32px;
+}
+
+/* ── Related entries ── */
+.dir-entry-related {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--dir-border);
+}
+.dir-entry-related-heading {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dir-ink);
+  margin: 0 0 20px;
+}
+.dir-entry-related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+.dir-entry-related-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+.dir-entry-related-card:hover { opacity: 0.75; }
+.dir-entry-related-thumb {
+  position: relative;
+  aspect-ratio: 2/3;
+  border-radius: var(--radius-md, 4px);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--dir-ink) 8%, transparent);
+}
+.dir-entry-related-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dir-ink);
+  line-height: 1.3;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .dir-entry-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 0 20px;
+  }
+  .dir-entry-image-col {
+    position: static;
+    max-width: 300px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .dir-entry-lower {
+    padding: 0 20px;
+  }
+  .dir-entry-breadcrumb {
+    padding: 20px 20px 0;
+  }
+}
+@media (max-width: 480px) {
+  .dir-entry-title {
+    font-size: 36px;
+  }
+  .dir-entry-image-col {
+    max-width: 240px;
+  }
+  .dir-entry-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dir-entry-related-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
