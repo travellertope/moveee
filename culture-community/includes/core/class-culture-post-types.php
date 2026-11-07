@@ -831,6 +831,15 @@ class Culture_Post_Types {
             },
         ) );
 
+        // External catalog cover/poster URL (TMDB/iTunes/Google Books quick-create).
+        // Needed as a fallback when no WP media attachment exists for seeded entries.
+        register_graphql_field( 'CultureDirectory', 'externalCoverUrl', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $v = get_post_meta( $post->databaseId, '_external_cover_url', true );
+                return $v ? (string) $v : null;
+            },
+        ) );
         register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
             'type'    => 'String',
             'resolve' => function( $post ) {

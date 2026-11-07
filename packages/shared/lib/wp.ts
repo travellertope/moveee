@@ -1812,6 +1812,7 @@ const DIRECTORY_FIELDS_FRAGMENT = `
     communityReviewCount
     averageRating
     aboutValue
+    externalCoverUrl
     selectedWorks {
       title
       imageUrl

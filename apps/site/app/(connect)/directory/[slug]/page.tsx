@@ -68,7 +68,9 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const typeNode = entry.cultureDirectoryTypes?.nodes?.[0];
   const typeSlug = typeNode?.slug ?? "";
   const typeLabel = TYPE_LABELS[typeSlug] ?? typeNode?.name ?? "Entry";
-  const img = entry.featuredImage?.node?.sourceUrl;
+  // Seeder-created entries store cover in _external_cover_url (not in WP media),
+  // so externalCoverUrl is the fallback when no WP featured image attachment exists.
+  const img = entry.featuredImage?.node?.sourceUrl || entry.externalCoverUrl || null;
 
   const LINE_SOURCE_TYPES: Record<string, string> = { book: "book", film: "film", album: "album", "tv-series": "film" };
   const quoteLinkRole = typeSlug === "person" ? "author" : "source";
@@ -187,11 +189,9 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
       { label: "ISBN",           key: "isbn" },
     ],
     album: [
-      { label: "Artist",    key: "artist" },
-      { label: "Year",      key: "year" },
-      { label: "Genre",     key: "genre" },
-      { label: "Label",     key: "label" },
-      { label: "Tracks",    key: "tracks" },
+      { label: "Artist", key: "artist" },
+      { label: "Year",   key: "year" },
+      { label: "Genre",  key: "genre" },
     ],
     artwork: [
       { label: "Artist",           key: "artist" },
