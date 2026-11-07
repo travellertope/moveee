@@ -53,7 +53,7 @@ function ImageGallery({
     <View style={gS.container}>
       {badge === "pro_early_access" && (
         <View style={gS.earlyBanner}>
-          <Text style={gS.earlyBannerText}>★  EARLY ACCESS — Available to Pro members</Text>
+          <Text style={gS.earlyBannerText}>EARLY ACCESS — Available to Pro members</Text>
         </View>
       )}
 
@@ -835,7 +835,7 @@ export default function ProductDetailScreen() {
                       </Text>
                       <View style={s.proSavingsBadge}>
                         <Text style={s.proSavingsText}>
-                          ★ Moveee Pro · Saving {product?.currencySymbol}
+                          Moveee Pro · Saving {product?.currencySymbol}
                           {(parseFloat(product?.regularPrice || "0") - parseFloat(detail.proPrice)).toFixed(2)}
                         </Text>
                       </View>
@@ -847,7 +847,7 @@ export default function ProductDetailScreen() {
                     {detail?.proPrice && (
                       <View style={s.proUpsellBox}>
                         <Text style={s.proUpsellMain}>
-                          ★ Moveee Pro price: {product?.currencySymbol}{detail.proPrice}
+                          Moveee Pro price: {product?.currencySymbol}{detail.proPrice}
                         </Text>
                         <Text style={s.proUpsellSub}>
                           {proPercentOff ? `Moveee Pro members save ${proPercentOff}% · ` : "Moveee Pro members save · "}
@@ -1001,7 +1001,7 @@ export default function ProductDetailScreen() {
           <View>
             {isPro && detail?.proPrice ? (
               <Text style={s.stickyPricePro}>
-                {product?.currencySymbol}{detail.proPrice} ★
+                {product?.currencySymbol}{detail.proPrice}
               </Text>
             ) : (
               <Text style={s.stickyPrice}>

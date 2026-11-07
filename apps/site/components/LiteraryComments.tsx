@@ -165,7 +165,7 @@ export default function LiteraryComments({ postId, canComment }: Props) {
         </form>
       ) : session ? (
         <div className="lit-comments-gate">
-          <div className="lit-gate-eyebrow">★ Moveee Lit</div>
+          <div className="lit-gate-eyebrow">Moveee Lit</div>
           <h4>Comments are for members.</h4>
           <p>
             Join the conversation on every piece in The Moveee Literary — Moveee Lit or Moveee Pro
@@ -177,7 +177,7 @@ export default function LiteraryComments({ postId, canComment }: Props) {
         </div>
       ) : (
         <div className="lit-comments-gate">
-          <div className="lit-gate-eyebrow">★ Moveee Lit</div>
+          <div className="lit-gate-eyebrow">Moveee Lit</div>
           <h4>Sign in to comment.</h4>
           <p>
             Commenting on The Moveee Literary is a Moveee Lit (and Moveee Pro) benefit.{" "}

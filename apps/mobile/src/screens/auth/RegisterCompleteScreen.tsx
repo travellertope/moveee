@@ -312,7 +312,7 @@ export default function RegisterCompleteScreen() {
               >
                 <View style={styles.tierCardHeader}>
                   <View>
-                    <Text style={[styles.tierEyebrow, { color: colors.gold }]}>MOVEEE PRO ★</Text>
+                    <Text style={[styles.tierEyebrow, { color: colors.gold }]}>MOVEEE PRO</Text>
                     <Text style={styles.tierName}>Moveee Pro</Text>
                     <Text style={styles.tierPriceNote}>Upgrade via web after sign up</Text>
                   </View>

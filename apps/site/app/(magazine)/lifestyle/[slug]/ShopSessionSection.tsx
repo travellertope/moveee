@@ -27,7 +27,7 @@ export default function ShopSessionSection({
     <>
       {isEarlyAccessActive && (
         <div className={`sp-early-access-banner${isPro ? " sp-early-access-banner--open" : ""}`}>
-          <span className="sp-ea-badge">★ Pro Early Access</span>
+          <span className="sp-ea-badge">Pro Early Access</span>
           {isPro ? (
             <span className="sp-ea-msg">You have early access to this drop as a Moveee Pro member.</span>
           ) : (

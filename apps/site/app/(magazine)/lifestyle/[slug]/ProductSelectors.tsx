@@ -61,7 +61,7 @@ export default function ProductSelectors({
           {showProPrice ? (
             // Pro member sees the discounted price prominently
             <>
-              <div className="sp-price-pro-label">★ Your Pro price</div>
+              <div className="sp-price-pro-label">Your Pro price</div>
               <div>
                 {price && (
                   <span style={{ textDecoration: "line-through", color: "var(--mute)", fontSize: 14, marginRight: 10 }}>
@@ -148,7 +148,7 @@ export default function ProductSelectors({
         {isGated ? (
           // Early access gate — show upgrade CTA instead of add-to-cart
           <Link href="/connect/membership" className="sp-btn-add sp-btn-add--gated">
-            <span>★</span> Get early access
+            Get early access
           </Link>
         ) : (
           <button

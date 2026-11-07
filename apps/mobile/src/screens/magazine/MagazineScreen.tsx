@@ -409,7 +409,7 @@ export default function MagazineScreen() {
             {/* PRO badge top-right */}
             {(featured as any).isProOnly ? (
               <View style={styles.proBadge}>
-                <Text style={styles.proBadgeText}>★ PRO EARLY ACCESS</Text>
+                <Text style={styles.proBadgeText}>PRO EARLY ACCESS</Text>
               </View>
             ) : null}
 

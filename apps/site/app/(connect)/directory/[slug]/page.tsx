@@ -658,7 +658,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
 
         {/* ── Improve CTA ── */}
         <div className="dir-wiki-improve" style={{ marginTop: "2rem" }}>
-          <div className="dir-wiki-improve-label">★ Community Wiki</div>
+          <div className="dir-wiki-improve-label">Community Wiki</div>
           <p>Know more? Help improve this entry.</p>
           <Link href={`/directory/submit?improve=${slug}`} className="dir-improve-btn">
             Improve →

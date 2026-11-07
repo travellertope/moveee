@@ -142,7 +142,7 @@ function EventRow({ event }: { event: TimelineEvent }) {
           {event.isLiterati ? (
             <span className="evt-tag evt-tag--literati">🪶 Literati Connect</span>
           ) : event.isFeatured ? (
-            <span className="evt-tag evt-tag--featured">★ Featured</span>
+            <span className="evt-tag evt-tag--featured">Featured</span>
           ) : null}
           {event.isPhysical === false && (
             <span className="evt-tag evt-tag--virtual">◎ Virtual</span>

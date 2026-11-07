@@ -79,7 +79,7 @@ function PriceRow({
       </View>
       {proPrice && (
         <Text style={{ fontFamily: fonts.mono, fontSize: proSize, color: c.gold }}>
-          {currencySymbol}{proPrice} for Pro ★
+          {currencySymbol}{proPrice} for Pro
         </Text>
       )}
     </View>
@@ -502,7 +502,7 @@ export default function ShopScreen() {
             {/* ── Pro Band — only shown to non-Pro members ── */}
             {!isPro && (
               <View style={styles.proBand}>
-                <Text style={styles.proBandEyebrow}>★ Moveee Pro Members</Text>
+                <Text style={styles.proBandEyebrow}>Moveee Pro Members</Text>
                 <Text style={styles.proBandTitle}>Early access · Member pricing · Free returns</Text>
                 <TouchableOpacity
                   style={styles.proBandBtn}

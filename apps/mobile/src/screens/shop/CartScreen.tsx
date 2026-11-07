@@ -244,7 +244,7 @@ export default function CartScreen() {
             onPress={() => nav.navigate("Connect", { screen: "Membership" } as any)}
           >
             <Text style={styles.proStripText}>
-              ★ Pro members save {currencySymbol}{(subtotal * PRO_DISCOUNT_RATE).toFixed(2)} on this order
+              Pro members save {currencySymbol}{(subtotal * PRO_DISCOUNT_RATE).toFixed(2)} on this order
             </Text>
             <Text style={styles.proStripCta}>UPGRADE →</Text>
           </TouchableOpacity>

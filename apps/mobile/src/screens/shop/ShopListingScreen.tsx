@@ -90,7 +90,7 @@ function PriceRow({
       </View>
       {product.proPrice && (
         <Text style={{ fontFamily: fonts.mono, fontSize: smSize, color: c.gold }}>
-          {sym}{product.proPrice} for Pro ★
+          {sym}{product.proPrice} for Pro
         </Text>
       )}
     </View>
