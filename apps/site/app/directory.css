@@ -1559,49 +1559,107 @@
    CLAUDE.md — don't mix the two systems in this file. */
 .dir-log {
   margin-top: 20px;
-  padding: 16px;
-  border: 1px solid var(--dir-border);
-  border-radius: 12px;
-  background: var(--dir-paper, #fff);
+  position: relative;
 }
-.dir-log-label {
-  font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--dir-muted);
-  margin-bottom: 10px;
-}
-.dir-log-statuses {
+/* Single trigger button */
+.dir-log-trigger {
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-}
-.dir-log-status {
-  flex: 1 1 auto;
-  min-width: 110px;
-  min-height: 44px;
-  padding: 0 12px;
+  padding: 11px 14px;
   border-radius: 10px;
-  border: 1px solid var(--dir-border);
+  border: 1.5px solid var(--dir-border);
   background: var(--dir-paper, #fff);
   color: var(--dir-ink);
+  font-family: var(--font-inter), 'Inter', sans-serif;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
 }
-.dir-log-status:disabled {
-  cursor: default;
-  opacity: 0.75;
+.dir-log-trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--dir-ink) 40%, transparent);
 }
-.dir-log-status--active,
-.dir-log-status--active:disabled {
-  background: var(--dir-ink);
+.dir-log-trigger--set {
   border-color: var(--dir-ink);
+  background: var(--dir-ink);
   color: var(--dir-paper, #fff);
-  opacity: 1;
 }
+.dir-log-trigger--set:hover:not(:disabled) {
+  border-color: var(--dir-ink);
+  background: color-mix(in srgb, var(--dir-ink) 90%, transparent);
+}
+.dir-log-trigger:disabled { cursor: default; }
+.dir-log-trigger-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.dir-log-trigger-label {
+  flex: 1;
+}
+.dir-log-trigger-chevron {
+  font-size: 10px;
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+.dir-log-signin-inline {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dir-ochre);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+/* Expanded options list */
+.dir-log-options {
+  margin-top: 6px;
+  border: 1.5px solid var(--dir-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--dir-paper, #fff);
+}
+.dir-log-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 0;
+  border-top: 1px solid var(--dir-border);
+  background: none;
+  color: var(--dir-ink);
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.dir-log-option:first-child { border-top: 0; }
+.dir-log-option:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--dir-ink) 5%, transparent);
+}
+.dir-log-option--active {
+  font-weight: 700;
+}
+.dir-log-option--remove {
+  color: var(--dir-muted);
+  font-size: 13px;
+}
+.dir-log-option-check {
+  width: 14px;
+  font-size: 12px;
+  color: var(--dir-ochre);
+  flex-shrink: 0;
+  line-height: 1;
+}
+/* Rating section */
 .dir-log-rate {
   margin-top: 12px;
   padding-top: 12px;
@@ -1617,16 +1675,16 @@
   gap: 6px;
 }
 .dir-log-star {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--dir-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--dir-paper, #fff);
   color: var(--dir-muted);
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
 }
@@ -1634,6 +1692,7 @@
   color: var(--dir-ochre);
   border-color: color-mix(in srgb, var(--dir-ochre) 45%, transparent);
 }
+/* Legacy classes (old three-button layout, now unused but kept for safety) */
 .dir-log-signin,
 .dir-log-remove {
   display: inline-block;
