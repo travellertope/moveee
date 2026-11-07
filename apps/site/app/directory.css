@@ -1722,6 +1722,97 @@
 }
 
 /* ═══════════════════════════════════════════════════════
+   ENTRY ACTION BAR — 4-button icon row (2026)
+   ═══════════════════════════════════════════════════════ */
+
+.dir-action-bar {
+  margin: 24px 0 28px;
+  position: relative;
+}
+
+.dir-action-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.dir-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border-radius: var(--radius-lg, 6px);
+  border: 1.5px solid var(--dir-border);
+  background: transparent;
+  color: var(--dir-ink);
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  text-decoration: none;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+}
+.dir-action-btn:hover {
+  background: color-mix(in srgb, var(--dir-ink) 5%, transparent);
+  border-color: color-mix(in srgb, var(--dir-ink) 32%, transparent);
+}
+.dir-action-btn--active {
+  background: var(--dir-ink);
+  color: var(--dir-paper);
+  border-color: var(--dir-ink);
+}
+.dir-action-btn--active:hover {
+  background: color-mix(in srgb, var(--dir-ink) 85%, transparent);
+}
+.dir-action-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dir-action-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+.dir-action-btn--active .dir-action-icon {
+  opacity: 1;
+}
+.dir-action-btn:hover .dir-action-icon {
+  opacity: 1;
+}
+
+.dir-action-label {
+  white-space: nowrap;
+}
+
+/* Log dropdown panel — reuses dir-log-options styling, just positioned below the bar */
+.dir-action-log-panel {
+  margin-top: 6px;
+  position: static;
+}
+
+@media (max-width: 480px) {
+  .dir-action-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .dir-action-btn {
+    padding: 10px 4px 8px;
+    font-size: 10px;
+  }
+  .dir-action-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
    ENTRY DETAIL PAGE — new editorial layout (2026)
    Replaces the old dir-wiki-layout sidebar pattern.
    ═══════════════════════════════════════════════════════ */

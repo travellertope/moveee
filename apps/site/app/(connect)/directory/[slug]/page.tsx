@@ -10,7 +10,7 @@ import "../../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
 import BookMoodPace from "./BookMoodPace";
-import EntryLogControl from "./EntryLogControl";
+import EntryActionBar from "./EntryActionBar";
 import SocialProofLine from "./SocialProofLine";
 import SaveLineButton from "./SaveLineButton";
 import DirectoryFollowButton from "./DirectoryFollowButton";
@@ -336,10 +336,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <p className="dir-entry-review-count">New · 0 reviews</p>
           )}
 
-          {/* Log/shelf + follow */}
-          {entry.databaseId && (
-            <EntryLogControl directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
-          )}
+          {/* Social proof + follow */}
           {entry.databaseId && (
             <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
@@ -401,6 +398,18 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <div className={`dir-entry-description${typeSlug === "book" ? " dir-entry-description--dropcap" : ""}`}>
               <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
             </div>
+          )}
+
+          {/* Action bar — Review / Save Line / Log / Improve */}
+          {entry.databaseId && (
+            <EntryActionBar
+              directoryId={entry.databaseId}
+              isLoggedIn={isLoggedIn}
+              slug={slug}
+              entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
+              quoteLinkRole={quoteLinkRole}
+              quoteLinkType={quoteLinkType || undefined}
+            />
           )}
 
           {/* Full body content (gated if needed) */}
