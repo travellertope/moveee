@@ -33,7 +33,7 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     titleSuffix: "",
     titleInline: false,
     cadence: "Weekly",
-    eyebrow: "★ Culture Drop · Every Tuesday",
+    eyebrow: "Culture Drop · Every Tuesday",
     tagline: "The weekly dispatch on contemporary culture.",
     standfirst:
       "For readers who want depth over noise — one considered take on culture, delivered once a week.",
@@ -73,7 +73,7 @@ export const NL_META: Record<NewsletterListId, NewsletterListMeta> = {
     titleSuffix: "Lit",
     titleInline: true,
     cadence: "Daily Mon–Fri + Saturdays",
-    eyebrow: "★ GetMeLit · A story a day, more every Saturday",
+    eyebrow: "GetMeLit · A story a day, more every Saturday",
     tagline: "A story a day. A full literary dispatch every Saturday.",
     standfirst:
       "A small daily ritual for people who love to read — one story, five minutes, every morning.",

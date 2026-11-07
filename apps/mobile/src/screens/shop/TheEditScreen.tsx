@@ -202,7 +202,7 @@ export default function TheEditScreen() {
                   </Text>
                   {isPatron && heroPick.proPrice ? (
                     <Text style={styles.featureProPrice}>
-                      {heroPick.currencySymbol ?? "£"}{heroPick.proPrice.toFixed(2)} for Pro ★
+                      {heroPick.currencySymbol ?? "£"}{heroPick.proPrice.toFixed(2)} for Pro
                     </Text>
                   ) : null}
                 </View>

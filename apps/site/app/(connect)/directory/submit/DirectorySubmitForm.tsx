@@ -84,7 +84,7 @@ export default function DirectorySubmitForm({
           ← Culture Directory
         </Link>
         <div className="dir-submit-auth-gate">
-          <div className="dir-eyebrow">★ Culture Directory</div>
+          <div className="dir-eyebrow">Culture Directory</div>
           <h2>Sign in to contribute</h2>
           <p>
             You need a Moveee account to submit directory entries and earn
@@ -114,7 +114,7 @@ export default function DirectorySubmitForm({
           ← Culture Directory
         </Link>
         <div className="dir-submit-auth-gate">
-          <div className="dir-eyebrow">★ Moveee Pro</div>
+          <div className="dir-eyebrow">Moveee Pro</div>
           <h2>Moveee Pro required</h2>
           <p>
             Building the Culture Directory is a Moveee Pro privilege. Upgrade your
@@ -245,7 +245,7 @@ export default function DirectorySubmitForm({
           ← Culture Directory
         </Link>
         <div className="dir-eyebrow">
-          {isImproveMode ? "★ Improve Entry" : "★ Community Contribution"}
+          {isImproveMode ? "Improve Entry" : "Community Contribution"}
         </div>
         <h1 className="dir-submit-heading">
           {isImproveMode ? "Improve a Directory Entry" : "Add a Directory Entry"}
@@ -286,7 +286,7 @@ export default function DirectorySubmitForm({
           </div>
           {error && <p className="dir-error">{error}</p>}
           <p className="dir-generate-note">
-            ★ Earn 25 culture points when your entry is approved
+            Earn 25 culture points when your entry is approved
           </p>
         </div>
       )}

@@ -74,7 +74,7 @@ export default function ContentGate({ accessLevel, isLoggedIn, callbackUrl = "/m
             <path d="M15 8l1.5 1.5" />
           </svg>
         </div>
-        <div className="ar-gate-tier">★ {tierLabel}</div>
+        <div className="ar-gate-tier">{tierLabel}</div>
       </div>
 
       <h3>{heading}</h3>

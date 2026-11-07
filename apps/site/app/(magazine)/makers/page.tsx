@@ -92,7 +92,7 @@ export default async function MakersArchivePage() {
                       sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   )}
-                  <div className="maker-card-vetted">★ Vetted Maker</div>
+                  <div className="maker-card-vetted">Vetted Maker</div>
                 </div>
                 <div className="maker-card-body">
                   <div className="maker-card-name">{name}</div>

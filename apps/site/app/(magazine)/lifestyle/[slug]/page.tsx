@@ -335,7 +335,7 @@ export default async function ProductPage({
         ) : (
           <div className="sp-gallery-wrap">
             <div className="sp-main-image" style={{ background: "var(--ink)" }}>
-              <div className="sp-vetted-seal"><span className="star">★</span> Vetted Maker</div>
+              <div className="sp-vetted-seal">Vetted Maker</div>
             </div>
           </div>
         )}

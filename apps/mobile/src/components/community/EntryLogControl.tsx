@@ -13,12 +13,8 @@ import {
   type ShelfStatus,
 } from "../../features/community/readingTracker";
 
-// Shelve and rate an entry from the entry screen itself — the shortcut the
-// Culture Log shipped without, where the only way in was the add-a-thing modal
-// on ReadingTrackerScreen. Mirrors the web component
-// (apps/connect/app/directory/[slug]/EntryLogControl.tsx) exactly: same
-// three-status row, same one-tap rating that needs no review, same "an entry
-// with no shelf renders nothing" rule.
+// Shelve and rate an entry from the entry screen itself. Single trigger button
+// that expands an inline option list — mirrors the web component redesign.
 
 interface EntryState {
   directoryId: number;
@@ -29,37 +25,52 @@ interface EntryState {
 
 function createStyles(c: ColorPalette) {
   return StyleSheet.create({
-    label: {
-      fontFamily: fonts.mono, fontSize: 10, letterSpacing: 0.6,
-      textTransform: "uppercase", color: c.mute, marginBottom: 10,
-    },
-    statuses: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
-    status: {
-      flexGrow: 1, minWidth: 96, minHeight: 44, paddingHorizontal: 10,
-      alignItems: "center", justifyContent: "center",
-      borderRadius: radius.lg, borderWidth: 1, borderColor: c.ghost,
+    // Trigger button
+    trigger: {
+      flexDirection: "row", alignItems: "center", gap: 8,
+      paddingHorizontal: 14, paddingVertical: 11,
+      borderRadius: radius.lg, borderWidth: 1.5, borderColor: c.ghost,
       backgroundColor: c.paper,
     },
-    statusActive: { backgroundColor: c.ink, borderColor: c.ink },
-    statusText: { fontFamily: fonts.sansBold, fontSize: 13.5, color: c.ink, textAlign: "center" },
-    statusTextActive: { color: c.paper },
+    triggerSet: { backgroundColor: c.ink, borderColor: c.ink },
+    triggerDot: {
+      width: 7, height: 7, borderRadius: 99,
+      backgroundColor: c.paper, opacity: 0.65,
+    },
+    triggerLabel: { flex: 1, fontFamily: fonts.sansBold, fontSize: 14, color: c.ink },
+    triggerLabelSet: { color: c.paper },
+    triggerChevron: { fontFamily: fonts.mono, fontSize: 10, color: c.ink, opacity: 0.4 },
+    triggerChevronSet: { color: c.paper },
+    // Options list
+    options: {
+      marginTop: 6,
+      borderRadius: radius.lg, borderWidth: 1.5, borderColor: c.ghost,
+      backgroundColor: c.paper, overflow: "hidden",
+    },
+    option: {
+      flexDirection: "row", alignItems: "center", gap: 10,
+      paddingHorizontal: 14, paddingVertical: 11,
+      borderTopWidth: 1, borderTopColor: c.ghost + "88",
+    },
+    optionFirst: { borderTopWidth: 0 },
+    optionCheck: { width: 14, fontFamily: fonts.sans, fontSize: 12, color: c.ochre },
+    optionLabel: { fontFamily: fonts.sans, fontSize: 14, color: c.ink, flex: 1 },
+    optionLabelActive: { fontFamily: fonts.sansBold },
+    optionRemove: { color: c.mute, fontSize: 13 },
+    // Rating
     rate: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.ghost + "55" },
     rateLine: { fontFamily: fonts.sans, fontSize: 13, color: c.mute, marginBottom: 8 },
     stars: { flexDirection: "row", gap: 6 },
     star: {
-      width: 48, height: 46, alignItems: "center", justifyContent: "center",
+      width: 44, height: 42, alignItems: "center", justifyContent: "center",
       borderRadius: radius.lg, borderWidth: 1, borderColor: c.ghost, backgroundColor: c.paper,
     },
     starOn: { borderColor: c.ochre },
-    starText: { fontSize: 22, lineHeight: 26, color: c.mute },
+    starText: { fontSize: 20, lineHeight: 24, color: c.mute },
     starTextOn: { color: c.ochre },
-    link: { paddingVertical: 10 },
-    linkText: { fontFamily: fonts.mono, fontSize: 12, color: c.ochre },
   });
 }
 
-// containerStyle is applied by this component, not by the caller wrapping it,
-// so an entry with no shelf leaves no empty card behind.
 export default function EntryLogControl({
   directoryId,
   containerStyle,
@@ -74,6 +85,7 @@ export default function EntryLogControl({
   const [state, setState] = useState<EntryState | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,20 +97,16 @@ export default function EntryLogControl({
   }, [directoryId]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
+    if (!isAuthenticated) { setLoading(false); return; }
     load();
   }, [load, isAuthenticated]);
 
   async function pick(status: ShelfStatus) {
     if (busy) return;
+    setOpen(false);
     setBusy(true);
     try {
       await api.post(`${MOBILE_API}/reading/shelf`, { directory_id: directoryId, status });
-      // Moving off `read` leaves the rating in place on purpose — a re-read
-      // shouldn't erase what you thought of it the first time.
       setState((prev) => (prev ? { ...prev, status } : prev));
     } catch {}
     setBusy(false);
@@ -110,8 +118,7 @@ export default function EntryLogControl({
     setBusy(true);
     try {
       const res = await api.post<{ status?: ShelfStatus }>(`${MOBILE_API}/reading/rating`, {
-        directory_id: directoryId,
-        rating: next,
+        directory_id: directoryId, rating: next,
       });
       setState((prev) =>
         prev ? { ...prev, rating: next, status: (res?.status ?? prev.status) as ShelfStatus | null } : prev
@@ -122,6 +129,7 @@ export default function EntryLogControl({
 
   async function remove() {
     if (busy) return;
+    setOpen(false);
     setBusy(true);
     try {
       await api.delete(`${MOBILE_API}/reading/shelf?directory_id=${directoryId}`);
@@ -130,39 +138,68 @@ export default function EntryLogControl({
     setBusy(false);
   }
 
-  // A person, a movement, a concept has no shelf — you don't finish someone,
-  // and TYPE_MEDIA_MAP resolves all of them to 'other'. Those entries still
-  // accrue saved lines and reviews; they just have nothing to log.
   if (!isAuthenticated || loading || !state || state.medium === "other") return null;
+
+  const isSet = !!state.status;
+  const label = isSet ? statusLabel(state.status!, state.medium) : "Add to Log";
+  const isRead = state.status === "read";
 
   return (
     <View style={containerStyle}>
-      <Text style={styles.label}>Add to your log</Text>
+      {/* Trigger */}
+      <TouchableOpacity
+        style={[styles.trigger, isSet && styles.triggerSet]}
+        onPress={() => setOpen((v) => !v)}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
+        {isSet && <View style={styles.triggerDot} />}
+        <Text style={[styles.triggerLabel, isSet && styles.triggerLabelSet]}>{label}</Text>
+        <Text style={[styles.triggerChevron, isSet && styles.triggerChevronSet]}>
+          {open ? "▴" : "▾"}
+        </Text>
+      </TouchableOpacity>
 
-      <View style={styles.statuses}>
-        {SHELF_STATUSES.map((s) => {
-          const on = state.status === s;
-          return (
+      {/* Options */}
+      {open && (
+        <View style={styles.options}>
+          {SHELF_STATUSES.map((s, i) => {
+            const active = state.status === s;
+            return (
+              <TouchableOpacity
+                key={s}
+                style={[styles.option, i === 0 && styles.optionFirst]}
+                onPress={() => pick(s)}
+                disabled={busy}
+                accessibilityRole="menuitem"
+              >
+                <Text style={styles.optionCheck}>{active ? "✓" : ""}</Text>
+                <Text style={[styles.optionLabel, active && styles.optionLabelActive]}>
+                  {statusLabel(s, state.medium)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+          {isSet && (
             <TouchableOpacity
-              key={s}
-              style={[styles.status, on && styles.statusActive]}
-              onPress={() => pick(s)}
+              style={styles.option}
+              onPress={remove}
               disabled={busy}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
+              accessibilityRole="menuitem"
             >
-              <Text style={[styles.statusText, on && styles.statusTextActive]}>
-                {statusLabel(s, state.medium)}
-              </Text>
+              <Text style={styles.optionCheck} />
+              <Text style={[styles.optionLabel, styles.optionRemove]}>Remove from log</Text>
             </TouchableOpacity>
-          );
-        })}
-      </View>
+          )}
+        </View>
+      )}
 
-      {state.status === "read" && (
+      {/* Rating — visible when watched/read and options are closed */}
+      {isRead && !open && (
         <View style={styles.rate}>
           <Text style={styles.rateLine}>
-            {state.rating > 0 ? "Saved. Tap again to change it." : "How was it? One tap, no review needed."}
+            {state.rating > 0 ? "Saved. Tap again to change." : "How was it? One tap, no review needed."}
           </Text>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map((n) => {
@@ -182,12 +219,6 @@ export default function EntryLogControl({
             })}
           </View>
         </View>
-      )}
-
-      {state.status && (
-        <TouchableOpacity style={styles.link} onPress={remove} disabled={busy}>
-          <Text style={styles.linkText}>Remove from your log</Text>
-        </TouchableOpacity>
       )}
     </View>
   );

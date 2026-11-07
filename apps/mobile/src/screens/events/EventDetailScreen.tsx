@@ -103,7 +103,7 @@ export default function EventDetailScreen() {
               )}
               {event.isProOnly && (
                 <View style={[styles.heroBadge, styles.heroBadgePro]}>
-                  <Text style={[styles.heroBadgeText, styles.heroBadgeProText]}>★ Pro Only</Text>
+                  <Text style={[styles.heroBadgeText, styles.heroBadgeProText]}>Pro Only</Text>
                 </View>
               )}
               {event.category ? (

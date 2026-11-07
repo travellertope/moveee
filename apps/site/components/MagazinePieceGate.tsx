@@ -114,7 +114,7 @@ export default function MagazinePieceGate({ slug, mode }: Props) {
             <path d="M15 8l1.5 1.5" />
           </svg>
         </div>
-        <div className="ar-gate-tier">★ {isPatronGate ? "Moveee Pro" : "Moveee Community"}</div>
+        <div className="ar-gate-tier">{isPatronGate ? "Moveee Pro" : "Moveee Community"}</div>
       </div>
 
       {stage === "pro-needed" ? (

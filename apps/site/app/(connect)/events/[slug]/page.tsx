@@ -368,7 +368,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
 
             {event.associatedJourney && (
               <div className="evt-card evt-card--compact evt-card--dark">
-                <span className="evt-eyebrow">★ {event.associatedJourney.title}</span>
+                <span className="evt-eyebrow">{event.associatedJourney.title}</span>
                 <h4>Join the exclusive journey</h4>
                 <Link href={`/origins/${event.associatedJourney.slug}`} className="evt-outline-pill">
                   View Journey →

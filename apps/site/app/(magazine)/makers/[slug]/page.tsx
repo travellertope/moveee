@@ -110,7 +110,7 @@ export default async function SingleMakerPage({ params }: { params: Promise<{ sl
         </div>
 
         <div className="maker-hero-info">
-          <div className="maker-vetted-badge">★ Vetted Maker</div>
+          <div className="maker-vetted-badge">Vetted Maker</div>
           <h1 className="maker-hero-name">{storeName}</h1>
           {location && <div className="maker-hero-location">{location}</div>}
           {bio && <p className="maker-hero-bio">{bio}</p>}

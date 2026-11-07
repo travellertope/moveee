@@ -432,7 +432,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       ) : (
         <>
           <header className="ar-standard-hero">
-            <div className="ar-hero-eyebrow">★ {categoryName}</div>
+            <div className="ar-hero-eyebrow">{categoryName}</div>
             <h1 className="ar-title">{post.title}</h1>
             <div className="ar-byline">
               <div className="ar-byline-items">

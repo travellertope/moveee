@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SHELF_STATUSES,
   statusLabel,
@@ -35,6 +35,16 @@ export default function EntryLogControl({
   const [state, setState] = useState<EntryState | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,6 +61,7 @@ export default function EntryLogControl({
 
   async function pick(status: ShelfStatus) {
     if (!isLoggedIn || busy) return;
+    setOpen(false);
     setBusy(true);
     try {
       const res = await fetch("/api/reading/shelf", {
@@ -105,29 +116,55 @@ export default function EntryLogControl({
   const medium = state.medium;
   const isRead = state.status === "read";
 
+  const label = state.status ? statusLabel(state.status, medium) : "Add to Log";
+
   return (
-    <div className="dir-log">
-      <div className="dir-log-label">Add to your log</div>
+    <div className="dir-log" ref={wrapRef}>
+      {/* Trigger */}
+      <button
+        type="button"
+        className={`dir-log-trigger${state.status ? " dir-log-trigger--set" : ""}${open ? " dir-log-trigger--open" : ""}`}
+        onClick={() => isLoggedIn ? setOpen((v) => !v) : undefined}
+        disabled={busy}
+        aria-expanded={open}
+      >
+        {state.status && <span className="dir-log-trigger-dot" />}
+        <span className="dir-log-trigger-label">{label}</span>
+        {!isLoggedIn
+          ? <a className="dir-log-signin-inline" href="/login">Sign in →</a>
+          : <span className="dir-log-trigger-chevron">{open ? "▴" : "▾"}</span>
+        }
+      </button>
 
-      <div className="dir-log-statuses">
-        {SHELF_STATUSES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            className={`dir-log-status${state.status === s ? " dir-log-status--active" : ""}`}
-            onClick={() => pick(s)}
-            disabled={busy || !isLoggedIn}
-            aria-pressed={state.status === s}
-          >
-            {statusLabel(s, medium)}
-          </button>
-        ))}
-      </div>
+      {/* Expanded options */}
+      {open && (
+        <div className="dir-log-options">
+          {SHELF_STATUSES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`dir-log-option${state.status === s ? " dir-log-option--active" : ""}`}
+              onClick={() => pick(s)}
+              disabled={busy}
+            >
+              <span className="dir-log-option-check">{state.status === s ? "✓" : ""}</span>
+              {statusLabel(s, medium)}
+            </button>
+          ))}
+          {state.status && (
+            <button type="button" className="dir-log-option dir-log-option--remove" onClick={() => { setOpen(false); remove(); }} disabled={busy}>
+              <span className="dir-log-option-check" />
+              Remove from log
+            </button>
+          )}
+        </div>
+      )}
 
-      {isRead && isLoggedIn && (
+      {/* Rating — visible when watched/read, options collapsed */}
+      {isRead && isLoggedIn && !open && (
         <div className="dir-log-rate">
           <div className="dir-log-rate-line">
-            {state.rating > 0 ? "Saved. Tap again to change it." : "How was it? One tap, no review needed."}
+            {state.rating > 0 ? "Saved. Tap again to change." : "How was it? One tap, no review needed."}
           </div>
           <div className="dir-log-stars">
             {[1, 2, 3, 4, 5].map((n) => (
@@ -144,18 +181,6 @@ export default function EntryLogControl({
             ))}
           </div>
         </div>
-      )}
-
-      {!isLoggedIn && (
-        <a className="dir-log-signin" href="/login">
-          Sign in to log this →
-        </a>
-      )}
-
-      {isLoggedIn && state.status && (
-        <button type="button" className="dir-log-remove" onClick={remove} disabled={busy}>
-          Remove from your log
-        </button>
       )}
     </div>
   );
