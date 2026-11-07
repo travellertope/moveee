@@ -1829,6 +1829,7 @@ const DIRECTORY_FIELDS_FRAGMENT = `
       foodType mainIngredients alsoKnownAs culturalContext
       origin era keyDesigners materials culturalSignificance
       creator network seasons years
+      tracks
     }
   }
 `;

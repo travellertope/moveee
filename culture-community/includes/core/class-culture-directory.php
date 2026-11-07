@@ -881,6 +881,11 @@ class Culture_Directory {
         // External catalog dedup (Google Books/iTunes/TMDB quick-create).
         $external_source = sanitize_key( $request->get_param( 'external_source' ) );
         $external_id     = sanitize_text_field( $request->get_param( 'external_id' ) );
+        // Structured infobox fields from the external catalog (TMDB/Google Books/
+        // iTunes). Accepts an associative object whose keys map directly to
+        // CultureDirectoryInfobox field names (e.g. { year: "2023", genre: "Fiction" })
+        // and stores them as dir_infobox_* meta, same as handle_enrich_stub() does.
+        $infobox = (array) ( $request->get_param( 'infobox' ) ?? array() );
         // Cover art from the external API — stored as a plain URL rather than
         // sideloaded into the media library (no local re-hosting for v1).
         $cover_image_url = esc_url_raw( $request->get_param( 'cover_image_url' ) );
@@ -961,6 +966,16 @@ class Culture_Directory {
         }
         if ( $preview_url ) {
             update_post_meta( $post_id, '_external_preview_url', $preview_url );
+        }
+
+        // Structured infobox fields from the external API (passed by the bulk
+        // seeder). Same storage pattern as handle_enrich_stub().
+        foreach ( $infobox as $key => $value ) {
+            $clean_key   = 'dir_infobox_' . sanitize_key( $key );
+            $clean_value = sanitize_text_field( (string) $value );
+            if ( $clean_value ) {
+                update_post_meta( $post_id, $clean_key, $clean_value );
+            }
         }
 
         // Award reputation for creating a directory entry — skipped for a

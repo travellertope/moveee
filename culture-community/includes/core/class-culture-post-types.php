@@ -970,6 +970,8 @@ class Culture_Post_Types {
             'network'            => 'dir_infobox_network',
             'seasons'            => 'dir_infobox_seasons',
             'years'              => 'dir_infobox_years',
+            // album
+            'tracks'             => 'dir_infobox_tracks',
         );
 
         // Build per-field resolvers for the infobox sub-type.

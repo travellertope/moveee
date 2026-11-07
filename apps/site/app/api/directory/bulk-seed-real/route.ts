@@ -82,6 +82,8 @@ interface Candidate {
   about?: string;
   coverUrl: string | null;
   description?: string;
+  /** Structured infobox fields — stored as dir_infobox_* meta via quick-create. */
+  infobox?: Record<string, string>;
 }
 
 interface BulkSeedState {
@@ -128,7 +130,24 @@ async function saveState(state: BulkSeedState): Promise<void> {
   }
 }
 
-async function fetchTmdbLane(lane: (typeof TMDB_LANES)[number], page: number): Promise<{ items: Candidate[]; hasMore: boolean }> {
+/** Fetch the TMDB genre ID→name map (one call per film batch, cached inline). */
+async function fetchTmdbGenreMap(): Promise<Record<number, string>> {
+  if (!TMDB_API_KEY) return {};
+  try {
+    const res = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${TMDB_API_KEY}`);
+    if (!res.ok) return {};
+    const data = await res.json().catch(() => null);
+    const map: Record<number, string> = {};
+    for (const g of data?.genres ?? []) {
+      if (g?.id && g?.name) map[g.id as number] = g.name as string;
+    }
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+async function fetchTmdbLane(lane: (typeof TMDB_LANES)[number], page: number, genreMap: Record<number, string>): Promise<{ items: Candidate[]; hasMore: boolean }> {
   if (!TMDB_API_KEY) return { items: [], hasMore: false };
   const path = lane === "trending" ? "trending/movie/week" : lane === "top_rated" ? "movie/top_rated" : "movie/now_playing";
   const params = new URLSearchParams({ api_key: TMDB_API_KEY, page: String(page) });
@@ -140,14 +159,49 @@ async function fetchTmdbLane(lane: (typeof TMDB_LANES)[number], page: number): P
   return {
     items: results
       .filter((m) => m?.id && m?.title)
-      .map((m) => ({
-        externalId: String(m.id),
-        title: m.title as string,
-        coverUrl: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
-        description: typeof m.overview === "string" && m.overview.trim() ? m.overview : undefined,
-      })),
+      .map((m) => {
+        const year = m.release_date ? String(m.release_date).slice(0, 4) : undefined;
+        const genreIds: number[] = Array.isArray(m.genre_ids) ? m.genre_ids : [];
+        const genre = genreIds.map((id) => genreMap[id]).filter(Boolean)[0];
+        const language = m.original_language && m.original_language !== "en"
+          ? (m.original_language as string).toUpperCase()
+          : undefined;
+        const infobox: Record<string, string> = {};
+        if (year)     infobox.year     = year;
+        if (genre)    infobox.genre    = genre;
+        if (language) infobox.language = language;
+        return {
+          externalId: String(m.id),
+          title: m.title as string,
+          coverUrl: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
+          description: typeof m.overview === "string" && m.overview.trim() ? m.overview : undefined,
+          infobox: Object.keys(infobox).length ? infobox : undefined,
+        };
+      }),
     hasMore: page < Math.min(totalPages, 500),
   };
+}
+
+/** Batch iTunes Lookup to get year + genre + trackCount for a list of album IDs. */
+async function fetchItunesAlbumDetails(itunesIds: string[]): Promise<Record<string, { year?: string; genre?: string; tracks?: string }>> {
+  if (!itunesIds.length) return {};
+  try {
+    const res = await fetch(`https://itunes.apple.com/lookup?id=${itunesIds.join(",")}&entity=album`).catch(() => null);
+    if (!res || !res.ok) return {};
+    const data = await res.json().catch(() => null);
+    const map: Record<string, { year?: string; genre?: string; tracks?: string }> = {};
+    for (const item of data?.results ?? []) {
+      if (item?.collectionId) {
+        const year = item.releaseDate ? String(item.releaseDate).slice(0, 4) : undefined;
+        const genre = item.primaryGenreName && item.primaryGenreName !== "Music" ? item.primaryGenreName : undefined;
+        const tracks = item.trackCount ? String(item.trackCount) : undefined;
+        map[String(item.collectionId)] = { year, genre, tracks };
+      }
+    }
+    return map;
+  } catch {
+    return {};
+  }
 }
 
 async function fetchAppleTopAlbums(storefront: string): Promise<Candidate[]> {
@@ -155,7 +209,7 @@ async function fetchAppleTopAlbums(storefront: string): Promise<Candidate[]> {
   if (!res || !res.ok) return [];
   const data = await res.json().catch(() => null);
   const results: any[] = Array.isArray(data?.feed?.results) ? data.feed.results : [];
-  return results
+  const baseItems = results
     .filter((a) => a?.id && a?.name)
     .map((a) => ({
       externalId: `itunes:${a.id}`,
@@ -163,6 +217,21 @@ async function fetchAppleTopAlbums(storefront: string): Promise<Candidate[]> {
       about: a.artistName as string | undefined,
       coverUrl: a.artworkUrl100 ? String(a.artworkUrl100).replace("100x100bb", "600x600bb") : null,
     }));
+
+  // Batch lookup year + genre from iTunes (supports up to 150 IDs per call).
+  const ids = baseItems.map((b) => b.externalId.replace("itunes:", ""));
+  const details = await fetchItunesAlbumDetails(ids);
+
+  return baseItems.map((b) => {
+    const id = b.externalId.replace("itunes:", "");
+    const d = details[id];
+    const infobox: Record<string, string> = {};
+    if (d?.year)   infobox.year  = d.year;
+    if (d?.genre)  infobox.genre = d.genre;
+    // "tracks" key added to plugin's infobox_meta_map (see class-culture-post-types.php)
+    if (d?.tracks) infobox.tracks = d.tracks;
+    return { ...b, infobox: Object.keys(infobox).length ? infobox : undefined };
+  });
 }
 
 async function fetchGoogleBooksPage(
@@ -206,12 +275,26 @@ async function fetchGoogleBooksPage(
       const description = typeof info.description === "string" && info.description.trim()
         ? info.description.trim()
         : undefined;
+      const authors = Array.isArray(info.authors) ? info.authors : [];
+      const infobox: Record<string, string> = {};
+      if (authors.length)         infobox.author        = authors.join(", ");
+      if (info.publishedDate)     infobox.yearPublished  = String(info.publishedDate).slice(0, 4);
+      if (info.pageCount)         infobox.pages          = String(info.pageCount);
+      if (info.publisher)         infobox.publisher      = String(info.publisher);
+      if (info.language && info.language !== "en") infobox.language = String(info.language).toUpperCase();
+      // First category is usually the most specific genre label Google assigns.
+      const categories: string[] = Array.isArray(info.categories) ? info.categories : [];
+      if (categories.length)      infobox.genre          = categories[0];
+      // ISBN already used as externalId dedup key; also store for display.
+      if (isbn && isbn.length > 10) infobox.isbn = isbn;
+
       return {
         externalId: isbn,
         title: info.title as string,
-        about: Array.isArray(info.authors) ? info.authors.join(", ") : undefined,
+        about: authors.length ? authors.join(", ") : undefined,
         coverUrl: String(info.imageLinks.thumbnail).replace(/^http:/, "https:"),
         description,
+        infobox: Object.keys(infobox).length ? infobox : undefined,
       };
     });
 
@@ -231,6 +314,7 @@ async function createRealEntry(opts: {
   description?: string;
   externalSource: string;
   externalId: string;
+  infobox?: Record<string, string>;
 }): Promise<{ isNew: boolean } | null> {
   const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/quick-create`, {
     method: "POST",
@@ -247,6 +331,7 @@ async function createRealEntry(opts: {
       external_source: opts.externalSource,
       external_id: opts.externalId,
       skip_gamification: true,
+      infobox: opts.infobox || undefined,
     }),
     cache: "no-store",
   }).catch(() => null);
@@ -298,7 +383,9 @@ export async function POST(req: NextRequest) {
     const laneIdx = state.film.laneTurn % 3;
     const lane = TMDB_LANES[laneIdx];
     const page = state.film.lanePages[laneIdx];
-    const { items, hasMore } = await fetchTmdbLane(lane, page);
+    // Fetch genre map once per film batch (single /genre/movie/list call).
+    const genreMap = await fetchTmdbGenreMap();
+    const { items, hasMore } = await fetchTmdbLane(lane, page, genreMap);
     state.film.lanePages[laneIdx] = page + 1;
     state.film.laneTurn++;
     if (items.length === 0) state.film.laneDone[laneIdx] = !hasMore;
@@ -307,7 +394,7 @@ export async function POST(req: NextRequest) {
       if (state.film.created >= TARGET.film) break;
       const result = await createRealEntry({
         title: item.title, entryType: "film", coverUrl: item.coverUrl, description: item.description,
-        externalSource: "tmdb", externalId: item.externalId,
+        externalSource: "tmdb", externalId: item.externalId, infobox: item.infobox,
       });
       if (result?.isNew) { state.film.created++; createdThisCall++; }
     }
@@ -329,7 +416,7 @@ export async function POST(req: NextRequest) {
       if (state.music.created >= TARGET.music) break;
       const result = await createRealEntry({
         title: item.title, entryType: "album", aboutLabel: "Artist", aboutValue: item.about, coverUrl: item.coverUrl,
-        externalSource: "itunes", externalId: item.externalId,
+        externalSource: "itunes", externalId: item.externalId, infobox: item.infobox,
       });
       if (result?.isNew) { state.music.created++; createdThisCall++; }
     }
@@ -349,7 +436,7 @@ export async function POST(req: NextRequest) {
         if (state.book.created >= TARGET.book) break;
         const result = await createRealEntry({
           title: item.title, entryType: "book", aboutLabel: "Author", aboutValue: item.about, coverUrl: item.coverUrl,
-          description: item.description, externalSource: "google_books", externalId: item.externalId,
+          description: item.description, externalSource: "google_books", externalId: item.externalId, infobox: item.infobox,
         });
         if (result?.isNew) { state.book.created++; createdThisCall++; }
       }
