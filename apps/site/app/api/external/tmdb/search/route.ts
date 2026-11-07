@@ -50,24 +50,32 @@ export async function GET(req: NextRequest) {
   const data = await res.json().catch(() => null);
   const items: any[] = Array.isArray(data?.results) ? data.results : [];
 
-  // No director here — TMDB's search endpoint carries no crew data. Resolved
-  // lazily via /credits, only for the film the user actually picks (mirrors
-  // iTunes preview-clip lookup, avoids an N+1 fan-out across every result).
+  // Director and runtime are not on the search endpoint — resolved lazily
+  // via /credits when the user actually picks a film (same as before).
   const results = items
     .filter((m) => m?.id && m?.title)
     .slice(0, 8)
-    .map((m) => ({
-      externalId: String(m.id),
-      title: m.title as string,
-      year: m.release_date ? String(m.release_date).slice(0, 4) : undefined,
-      coverUrl: m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : null,
-      genres: Array.isArray(m.genre_ids)
-        ? Array.from(new Set(m.genre_ids.map((id: number) => TMDB_GENRE_MAP[id]).filter(Boolean)))
-        : undefined,
-      // TMDB's search/movie endpoint already returns this on every result —
-      // no extra request needed (unlike director, which needs /credits).
-      description: typeof m.overview === "string" && m.overview.trim() ? m.overview : undefined,
-    }));
+    .map((m) => {
+      const year = m.release_date ? String(m.release_date).slice(0, 4) : undefined;
+      const mappedGenres = Array.isArray(m.genre_ids)
+        ? (Array.from(new Set(m.genre_ids.map((id: number) => TMDB_GENRE_MAP[id]).filter(Boolean))) as string[])
+        : undefined;
+
+      // Partial infobox — director/runtime added lazily at pick time.
+      const infobox: Record<string, string> = {};
+      if (year) infobox.year = year;
+      if (mappedGenres?.[0]) infobox.genre = mappedGenres[0];
+
+      return {
+        externalId: String(m.id),
+        title: m.title as string,
+        year,
+        coverUrl: m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : null,
+        genres: mappedGenres,
+        description: typeof m.overview === "string" && m.overview.trim() ? m.overview : undefined,
+        infobox: Object.keys(infobox).length ? infobox : undefined,
+      };
+    });
 
   return NextResponse.json(results);
 }
