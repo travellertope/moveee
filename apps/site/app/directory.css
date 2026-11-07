@@ -1668,7 +1668,7 @@
    ═══════════════════════════════════════════════════════ */
 
 .dir-entry-page {
-  background: var(--dir-paper);
+  background: transparent;
   min-height: 100vh;
   padding-bottom: 80px;
 }
@@ -1911,11 +1911,9 @@
   opacity: 0.6;
 }
 
-/* ── Lower section (community + related) — now inside the right column ── */
+/* ── Lower section (community + related) — inside the right column ── */
 .dir-entry-lower {
-  margin-top: 56px;
-  padding-top: 48px;
-  border-top: 1px solid var(--dir-border);
+  margin-top: 40px;
 }
 
 /* ── Related entries ── */
