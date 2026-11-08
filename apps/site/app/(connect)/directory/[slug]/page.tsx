@@ -609,11 +609,11 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <div className="dir-entry-related-grid">
               {relatedEntries.map((e: any) => (
                 <Link key={e.slug} href={`/directory/${e.slug}`} className="dir-entry-related-card">
-                  {e.featuredImage?.node?.sourceUrl && (
-                    <div className="dir-entry-related-thumb">
-                      <Image src={e.featuredImage.node.sourceUrl} alt={e.title} fill style={{ objectFit: "cover" }} />
-                    </div>
-                  )}
+                  <div className="dir-entry-related-thumb">
+                    {e.featuredImage?.node?.sourceUrl && (
+                      <img src={e.featuredImage.node.sourceUrl} alt="" className="dir-entry-related-img" />
+                    )}
+                  </div>
                   <span className="dir-entry-related-title">{e.title}</span>
                 </Link>
               ))}

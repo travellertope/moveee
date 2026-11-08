@@ -2099,6 +2099,12 @@
   overflow: hidden;
   background: color-mix(in srgb, var(--dir-ink) 8%, transparent);
 }
+.dir-entry-related-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 .dir-entry-related-title {
   font-size: 12px;
   font-weight: 600;
