@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import PatronPrice from "@/components/PatronPrice";
 
@@ -16,11 +16,24 @@ const FALLBACK_ENTRY_TYPES = [
   { slug: "fashion",  label: "Fashion" },
 ];
 
+// Entry types that have a catalog lookup (book/film/album).
+const CATALOG_TYPES = new Set(["book", "film", "album"]);
+
 type Step = "input" | "generating" | "review" | "submitting" | "done" | "loading-entry";
 
 interface EntryTypeOption {
   slug: string;
   label: string;
+}
+
+interface CatalogResult {
+  externalId: string;
+  title: string;
+  about?: string;
+  year?: string;
+  coverUrl?: string | null;
+  description?: string;
+  infobox?: Record<string, string>;
 }
 
 interface Props {
@@ -52,6 +65,22 @@ export default function DirectorySubmitForm({
   const [entryType, setEntryType] = useState<string>("concept");
   const [pointsAwarded, setPointsAwarded] = useState(0);
 
+  // Catalog-prefill state
+  const [coverUrl, setCoverUrl] = useState("");
+  const [externalId, setExternalId] = useState("");
+  const [infobox, setInfobox] = useState<Record<string, string> | null>(null);
+
+  // Catalog search state
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [catalogResults, setCatalogResults] = useState<CatalogResult[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogPicked, setCatalogPicked] = useState(false);
+  const catalogRef = useRef<HTMLDivElement>(null);
+  const catalogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isCatalogType = CATALOG_TYPES.has(entryType);
+
   // Pre-populate form when in improve mode
   useEffect(() => {
     if (!isImproveMode || !isLoggedIn || !isPatron) return;
@@ -75,6 +104,94 @@ export default function DirectorySubmitForm({
         setStep("input");
       });
   }, [isImproveMode, improvingSlug, isLoggedIn, isPatron]);
+
+  // Close catalog dropdown when clicking outside
+  useEffect(() => {
+    function onOutside(e: MouseEvent) {
+      if (catalogRef.current && !catalogRef.current.contains(e.target as Node)) {
+        setCatalogOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, []);
+
+  // Debounced catalog search
+  const searchCatalog = useCallback(
+    (q: string, type: string) => {
+      if (catalogTimerRef.current) clearTimeout(catalogTimerRef.current);
+      if (q.trim().length < 2) {
+        setCatalogResults([]);
+        setCatalogOpen(false);
+        return;
+      }
+      catalogTimerRef.current = setTimeout(async () => {
+        setCatalogLoading(true);
+        try {
+          const res = await fetch(
+            `/api/directory/lookup?type=${encodeURIComponent(type)}&q=${encodeURIComponent(q.trim())}`
+          );
+          if (res.ok) {
+            const results = await res.json();
+            setCatalogResults(Array.isArray(results) ? results : []);
+            setCatalogOpen(true);
+          }
+        } catch {}
+        setCatalogLoading(false);
+      }, 350);
+    },
+    []
+  );
+
+  function handleCatalogQueryChange(val: string) {
+    setCatalogQuery(val);
+    setCatalogPicked(false);
+    searchCatalog(val, entryType);
+  }
+
+  function handleCatalogPick(result: CatalogResult) {
+    setCatalogOpen(false);
+    setCatalogPicked(true);
+    setCatalogQuery(result.title);
+
+    // Pre-fill form fields from catalog result
+    setTitle(result.title);
+    if (result.coverUrl) setCoverUrl(result.coverUrl);
+    if (result.externalId) setExternalId(result.externalId);
+    if (result.infobox) setInfobox(result.infobox);
+
+    // Build a starter excerpt from description or about
+    const starterExcerpt = result.description
+      ? result.description.slice(0, 300).replace(/\s+\S+$/, "…")
+      : result.about
+      ? `${result.title} by ${result.about}${result.year ? ` (${result.year})` : ""}.`
+      : "";
+    setExcerpt(starterExcerpt);
+    setContent("");
+  }
+
+  function handleCatalogClear() {
+    setCatalogQuery("");
+    setCatalogPicked(false);
+    setCatalogResults([]);
+    setCoverUrl("");
+    setExternalId("");
+    setInfobox(null);
+    setTitle("");
+    setExcerpt("");
+    setContent("");
+  }
+
+  // When entry type changes away from a catalog type, clear catalog state
+  function handleEntryTypeChange(val: string) {
+    setEntryType(val);
+    if (!CATALOG_TYPES.has(val)) {
+      handleCatalogClear();
+    } else {
+      // Re-trigger search if there's already a query
+      if (catalogQuery.trim().length >= 2) searchCatalog(catalogQuery, val);
+    }
+  }
 
   // ── Auth gate — not logged in ────────────────────────────────────────────
   if (!isLoggedIn) {
@@ -193,23 +310,33 @@ export default function DirectorySubmitForm({
     }
   }
 
+  function handleCatalogContinue() {
+    if (!title.trim()) return;
+    setStep("review");
+  }
+
   async function handleSubmit() {
     if (!title.trim() || !excerpt.trim() || !content.trim()) return;
     setStep("submitting");
     setError("");
 
     try {
+      const payload: Record<string, any> = {
+        title: title.trim(),
+        excerpt: excerpt.trim(),
+        content: content.trim(),
+        entryType,
+        aiGenerated: !isImproveMode && !catalogPicked,
+        ...(isImproveMode && { improvingSlug }),
+        ...(coverUrl && { coverUrl }),
+        ...(externalId && { externalId }),
+        ...(infobox && { infobox }),
+      };
+
       const res = await fetch("/api/directory/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          excerpt: excerpt.trim(),
-          content: content.trim(),
-          entryType,
-          aiGenerated: !isImproveMode,
-          ...(isImproveMode && { improvingSlug }),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -235,7 +362,10 @@ export default function DirectorySubmitForm({
     setEntryType("concept");
     setError("");
     setPointsAwarded(0);
+    handleCatalogClear();
   }
+
+  const catalogTypeName = entryType === "book" ? "book" : entryType === "film" ? "film" : "album";
 
   return (
     <div className="dir-submit-wrap">
@@ -253,48 +383,172 @@ export default function DirectorySubmitForm({
         <p className="dir-submit-desc">
           {isImproveMode
             ? "Review and improve the entry below. Your revised version will be sent for editorial review. Approved improvements earn you culture points."
-            : "Type a name or topic below. Gemini AI will draft a starter entry — review and edit it before submitting. Every approved entry earns you culture points."}
+            : "Add a book, film, or album by searching the catalog — details fill in automatically. For everything else, type a name and generate a starter entry with AI."}
         </p>
       </div>
 
-      {/* ── Step: Input / Generating (new entry only) ── */}
+      {/* ── Step: Input (new entry only) ── */}
       {!isImproveMode && (step === "input" || step === "generating") && (
         <div className="dir-generate-section">
-          <label className="dir-field-label" htmlFor="dir-topic">
-            Name or topic
-          </label>
-          <div className="dir-generate-row">
-            <input
-              id="dir-topic"
-              type="text"
-              className="dir-topic-input"
-              placeholder="e.g. Fela Kuti, Highlife music, Lagos Island, Ankara fabric…"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) =>
-                e.key === "Enter" && step === "input" && handleGenerate()
-              }
+
+          {/* Entry type selector — shown first so the right search/input appears */}
+          <div className="dir-field" style={{ marginBottom: 24 }}>
+            <label className="dir-field-label" htmlFor="dir-entry-type-input">
+              Entry type
+            </label>
+            <select
+              id="dir-entry-type-input"
+              className="dir-field-input"
+              value={entryType}
+              onChange={(e) => handleEntryTypeChange(e.target.value)}
               disabled={step === "generating"}
-            />
-            <button
-              className="dir-generate-btn"
-              onClick={handleGenerate}
-              disabled={step === "generating" || !topic.trim()}
             >
-              {step === "generating" ? "Generating…" : "Generate with AI →"}
-            </button>
+              {ENTRY_TYPES.map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
-          {error && <p className="dir-error">{error}</p>}
-          <p className="dir-generate-note">
-            Earn 25 culture points when your entry is approved
-          </p>
+
+          {/* Catalog search path — book, film, album */}
+          {isCatalogType ? (
+            <div ref={catalogRef} className="dir-catalog-search">
+              <label className="dir-field-label" htmlFor="dir-catalog-q">
+                Search {catalogTypeName} catalog
+              </label>
+              <div className="dir-catalog-input-row">
+                <input
+                  id="dir-catalog-q"
+                  type="text"
+                  className="dir-topic-input"
+                  placeholder={
+                    entryType === "book"
+                      ? "e.g. Things Fall Apart, Giovanni's Room…"
+                      : entryType === "film"
+                      ? "e.g. Moonlight, Black Panther…"
+                      : "e.g. Homecoming, After Hours…"
+                  }
+                  value={catalogQuery}
+                  onChange={(e) => handleCatalogQueryChange(e.target.value)}
+                  autoComplete="off"
+                />
+                {catalogPicked && (
+                  <button
+                    type="button"
+                    className="dir-catalog-clear"
+                    onClick={handleCatalogClear}
+                    aria-label="Clear selection"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Dropdown results */}
+              {catalogOpen && catalogResults.length > 0 && (
+                <ul className="dir-catalog-results" role="listbox">
+                  {catalogResults.map((r) => (
+                    <li
+                      key={r.externalId}
+                      className="dir-catalog-result"
+                      role="option"
+                      onClick={() => handleCatalogPick(r)}
+                    >
+                      {r.coverUrl && (
+                        <img
+                          src={r.coverUrl}
+                          alt=""
+                          className="dir-catalog-result-thumb"
+                        />
+                      )}
+                      <div className="dir-catalog-result-text">
+                        <span className="dir-catalog-result-title">{r.title}</span>
+                        {(r.about || r.year) && (
+                          <span className="dir-catalog-result-meta">
+                            {[r.about, r.year].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {catalogLoading && (
+                <p className="dir-catalog-searching">Searching…</p>
+              )}
+
+              {/* Cover preview after picking */}
+              {catalogPicked && coverUrl && (
+                <div className="dir-catalog-picked">
+                  <img src={coverUrl} alt={title} className="dir-catalog-cover" />
+                  <div className="dir-catalog-picked-info">
+                    <strong>{title}</strong>
+                    {excerpt && <p>{excerpt.slice(0, 120)}{excerpt.length > 120 ? "…" : ""}</p>}
+                  </div>
+                </div>
+              )}
+
+              {error && <p className="dir-error">{error}</p>}
+
+              <div className="dir-generate-row" style={{ marginTop: 16 }}>
+                <button
+                  className="dir-generate-btn"
+                  onClick={handleCatalogContinue}
+                  disabled={!catalogPicked || !title.trim()}
+                >
+                  Continue →
+                </button>
+              </div>
+              <p className="dir-generate-note">
+                Earn 25 culture points when your entry is approved
+              </p>
+            </div>
+          ) : (
+            /* AI generate path — all other types */
+            <>
+              <label className="dir-field-label" htmlFor="dir-topic">
+                Name or topic
+              </label>
+              <div className="dir-generate-row">
+                <input
+                  id="dir-topic"
+                  type="text"
+                  className="dir-topic-input"
+                  placeholder="e.g. Fela Kuti, Highlife music, Lagos Island, Ankara fabric…"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && step === "input" && handleGenerate()
+                  }
+                  disabled={step === "generating"}
+                />
+                <button
+                  className="dir-generate-btn"
+                  onClick={handleGenerate}
+                  disabled={step === "generating" || !topic.trim()}
+                >
+                  {step === "generating" ? "Generating…" : "Generate with AI →"}
+                </button>
+              </div>
+              {error && <p className="dir-error">{error}</p>}
+              <p className="dir-generate-note">
+                Earn 25 culture points when your entry is approved
+              </p>
+            </>
+          )}
         </div>
       )}
 
       {/* ── Step: Review & Edit ── */}
       {(step === "review" || step === "submitting") && (
         <div className="dir-review-section">
-          {!isImproveMode && (
+          {!isImproveMode && catalogPicked && (
+            <div className="dir-review-notice">
+              Details filled from the catalog — add your own description and content before submitting.
+            </div>
+          )}
+          {!isImproveMode && !catalogPicked && (
             <div className="dir-review-notice">
               AI-generated stub — review and edit before submitting. Your
               corrections and additions are welcome.
@@ -303,6 +557,13 @@ export default function DirectorySubmitForm({
           {isImproveMode && (
             <div className="dir-review-notice">
               You are improving an existing entry. Edit any section and submit — your version goes to editorial review.
+            </div>
+          )}
+
+          {/* Cover preview (catalog picks only) */}
+          {coverUrl && (
+            <div className="dir-review-cover">
+              <img src={coverUrl} alt={title} className="dir-review-cover-img" />
             </div>
           )}
 

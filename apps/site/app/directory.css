@@ -1311,6 +1311,150 @@
   cursor: not-allowed;
 }
 
+/* Catalog search (book / film / album lookup) */
+.dir-catalog-search {
+  position: relative;
+}
+
+.dir-catalog-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dir-catalog-input-row .dir-topic-input {
+  flex: 1;
+}
+
+.dir-catalog-clear {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--dir-border);
+  border-radius: var(--radius-md, 4px);
+  color: var(--dir-muted);
+  font-size: 13px;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+.dir-catalog-clear:hover { background: rgba(20,17,13,.06); color: var(--dir-ink); }
+
+.dir-catalog-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--dir-paper, #fff);
+  border: 1px solid var(--dir-border);
+  border-radius: var(--radius-md, 4px);
+  box-shadow: 0 4px 20px rgba(20,17,13,.1);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 40;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.dir-catalog-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.dir-catalog-result:hover { background: rgba(20,17,13,.04); }
+
+.dir-catalog-result-thumb {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 2px);
+  flex-shrink: 0;
+  background: var(--dir-border);
+}
+
+.dir-catalog-result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dir-catalog-result-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dir-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dir-catalog-result-meta {
+  font-size: 12px;
+  color: var(--dir-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dir-catalog-searching {
+  font-size: 12px;
+  color: var(--dir-muted);
+  margin-top: 8px;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+}
+
+.dir-catalog-picked {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(179,130,56,.06);
+  border: 1px solid rgba(179,130,56,.2);
+  border-radius: var(--radius-md, 4px);
+}
+
+.dir-catalog-cover {
+  width: 60px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 2px);
+  flex-shrink: 0;
+}
+
+.dir-catalog-picked-info {
+  min-width: 0;
+}
+.dir-catalog-picked-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dir-ink);
+  margin-bottom: 4px;
+}
+.dir-catalog-picked-info p {
+  font-size: 12px;
+  color: var(--dir-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Cover preview in review section (catalog picks) */
+.dir-review-cover {
+  margin-bottom: 24px;
+}
+.dir-review-cover-img {
+  width: 80px;
+  height: 112px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 4px);
+  display: block;
+}
+
 /* Error */
 .dir-error {
   font-size: 13px;
