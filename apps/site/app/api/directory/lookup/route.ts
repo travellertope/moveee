@@ -7,8 +7,11 @@ export const runtime = "nodejs";
 //   book  → Google Books API
 //   film  → iTunes Search API (media=movie)
 //   album → iTunes Search API (media=music, entity=album)
+//   place → Google Places Text Search
+//   food  → Google Places Text Search (biased to food/restaurant types)
 
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY ?? "";
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY ?? "";
 
 async function lookupBooks(q: string) {
   const params = new URLSearchParams({ q, maxResults: "8" });
@@ -134,6 +137,62 @@ async function lookupITunes(q: string, media: "movie" | "music") {
     .slice(0, 8);
 }
 
+const PLACE_TYPE_BIAS: Record<string, string> = {
+  food: "restaurant",
+};
+
+// Clean up Places API type strings into readable labels
+function formatPlaceType(type: string): string {
+  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+async function lookupPlaces(q: string, entryType: "place" | "food") {
+  if (!GOOGLE_PLACES_API_KEY) return [];
+
+  const params = new URLSearchParams({ query: q, key: GOOGLE_PLACES_API_KEY });
+  if (PLACE_TYPE_BIAS[entryType]) params.set("type", PLACE_TYPE_BIAS[entryType]);
+
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/place/textsearch/json?${params}`,
+    { next: { revalidate: 300 } }
+  ).catch(() => null);
+  if (!res || !res.ok) return [];
+
+  const data = await res.json().catch(() => null);
+  const items: any[] = Array.isArray(data?.results) ? data.results : [];
+
+  return items
+    .filter((p) => p?.place_id && p?.name)
+    .map((p) => {
+      const photoRef: string | undefined = p.photos?.[0]?.photo_reference;
+      const address: string | undefined = p.formatted_address || p.vicinity;
+
+      const infobox: Record<string, string> = {};
+      if (address) infobox.address = address;
+      const primaryType = Array.isArray(p.types)
+        ? (p.types as string[]).find((t) => !["point_of_interest", "establishment"].includes(t))
+        : undefined;
+      if (primaryType) infobox.category = formatPlaceType(primaryType);
+      if (p.rating != null) infobox.rating = String(p.rating);
+      if (entryType === "food" && p.price_level != null) {
+        infobox.price_level = "£".repeat(Number(p.price_level));
+      }
+
+      return {
+        externalId: p.place_id as string,
+        title: p.name as string,
+        about: address,
+        year: undefined,
+        // Proxy URL — key stays server-side, browser loads /api/directory/places-photo
+        coverUrl: photoRef ? `/api/directory/places-photo?ref=${encodeURIComponent(photoRef)}` : null,
+        // Pass the raw ref separately so the submit route can upload to R2
+        photoRef: photoRef ?? null,
+        infobox: Object.keys(infobox).length ? infobox : undefined,
+      };
+    })
+    .slice(0, 8);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") ?? "";
@@ -150,6 +209,9 @@ export async function GET(req: NextRequest) {
   if (type === "album") {
     return NextResponse.json(await lookupITunes(q, "music"));
   }
+  if (type === "place" || type === "food") {
+    return NextResponse.json(await lookupPlaces(q, type));
+  }
 
-  return NextResponse.json({ error: "Invalid type. Use book, film, or album." }, { status: 400 });
+  return NextResponse.json({ error: "Invalid type. Use book, film, album, place, or food." }, { status: 400 });
 }

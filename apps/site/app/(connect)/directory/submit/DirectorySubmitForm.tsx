@@ -16,8 +16,8 @@ const FALLBACK_ENTRY_TYPES = [
   { slug: "fashion",  label: "Fashion" },
 ];
 
-// Entry types that have a catalog lookup (book/film/album).
-const CATALOG_TYPES = new Set(["book", "film", "album"]);
+// Entry types that have a catalog lookup.
+const CATALOG_TYPES = new Set(["book", "film", "album", "place", "food"]);
 
 type Step = "input" | "generating" | "review" | "submitting" | "done" | "loading-entry";
 
@@ -32,6 +32,7 @@ interface CatalogResult {
   about?: string;
   year?: string;
   coverUrl?: string | null;
+  photoRef?: string | null;
   description?: string;
   infobox?: Record<string, string>;
 }
@@ -68,6 +69,7 @@ export default function DirectorySubmitForm({
   // Catalog-prefill state
   const [coverUrl, setCoverUrl] = useState("");
   const [externalId, setExternalId] = useState("");
+  const [photoRef, setPhotoRef] = useState("");
   const [infobox, setInfobox] = useState<Record<string, string> | null>(null);
 
   // Catalog search state
@@ -158,14 +160,21 @@ export default function DirectorySubmitForm({
     setTitle(result.title);
     if (result.coverUrl) setCoverUrl(result.coverUrl);
     if (result.externalId) setExternalId(result.externalId);
+    if (result.photoRef) setPhotoRef(result.photoRef);
     if (result.infobox) setInfobox(result.infobox);
 
-    // Build a starter excerpt from description or about
-    const starterExcerpt = result.description
-      ? result.description.slice(0, 300).replace(/\s+\S+$/, "…")
-      : result.about
-      ? `${result.title} by ${result.about}${result.year ? ` (${result.year})` : ""}.`
-      : "";
+    // Build a starter excerpt from whatever the catalog gives us
+    let starterExcerpt = "";
+    if (result.description) {
+      starterExcerpt = result.description.slice(0, 300).replace(/\s+\S+$/, "…");
+    } else if (entryType === "place" || entryType === "food") {
+      // Places: use address as the seed; user will write the real description
+      starterExcerpt = result.about
+        ? `${result.title} — ${result.about}.`
+        : result.title;
+    } else if (result.about) {
+      starterExcerpt = `${result.title} by ${result.about}${result.year ? ` (${result.year})` : ""}.`;
+    }
     setExcerpt(starterExcerpt);
     setContent("");
   }
@@ -176,6 +185,7 @@ export default function DirectorySubmitForm({
     setCatalogResults([]);
     setCoverUrl("");
     setExternalId("");
+    setPhotoRef("");
     setInfobox(null);
     setTitle("");
     setExcerpt("");
@@ -330,6 +340,7 @@ export default function DirectorySubmitForm({
         ...(isImproveMode && { improvingSlug }),
         ...(coverUrl && { coverUrl }),
         ...(externalId && { externalId }),
+        ...(photoRef && { photoRef }),
         ...(infobox && { infobox }),
       };
 
@@ -365,7 +376,12 @@ export default function DirectorySubmitForm({
     handleCatalogClear();
   }
 
-  const catalogTypeName = entryType === "book" ? "book" : entryType === "film" ? "film" : "album";
+  const catalogTypeName =
+    entryType === "book" ? "book"
+    : entryType === "film" ? "film"
+    : entryType === "album" ? "album"
+    : entryType === "food" ? "restaurant or food spot"
+    : "place";
 
   return (
     <div className="dir-submit-wrap">
@@ -427,7 +443,11 @@ export default function DirectorySubmitForm({
                       ? "e.g. Things Fall Apart, Giovanni's Room…"
                       : entryType === "film"
                       ? "e.g. Moonlight, Black Panther…"
-                      : "e.g. Homecoming, After Hours…"
+                      : entryType === "album"
+                      ? "e.g. Homecoming, After Hours…"
+                      : entryType === "food"
+                      ? "e.g. Nandos Brixton, Alara Lagos…"
+                      : "e.g. Tate Modern, Olumo Rock, Labadi Beach…"
                   }
                   value={catalogQuery}
                   onChange={(e) => handleCatalogQueryChange(e.target.value)}

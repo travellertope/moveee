@@ -1,8 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { uploadToR2 } from "@/lib/r2";
 
 export const runtime = "nodejs";
+
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY ?? "";
+
+async function fetchAndUploadPlacesPhoto(
+  photoRef: string,
+  title: string
+): Promise<string | null> {
+  if (!GOOGLE_PLACES_API_KEY) return null;
+  try {
+    const params = new URLSearchParams({
+      photoreference: photoRef,
+      maxwidth: "640",
+      key: GOOGLE_PLACES_API_KEY,
+    });
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/place/photo?${params}`
+    );
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60);
+    return await uploadToR2(`directory/${slug}-${Date.now()}.jpg`, buffer, "image/jpeg");
+  } catch {
+    return null;
+  }
+}
 
 const WP_URL = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 const API_SECRET = process.env.CULTURE_API_SECRET ?? "";
@@ -24,6 +50,7 @@ export async function POST(req: NextRequest) {
     improvingSlug,
     coverUrl,
     externalId,
+    photoRef,
     infobox,
     interests,
   } = body;
@@ -66,19 +93,21 @@ export async function POST(req: NextRequest) {
   const submitData = await submitRes.json();
   const postId: number = submitData.post_id;
 
-  // If a cover image URL was provided, attach it as the featured image
-  if (postId && coverUrl && typeof coverUrl === "string") {
-    const imageTitle = title.trim();
+  // Attach cover image if available.
+  // For place/food entries, photoRef (a Google Places photo_reference) is
+  // uploaded to R2 first so the stored URL is permanent. For book/film/album
+  // entries, coverUrl is already a stable CDN link (Google Books / iTunes)
+  // that can be attached directly.
+  const imageTitle = title.trim();
+  const attachImage = async (imageUrl: string) => {
     const imagePayload: Record<string, any> = {
       post_id: postId,
-      image_url: coverUrl,
+      image_url: imageUrl,
       image_title: imageTitle,
       image_alt: imageTitle,
     };
     if (externalId) imagePayload.external_id = externalId;
-
-    // Fire-and-forget — don't block the response on image attachment
-    fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
+    await fetch(`${WP_URL}/wp-json/culture/v1/directory/attach-image`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${API_SECRET}`,
@@ -86,6 +115,19 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify(imagePayload),
     }).catch(() => {});
+  };
+
+  if (postId) {
+    if (photoRef && typeof photoRef === "string") {
+      // Upload Places photo to R2, then attach — do this async
+      fetchAndUploadPlacesPhoto(photoRef, title.trim()).then((r2Url) => {
+        if (r2Url) attachImage(r2Url);
+        else if (coverUrl && typeof coverUrl === "string") attachImage(coverUrl);
+      });
+    } else if (coverUrl && typeof coverUrl === "string") {
+      // Fire-and-forget for stable catalog URLs (books, films, albums)
+      attachImage(coverUrl);
+    }
   }
 
   return NextResponse.json({
