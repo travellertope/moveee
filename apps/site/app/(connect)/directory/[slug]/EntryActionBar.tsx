@@ -17,11 +17,6 @@ interface EntryState {
   rating: number;
 }
 
-const SHORT_STATUS: Record<ShelfStatus, string> = {
-  want_to_read:      "Want to Read",
-  currently_reading: "Reading",
-  read:              "Read",
-};
 
 export default function EntryActionBar({
   directoryId,
@@ -157,7 +152,7 @@ export default function EntryActionBar({
               }
             </svg>
             <span className="dir-action-label">
-              {isSet ? SHORT_STATUS[state!.status!] : "Add to Log"}
+              {isSet ? statusLabel(state!.status!, medium as MediumOrOther) : "Add to Log"}
             </span>
           </button>
         ) : (
