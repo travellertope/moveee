@@ -1214,6 +1214,12 @@ class Culture_Directory {
         $ratings    = array();
         $by_template = array();
 
+        // Book/film/music reviews prepend the linked entry title to post_content
+        // (e.g. "One Night Only\n\nThe actual review…"). Fetch it once so we can
+        // strip it from every content snippet, and decode HTML entities so the
+        // frontend can render plain text without dangerouslySetInnerHTML.
+        $entry_title = html_entity_decode( get_the_title( $dir_id ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
         foreach ( $query->posts as $post ) {
             $author      = get_userdata( $post->post_author );
             $avatar_url  = get_avatar_url( $post->post_author, array( 'size' => 48 ) );
@@ -1225,11 +1231,17 @@ class Culture_Directory {
             if ( $star_rating > 0 ) $ratings[] = $star_rating;
             $by_template[ $template ] = ( $by_template[ $template ] ?? 0 ) + 1;
 
+            $raw = wp_strip_all_tags( $post->post_content );
+            if ( $entry_title !== '' && strpos( $raw, $entry_title ) === 0 ) {
+                $raw = ltrim( substr( $raw, strlen( $entry_title ) ) );
+            }
+            $content_snippet = html_entity_decode( wp_trim_words( $raw, 60 ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
             $posts[] = array(
                 'id'            => $post->ID,
                 'slug'          => $post->post_name,
                 'template_type' => $template,
-                'content'       => wp_trim_words( $post->post_content, 60 ),
+                'content'       => $content_snippet,
                 'star_rating'   => $star_rating ?: null,
                 'author'        => array(
                     'name'   => $author ? $author->display_name : 'Member',
