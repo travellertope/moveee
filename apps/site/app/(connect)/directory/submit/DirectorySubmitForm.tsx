@@ -19,7 +19,7 @@ const FALLBACK_ENTRY_TYPES = [
 // Entry types that have a catalog lookup.
 const CATALOG_TYPES = new Set(["book", "film", "album", "place", "food"]);
 
-type Step = "input" | "generating" | "review" | "submitting" | "done" | "loading-entry";
+type Step = "input" | "review" | "submitting" | "done" | "loading-entry";
 
 interface EntryTypeOption {
   slug: string;
@@ -56,7 +56,6 @@ export default function DirectorySubmitForm({
   const ENTRY_TYPES = entryTypes?.length ? entryTypes : FALLBACK_ENTRY_TYPES;
 
   const [step, setStep] = useState<Step>(isImproveMode ? "loading-entry" : "input");
-  const [topic, setTopic] = useState("");
   const [error, setError] = useState("");
 
   // Editable stub fields
@@ -291,35 +290,6 @@ export default function DirectorySubmitForm({
     );
   }
 
-  async function handleGenerate() {
-    if (!topic.trim()) return;
-    setStep("generating");
-    setError("");
-
-    try {
-      const res = await fetch("/api/directory/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: topic.trim() }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Generation failed");
-      }
-
-      const stub = await res.json();
-      setTitle(stub.title ?? topic);
-      setExcerpt(stub.excerpt ?? "");
-      setContent(stub.content ?? "");
-      setEntryType(stub.entryType ?? "concept");
-      setStep("review");
-    } catch (err: any) {
-      setError(err.message ?? "Something went wrong. Please try again.");
-      setStep("input");
-    }
-  }
-
   function handleCatalogContinue() {
     if (!title.trim()) return;
     setStep("review");
@@ -336,7 +306,7 @@ export default function DirectorySubmitForm({
         excerpt: excerpt.trim(),
         content: content.trim(),
         entryType,
-        aiGenerated: !isImproveMode && !catalogPicked,
+        aiGenerated: false,
         ...(isImproveMode && { improvingSlug }),
         ...(coverUrl && { coverUrl }),
         ...(externalId && { externalId }),
@@ -366,7 +336,6 @@ export default function DirectorySubmitForm({
 
   function handleReset() {
     setStep("input");
-    setTopic("");
     setTitle("");
     setExcerpt("");
     setContent("");
@@ -399,12 +368,12 @@ export default function DirectorySubmitForm({
         <p className="dir-submit-desc">
           {isImproveMode
             ? "Review and improve the entry below. Your revised version will be sent for editorial review. Approved improvements earn you culture points."
-            : "Add a book, film, or album by searching the catalog — details fill in automatically. For everything else, type a name and generate a starter entry with AI."}
+            : "Add a book, film, album, place, or food spot by searching the catalog — details fill in automatically. For everything else, choose a type and fill in the entry yourself. Every approved entry earns you culture points."}
         </p>
       </div>
 
       {/* ── Step: Input (new entry only) ── */}
-      {!isImproveMode && (step === "input" || step === "generating") && (
+      {!isImproveMode && step === "input" && (
         <div className="dir-generate-section">
 
           {/* Entry type selector — shown first so the right search/input appears */}
@@ -417,7 +386,6 @@ export default function DirectorySubmitForm({
               className="dir-field-input"
               value={entryType}
               onChange={(e) => handleEntryTypeChange(e.target.value)}
-              disabled={step === "generating"}
             >
               {ENTRY_TYPES.map((t) => (
                 <option key={t.slug} value={t.slug}>
@@ -525,30 +493,27 @@ export default function DirectorySubmitForm({
               </p>
             </div>
           ) : (
-            /* AI generate path — all other types */
+            /* Manual input — all other types */
             <>
-              <label className="dir-field-label" htmlFor="dir-topic">
-                Name or topic
+              <label className="dir-field-label" htmlFor="dir-title-input">
+                Name
               </label>
               <div className="dir-generate-row">
                 <input
-                  id="dir-topic"
+                  id="dir-title-input"
                   type="text"
                   className="dir-topic-input"
                   placeholder="e.g. Fela Kuti, Highlife music, Lagos Island, Ankara fabric…"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && step === "input" && handleGenerate()
-                  }
-                  disabled={step === "generating"}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && title.trim() && setStep("review")}
                 />
                 <button
                   className="dir-generate-btn"
-                  onClick={handleGenerate}
-                  disabled={step === "generating" || !topic.trim()}
+                  onClick={() => setStep("review")}
+                  disabled={!title.trim()}
                 >
-                  {step === "generating" ? "Generating…" : "Generate with AI →"}
+                  Continue →
                 </button>
               </div>
               {error && <p className="dir-error">{error}</p>}
@@ -570,8 +535,7 @@ export default function DirectorySubmitForm({
           )}
           {!isImproveMode && !catalogPicked && (
             <div className="dir-review-notice">
-              AI-generated stub — review and edit before submitting. Your
-              corrections and additions are welcome.
+              Fill in the summary and full entry below, then submit for editorial review.
             </div>
           )}
           {isImproveMode && (

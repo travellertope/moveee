@@ -43,6 +43,7 @@ class Culture_Cron {
     // ── Hook names ────────────────────────────────────────────────────────
 
     const HOOK_GRACE_CHECK      = 'culture_check_grace_periods';
+    // HOOK_SEED_DIRECTORY retired November 2026 — human/catalog submissions only going forward.
     const HOOK_SEED_DIRECTORY   = 'culture_seed_directory';
     const HOOK_REFRESH_PULSE    = 'culture_refresh_pulse';
     // HOOK_SEED_EVENTS retired October 2026 — community-posted events only going forward.
@@ -61,7 +62,7 @@ class Culture_Cron {
     public static function init() {
         add_filter( 'cron_schedules',      array( __CLASS__, 'add_schedules' ) );
         add_action( self::HOOK_GRACE_CHECK,    array( __CLASS__, 'process_grace_periods' ) );
-        add_action( self::HOOK_SEED_DIRECTORY, array( __CLASS__, 'seed_directory' ) );
+        // HOOK_SEED_DIRECTORY retired November 2026 — no longer registered.
         add_action( self::HOOK_REFRESH_PULSE,  array( __CLASS__, 'refresh_pulse' ) );
         add_action( self::HOOK_CLUSTER_SWEEP,  array( __CLASS__, 'sweep_forming_clusters' ) );
         add_action( self::HOOK_CLUSTER_ELECTION_TALLY, array( __CLASS__, 'tally_cluster_elections' ) );
@@ -71,7 +72,7 @@ class Culture_Cron {
         add_action( self::HOOK_LITERATI_ATTENDANCE,      array( __CLASS__, 'sweep_literati_attendance' ) );
 
         self::maybe_clear_retired_jobs();
-        self::maybe_reschedule_directory_seed();
+        // maybe_reschedule_directory_seed() retired alongside HOOK_SEED_DIRECTORY (November 2026).
 
         // Deferred gamification: newsletter subscribe fires this instead of calling
         // award_points() synchronously inside the public unauthenticated endpoint.
@@ -132,7 +133,7 @@ class Culture_Cron {
     public static function schedule() {
         $jobs = array(
             self::HOOK_GRACE_CHECK      => 'daily',
-            self::HOOK_SEED_DIRECTORY   => 'daily',
+            // HOOK_SEED_DIRECTORY retired November 2026.
             self::HOOK_REFRESH_PULSE    => 'daily',
             'culture_check_perk_expiry'        => 'hourly',
             self::HOOK_CLUSTER_SWEEP           => 'daily',
@@ -156,7 +157,7 @@ class Culture_Cron {
     public static function unschedule() {
         $hooks = array(
             self::HOOK_GRACE_CHECK,
-            self::HOOK_SEED_DIRECTORY,
+            // HOOK_SEED_DIRECTORY retired November 2026 — cleared via maybe_clear_retired_jobs().
             self::HOOK_REFRESH_PULSE,
             'culture_check_perk_expiry',
             self::HOOK_CLUSTER_SWEEP,
@@ -186,21 +187,19 @@ class Culture_Cron {
      * maybe_backfill_ / maybe_clear_ method in this plugin.
      */
     private static function maybe_clear_retired_jobs() {
-        if ( '2' === get_option( 'culture_cron_retired_jobs_cleared', '' ) ) {
+        if ( '3' === get_option( 'culture_cron_retired_jobs_cleared', '' ) ) {
             return;
         }
 
         // v1: culture_seed_quotes (retired September 2026)
         // v2: culture_seed_events (retired October 2026 — community-posted events only)
-        $retired_hooks = array( 'culture_seed_quotes', 'culture_seed_events' );
+        // v3: culture_seed_directory (retired November 2026 — human/catalog submissions only)
+        $retired_hooks = array( 'culture_seed_quotes', 'culture_seed_events', 'culture_seed_directory' );
         foreach ( $retired_hooks as $hook ) {
-            $timestamp = wp_next_scheduled( $hook );
-            if ( $timestamp ) {
-                wp_unschedule_event( $timestamp, $hook );
-            }
+            wp_clear_scheduled_hook( $hook );
         }
 
-        update_option( 'culture_cron_retired_jobs_cleared', '2' );
+        update_option( 'culture_cron_retired_jobs_cleared', '3' );
     }
 
     /**
