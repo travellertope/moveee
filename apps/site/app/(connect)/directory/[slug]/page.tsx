@@ -328,6 +328,19 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
           )}
 
+          {/* Action bar — lives under the cover image */}
+          {entry.databaseId && (
+            <EntryActionBar
+              directoryId={entry.databaseId}
+              isLoggedIn={isLoggedIn}
+              slug={slug}
+              entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
+              quoteLinkRole={quoteLinkRole}
+              quoteLinkType={quoteLinkType || undefined}
+              typeSlug={typeSlug}
+            />
+          )}
+
           {/* Book mood/pace (books only) */}
           {typeSlug === "book" && entry.databaseId && (
             <BookMoodPace directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
@@ -375,19 +388,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 <span key={i} className="dir-entry-tag">{pill}</span>
               ))}
             </div>
-          )}
-
-          {/* Action bar — Review / Save Line / Log / Improve */}
-          {entry.databaseId && (
-            <EntryActionBar
-              directoryId={entry.databaseId}
-              isLoggedIn={isLoggedIn}
-              slug={slug}
-              entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
-              quoteLinkRole={quoteLinkRole}
-              quoteLinkType={quoteLinkType || undefined}
-              typeSlug={typeSlug}
-            />
           )}
 
           {/* Article area — infobox floats right, description + body wrap to its left */}
@@ -534,7 +534,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           <div className="dir-community-section" style={{ marginTop: "2rem" }}>
             <div className="dir-community-header">
               <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
-                {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
+                Quotes
               </h2>
               {directoryQuotes.length > 0 && (
                 <span className="dir-community-rating-count">
