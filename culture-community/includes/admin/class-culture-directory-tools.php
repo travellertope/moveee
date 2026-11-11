@@ -21,6 +21,7 @@ class Culture_Directory_Tools {
 		add_action( 'wp_ajax_culture_dir_wiki_fetch',     array( __CLASS__, 'ajax_wiki_fetch' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_seed',      array( __CLASS__, 'ajax_wiki_seed' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_backfill',  array( __CLASS__, 'ajax_wiki_backfill' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_audit',     array( __CLASS__, 'ajax_wiki_audit' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
 
@@ -420,6 +421,78 @@ class Culture_Directory_Tools {
 			'total'     => $total,
 			'done'      => $done,
 			'results'   => $results,
+		) );
+	}
+
+	/**
+	 * Audit all enriched directory entries for bad Wikipedia matches and clear them.
+	 *
+	 * Scans every published entry that has a _wiki_title set (and not _not_found),
+	 * runs wiki_title_matches() against it, and for every mismatch: deletes _wiki_title,
+	 * _wiki_url, and all dir_infobox_* meta so a subsequent backfill re-fetches
+	 * correct (or no) data.
+	 *
+	 * Returns: { checked, cleared, entries[] }
+	 */
+	public static function ajax_wiki_audit() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Insufficient permissions.' );
+		}
+
+		global $wpdb;
+
+		// Fetch all published entries that have a real (non-"_not_found") _wiki_title.
+		$rows = $wpdb->get_results(
+			"SELECT p.ID, p.post_title, pm.meta_value AS wiki_title
+			   FROM {$wpdb->posts} p
+			   INNER JOIN {$wpdb->postmeta} pm
+			       ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+			  WHERE p.post_type   = 'culture_directory'
+			    AND p.post_status = 'publish'
+			    AND pm.meta_value != '_not_found'",
+			ARRAY_A
+		);
+
+		$checked = 0;
+		$cleared = 0;
+		$entries = array();
+
+		foreach ( $rows as $row ) {
+			$post_id    = (int) $row['ID'];
+			$post_title = $row['post_title'];
+			$wiki_title = $row['wiki_title'];
+
+			$checked++;
+
+			if ( ! self::wiki_title_matches( $post_title, $wiki_title ) ) {
+				// Remove the Wikipedia tracking meta.
+				delete_post_meta( $post_id, '_wiki_title' );
+				delete_post_meta( $post_id, '_wiki_url' );
+
+				// Remove all infobox fields that the backfiller may have written.
+				$infobox_keys = $wpdb->get_col( $wpdb->prepare(
+					"SELECT DISTINCT meta_key FROM {$wpdb->postmeta}
+					  WHERE post_id = %d AND meta_key LIKE 'dir_infobox_%'",
+					$post_id
+				) );
+				foreach ( $infobox_keys as $key ) {
+					delete_post_meta( $post_id, $key );
+				}
+
+				$cleared++;
+				$entries[] = array(
+					'id'        => $post_id,
+					'title'     => $post_title,
+					'wiki_was'  => $wiki_title,
+				);
+			}
+		}
+
+		wp_send_json_success( array(
+			'checked' => $checked,
+			'cleared' => $cleared,
+			'entries' => $entries,
 		) );
 	}
 
@@ -913,6 +986,18 @@ class Culture_Directory_Tools {
 				<div id="cdwb-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
 			</div>
 
+			<div class="cdt-panel" style="margin-top:16px;">
+				<h3 style="margin-top:0;"><?php esc_html_e( 'Audit: clear bad Wikipedia matches', 'culture-community' ); ?></h3>
+				<p class="description">
+					<?php esc_html_e( 'Scans all enriched entries and removes data for any entry whose stored Wikipedia article title does not share a significant word with the entry\'s own title (e.g. "Water Margin" stored for "Women on the Margins"). Cleared entries will be re-processed on the next backfill run.', 'culture-community' ); ?>
+				</p>
+				<button id="cdwb-audit-btn" class="button button-secondary">
+					<?php esc_html_e( 'Audit & clear bad matches →', 'culture-community' ); ?>
+				</button>
+				<span class="spinner" id="cdwb-audit-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+				<div id="cdwb-audit-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+			</div>
+
 			<?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
 			<div class="cdt-panel">
 				<h2><?php esc_html_e( 'Wikipedia Seeder', 'culture-community' ); ?></h2>
@@ -1072,6 +1157,48 @@ class Culture_Directory_Tools {
 					stop();
 				});
 			}());
+
+			/* ── Audit: clear bad Wikipedia matches ── */
+			$('#cdwb-audit-btn').on('click', function() {
+				var $btn     = $(this);
+				var $spinner = $('#cdwb-audit-spinner');
+				var $log     = $('#cdwb-audit-log');
+
+				$btn.prop('disabled', true);
+				$spinner.show();
+				$log.empty().show().append('<div>Scanning all enriched entries…</div>');
+
+				$.post(ajaxurl, {
+					action: 'culture_dir_wiki_audit',
+					nonce:  '<?php echo esc_js( wp_create_nonce( 'culture_dir_tools' ) ); ?>',
+				})
+				.done(function(res) {
+					$spinner.hide();
+					$btn.prop('disabled', false);
+					if (!res.success) {
+						$log.append('<div style="color:red;">Error: ' + (res.data || 'Unknown error') + '</div>');
+						return;
+					}
+					var d = res.data;
+					$log.append('<div><strong>' + d.checked + '</strong> entries checked, <strong>' + d.cleared + '</strong> bad matches cleared.</div>');
+					if (d.entries && d.entries.length) {
+						$log.append('<div style="margin-top:6px;color:#8a2d10;font-weight:600;">Cleared entries (will be re-processed on next backfill):</div>');
+						$.each(d.entries, function(i, e) {
+							$log.append('<div>✕ ' + $('<span>').text(e.title).html() + ' <span style="color:#999;">(was: ' + $('<span>').text(e.wiki_was).html() + ')</span></div>');
+						});
+					} else {
+						$log.append('<div style="color:green;">No bad matches found — all stored Wikipedia titles look correct.</div>');
+					}
+					if (d.cleared > 0) {
+						$log.append('<div style="margin-top:8px;">Run <strong>Start backfill</strong> to re-enrich the cleared entries.</div>');
+					}
+				})
+				.fail(function() {
+					$spinner.hide();
+					$btn.prop('disabled', false);
+					$log.append('<div style="color:red;">Request failed.</div>');
+				});
+			});
 
 			/* ── Wikipedia Seeder ── */
 			$('input[name="cdw-source"]').on('change', function() {
