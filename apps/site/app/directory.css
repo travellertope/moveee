@@ -1443,6 +1443,34 @@
   margin: 0;
 }
 
+/* Wikipedia enrichment badge */
+.dir-wiki-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .04em;
+  text-decoration: none;
+  background: rgba(20,17,13,.06);
+  color: var(--dir-muted);
+  border: 1px solid rgba(20,17,13,.12);
+  transition: background .15s;
+}
+.dir-wiki-badge:hover {
+  background: rgba(20,17,13,.1);
+  color: var(--ink);
+}
+.dir-wiki-badge--loading {
+  animation: dir-wiki-pulse 1.4s ease-in-out infinite;
+  cursor: default;
+}
+@keyframes dir-wiki-pulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+
 /* Cover preview in review section (catalog picks) */
 .dir-review-cover {
   margin-bottom: 24px;

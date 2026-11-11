@@ -441,6 +441,59 @@ class Culture_Directory {
     // ── Phase 3: Aggregate recomputation ─────────────────────────────────────
 
     /**
+     * Hooked to save_post_culture_directory — propagates the entry's current
+     * featured image (or _external_cover_url fallback) to all linked community
+     * posts. Fixes cover images that were cached at submit time before an image
+     * was uploaded to the directory entry.
+     *
+     * To backfill already-published posts: re-save the affected directory entry
+     * in WP Admin. The hook runs and updates every linked community post.
+     */
+    public static function sync_linked_post_covers( $post_id ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        if ( wp_is_post_revision( $post_id ) ) {
+            return;
+        }
+
+        $cover = get_the_post_thumbnail_url( $post_id, 'full' )
+              ?: ( get_post_meta( $post_id, '_external_cover_url', true )
+                  ?: get_post_meta( $post_id, '_culture_dir_image_url', true ) );
+        if ( ! $cover ) {
+            return;
+        }
+
+        // Determine the cover meta key from the entry type taxonomy.
+        $terms = wp_get_object_terms( $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
+        if ( is_wp_error( $terms ) || empty( $terms ) ) {
+            return;
+        }
+        $entry_type = $terms[0];
+        $meta_key_map = array(
+            'film'  => '_film_cover_url',
+            'book'  => '_book_cover_url',
+            'album' => '_music_cover_url',
+        );
+        if ( ! isset( $meta_key_map[ $entry_type ] ) ) {
+            return;
+        }
+        $cover_meta_key = $meta_key_map[ $entry_type ];
+
+        // Find all community posts linked to this directory entry.
+        global $wpdb;
+        $linked_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta}
+             WHERE meta_key = '_linked_directory_id' AND meta_value = %d",
+            $post_id
+        ) );
+
+        foreach ( $linked_ids as $lid ) {
+            update_post_meta( (int) $lid, $cover_meta_key, esc_url_raw( $cover ) );
+        }
+    }
+
+    /**
      * Hooked to save_post_{culture_post} — recomputes rating/review count on
      * the linked directory entry whenever a community post is saved/deleted.
      */

@@ -71,6 +71,11 @@ export default function DirectorySubmitForm({
   const [photoRef, setPhotoRef] = useState("");
   const [infobox, setInfobox] = useState<Record<string, string> | null>(null);
 
+  // Wikipedia enrichment state
+  const [enriching, setEnriching] = useState(false);
+  const [wikiTitle, setWikiTitle] = useState("");
+  const [wikiUrl, setWikiUrl] = useState("");
+
   // Catalog search state
   const [catalogQuery, setCatalogQuery] = useState("");
   const [catalogResults, setCatalogResults] = useState<CatalogResult[]>([]);
@@ -154,6 +159,8 @@ export default function DirectorySubmitForm({
     setCatalogOpen(false);
     setCatalogPicked(true);
     setCatalogQuery(result.title);
+    setWikiTitle("");
+    setWikiUrl("");
 
     // Pre-fill form fields from catalog result
     setTitle(result.title);
@@ -167,7 +174,6 @@ export default function DirectorySubmitForm({
     if (result.description) {
       starterExcerpt = result.description.slice(0, 300).replace(/\s+\S+$/, "…");
     } else if (entryType === "place" || entryType === "food") {
-      // Places: use address as the seed; user will write the real description
       starterExcerpt = result.about
         ? `${result.title} — ${result.about}.`
         : result.title;
@@ -176,6 +182,64 @@ export default function DirectorySubmitForm({
     }
     setExcerpt(starterExcerpt);
     setContent("");
+
+    // Auto-enrich from Wikipedia/Wikidata in the background
+    const pickTitle = result.title;
+    const pickType = entryType;
+    const catalogCover = result.coverUrl;
+    const catalogInfobox = result.infobox ?? {};
+
+    setEnriching(true);
+    fetch(`/api/directory/enrich?q=${encodeURIComponent(pickTitle)}&type=${encodeURIComponent(pickType)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data?.found) return;
+
+        // Set Wikipedia attribution
+        if (data.wikiTitle) setWikiTitle(data.wikiTitle);
+        if (data.wikiUrl) setWikiUrl(data.wikiUrl);
+
+        // Populate content (full entry) from Wikipedia description
+        if (data.description) {
+          const paras = data.description
+            .split(/\n{2,}/)
+            .map((p: string) => p.trim())
+            .filter(Boolean);
+          const html = paras.map((p: string) => `<p>${p}</p>`).join("\n");
+          setContent(html);
+
+          // Improve excerpt if no catalog description was available
+          setExcerpt((prev) => {
+            if (prev && !prev.endsWith(".")) return prev;
+            // If previous excerpt was just "Title — address." style, upgrade it
+            if (!result.description && data.description) {
+              const firstSentence = data.description.split(/\.\s/)[0];
+              return firstSentence
+                ? firstSentence.slice(0, 280).replace(/\s+\S+$/, "…")
+                : prev;
+            }
+            return prev;
+          });
+        }
+
+        // Use Wikipedia cover only if the catalog didn't provide one
+        if (data.coverUrl && !catalogCover) {
+          setCoverUrl(data.coverUrl);
+        }
+
+        // Merge infobox: catalog fields take priority, Wikipedia fills gaps
+        if (data.infobox) {
+          setInfobox((prev) => {
+            const base: Record<string, string> = { ...catalogInfobox, ...(prev ?? {}) };
+            for (const [k, v] of Object.entries(data.infobox as Record<string, string>)) {
+              if (!base[k] && v) base[k] = v;
+            }
+            return Object.keys(base).length ? base : null;
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setEnriching(false));
   }
 
   function handleCatalogClear() {
@@ -189,6 +253,9 @@ export default function DirectorySubmitForm({
     setTitle("");
     setExcerpt("");
     setContent("");
+    setWikiTitle("");
+    setWikiUrl("");
+    setEnriching(false);
   }
 
   // When entry type changes away from a catalog type, clear catalog state
@@ -467,12 +534,27 @@ export default function DirectorySubmitForm({
               )}
 
               {/* Cover preview after picking */}
-              {catalogPicked && coverUrl && (
+              {catalogPicked && (
                 <div className="dir-catalog-picked">
-                  <img src={coverUrl} alt={title} className="dir-catalog-cover" />
+                  {coverUrl && <img src={coverUrl} alt={title} className="dir-catalog-cover" />}
                   <div className="dir-catalog-picked-info">
                     <strong>{title}</strong>
                     {excerpt && <p>{excerpt.slice(0, 120)}{excerpt.length > 120 ? "…" : ""}</p>}
+                    {enriching && (
+                      <span className="dir-wiki-badge dir-wiki-badge--loading">
+                        Enriching from Wikipedia…
+                      </span>
+                    )}
+                    {!enriching && wikiTitle && (
+                      <a
+                        href={wikiUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="dir-wiki-badge"
+                      >
+                        Wikipedia · {wikiTitle}
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
@@ -530,7 +612,15 @@ export default function DirectorySubmitForm({
         <div className="dir-review-section">
           {!isImproveMode && catalogPicked && (
             <div className="dir-review-notice">
-              Details filled from the catalog — add your own description and content before submitting.
+              Details filled from the catalog
+              {wikiTitle && (
+                <> and enriched from{" "}
+                  <a href={wikiUrl} target="_blank" rel="noopener noreferrer">
+                    Wikipedia
+                  </a>
+                </>
+              )}
+              {" "}— review and edit before submitting.
             </div>
           )}
           {!isImproveMode && !catalogPicked && (
