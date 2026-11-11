@@ -284,36 +284,68 @@ class Culture_Directory_Tools {
 
 		global $wpdb;
 
-		$batch_num  = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
-		$batch_size = 5;
-		$overwrite  = ! empty( $_POST['overwrite'] );
-		$offset     = $batch_num * $batch_size;
+		$batch_num    = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
+		$batch_size   = 5;
+		$overwrite    = ! empty( $_POST['overwrite'] );
+		$retry_failed = ! empty( $_POST['retry_failed'] );
+		$offset       = $batch_num * $batch_size;
 
-		// Count entries not yet Wikipedia-enriched (no _wiki_title meta row)
-		$total = (int) $wpdb->get_var(
-			"SELECT COUNT(DISTINCT p.ID)
-			 FROM {$wpdb->posts} p
-			 LEFT JOIN {$wpdb->postmeta} pm
-			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
-			 WHERE p.post_type = 'culture_directory'
-			   AND p.post_status = 'publish'
-			   AND pm.meta_value IS NULL"
-		);
+		if ( $retry_failed ) {
+			// Retry mode: entries that were previously searched but not found.
+			$total = (int) $wpdb->get_var(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value = '_not_found'"
+			);
 
-		// Get this batch
-		$ids = $wpdb->get_col( $wpdb->prepare(
-			"SELECT DISTINCT p.ID
-			 FROM {$wpdb->posts} p
-			 LEFT JOIN {$wpdb->postmeta} pm
-			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
-			 WHERE p.post_type = 'culture_directory'
-			   AND p.post_status = 'publish'
-			   AND pm.meta_value IS NULL
-			 ORDER BY p.ID ASC
-			 LIMIT %d OFFSET %d",
-			$batch_size,
-			$offset
-		) );
+			$ids = $wpdb->get_col( $wpdb->prepare(
+				"SELECT DISTINCT p.ID
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value = '_not_found'
+				 ORDER BY p.ID ASC
+				 LIMIT %d OFFSET %d",
+				$batch_size,
+				$offset
+			) );
+
+			// Clear the _not_found marker so a re-match can be saved.
+			foreach ( $ids as $id ) {
+				delete_post_meta( (int) $id, '_wiki_title' );
+			}
+		} else {
+			// Normal mode: entries not yet processed (no _wiki_title meta row).
+			$total = (int) $wpdb->get_var(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 LEFT JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value IS NULL"
+			);
+
+			$ids = $wpdb->get_col( $wpdb->prepare(
+				"SELECT DISTINCT p.ID
+				 FROM {$wpdb->posts} p
+				 LEFT JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value IS NULL
+				 ORDER BY p.ID ASC
+				 LIMIT %d OFFSET %d",
+				$batch_size,
+				$offset
+			) );
+		}
 
 		if ( empty( $ids ) ) {
 			wp_send_json_success( array(
@@ -394,23 +426,43 @@ class Culture_Directory_Tools {
 	/** Search Wikipedia for the best-matching article title. */
 	private static function wiki_opensearch( string $title, string $entry_type ): ?string {
 		static $hints = array( 'film' => 'film', 'book' => 'novel', 'album' => 'album' );
-		$hint  = $hints[ $entry_type ] ?? '';
-		$query = $hint ? "$title $hint" : $title;
+		$hint = $hints[ $entry_type ] ?? '';
 
-		$url = add_query_arg( array(
-			'action'    => 'opensearch',
-			'search'    => $query,
-			'limit'     => '3',
-			'redirects' => 'resolve',
-			'format'    => 'json',
-		), 'https://en.wikipedia.org/w/api.php' );
+		// Inner helper: run opensearch for a given query string.
+		$search = function( string $q ) use ( $hint ): ?string {
+			$query = $hint ? "$q $hint" : $q;
+			$url   = add_query_arg( array(
+				'action'    => 'opensearch',
+				'search'    => $query,
+				'limit'     => '5',
+				'redirects' => 'resolve',
+				'format'    => 'json',
+			), 'https://en.wikipedia.org/w/api.php' );
 
-		$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
-		if ( is_wp_error( $response ) ) return null;
+			$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
+			if ( is_wp_error( $response ) ) return null;
 
-		$body   = json_decode( wp_remote_retrieve_body( $response ), true );
-		$titles = $body[1] ?? array();
-		return ! empty( $titles[0] ) ? (string) $titles[0] : null;
+			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+			$titles = $body[1] ?? array();
+			return ! empty( $titles[0] ) ? (string) $titles[0] : null;
+		};
+
+		// First attempt: full title.
+		$result = $search( $title );
+		if ( $result ) return $result;
+
+		// Fallback: strip subtitle after ': ' — e.g. "The Tortured Poets Department: The Anthology"
+		// → "The Tortured Poets Department". Many albums, films and books carry edition/sequel
+		// subtitles not reflected in the Wikipedia article title, so a bare title search is more
+		// likely to match.
+		$colon_pos = strpos( $title, ': ' );
+		if ( $colon_pos !== false ) {
+			$base   = substr( $title, 0, $colon_pos );
+			$result = $search( $base );
+			if ( $result ) return $result;
+		}
+
+		return null;
 	}
 
 	/**
@@ -737,6 +789,18 @@ class Culture_Directory_Tools {
 					</p>
 				</div>
 
+				<?php
+				$backfill_not_found = (int) $wpdb->get_var(
+					"SELECT COUNT(DISTINCT p.ID)
+					 FROM {$wpdb->posts} p
+					 INNER JOIN {$wpdb->postmeta} pm
+					     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+					 WHERE p.post_type = 'culture_directory'
+					   AND p.post_status = 'publish'
+					   AND pm.meta_value = '_not_found'"
+				);
+				?>
+
 				<label style="display:block;margin-bottom:12px;">
 					<input type="checkbox" id="cdwb-overwrite">
 					<?php esc_html_e( 'Overwrite existing content and cover on all entries (AI-generated covers are always replaced even without this)', 'culture-community' ); ?>
@@ -744,6 +808,9 @@ class Culture_Directory_Tools {
 
 				<button id="cdwb-start-btn" class="button button-primary" <?php echo $backfill_pending < 1 ? 'disabled' : ''; ?>>
 					<?php esc_html_e( 'Start backfill →', 'culture-community' ); ?>
+				</button>
+				<button id="cdwb-retry-btn" class="button button-secondary" style="margin-left:8px;" <?php echo $backfill_not_found < 1 ? 'disabled' : ''; ?>>
+					<?php printf( esc_html__( 'Retry %d not-found →', 'culture-community' ), $backfill_not_found ); ?>
 				</button>
 				<button id="cdwb-stop-btn" class="button" style="display:none;margin-left:8px;">
 					<?php esc_html_e( 'Stop', 'culture-community' ); ?>
@@ -825,6 +892,7 @@ class Culture_Directory_Tools {
 				var currentBatch = 0;
 				var totalProcessed = 0;
 				var totalUpdated = 0;
+				var retryMode = false;
 
 				function log(text, isError) {
 					var $log = $('#cdwb-log').show();
@@ -837,10 +905,11 @@ class Culture_Directory_Tools {
 					if (!running) return;
 
 					$.post(ajaxUrl, {
-						action:    'culture_dir_wiki_backfill',
-						nonce:     nonce,
-						batch:     currentBatch,
-						overwrite: $('#cdwb-overwrite').is(':checked') ? '1' : '',
+						action:        'culture_dir_wiki_backfill',
+						nonce:         nonce,
+						batch:         currentBatch,
+						overwrite:     $('#cdwb-overwrite').is(':checked') ? '1' : '',
+						retry_failed:  retryMode ? '1' : '',
 					})
 					.done(function(res) {
 						if (!running) return;
@@ -882,22 +951,27 @@ class Culture_Directory_Tools {
 
 				function stop() {
 					running = false;
-					$('#cdwb-start-btn').prop('disabled', false).show();
+					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', false);
 					$('#cdwb-stop-btn').hide();
 					$('#cdwb-spinner').hide();
 				}
 
-				$('#cdwb-start-btn').on('click', function() {
+				function start(isRetry) {
 					running = true;
+					retryMode = !!isRetry;
 					currentBatch = 0;
 					totalProcessed = 0;
 					totalUpdated = 0;
-					$(this).prop('disabled', true);
+					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', true);
 					$('#cdwb-stop-btn').show();
 					$('#cdwb-spinner').show();
 					$('#cdwb-log').empty().show();
+					if (isRetry) log('Retrying not-found entries with improved subtitle search…');
 					tick();
-				});
+				}
+
+				$('#cdwb-start-btn').on('click', function() { start(false); });
+				$('#cdwb-retry-btn').on('click', function() { start(true); });
 
 				$('#cdwb-stop-btn').on('click', function() {
 					log('Stopped by user.');
