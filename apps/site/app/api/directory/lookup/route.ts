@@ -273,6 +273,17 @@ async function lookupWikipedia(q: string, type: string) {
     .slice(0, 5);
 }
 
+function mergeWithWiki(
+  catalogResults: { title: string }[],
+  wikiResults: { title: string }[]
+) {
+  const catalogTitles = new Set(catalogResults.map((r) => normalizeTitle(r.title)));
+  const wikiOnly = wikiResults.filter(
+    (r) => !catalogTitles.has(normalizeTitle(r.title))
+  );
+  return [...catalogResults, ...wikiOnly].slice(0, 10);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") ?? "";
@@ -280,29 +291,29 @@ export async function GET(req: NextRequest) {
 
   if (q.length < 2) return NextResponse.json([]);
 
-  if (type === "place" || type === "food") {
-    return NextResponse.json(await lookupPlaces(q, type));
-  }
-
   if (type === "book" || type === "film" || type === "album") {
-    // Run catalog + Wikipedia searches in parallel
     const [catalogResults, wikiResults] = await Promise.all([
       type === "book"
         ? lookupBooks(q)
         : lookupITunes(q, type === "film" ? "movie" : "music"),
       lookupWikipedia(q, type),
     ]);
-
-    // Catalog results take priority; Wikipedia fills gaps for titles not found there
-    const catalogTitles = new Set(
-      (catalogResults as { title: string }[]).map((r) => normalizeTitle(r.title))
-    );
-    const wikiOnly = wikiResults.filter(
-      (r) => !catalogTitles.has(normalizeTitle(r.title))
-    );
-
-    return NextResponse.json([...catalogResults, ...wikiOnly].slice(0, 10));
+    return NextResponse.json(mergeWithWiki(catalogResults, wikiResults));
   }
 
-  return NextResponse.json({ error: "Invalid type. Use book, film, album, place, or food." }, { status: 400 });
+  if (type === "place" || type === "food") {
+    const [catalogResults, wikiResults] = await Promise.all([
+      lookupPlaces(q, type as "place" | "food"),
+      lookupWikipedia(q, type),
+    ]);
+    return NextResponse.json(mergeWithWiki(catalogResults, wikiResults));
+  }
+
+  // All other types (person, movement, genre, concept, artwork, fashion…)
+  // have no dedicated catalog — Wikipedia only.
+  if (type) {
+    return NextResponse.json(await lookupWikipedia(q, type));
+  }
+
+  return NextResponse.json([]);
 }
