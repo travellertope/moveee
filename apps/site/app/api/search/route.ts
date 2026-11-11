@@ -103,20 +103,30 @@ async function searchHubs(q: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get('q')?.trim();
+  const q    = req.nextUrl.searchParams.get('q')?.trim();
+  const type = req.nextUrl.searchParams.get('type') ?? 'all'; // 'all' | 'pulse' | 'news' | 'editorial' | 'event' | 'directory' | 'quote'
   if (!q || q.length < 2) {
-    return NextResponse.json({ magazine: [], events: [], origins: [], products: [], quotes: [], directory: [], pulse: [], community: [], hubs: [] });
+    return NextResponse.json({ results: [], magazine: [], events: [], origins: [], products: [], quotes: [], directory: [], pulse: [], community: [], hubs: [] });
   }
+
+  // Only fetch what this type filter actually needs
+  const needsPosts     = type === 'all' || type === 'editorial' || type === 'news' || type === 'event';
+  const needsProducts  = false; // shop not surfaced in search modal
+  const needsQuotes    = type === 'all' || type === 'quote';
+  const needsDirectory = type === 'all' || type === 'directory';
+  const needsPulse     = type === 'all' || type === 'pulse';
+  const needsCommunity = type === 'all' || type === 'pulse';
+  const needsHubs      = type === 'all';
 
   const [postsResult, productsResult, quotesResult, directoryResult, pulseResult, communityResult, hubsResult] =
     await Promise.allSettled([
-      gql(SEARCH_POSTS, { search: q }),
-      gql(SEARCH_PRODUCTS, { search: q }),
-      gql(SEARCH_QUOTES, { search: q }),
-      gql(SEARCH_DIRECTORY, { search: q }),
-      searchPulseStories(q),
-      searchCommunityPosts(q),
-      searchHubs(q),
+      needsPosts     ? gql(SEARCH_POSTS, { search: q })       : Promise.resolve(null),
+      needsProducts  ? gql(SEARCH_PRODUCTS, { search: q })    : Promise.resolve(null),
+      needsQuotes    ? gql(SEARCH_QUOTES, { search: q })      : Promise.resolve(null),
+      needsDirectory ? gql(SEARCH_DIRECTORY, { search: q })   : Promise.resolve(null),
+      needsPulse     ? searchPulseStories(q)                  : Promise.resolve([]),
+      needsCommunity ? searchCommunityPosts(q)                : Promise.resolve([]),
+      needsHubs      ? searchHubs(q)                          : Promise.resolve([]),
     ]);
 
   const posts: any[] = postsResult.status === 'fulfilled' && postsResult.value ? postsResult.value.posts?.nodes ?? [] : [];
@@ -179,6 +189,37 @@ export async function GET(req: NextRequest) {
 
   const hubs: any[] = hubsResult.status === 'fulfilled' ? hubsResult.value : [];
 
-  return NextResponse.json({ magazine, events, origins, products, quotes, directory, pulse, community, hubs });
+  // Flat results array for SearchModal — { id, title, subtype, href }
+  // Ordered by specificity: directory, quotes, editorial, events, pulse, community
+  const results: { id: number | string; title: string; subtype: string; href: string }[] = [];
+
+  if (needsDirectory) {
+    for (const d of directory) {
+      results.push({ id: d.id, title: d.title, subtype: 'culture_directory', href: `/directory/${d.slug}` });
+    }
+  }
+  if (needsQuotes) {
+    for (const qt of quotes) {
+      results.push({ id: qt.id, title: qt.title, subtype: 'culture_quote', href: `/quotes/${qt.slug}` });
+    }
+  }
+  if (needsPosts) {
+    for (const p of magazine) {
+      results.push({ id: p.id, title: p.title, subtype: 'post', href: `/magazine/${p.slug}` });
+    }
+    for (const ev of events) {
+      results.push({ id: ev.id, title: ev.title, subtype: 'culture_event', href: `/events/${ev.slug}` });
+    }
+  }
+  if (needsPulse) {
+    for (const ps of pulse) {
+      results.push({ id: ps.id, title: ps.title, subtype: 'pulse_story', href: `/pulse/${ps.slug}` });
+    }
+    for (const cm of community) {
+      results.push({ id: cm.id, title: cm.title, subtype: 'culture_post', href: `/community/${cm.slug}` });
+    }
+  }
+
+  return NextResponse.json({ results, magazine, events, origins, products, quotes, directory, pulse, community, hubs });
 }
 
