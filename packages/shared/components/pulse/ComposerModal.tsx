@@ -114,6 +114,10 @@ interface InitialQuote {
   authorEntry?: { id: number; title: string };
   sourceEntry?: { id: number; title: string };
   quoteType?: string;
+  /** Pre-populate the "Who said it?" search field with this name (primary
+   * artist/author) so the user sees relevant directory matches immediately.
+   * Only used when authorEntry is not provided (i.e. source-type entries). */
+  authorName?: string;
 }
 
 interface InitialReview {
@@ -226,6 +230,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   // Quote
   const [qText, setQText]           = useState("");
   const [qAuthorEntry, setQAuthorEntry] = useState<any>(null);
+  const [qAuthorInitialQuery, setQAuthorInitialQuery] = useState<string | undefined>();
   const [qSource, setQSource]       = useState("");
   const [qSourceEntry, setQSourceEntry] = useState<any>(null);
   const [qType, setQType]           = useState("");
@@ -305,6 +310,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
       if (initialQuote?.authorEntry) setQAuthorEntry(initialQuote.authorEntry);
       if (initialQuote?.sourceEntry) setQSourceEntry(initialQuote.sourceEntry);
       if (initialQuote?.quoteType)   setQType(initialQuote.quoteType);
+      setQAuthorInitialQuery(initialQuote?.authorName);
       if (initialReview) {
         setRevSubtype(initialReview.subtype);
         setRevEntry(initialReview.entry);
@@ -1045,6 +1051,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   typeFilter="person"
                   placeholder="Who said it? *"
                   aboutFieldLabel="Known for"
+                  initialQuery={qAuthorInitialQuery}
                 />
               </div>
 

@@ -255,6 +255,16 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     return null;
   })();
 
+  // Clean author/artist name for pre-filling the "Who said it?" field when
+  // the user opens Save a Line from a source-type entry (album, book, film)
+  const quoteAuthorName = (() => {
+    if (typeSlug === "book") return entry.aboutValue || infobox["author"] || null;
+    if (typeSlug === "album") return entry.aboutValue || infobox["artist"] || null;
+    if (typeSlug === "film") return infobox["director"] || null;
+    if (typeSlug === "tv-series") return infobox["creator"] || null;
+    return null;
+  })();
+
   // Which fields go in the type-specific details section
   const DETAILS_SECTION_LABEL: Record<string, string> = {
     book:        "Publication Info",
@@ -338,6 +348,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               quoteLinkRole={quoteLinkRole}
               quoteLinkType={quoteLinkType || undefined}
               typeSlug={typeSlug}
+              prefilledAuthor={quoteAuthorName || undefined}
             />
           )}
 

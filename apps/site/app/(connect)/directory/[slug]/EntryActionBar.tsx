@@ -33,6 +33,7 @@ export default function EntryActionBar({
   quoteLinkRole,
   quoteLinkType,
   typeSlug,
+  prefilledAuthor,
 }: {
   directoryId: number;
   isLoggedIn: boolean;
@@ -41,6 +42,9 @@ export default function EntryActionBar({
   quoteLinkRole: "author" | "source";
   quoteLinkType?: string;
   typeSlug?: string;
+  /** Primary artist/author name to pre-populate the "Who said it?" field when
+   * opening the Save a Line composer from a source-type entry (album, book, film). */
+  prefilledAuthor?: string;
 }) {
   const [state, setState]       = useState<EntryState | null>(null);
   const [logOpen, setLogOpen]   = useState(false);
@@ -288,7 +292,7 @@ export default function EntryActionBar({
         open={saveOpen}
         onClose={() => setSaveOpen(false)}
         initialTab="quote"
-        initialQuote={{ authorEntry, sourceEntry, quoteType }}
+        initialQuote={{ authorEntry, sourceEntry, quoteType, authorName: prefilledAuthor }}
       />
       <ComposerModal
         open={reviewOpen}
