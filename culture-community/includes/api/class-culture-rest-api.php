@@ -12,6 +12,8 @@ class Culture_REST_API {
     public static function init() {
         add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
         add_action( 'save_post_culture_post', array( 'Culture_Directory', 'recompute_aggregates_on_post_save' ), 10, 2 );
+        // Propagate directory entry cover image to all linked community posts whenever the entry is saved.
+        add_action( 'save_post_culture_directory', array( 'Culture_Directory', 'sync_linked_post_covers' ), 20, 1 );
         // Award reputation when a community post is created via the REST API.
         add_action( 'rest_after_insert_culture_post', array( __CLASS__, 'handle_community_post_created' ), 10, 3 );
         // Inject platform avatar URL into WP comment REST responses.
