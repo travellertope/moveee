@@ -482,6 +482,31 @@ class Culture_Directory_Tools {
 			if ( $result ) return $result;
 		}
 
+		// Fallback 4: Wikipedia full-text search — handles cases where the article title
+		// differs substantially from the stored entry title, e.g. "The Odyssey of Homer"
+		// stored in the directory but the Wikipedia article is simply "Odyssey".
+		// Uses action=query&list=search (CirrusSearch) rather than opensearch, which only
+		// does title prefix/fuzzy matching and misses these.
+		$query    = $hint ? "$title $hint" : $title;
+		$fts_url  = add_query_arg( array(
+			'action'   => 'query',
+			'list'     => 'search',
+			'srsearch' => $query,
+			'srlimit'  => '3',
+			'srinfo'   => '',
+			'srprop'   => 'titlesnippet',
+			'format'   => 'json',
+		), 'https://en.wikipedia.org/w/api.php' );
+
+		$fts_response = wp_remote_get( $fts_url, array( 'timeout' => 10 ) );
+		if ( ! is_wp_error( $fts_response ) ) {
+			$fts_body    = json_decode( wp_remote_retrieve_body( $fts_response ), true );
+			$fts_results = $fts_body['query']['search'] ?? array();
+			if ( ! empty( $fts_results[0]['title'] ) ) {
+				return (string) $fts_results[0]['title'];
+			}
+		}
+
 		return null;
 	}
 
