@@ -94,29 +94,49 @@ const TYPE_HINT: Record<string, string> = {
 
 const STOPWORDS = new Set(["the", "and", "for", "with", "from", "that", "this", "into", "also", "more", "over", "some", "have", "been", "were", "their"]);
 
+/** Strip diacritics and return lowercase ASCII — "Candomblé" → "candomble". */
+function asciiLower(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
 function sigWords(text: string): string[] {
-  return text.toLowerCase()
+  return asciiLower(text)
     .split(/[^a-z0-9]+/)
     .filter(w => w.length >= 4 && !STOPWORDS.has(w));
 }
 
+/** Check whether a word (or its de-pluralised/pluralised form) appears as a whole word in haystack.
+ * Plural tolerance only applies for 7+ character stems to avoid false positives
+ * ("margins"→"margin" at 6 chars is excluded; "festivals"→"festival" at 8 chars is included). */
+function wordIn(word: string, haystack: string): boolean {
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (new RegExp(`\\b${esc(word)}\\b`).test(haystack)) return true;
+  // Plural query word → check stem (only for long stems, 7+ chars)
+  if (word.endsWith("s")) {
+    const stem = word.slice(0, -1);
+    if (stem.length >= 7 && new RegExp(`\\b${esc(stem)}\\b`).test(haystack)) return true;
+  }
+  // Singular query word → check plural form (only for long words, 7+ chars)
+  if (word.length >= 7 && new RegExp(`\\b${esc(word)}s\\b`).test(haystack)) return true;
+  return false;
+}
+
 /** Validates that a Wikipedia candidate title is plausibly related to the query
  * by requiring at least one significant word (4+ chars, non-stopword) to appear
- * as a whole word in both directions. Prevents false positives like "Water Margin"
- * matching "Women on the Margins". */
+ * as a whole word in both directions. Handles diacritics and simple plurals.
+ * Prevents false positives like "Water Margin" matching "Women on the Margins". */
 function wikiTitleMatches(original: string, candidate: string): boolean {
   const origWords = sigWords(original);
   if (!origWords.length) return true; // very short title — skip validation
 
-  const candLower = candidate.toLowerCase();
-  const origLower = original.toLowerCase();
-  const wordBoundary = (w: string) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
+  const candAscii = asciiLower(candidate);
+  const origAscii = asciiLower(original);
 
   for (const w of origWords) {
-    if (wordBoundary(w).test(candLower)) return true;
+    if (wordIn(w, candAscii)) return true;
   }
   for (const w of sigWords(candidate)) {
-    if (wordBoundary(w).test(origLower)) return true;
+    if (wordIn(w, origAscii)) return true;
   }
   return false;
 }

@@ -497,17 +497,31 @@ class Culture_Directory_Tools {
 	}
 
 	/**
+	 * Strip diacritics from a UTF-8 string and return plain ASCII lowercase.
+	 * "Candomblé" → "candomble", "Ògún" → "ogun". Uses iconv TRANSLIT which
+	 * is available in virtually every PHP setup.
+	 */
+	private static function ascii_lower( string $text ): string {
+		$ascii = iconv( 'UTF-8', 'ASCII//TRANSLIT//IGNORE', $text );
+		return strtolower( $ascii !== false ? $ascii : $text );
+	}
+
+	/**
 	 * Checks whether a Wikipedia article title is a plausible match for the
 	 * original directory entry title. At least one significant word (4+ chars,
 	 * not a stopword) from the original must appear as a whole word in the
-	 * candidate, or vice versa. Prevents false positives like "Water Margin"
-	 * matching "Women on the Margins" because they share the root "margin".
+	 * candidate, or vice versa.
+	 *
+	 * Handles:
+	 *  - Diacritics: "Candomblé" matches "Candomblé" after ASCII normalisation.
+	 *  - Simple plurals: "Festival" matches "Festivals" and vice versa.
+	 *  - Prevents false positives: "Water Margin" ≠ "Women on the Margins".
 	 */
 	private static function wiki_title_matches( string $original, string $candidate ): bool {
 		static $stopwords = array( 'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'also', 'more', 'over', 'some', 'have', 'been', 'were', 'their' );
 
 		$sig_words = function( string $text ) use ( $stopwords ): array {
-			$words = preg_split( '/[^a-z0-9]+/', strtolower( $text ), -1, PREG_SPLIT_NO_EMPTY );
+			$words = preg_split( '/[^a-z0-9]+/', self::ascii_lower( $text ), -1, PREG_SPLIT_NO_EMPTY );
 			return array_values( array_filter( $words, function( $w ) use ( $stopwords ) {
 				return strlen( $w ) >= 4 && ! in_array( $w, $stopwords, true );
 			} ) );
@@ -519,21 +533,40 @@ class Culture_Directory_Tools {
 		// Very short or all-stopword titles (e.g. "1984", "It") — skip validation.
 		if ( empty( $orig_words ) ) return true;
 
-		$cand_lower = strtolower( $candidate );
-		$orig_lower = strtolower( $original );
+		$cand_ascii = self::ascii_lower( $candidate );
+		$orig_ascii = self::ascii_lower( $original );
+
+		// Check a word (and its de-pluralised/pluralised form) against a haystack string.
+		// Plural tolerance is only applied when the stem is 7+ characters long, which
+		// avoids false positives like "margins" (stem "margin", 6 chars) matching "margin"
+		// in "Water Margin", while still allowing "festivals" (stem "festival", 8 chars)
+		// to match "festival" and vice versa.
+		$word_in = function( string $word, string $haystack ): bool {
+			if ( preg_match( '/\b' . preg_quote( $word, '/' ) . '\b/', $haystack ) ) {
+				return true;
+			}
+			// Plural query word → check stem in haystack (only for long stems).
+			if ( substr( $word, -1 ) === 's' ) {
+				$stem = substr( $word, 0, -1 );
+				if ( strlen( $stem ) >= 7 && preg_match( '/\b' . preg_quote( $stem, '/' ) . '\b/', $haystack ) ) {
+					return true;
+				}
+			}
+			// Singular query word → check pluralised form in haystack (only for long words).
+			if ( strlen( $word ) >= 7 && preg_match( '/\b' . preg_quote( $word, '/' ) . 's\b/', $haystack ) ) {
+				return true;
+			}
+			return false;
+		};
 
 		// Any original significant word appearing as a whole word in the candidate?
 		foreach ( $orig_words as $word ) {
-			if ( preg_match( '/\b' . preg_quote( $word, '/' ) . '\b/u', $cand_lower ) ) {
-				return true;
-			}
+			if ( $word_in( $word, $cand_ascii ) ) return true;
 		}
 
 		// Any candidate significant word appearing as a whole word in the original?
 		foreach ( $cand_words as $word ) {
-			if ( preg_match( '/\b' . preg_quote( $word, '/' ) . '\b/u', $orig_lower ) ) {
-				return true;
-			}
+			if ( $word_in( $word, $orig_ascii ) ) return true;
 		}
 
 		return false;
