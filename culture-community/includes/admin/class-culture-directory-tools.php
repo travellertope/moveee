@@ -451,14 +451,25 @@ class Culture_Directory_Tools {
 		$result = $search( $title );
 		if ( $result ) return $result;
 
-		// Fallback: strip subtitle after ': ' — e.g. "The Tortured Poets Department: The Anthology"
+		// Fallback 1: strip trailing disambiguation suffix in parentheses —
+		// e.g. "Game of Thrones (TV series)" → "Game of Thrones",
+		//      "Squid Game (TV series)" → "Squid Game",
+		//      "Black Panther (film)" → "Black Panther".
+		// Directory entries are stored with these qualifiers to avoid ambiguity
+		// but Wikipedia article titles usually omit them.
+		$paren_base = preg_replace( '/\s*\([^)]+\)\s*$/', '', $title );
+		if ( $paren_base && $paren_base !== $title ) {
+			$result = $search( $paren_base );
+			if ( $result ) return $result;
+		}
+
+		// Fallback 2: strip subtitle after ': ' — e.g. "The Tortured Poets Department: The Anthology"
 		// → "The Tortured Poets Department". Many albums, films and books carry edition/sequel
-		// subtitles not reflected in the Wikipedia article title, so a bare title search is more
-		// likely to match.
+		// subtitles not reflected in the Wikipedia article title.
 		$colon_pos = strpos( $title, ': ' );
 		if ( $colon_pos !== false ) {
-			$base   = substr( $title, 0, $colon_pos );
-			$result = $search( $base );
+			$colon_base = substr( $title, 0, $colon_pos );
+			$result     = $search( $colon_base );
 			if ( $result ) return $result;
 		}
 
