@@ -91,7 +91,7 @@ export default function EventSubmitPage() {
   };
 
   return (
-    <div style={{ background: "#ffffff", minHeight: "100vh", padding: "2.5rem 1.5rem 5rem" }}>
+    <div className="evt-submit-page" style={{ background: "#ffffff", minHeight: "100vh", padding: "2.5rem 1.5rem 5rem" }}>
       <div style={{ maxWidth: "600px", margin: "0 auto" }}>
         <Link href="/feed" style={{
           color: "#7a6f5c", fontSize: "0.75rem", textDecoration: "none",
