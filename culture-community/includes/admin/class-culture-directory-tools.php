@@ -473,6 +473,15 @@ class Culture_Directory_Tools {
 			if ( $result ) return $result;
 		}
 
+		// Fallback 3: strip edition/variant suffix after ' - ' —
+		// e.g. "Sense and Sensibility - Illustrated Edition" → "Sense and Sensibility".
+		$dash_pos = strpos( $title, ' - ' );
+		if ( $dash_pos !== false ) {
+			$dash_base = substr( $title, 0, $dash_pos );
+			$result    = $search( $dash_base );
+			if ( $result ) return $result;
+		}
+
 		return null;
 	}
 
