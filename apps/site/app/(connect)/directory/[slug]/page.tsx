@@ -323,7 +323,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           {entry.databaseId && (
             <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
-          {entry.databaseId && (
+          {/* Follow pill — hidden for types where Follow lives in the action bar */}
+          {entry.databaseId && !["person", "movement", "artwork", "genre", "concept", "fashion"].includes(typeSlug) && (
             <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
           )}
 
@@ -392,6 +393,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
               quoteLinkRole={quoteLinkRole}
               quoteLinkType={quoteLinkType || undefined}
+              typeSlug={typeSlug}
             />
           )}
 

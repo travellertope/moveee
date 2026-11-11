@@ -2325,3 +2325,16 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* ── Directory entry pages: hide the left nav rail ── */
+/* Directory entries are immersive single-item views — the rail wastes screen real estate */
+.cw-shell:has(.dir-entry-page) .ch-rail { display: none !important; }
+/* Let the content column expand to fill the freed space */
+@media (min-width: 860px) {
+  .cw-shell:has(.dir-entry-page) {
+    max-width: 1100px;
+  }
+  .cw-shell:has(.dir-entry-page) .cw-shell-content {
+    max-width: 100%;
+  }
+}
