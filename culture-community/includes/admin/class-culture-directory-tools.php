@@ -883,13 +883,19 @@ class Culture_Directory_Tools {
             $changes[] = 'excerpt';
         }
 
-        // Update cover meta when no featured image and no cover URL yet
+        // Update cover meta:
+        //   • always when no cover exists
+        //   • always when the entry was AI-generated (_ai_generated=1) — real Wikipedia
+        //     art beats an AI placeholder regardless of the overwrite checkbox
+        //   • when overwrite is explicitly requested
+        // A manually set WP featured image is never touched (admin intent).
         if ( $cover ) {
             $has_thumb = (bool) get_the_post_thumbnail_url( $post_id, 'thumbnail' );
             $has_meta  = get_post_meta( $post_id, '_external_cover_url', true )
                       ?: get_post_meta( $post_id, '_culture_dir_image_url', true );
+            $is_ai     = get_post_meta( $post_id, '_ai_generated', true ) === '1';
 
-            if ( ! $has_thumb && ( ! $has_meta || $overwrite ) ) {
+            if ( ! $has_thumb && ( ! $has_meta || $is_ai || $overwrite ) ) {
                 update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
                 update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
                 $changes[] = 'cover';
@@ -1327,7 +1333,7 @@ class Culture_Directory_Tools {
 
             <label style="display:block;margin-bottom:12px;">
                 <input type="checkbox" id="cdwb-overwrite">
-                <?php esc_html_e( 'Overwrite existing content and cover (use for entries with AI-generated stubs)', 'culture-community' ); ?>
+                <?php esc_html_e( 'Overwrite existing content and cover on all entries (AI-generated covers are always replaced even without this)', 'culture-community' ); ?>
             </label>
 
             <button id="cdwb-start-btn" class="button button-primary" <?php echo $backfill_pending < 1 ? 'disabled' : ''; ?>>
