@@ -46,7 +46,6 @@ const WD_PROPS: Record<string, Record<string, string>> = {
     P571:  "founded",
     P856:  "website",
     P17:   "country",
-    P856:  "website",
   },
   food: {
     P131:  "located_in",
