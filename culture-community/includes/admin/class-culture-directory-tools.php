@@ -423,13 +423,57 @@ class Culture_Directory_Tools {
 		) );
 	}
 
+	/**
+	 * Checks whether a Wikipedia article title is a plausible match for the
+	 * original directory entry title. At least one significant word (4+ chars,
+	 * not a stopword) from the original must appear as a whole word in the
+	 * candidate, or vice versa. Prevents false positives like "Water Margin"
+	 * matching "Women on the Margins" because they share the root "margin".
+	 */
+	private static function wiki_title_matches( string $original, string $candidate ): bool {
+		static $stopwords = array( 'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'also', 'more', 'over', 'some', 'have', 'been', 'were', 'their' );
+
+		$sig_words = function( string $text ) use ( $stopwords ): array {
+			$words = preg_split( '/[^a-z0-9]+/', strtolower( $text ), -1, PREG_SPLIT_NO_EMPTY );
+			return array_values( array_filter( $words, function( $w ) use ( $stopwords ) {
+				return strlen( $w ) >= 4 && ! in_array( $w, $stopwords, true );
+			} ) );
+		};
+
+		$orig_words = $sig_words( $original );
+		$cand_words = $sig_words( $candidate );
+
+		// Very short or all-stopword titles (e.g. "1984", "It") — skip validation.
+		if ( empty( $orig_words ) ) return true;
+
+		$cand_lower = strtolower( $candidate );
+		$orig_lower = strtolower( $original );
+
+		// Any original significant word appearing as a whole word in the candidate?
+		foreach ( $orig_words as $word ) {
+			if ( preg_match( '/\b' . preg_quote( $word, '/' ) . '\b/u', $cand_lower ) ) {
+				return true;
+			}
+		}
+
+		// Any candidate significant word appearing as a whole word in the original?
+		foreach ( $cand_words as $word ) {
+			if ( preg_match( '/\b' . preg_quote( $word, '/' ) . '\b/u', $orig_lower ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/** Search Wikipedia for the best-matching article title. */
 	private static function wiki_opensearch( string $title, string $entry_type ): ?string {
 		static $hints = array( 'film' => 'film', 'book' => 'novel', 'album' => 'album' );
 		$hint = $hints[ $entry_type ] ?? '';
 
-		// Inner helper: run opensearch for a given query string.
-		$search = function( string $q ) use ( $hint ): ?string {
+		// Inner helper: run opensearch for a given query string and validate
+		// that the returned title is actually related to the original.
+		$search = function( string $q, string $validate_against ) use ( $hint ): ?string {
 			$query = $hint ? "$q $hint" : $q;
 			$url   = add_query_arg( array(
 				'action'    => 'opensearch',
@@ -444,49 +488,51 @@ class Culture_Directory_Tools {
 
 			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
 			$titles = $body[1] ?? array();
-			return ! empty( $titles[0] ) ? (string) $titles[0] : null;
+
+			// Return the first result that shares at least one significant word
+			// with the original title (whole-word match, bidirectional).
+			foreach ( $titles as $candidate ) {
+				if ( ! empty( $candidate ) && self::wiki_title_matches( $validate_against, (string) $candidate ) ) {
+					return (string) $candidate;
+				}
+			}
+			return null;
 		};
 
-		// First attempt: full title.
-		$result = $search( $title );
+		// Pass 1: full title.
+		$result = $search( $title, $title );
 		if ( $result ) return $result;
 
-		// Fallback 1: strip trailing disambiguation suffix in parentheses —
+		// Pass 2: strip trailing disambiguation suffix in parentheses —
 		// e.g. "Game of Thrones (TV series)" → "Game of Thrones",
 		//      "Squid Game (TV series)" → "Squid Game",
 		//      "Black Panther (film)" → "Black Panther".
-		// Directory entries are stored with these qualifiers to avoid ambiguity
-		// but Wikipedia article titles usually omit them.
 		$paren_base = preg_replace( '/\s*\([^)]+\)\s*$/', '', $title );
 		if ( $paren_base && $paren_base !== $title ) {
-			$result = $search( $paren_base );
+			$result = $search( $paren_base, $paren_base );
 			if ( $result ) return $result;
 		}
 
-		// Fallback 2: strip subtitle after ': ' — e.g. "The Tortured Poets Department: The Anthology"
-		// → "The Tortured Poets Department". Many albums, films and books carry edition/sequel
-		// subtitles not reflected in the Wikipedia article title.
+		// Pass 3: strip subtitle after ': ' — e.g. "The Tortured Poets Department: The Anthology"
+		// → "The Tortured Poets Department".
 		$colon_pos = strpos( $title, ': ' );
 		if ( $colon_pos !== false ) {
 			$colon_base = substr( $title, 0, $colon_pos );
-			$result     = $search( $colon_base );
+			$result     = $search( $colon_base, $colon_base );
 			if ( $result ) return $result;
 		}
 
-		// Fallback 3: strip edition/variant suffix after ' - ' —
+		// Pass 4: strip edition/variant suffix after ' - ' —
 		// e.g. "Sense and Sensibility - Illustrated Edition" → "Sense and Sensibility".
 		$dash_pos = strpos( $title, ' - ' );
 		if ( $dash_pos !== false ) {
 			$dash_base = substr( $title, 0, $dash_pos );
-			$result    = $search( $dash_base );
+			$result    = $search( $dash_base, $dash_base );
 			if ( $result ) return $result;
 		}
 
-		// Fallback 4: Wikipedia full-text search — handles cases where the article title
-		// differs substantially from the stored entry title, e.g. "The Odyssey of Homer"
-		// stored in the directory but the Wikipedia article is simply "Odyssey".
-		// Uses action=query&list=search (CirrusSearch) rather than opensearch, which only
-		// does title prefix/fuzzy matching and misses these.
+		// Pass 5: Wikipedia CirrusSearch full-text — handles cases where the article title
+		// differs substantially from the stored entry title, e.g. "The Odyssey of Homer" → "Odyssey".
 		$query    = $hint ? "$title $hint" : $title;
 		$fts_url  = add_query_arg( array(
 			'action'   => 'query',
@@ -502,8 +548,11 @@ class Culture_Directory_Tools {
 		if ( ! is_wp_error( $fts_response ) ) {
 			$fts_body    = json_decode( wp_remote_retrieve_body( $fts_response ), true );
 			$fts_results = $fts_body['query']['search'] ?? array();
-			if ( ! empty( $fts_results[0]['title'] ) ) {
-				return (string) $fts_results[0]['title'];
+			foreach ( $fts_results as $fts_result ) {
+				$fts_title = $fts_result['title'] ?? '';
+				if ( $fts_title && self::wiki_title_matches( $title, $fts_title ) ) {
+					return (string) $fts_title;
+				}
 			}
 		}
 
