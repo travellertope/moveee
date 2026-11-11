@@ -27,6 +27,7 @@ interface EntryTypeOption {
 }
 
 interface CatalogResult {
+  source?: "wikipedia";
   externalId: string;
   title: string;
   about?: string;
@@ -159,8 +160,19 @@ export default function DirectorySubmitForm({
     setCatalogOpen(false);
     setCatalogPicked(true);
     setCatalogQuery(result.title);
-    setWikiTitle("");
-    setWikiUrl("");
+
+    // If this result came straight from Wikipedia, pre-set attribution now
+    // so the enrichment call can go straight to the Wikidata claims fetch.
+    const isWikiResult = result.source === "wikipedia";
+    const wikiSlug = isWikiResult
+      ? result.externalId.replace(/^wikipedia:/, "")
+      : "";
+    setWikiTitle(isWikiResult ? result.title : "");
+    setWikiUrl(
+      isWikiResult
+        ? `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`
+        : ""
+    );
 
     // Pre-fill form fields from catalog result
     setTitle(result.title);
@@ -183,8 +195,9 @@ export default function DirectorySubmitForm({
     setExcerpt(starterExcerpt);
     setContent("");
 
-    // Auto-enrich from Wikipedia/Wikidata in the background
-    const pickTitle = result.title;
+    // Auto-enrich from Wikipedia/Wikidata in the background.
+    // For Wikipedia results we pass the exact wiki title to skip a second opensearch.
+    const pickTitle = isWikiResult ? result.title : result.title;
     const pickType = entryType;
     const catalogCover = result.coverUrl;
     const catalogInfobox = result.infobox ?? {};
@@ -519,11 +532,13 @@ export default function DirectorySubmitForm({
                       )}
                       <div className="dir-catalog-result-text">
                         <span className="dir-catalog-result-title">{r.title}</span>
-                        {(r.about || r.year) && (
-                          <span className="dir-catalog-result-meta">
-                            {[r.about, r.year].filter(Boolean).join(" · ")}
-                          </span>
-                        )}
+                        <span className="dir-catalog-result-meta">
+                          {r.source === "wikipedia" ? (
+                            <span className="dir-catalog-result-wiki">Wikipedia</span>
+                          ) : (
+                            [r.about, r.year].filter(Boolean).join(" · ")
+                          )}
+                        </span>
                       </div>
                     </li>
                   ))}

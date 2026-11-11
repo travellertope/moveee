@@ -4,11 +4,13 @@ export const runtime = "nodejs";
 
 // Unified catalog lookup for the directory submission form.
 // Routes by ?type= to the appropriate catalog:
-//   book  → Google Books API
-//   film  → iTunes Search API (media=movie)
-//   album → iTunes Search API (media=music, entity=album)
+//   book  → Google Books API + Wikipedia
+//   film  → iTunes Search API (media=movie) + Wikipedia
+//   album → iTunes Search API (media=music, entity=album) + Wikipedia
 //   place → Google Places Text Search
 //   food  → Google Places Text Search (biased to food/restaurant types)
+// Wikipedia runs in parallel for film/book/album and fills gaps when catalog
+// has thin results (e.g. very new releases not yet indexed by iTunes/Books).
 
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY ?? "";
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY ?? "";
@@ -193,6 +195,84 @@ async function lookupPlaces(q: string, entryType: "place" | "food") {
     .slice(0, 8);
 }
 
+// Wikipedia search type hints — same as the enrichment endpoint
+const WP_TYPE_HINT: Record<string, string> = {
+  film:  "film",
+  book:  "novel",
+  album: "album",
+};
+
+// Suffixes added by Wikipedia to disambiguate articles — strip before dedup
+const WP_DISAMBIG_SUFFIX = /\s*\([^)]+\)\s*$/;
+
+function normalizeTitle(t: string): string {
+  return t.replace(WP_DISAMBIG_SUFFIX, "").toLowerCase().trim();
+}
+
+async function lookupWikipedia(q: string, type: string) {
+  const hint = WP_TYPE_HINT[type];
+  const query = hint ? `${q} ${hint}` : q;
+
+  // 1. Opensearch: get up to 5 candidate article titles
+  const osRes = await fetch(
+    `https://en.wikipedia.org/w/api.php?${new URLSearchParams({
+      action: "opensearch",
+      search: query,
+      limit: "5",
+      redirects: "resolve",
+      format: "json",
+      origin: "*",
+    })}`,
+    { next: { revalidate: 1800 } }
+  ).catch(() => null);
+  if (!osRes?.ok) return [];
+
+  const osData = await osRes.json().catch(() => null);
+  const titles: string[] = Array.isArray(osData?.[1]) ? osData[1] : [];
+  if (!titles.length) return [];
+
+  // 2. Batch page fetch: intro extract + thumbnail for all candidates at once
+  const pageRes = await fetch(
+    `https://en.wikipedia.org/w/api.php?${new URLSearchParams({
+      action: "query",
+      prop: "extracts|pageimages",
+      exintro: "1",
+      exsentences: "3",
+      titles: titles.join("|"),
+      pithumbsize: "600",
+      redirects: "1",
+      pilicense: "any",
+      format: "json",
+      origin: "*",
+    })}`,
+    { next: { revalidate: 1800 } }
+  ).catch(() => null);
+  if (!pageRes?.ok) return [];
+
+  const pageData = await pageRes.json().catch(() => null);
+  const pages: Record<string, any> = pageData?.query?.pages ?? {};
+
+  return Object.values(pages)
+    .filter((p: any) => p && !("missing" in p) && p.title)
+    .map((p: any) => {
+      const rawExtract: string = p.extract ?? "";
+      const plainText = rawExtract.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const description = plainText || undefined;
+
+      return {
+        source: "wikipedia" as const,
+        externalId: `wikipedia:${(p.title as string).replace(/ /g, "_")}`,
+        title: p.title as string,
+        about: undefined,
+        year: undefined,
+        coverUrl: (p.thumbnail?.source as string) ?? null,
+        description,
+        infobox: undefined,
+      };
+    })
+    .slice(0, 5);
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") ?? "";
@@ -200,17 +280,28 @@ export async function GET(req: NextRequest) {
 
   if (q.length < 2) return NextResponse.json([]);
 
-  if (type === "book") {
-    return NextResponse.json(await lookupBooks(q));
-  }
-  if (type === "film") {
-    return NextResponse.json(await lookupITunes(q, "movie"));
-  }
-  if (type === "album") {
-    return NextResponse.json(await lookupITunes(q, "music"));
-  }
   if (type === "place" || type === "food") {
     return NextResponse.json(await lookupPlaces(q, type));
+  }
+
+  if (type === "book" || type === "film" || type === "album") {
+    // Run catalog + Wikipedia searches in parallel
+    const [catalogResults, wikiResults] = await Promise.all([
+      type === "book"
+        ? lookupBooks(q)
+        : lookupITunes(q, type === "film" ? "movie" : "music"),
+      lookupWikipedia(q, type),
+    ]);
+
+    // Catalog results take priority; Wikipedia fills gaps for titles not found there
+    const catalogTitles = new Set(
+      (catalogResults as { title: string }[]).map((r) => normalizeTitle(r.title))
+    );
+    const wikiOnly = wikiResults.filter(
+      (r) => !catalogTitles.has(normalizeTitle(r.title))
+    );
+
+    return NextResponse.json([...catalogResults, ...wikiOnly].slice(0, 10));
   }
 
   return NextResponse.json({ error: "Invalid type. Use book, film, album, place, or food." }, { status: 400 });
