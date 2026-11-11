@@ -908,6 +908,24 @@ class Culture_ACF_Fields {
             'position'   => 'normal',
         ) );
 
+        // ── Album ─────────────────────────────────────────────────────────────
+        acf_add_local_field_group( array(
+            'key'      => 'group_dir_infobox_album',
+            'title'    => 'Album — Infobox Details',
+            'fields'   => array(
+                array( 'key' => 'field_dir_ib_alb_artist',  'label' => 'Artist',           'name' => 'dir_infobox_artist',         'type' => 'text', 'wrapper' => array( 'width' => '50' ) ),
+                array( 'key' => 'field_dir_ib_alb_year',    'label' => 'Year',             'name' => 'dir_infobox_year',           'type' => 'text', 'wrapper' => array( 'width' => '25' ) ),
+                array( 'key' => 'field_dir_ib_alb_genre',   'label' => 'Genre',            'name' => 'dir_infobox_genre',          'type' => 'text', 'wrapper' => array( 'width' => '25' ) ),
+                array( 'key' => 'field_dir_ib_alb_label',   'label' => 'Record Label',     'name' => 'dir_infobox_record_label',   'type' => 'text', 'wrapper' => array( 'width' => '50' ) ),
+                array( 'key' => 'field_dir_ib_alb_producer','label' => 'Producer',         'name' => 'dir_infobox_producer',       'type' => 'text', 'wrapper' => array( 'width' => '50' ) ),
+                array( 'key' => 'field_dir_ib_alb_tracks',  'label' => 'Track Count',      'name' => 'dir_infobox_tracks',         'type' => 'text', 'wrapper' => array( 'width' => '33' ) ),
+                array( 'key' => 'field_dir_ib_alb_country', 'label' => 'Country of Origin','name' => 'dir_infobox_country_of_origin','type' => 'text', 'wrapper' => array( 'width' => '33' ) ),
+            ),
+            'location'   => $dir_type_location( 'album' ),
+            'menu_order' => 5,
+            'position'   => 'normal',
+        ) );
+
         // ── Artwork ───────────────────────────────────────────────────────────
         acf_add_local_field_group( array(
             'key'      => 'group_dir_infobox_artwork',

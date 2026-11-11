@@ -609,7 +609,7 @@ class Culture_Directory_Tools {
     private static function wiki_fetch_pages_batch( array $titles ): array {
         $url = add_query_arg( array(
             'action'      => 'query',
-            'prop'        => 'extracts|pageimages',
+            'prop'        => 'extracts|pageimages|pageprops',
             'exintro'     => '1',
             'exsentences' => '10',
             'pithumbsize' => '640',
@@ -696,6 +696,15 @@ class Culture_Directory_Tools {
         update_post_meta( $post_id, '_external_id', $page['title'] ?? $title );
         update_post_meta( $post_id, '_ai_generated', '0' );
         update_post_meta( $post_id, '_wiki_title', $page['title'] ?? $title );
+
+        // Fetch and save Wikidata structured fields (director, year, cast, etc.)
+        $qid = $page['pageprops']['wikibase_item'] ?? '';
+        if ( $qid && $entry_type ) {
+            $wd_fields = self::wiki_wikidata_fields( $qid, $entry_type );
+            if ( ! empty( $wd_fields ) ) {
+                self::save_infobox_to_acf( $post_id, $wd_fields, true );
+            }
+        }
 
         return $post_id;
     }
@@ -800,7 +809,7 @@ class Culture_Directory_Tools {
             }
 
             $real_title = $page['title'] ?? $wiki_title;
-            $changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $overwrite );
+            $changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $overwrite, $entry_type );
 
             update_post_meta( (int) $post_id, '_wiki_title', $real_title );
             update_post_meta( (int) $post_id, '_wiki_url',
@@ -853,11 +862,191 @@ class Culture_Directory_Tools {
     }
 
     /**
+     * Wikidata property → ACF field name, per entry type.
+     * 'multi' entries collect multiple claim values (e.g. cast members).
+     */
+    private static function wikidata_prop_map(): array {
+        return array(
+            'film' => array(
+                'P57'  => array( 'acf' => 'dir_infobox_director',            'multi' => false ),
+                'P577' => array( 'acf' => 'dir_infobox_year',                'multi' => false, 'type' => 'time' ),
+                'P2047'=> array( 'acf' => 'dir_infobox_runtime',             'multi' => false, 'type' => 'quantity', 'suffix' => ' min' ),
+                'P495' => array( 'acf' => 'dir_infobox_country',             'multi' => false ),
+                'P364' => array( 'acf' => 'dir_infobox_language',            'multi' => false ),
+                'P750' => array( 'acf' => 'dir_infobox_distributor',         'multi' => false ),
+                'P272' => array( 'acf' => 'dir_infobox_production_company',  'multi' => false ),
+                'P344' => array( 'acf' => 'dir_infobox_cinematographer',     'multi' => false ),
+                'P161' => array( 'acf' => 'dir_infobox_starring',            'multi' => true, 'max' => 8 ),
+                'P136' => array( 'acf' => 'dir_infobox_genre',               'multi' => false ),
+            ),
+            'book' => array(
+                'P50'  => array( 'acf' => 'dir_infobox_author',              'multi' => false ),
+                'P577' => array( 'acf' => 'dir_infobox_year_published',      'multi' => false, 'type' => 'time' ),
+                'P1104'=> array( 'acf' => 'dir_infobox_pages',               'multi' => false, 'type' => 'quantity' ),
+                'P136' => array( 'acf' => 'dir_infobox_genre',               'multi' => false ),
+                'P123' => array( 'acf' => 'dir_infobox_publisher',           'multi' => false ),
+                'P407' => array( 'acf' => 'dir_infobox_language',            'multi' => false ),
+                'P495' => array( 'acf' => 'dir_infobox_country',             'multi' => false ),
+            ),
+            'album' => array(
+                'P175' => array( 'acf' => 'dir_infobox_artist',              'multi' => false ),
+                'P264' => array( 'acf' => 'dir_infobox_record_label',        'multi' => false ),
+                'P577' => array( 'acf' => 'dir_infobox_year',                'multi' => false, 'type' => 'time' ),
+                'P136' => array( 'acf' => 'dir_infobox_genre',               'multi' => false ),
+                'P2554'=> array( 'acf' => 'dir_infobox_producer',            'multi' => false ),
+                'P495' => array( 'acf' => 'dir_infobox_country_of_origin',   'multi' => false ),
+            ),
+            'person' => array(
+                'P569' => array( 'acf' => 'dir_infobox_born',                'multi' => false, 'type' => 'time' ),
+                'P570' => array( 'acf' => 'dir_infobox_died',                'multi' => false, 'type' => 'time' ),
+                'P27'  => array( 'acf' => 'dir_infobox_nationality',         'multi' => false ),
+                'P106' => array( 'acf' => 'dir_infobox_occupation',          'multi' => false ),
+                'P19'  => array( 'acf' => 'dir_infobox_origin_city',         'multi' => false ),
+            ),
+            'place' => array(
+                'P17'  => array( 'acf' => 'dir_infobox_country',             'multi' => false ),
+                'P131' => array( 'acf' => 'dir_infobox_region',              'multi' => false ),
+                'P571' => array( 'acf' => 'dir_infobox_founded',             'multi' => false, 'type' => 'time' ),
+            ),
+        );
+    }
+
+    /**
+     * Fetch structured Wikidata fields for a QID and return them as an
+     * associative array keyed by ACF field name (e.g. 'dir_infobox_director').
+     * Entity-reference QIDs are batch-resolved to English labels.
+     */
+    private static function wiki_wikidata_fields( string $qid, string $entry_type ): array {
+        $prop_map = self::wikidata_prop_map()[ $entry_type ] ?? array();
+        if ( empty( $prop_map ) ) return array();
+
+        // Fetch claims
+        $url = add_query_arg( array(
+            'action' => 'wbgetentities',
+            'ids'    => $qid,
+            'props'  => 'claims',
+            'format' => 'json',
+        ), 'https://www.wikidata.org/w/api.php' );
+
+        $response = wp_remote_get( $url, array( 'timeout' => 15 ) );
+        if ( is_wp_error( $response ) ) return array();
+
+        $body   = json_decode( wp_remote_retrieve_body( $response ), true );
+        $claims = $body['entities'][ $qid ]['claims'] ?? array();
+        if ( empty( $claims ) ) return array();
+
+        $fields       = array();
+        $entity_qids  = array(); // QIDs needing label resolution
+        $qid_to_acf   = array(); // QID → ACF key
+
+        foreach ( $prop_map as $prop_id => $spec ) {
+            $acf_key = $spec['acf'];
+            $claim_arr = $claims[ $prop_id ] ?? array();
+            if ( empty( $claim_arr ) ) continue;
+
+            $is_multi = ! empty( $spec['multi'] );
+            $max      = $is_multi ? ( $spec['max'] ?? 5 ) : 1;
+            $values   = array();
+
+            foreach ( array_slice( $claim_arr, 0, $is_multi ? $max : 1 ) as $claim ) {
+                if ( ( $claim['rank'] ?? '' ) === 'deprecated' ) continue;
+                $snak = $claim['mainsnak'] ?? array();
+                if ( ( $snak['snaktype'] ?? '' ) !== 'value' ) continue;
+                $val = $snak['datavalue']['value'] ?? null;
+                if ( $val === null ) continue;
+
+                if ( is_string( $val ) ) {
+                    $values[] = $val;
+                } elseif ( is_array( $val ) ) {
+                    if ( isset( $val['text'] ) ) {
+                        // monolingualtext
+                        $values[] = (string) $val['text'];
+                    } elseif ( isset( $val['amount'] ) && ( $spec['type'] ?? '' ) === 'quantity' ) {
+                        $num = (string) abs( (float) $val['amount'] );
+                        $values[] = $num . ( $spec['suffix'] ?? '' );
+                    } elseif ( isset( $val['time'] ) && ( $spec['type'] ?? '' ) === 'time' ) {
+                        $year = ltrim( substr( $val['time'], 1, 4 ), '0' );
+                        if ( $year && $year !== '0' ) $values[] = $year;
+                    } elseif ( isset( $val['id'] ) ) {
+                        // entity reference — resolve label later
+                        $entity_qids[] = (string) $val['id'];
+                        $qid_to_acf[ (string) $val['id'] ] = $acf_key;
+                    }
+                }
+            }
+
+            if ( ! empty( $values ) ) {
+                $fields[ $acf_key ] = $is_multi
+                    ? implode( "\n", $values )
+                    : $values[0];
+            }
+        }
+
+        // Batch-resolve entity-reference labels (director name, genre, etc.)
+        if ( ! empty( $entity_qids ) ) {
+            $label_url = add_query_arg( array(
+                'action'    => 'wbgetentities',
+                'ids'       => implode( '|', array_unique( array_slice( $entity_qids, 0, 50 ) ) ),
+                'props'     => 'labels',
+                'languages' => 'en',
+                'format'    => 'json',
+            ), 'https://www.wikidata.org/w/api.php' );
+
+            $label_resp = wp_remote_get( $label_url, array( 'timeout' => 15 ) );
+            if ( ! is_wp_error( $label_resp ) ) {
+                $label_body = json_decode( wp_remote_retrieve_body( $label_resp ), true );
+                $entities   = $label_body['entities'] ?? array();
+
+                // For multi-value fields, collect all resolved labels per ACF key
+                $multi_values = array();
+                foreach ( $entity_qids as $eq ) {
+                    $label = $entities[ $eq ]['labels']['en']['value'] ?? null;
+                    if ( ! $label ) continue;
+                    $acf = $qid_to_acf[ $eq ] ?? null;
+                    if ( ! $acf ) continue;
+                    $multi_values[ $acf ][] = $label;
+                }
+                foreach ( $multi_values as $acf => $labels ) {
+                    $spec = array_values( array_filter( self::wikidata_prop_map()[ $entry_type ], function ( $s ) use ( $acf ) {
+                        return $s['acf'] === $acf;
+                    } ) )[0] ?? array();
+                    $is_multi = ! empty( $spec['multi'] );
+                    if ( ! isset( $fields[ $acf ] ) ) {
+                        $fields[ $acf ] = $is_multi
+                            ? implode( "\n", $labels )
+                            : $labels[0];
+                    }
+                }
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Save a Wikidata infobox fields array to ACF post meta.
+     * Skips any field that already has a value unless $overwrite is true.
+     * Returns the list of ACF field names that were written.
+     */
+    private static function save_infobox_to_acf( int $post_id, array $fields, bool $overwrite = false ): array {
+        $saved = array();
+        foreach ( $fields as $acf_key => $value ) {
+            if ( ! $value ) continue;
+            $existing = get_post_meta( $post_id, $acf_key, true );
+            if ( $existing && ! $overwrite ) continue;
+            update_post_meta( $post_id, $acf_key, sanitize_textarea_field( $value ) );
+            $saved[] = $acf_key;
+        }
+        return $saved;
+    }
+
+    /**
      * Apply Wikipedia page data to an existing directory entry.
-     * Only overwrites content if it is thin; always fills missing cover meta.
+     * Also fetches Wikidata structured fields (director, year, cast, etc.) and
+     * saves them to ACF post meta so the infobox boxes in WP Admin are populated.
      * Returns an array of field names that were changed.
      */
-    private static function apply_wiki_data_to_post( int $post_id, WP_Post $post, array $page, bool $overwrite ): array {
+    private static function apply_wiki_data_to_post( int $post_id, WP_Post $post, array $page, bool $overwrite, string $entry_type = '' ): array {
         $changes = array();
         $extract = strip_tags( $page['extract'] ?? '' );
         $cover   = $page['thumbnail']['source'] ?? '';
@@ -885,8 +1074,7 @@ class Culture_Directory_Tools {
 
         // Update cover meta:
         //   • always when no cover exists
-        //   • always when the entry was AI-generated (_ai_generated=1) — real Wikipedia
-        //     art beats an AI placeholder regardless of the overwrite checkbox
+        //   • always when the entry was AI-generated (_ai_generated=1)
         //   • when overwrite is explicitly requested
         // A manually set WP featured image is never touched (admin intent).
         if ( $cover ) {
@@ -899,6 +1087,18 @@ class Culture_Directory_Tools {
                 update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
                 update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
                 $changes[] = 'cover';
+            }
+        }
+
+        // Fetch and save Wikidata structured fields (director, year, cast, etc.)
+        $qid = $page['pageprops']['wikibase_item'] ?? '';
+        if ( $qid && $entry_type ) {
+            $wd_fields = self::wiki_wikidata_fields( $qid, $entry_type );
+            if ( ! empty( $wd_fields ) ) {
+                $saved = self::save_infobox_to_acf( $post_id, $wd_fields, $overwrite );
+                if ( ! empty( $saved ) ) {
+                    $changes[] = 'infobox';
+                }
             }
         }
 
