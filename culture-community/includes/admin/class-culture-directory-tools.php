@@ -70,6 +70,7 @@ class Culture_Directory_Tools {
         // Wikipedia seeder
         add_action( 'wp_ajax_culture_dir_wiki_fetch',              array( __CLASS__, 'ajax_wiki_fetch' ) );
         add_action( 'wp_ajax_culture_dir_wiki_seed',               array( __CLASS__, 'ajax_wiki_seed' ) );
+        add_action( 'wp_ajax_culture_dir_wiki_backfill',           array( __CLASS__, 'ajax_wiki_backfill' ) );
         add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
     }
 
@@ -699,6 +700,211 @@ class Culture_Directory_Tools {
         return $post_id;
     }
 
+    // ── AJAX: Wikipedia backfill for existing published entries ──────────────
+
+    /**
+     * Process one batch of published directory entries that have not yet been
+     * enriched from Wikipedia. Called repeatedly by JS until done:true.
+     *
+     * POST params: nonce, batch (int, 0-based page), overwrite (bool)
+     * Returns: { processed, updated, batch, total, done, results[] }
+     */
+    public static function ajax_wiki_backfill() {
+        check_ajax_referer( 'culture_dir_tools', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+        }
+
+        @set_time_limit( 120 );
+
+        global $wpdb;
+
+        $batch_num  = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
+        $batch_size = 5; // small batch — each entry needs one HTTP call
+        $overwrite  = ! empty( $_POST['overwrite'] );
+        $offset     = $batch_num * $batch_size;
+
+        // Count entries not yet Wikipedia-enriched (no _wiki_title meta row)
+        $total = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT p.ID)
+             FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} pm
+                 ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+             WHERE p.post_type = 'culture_directory'
+               AND p.post_status = 'publish'
+               AND pm.meta_value IS NULL"
+        );
+
+        // Get this batch
+        $ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT p.ID
+             FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} pm
+                 ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+             WHERE p.post_type = 'culture_directory'
+               AND p.post_status = 'publish'
+               AND pm.meta_value IS NULL
+             ORDER BY p.ID ASC
+             LIMIT %d OFFSET %d",
+            $batch_size,
+            $offset
+        ) );
+
+        if ( empty( $ids ) ) {
+            wp_send_json_success( array(
+                'processed' => 0,
+                'updated'   => 0,
+                'batch'     => $batch_num,
+                'total'     => $total,
+                'done'      => true,
+                'results'   => array(),
+            ) );
+        }
+
+        $updated = 0;
+        $results = array();
+
+        foreach ( $ids as $post_id ) {
+            $post = get_post( (int) $post_id );
+            if ( ! $post ) continue;
+
+            // Determine entry type for search hint
+            $terms      = wp_get_object_terms( (int) $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
+            $entry_type = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0] : '';
+
+            // Search Wikipedia
+            $wiki_title = self::wiki_opensearch( $post->post_title, $entry_type );
+
+            if ( ! $wiki_title ) {
+                // Mark as checked so this entry is skipped on subsequent runs
+                update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+                $results[] = array( 'title' => $post->post_title, 'found' => false );
+                continue;
+            }
+
+            // Fetch page data (extract + thumbnail)
+            $pages = self::wiki_fetch_pages_batch( array( $wiki_title ) );
+            $page  = $pages[ $wiki_title ] ?? null;
+
+            // Fallback: try normalised title match
+            if ( ! $page ) {
+                foreach ( $pages as $pt => $pd ) {
+                    if ( strcasecmp( $pt, $wiki_title ) === 0 ) { $page = $pd; break; }
+                }
+            }
+
+            if ( ! $page ) {
+                update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+                $results[] = array( 'title' => $post->post_title, 'found' => false );
+                continue;
+            }
+
+            $real_title = $page['title'] ?? $wiki_title;
+            $changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $overwrite );
+
+            update_post_meta( (int) $post_id, '_wiki_title', $real_title );
+            update_post_meta( (int) $post_id, '_wiki_url',
+                'https://en.wikipedia.org/wiki/' . rawurlencode( str_replace( ' ', '_', $real_title ) )
+            );
+
+            if ( ! empty( $changes ) ) $updated++;
+
+            $results[] = array(
+                'title'   => $post->post_title,
+                'found'   => true,
+                'changes' => $changes,
+            );
+        }
+
+        // done when this batch contained fewer entries than the batch_size
+        // (last page), or the offset now equals total.
+        $done = count( $ids ) < $batch_size || ( $offset + count( $ids ) ) >= $total;
+
+        wp_send_json_success( array(
+            'processed' => count( $ids ),
+            'updated'   => $updated,
+            'batch'     => $batch_num,
+            'total'     => $total,
+            'done'      => $done,
+            'results'   => $results,
+        ) );
+    }
+
+    /** Search Wikipedia for the best-matching article title. */
+    private static function wiki_opensearch( string $title, string $entry_type ): ?string {
+        static $hints = array( 'film' => 'film', 'book' => 'novel', 'album' => 'album' );
+        $hint  = $hints[ $entry_type ] ?? '';
+        $query = $hint ? "$title $hint" : $title;
+
+        $url = add_query_arg( array(
+            'action'    => 'opensearch',
+            'search'    => $query,
+            'limit'     => '3',
+            'redirects' => 'resolve',
+            'format'    => 'json',
+        ), 'https://en.wikipedia.org/w/api.php' );
+
+        $response = wp_remote_get( $url, array( 'timeout' => 10 ) );
+        if ( is_wp_error( $response ) ) return null;
+
+        $body   = json_decode( wp_remote_retrieve_body( $response ), true );
+        $titles = $body[1] ?? array();
+        return ! empty( $titles[0] ) ? (string) $titles[0] : null;
+    }
+
+    /**
+     * Apply Wikipedia page data to an existing directory entry.
+     * Only overwrites content if it is thin; always fills missing cover meta.
+     * Returns an array of field names that were changed.
+     */
+    private static function apply_wiki_data_to_post( int $post_id, WP_Post $post, array $page, bool $overwrite ): array {
+        $changes = array();
+        $extract = strip_tags( $page['extract'] ?? '' );
+        $cover   = $page['thumbnail']['source'] ?? '';
+
+        // Update content when empty / very thin, or when overwrite is set
+        if ( $extract ) {
+            $content_len = strlen( strip_tags( $post->post_content ) );
+            if ( $overwrite || $content_len < 120 ) {
+                $paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $extract ) ) );
+                $content = implode( "\n\n", array_map( function ( $p ) {
+                    return '<p>' . wp_kses_post( $p ) . '</p>';
+                }, $paras ) );
+                wp_update_post( array( 'ID' => $post_id, 'post_content' => $content ) );
+                $changes[] = 'content';
+            }
+        }
+
+        // Update excerpt when empty
+        if ( $extract && empty( trim( $post->post_excerpt ) ) ) {
+            $dot     = strpos( $extract, '. ' );
+            $excerpt = $dot !== false ? substr( $extract, 0, $dot + 1 ) : substr( $extract, 0, 220 );
+            wp_update_post( array( 'ID' => $post_id, 'post_excerpt' => wp_strip_all_tags( $excerpt ) ) );
+            $changes[] = 'excerpt';
+        }
+
+        // Update cover meta:
+        //   • always when no cover exists
+        //   • always when the entry was AI-generated (_ai_generated=1) — real Wikipedia
+        //     art beats an AI placeholder regardless of the overwrite checkbox
+        //   • when overwrite is explicitly requested
+        // A manually set WP featured image is never touched (admin intent).
+        if ( $cover ) {
+            $has_thumb = (bool) get_the_post_thumbnail_url( $post_id, 'thumbnail' );
+            $has_meta  = get_post_meta( $post_id, '_external_cover_url', true )
+                      ?: get_post_meta( $post_id, '_culture_dir_image_url', true );
+            $is_ai     = get_post_meta( $post_id, '_ai_generated', true ) === '1';
+
+            if ( ! $has_thumb && ( ! $has_meta || $is_ai || $overwrite ) ) {
+                update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
+                update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
+                $changes[] = 'cover';
+            }
+        }
+
+        return $changes;
+    }
+
     /** All directory titles regardless of post status (lowercase, for de-dup). */
     private static function get_all_directory_titles(): array {
         $posts = get_posts( array(
@@ -1075,6 +1281,69 @@ class Culture_Directory_Tools {
             </button>
             <span class="spinner" id="cdt-backfill-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
             <div id="cdt-backfill-result" class="cdt-result" style="display:none;"></div>
+        </div>
+
+        <?php /* ── WIKIPEDIA BACKFILL PANEL ── */ ?>
+        <?php
+        global $wpdb;
+        $backfill_pending = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT p.ID)
+             FROM {$wpdb->posts} p
+             LEFT JOIN {$wpdb->postmeta} pm
+                 ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+             WHERE p.post_type = 'culture_directory'
+               AND p.post_status = 'publish'
+               AND pm.meta_value IS NULL"
+        );
+        $backfill_done = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT p.ID)
+             FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} pm
+                 ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+             WHERE p.post_type = 'culture_directory'
+               AND p.post_status = 'publish'"
+        );
+        $backfill_total_pub = $backfill_pending + $backfill_done;
+        ?>
+        <div class="cdt-panel">
+            <h2><?php esc_html_e( 'Wikipedia Backfill', 'culture-community' ); ?></h2>
+            <p class="description">
+                <?php esc_html_e( 'Enrich all published directory entries that have not yet been matched to a Wikipedia article. For each entry the tool finds the best Wikipedia match, fills in the full description if the existing content is thin (< 120 characters), and sets the cover image if none exists. Entries already processed are skipped automatically.', 'culture-community' ); ?>
+            </p>
+
+            <div class="cdt-progress-block">
+                <div class="cdt-progress-label">
+                    <strong id="cdwb-done-count"><?php echo esc_html( $backfill_done ); ?></strong>
+                    <?php esc_html_e( ' of ', 'culture-community' ); ?>
+                    <strong><?php echo esc_html( $backfill_total_pub ); ?></strong>
+                    <?php esc_html_e( ' published entries enriched', 'culture-community' ); ?>
+                    <span class="cdt-pct" id="cdwb-pct"><?php echo $backfill_total_pub > 0 ? round( $backfill_done / $backfill_total_pub * 100 ) : 0; ?>%</span>
+                </div>
+                <div class="cdt-progress-bar">
+                    <div class="cdt-progress-fill" id="cdwb-fill" style="width:<?php echo $backfill_total_pub > 0 ? round( $backfill_done / $backfill_total_pub * 100 ) : 0; ?>%"></div>
+                </div>
+                <p class="description" style="margin-top:6px;" id="cdwb-remaining">
+                    <?php if ( $backfill_pending > 0 ) : ?>
+                        <?php echo esc_html( $backfill_pending ); ?><?php esc_html_e( ' entries still need enrichment', 'culture-community' ); ?>
+                    <?php else : ?>
+                        <span style="color:#00a32a;">&#10003; <?php esc_html_e( 'All published entries have been processed.', 'culture-community' ); ?></span>
+                    <?php endif; ?>
+                </p>
+            </div>
+
+            <label style="display:block;margin-bottom:12px;">
+                <input type="checkbox" id="cdwb-overwrite">
+                <?php esc_html_e( 'Overwrite existing content and cover on all entries (AI-generated covers are always replaced even without this)', 'culture-community' ); ?>
+            </label>
+
+            <button id="cdwb-start-btn" class="button button-primary" <?php echo $backfill_pending < 1 ? 'disabled' : ''; ?>>
+                <?php esc_html_e( 'Start backfill →', 'culture-community' ); ?>
+            </button>
+            <button id="cdwb-stop-btn" class="button" style="display:none;margin-left:8px;">
+                <?php esc_html_e( 'Stop', 'culture-community' ); ?>
+            </button>
+            <span class="spinner" id="cdwb-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+            <div id="cdwb-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
         </div>
 
         <?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
@@ -1518,6 +1787,93 @@ class Culture_Directory_Tools {
                     $result.hide().html('');
                     allResults = [];
                     runBatch(0, <?php echo (int) $backfill_total; ?>);
+                });
+            }());
+
+            /* ── Wikipedia Backfill ── */
+            (function() {
+                var running = false;
+                var currentBatch = 0;
+                var totalProcessed = 0;
+                var totalUpdated = 0;
+
+                function log(text, isError) {
+                    var $log = $('#cdwb-log').show();
+                    var color = isError ? '#d63638' : '#3c434a';
+                    $log.append('<div style="color:' + color + ';">' + $('<span>').text(text).html() + '</div>');
+                    $log.scrollTop($log[0].scrollHeight);
+                }
+
+                function tick() {
+                    if (!running) return;
+
+                    $.post(ajaxUrl, {
+                        action:    'culture_dir_wiki_backfill',
+                        nonce:     nonce,
+                        batch:     currentBatch,
+                        overwrite: $('#cdwb-overwrite').is(':checked') ? '1' : '',
+                    })
+                    .done(function(res) {
+                        if (!running) return;
+
+                        if (!res.success) {
+                            log('Error: ' + (res.data && res.data.message ? res.data.message : 'unknown'), true);
+                            stop();
+                            return;
+                        }
+
+                        var d = res.data;
+                        totalProcessed += d.processed;
+                        totalUpdated   += d.updated;
+                        currentBatch++;
+
+                        // Log each result
+                        (d.results || []).forEach(function(r) {
+                            var suffix = r.found
+                                ? (r.changes && r.changes.length ? ' → updated: ' + r.changes.join(', ') : ' → no changes needed')
+                                : ' → not found on Wikipedia';
+                            log((r.found ? '✓' : '–') + ' ' + r.title + suffix);
+                        });
+
+                        log('Batch ' + (currentBatch) + ': ' + d.processed + ' processed, ' + d.updated + ' updated. ' + (d.total - (currentBatch * 5)) + ' remaining.');
+
+                        if (d.done) {
+                            log('Done — ' + totalProcessed + ' entries processed, ' + totalUpdated + ' updated.', false);
+                            stop();
+                            setTimeout(function() { location.reload(); }, 2000);
+                            return;
+                        }
+
+                        setTimeout(tick, 400); // small delay between batches
+                    })
+                    .fail(function() {
+                        log('Request failed — stopping.', true);
+                        stop();
+                    });
+                }
+
+                function stop() {
+                    running = false;
+                    $('#cdwb-start-btn').prop('disabled', false).show();
+                    $('#cdwb-stop-btn').hide();
+                    $('#cdwb-spinner').hide();
+                }
+
+                $('#cdwb-start-btn').on('click', function() {
+                    running = true;
+                    currentBatch = 0;
+                    totalProcessed = 0;
+                    totalUpdated = 0;
+                    $(this).prop('disabled', true);
+                    $('#cdwb-stop-btn').show();
+                    $('#cdwb-spinner').show();
+                    $('#cdwb-log').empty().show();
+                    tick();
+                });
+
+                $('#cdwb-stop-btn').on('click', function() {
+                    log('Stopped by user.');
+                    stop();
                 });
             }());
 

@@ -16,7 +16,8 @@ const FALLBACK_ENTRY_TYPES = [
   { slug: "fashion",  label: "Fashion" },
 ];
 
-// Entry types that have a catalog lookup.
+// Entry types that have a dedicated catalog API (iTunes/Google Books/Places).
+// All other types fall back to Wikipedia-only search via the same lookup endpoint.
 const CATALOG_TYPES = new Set(["book", "film", "album", "place", "food"]);
 
 type Step = "input" | "review" | "submitting" | "done" | "loading-entry";
@@ -27,6 +28,7 @@ interface EntryTypeOption {
 }
 
 interface CatalogResult {
+  source?: "wikipedia";
   externalId: string;
   title: string;
   about?: string;
@@ -159,8 +161,19 @@ export default function DirectorySubmitForm({
     setCatalogOpen(false);
     setCatalogPicked(true);
     setCatalogQuery(result.title);
-    setWikiTitle("");
-    setWikiUrl("");
+
+    // If this result came straight from Wikipedia, pre-set attribution now
+    // so the enrichment call can go straight to the Wikidata claims fetch.
+    const isWikiResult = result.source === "wikipedia";
+    const wikiSlug = isWikiResult
+      ? result.externalId.replace(/^wikipedia:/, "")
+      : "";
+    setWikiTitle(isWikiResult ? result.title : "");
+    setWikiUrl(
+      isWikiResult
+        ? `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`
+        : ""
+    );
 
     // Pre-fill form fields from catalog result
     setTitle(result.title);
@@ -183,8 +196,9 @@ export default function DirectorySubmitForm({
     setExcerpt(starterExcerpt);
     setContent("");
 
-    // Auto-enrich from Wikipedia/Wikidata in the background
-    const pickTitle = result.title;
+    // Auto-enrich from Wikipedia/Wikidata in the background.
+    // For Wikipedia results we pass the exact wiki title to skip a second opensearch.
+    const pickTitle = isWikiResult ? result.title : result.title;
     const pickType = entryType;
     const catalogCover = result.coverUrl;
     const catalogInfobox = result.infobox ?? {};
@@ -258,15 +272,13 @@ export default function DirectorySubmitForm({
     setEnriching(false);
   }
 
-  // When entry type changes away from a catalog type, clear catalog state
+  // Clear catalog state and re-search when entry type changes
   function handleEntryTypeChange(val: string) {
     setEntryType(val);
-    if (!CATALOG_TYPES.has(val)) {
-      handleCatalogClear();
-    } else {
-      // Re-trigger search if there's already a query
-      if (catalogQuery.trim().length >= 2) searchCatalog(catalogQuery, val);
-    }
+    // Always clear picked state when switching type (result came from a different catalog)
+    handleCatalogClear();
+    // Re-trigger search if there's already a query typed
+    if (catalogQuery.trim().length >= 2) searchCatalog(catalogQuery, val);
   }
 
   // ── Auth gate — not logged in ────────────────────────────────────────────
@@ -358,7 +370,11 @@ export default function DirectorySubmitForm({
   }
 
   function handleCatalogContinue() {
-    if (!title.trim()) return;
+    // If nothing was picked from results but the user typed a name, use it as the title
+    if (!catalogPicked && catalogQuery.trim()) {
+      setTitle(catalogQuery.trim());
+    }
+    if (!title.trim() && !catalogQuery.trim()) return;
     setStep("review");
   }
 
@@ -417,7 +433,18 @@ export default function DirectorySubmitForm({
     : entryType === "film" ? "film"
     : entryType === "album" ? "album"
     : entryType === "food" ? "restaurant or food spot"
-    : "place";
+    : entryType === "place" ? "place"
+    : entryType === "person" ? "person"
+    : entryType;
+
+  const catalogPlaceholder =
+    entryType === "book" ? "e.g. Things Fall Apart, Giovanni's Room…"
+    : entryType === "film" ? "e.g. Moonlight, Black Panther…"
+    : entryType === "album" ? "e.g. Homecoming, After Hours…"
+    : entryType === "food" ? "e.g. Nandos Brixton, Alara Lagos…"
+    : entryType === "place" ? "e.g. Tate Modern, Olumo Rock, Labadi Beach…"
+    : entryType === "person" ? "e.g. Fela Kuti, Chimamanda Ngozi Adichie…"
+    : "e.g. Highlife music, Lagos Island, Ankara fabric…";
 
   return (
     <div className="dir-submit-wrap">
@@ -462,28 +489,17 @@ export default function DirectorySubmitForm({
             </select>
           </div>
 
-          {/* Catalog search path — book, film, album */}
-          {isCatalogType ? (
-            <div ref={catalogRef} className="dir-catalog-search">
+          {/* Search — catalog APIs for book/film/album/place/food, Wikipedia for all other types */}
+          <div ref={catalogRef} className="dir-catalog-search">
               <label className="dir-field-label" htmlFor="dir-catalog-q">
-                Search {catalogTypeName} catalog
+                Search {catalogTypeName}{isCatalogType ? " catalog" : " on Wikipedia"}
               </label>
               <div className="dir-catalog-input-row">
                 <input
                   id="dir-catalog-q"
                   type="text"
                   className="dir-topic-input"
-                  placeholder={
-                    entryType === "book"
-                      ? "e.g. Things Fall Apart, Giovanni's Room…"
-                      : entryType === "film"
-                      ? "e.g. Moonlight, Black Panther…"
-                      : entryType === "album"
-                      ? "e.g. Homecoming, After Hours…"
-                      : entryType === "food"
-                      ? "e.g. Nandos Brixton, Alara Lagos…"
-                      : "e.g. Tate Modern, Olumo Rock, Labadi Beach…"
-                  }
+                  placeholder={catalogPlaceholder}
                   value={catalogQuery}
                   onChange={(e) => handleCatalogQueryChange(e.target.value)}
                   autoComplete="off"
@@ -519,11 +535,13 @@ export default function DirectorySubmitForm({
                       )}
                       <div className="dir-catalog-result-text">
                         <span className="dir-catalog-result-title">{r.title}</span>
-                        {(r.about || r.year) && (
-                          <span className="dir-catalog-result-meta">
-                            {[r.about, r.year].filter(Boolean).join(" · ")}
-                          </span>
-                        )}
+                        <span className="dir-catalog-result-meta">
+                          {r.source === "wikipedia" ? (
+                            <span className="dir-catalog-result-wiki">Wikipedia</span>
+                          ) : (
+                            [r.about, r.year].filter(Boolean).join(" · ")
+                          )}
+                        </span>
                       </div>
                     </li>
                   ))}
@@ -565,7 +583,7 @@ export default function DirectorySubmitForm({
                 <button
                   className="dir-generate-btn"
                   onClick={handleCatalogContinue}
-                  disabled={!catalogPicked || !title.trim()}
+                  disabled={!catalogPicked && !catalogQuery.trim()}
                 >
                   Continue →
                 </button>
@@ -573,37 +591,7 @@ export default function DirectorySubmitForm({
               <p className="dir-generate-note">
                 Earn 25 culture points when your entry is approved
               </p>
-            </div>
-          ) : (
-            /* Manual input — all other types */
-            <>
-              <label className="dir-field-label" htmlFor="dir-title-input">
-                Name
-              </label>
-              <div className="dir-generate-row">
-                <input
-                  id="dir-title-input"
-                  type="text"
-                  className="dir-topic-input"
-                  placeholder="e.g. Fela Kuti, Highlife music, Lagos Island, Ankara fabric…"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && title.trim() && setStep("review")}
-                />
-                <button
-                  className="dir-generate-btn"
-                  onClick={() => setStep("review")}
-                  disabled={!title.trim()}
-                >
-                  Continue →
-                </button>
-              </div>
-              {error && <p className="dir-error">{error}</p>}
-              <p className="dir-generate-note">
-                Earn 25 culture points when your entry is approved
-              </p>
-            </>
-          )}
+          </div>
         </div>
       )}
 
