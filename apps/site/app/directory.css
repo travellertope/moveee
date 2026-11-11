@@ -2185,43 +2185,102 @@
   color: var(--dir-ink);
 }
 
-/* ── Type-specific details section ── */
-.dir-entry-specifics {
-  margin-top: 32px;
-  padding-top: 28px;
-  border-top: 1px solid var(--dir-border);
+/* ── Wikipedia-style floating infobox ── */
+.dir-entry-article {
+  /* clearfix: infobox floats inside here, works/date/lower sections start below */
+  overflow: hidden;
 }
+.dir-entry-article::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.dir-infobox {
+  float: right;
+  width: 270px;
+  margin: 4px 0 20px 28px;
+  border: 1px solid var(--dir-border);
+  border-radius: var(--radius-xl, 12px);
+  overflow: hidden;
+  font-size: 13px;
+  background: color-mix(in srgb, var(--dir-paper) 60%, white);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--dir-ink) 6%, transparent);
+}
+[data-theme="dark"] .dir-infobox {
+  background: color-mix(in srgb, var(--dir-paper) 80%, black);
+}
+
+.dir-infobox-header {
+  background: var(--dir-dark-bg);
+  padding: 14px 16px 12px;
+  text-align: center;
+}
+.dir-infobox-header-name {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 3px;
+}
+.dir-infobox-header-type {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dir-ochre);
+}
+
+.dir-infobox-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dir-infobox-row {
+  border-bottom: 1px solid var(--dir-border);
+}
+.dir-infobox-row:last-child { border-bottom: none; }
+.dir-infobox-row:nth-child(even) td {
+  background: color-mix(in srgb, var(--dir-ink) 3%, transparent);
+}
+.dir-infobox-label {
+  padding: 7px 10px 7px 14px;
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dir-ochre);
+  vertical-align: top;
+  white-space: nowrap;
+  width: 38%;
+}
+.dir-infobox-value {
+  padding: 7px 14px 7px 4px;
+  font-size: 12.5px;
+  color: var(--dir-muted);
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+/* Mobile: infobox goes full-width, stacks above the text */
+@media (max-width: 600px) {
+  .dir-infobox {
+    float: none;
+    width: 100%;
+    margin: 0 0 20px;
+  }
+}
+
+/* ── Type-specific details section (legacy — kept for progressive fallback) ── */
 .dir-entry-specifics-heading {
   font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
   font-size: 20px;
   font-weight: 700;
   color: var(--dir-ink);
   margin: 0 0 20px;
-}
-
-/* Publication / details info grid */
-.dir-entry-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 20px 24px;
-}
-.dir-entry-info-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.dir-entry-info-label {
-  font-family: var(--font-inter), 'Inter', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--dir-muted);
-}
-.dir-entry-info-value {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--dir-ink);
 }
 
 /* ── Save line CTA ── */
