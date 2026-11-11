@@ -10,7 +10,7 @@ import type { DirectoryFollowStatus } from "@/lib/reading-tracker";
 // (PHP) — a follower is notified whenever a new community post links to
 // this entry.
 
-const SUPPORTED_TYPES = new Set(["person", "place"]);
+const SUPPORTED_TYPES = new Set(["person", "place", "movement", "artwork", "genre", "concept", "fashion"]);
 
 export default function DirectoryFollowButton({
   directoryId,

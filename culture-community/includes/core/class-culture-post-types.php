@@ -1757,6 +1757,34 @@ class Culture_Post_Types {
             'graphql_plural_name' => 'cultureDirectoryTypes',
         ) );
 
+        register_taxonomy( 'culture_dir_genre', array( 'culture_directory' ), array(
+            'labels' => array(
+                'name'              => __( 'Genre', 'culture-community' ),
+                'singular_name'     => __( 'Genre', 'culture-community' ),
+                'search_items'      => __( 'Search Genres', 'culture-community' ),
+                'all_items'         => __( 'All Genres', 'culture-community' ),
+                'edit_item'         => __( 'Edit Genre', 'culture-community' ),
+                'add_new_item'      => __( 'Add New Genre', 'culture-community' ),
+                'new_item_name'     => __( 'New Genre Name', 'culture-community' ),
+                'menu_name'         => __( 'Genre', 'culture-community' ),
+            ),
+            'hierarchical'        => false,
+            'public'              => false,
+            'publicly_queryable'  => false,
+            'show_ui'             => true,
+            'show_admin_column'   => true,
+            'show_in_nav_menus'   => false,
+            'show_tagcloud'       => false,
+            'show_in_quick_edit'  => true,
+            'show_in_rest'        => true,
+            'rest_base'           => 'culture-dir-genre',
+            'rewrite'             => false,
+            'query_var'           => false,
+            'show_in_graphql'     => true,
+            'graphql_single_name' => 'cultureDirectoryGenre',
+            'graphql_plural_name' => 'cultureDirectoryGenres',
+        ) );
+
         register_taxonomy( 'issue', array( 'post' ), array(
             'labels' => array(
                 'name'              => __( 'Issues', 'culture-community' ),

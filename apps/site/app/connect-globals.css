@@ -369,3 +369,44 @@ body.hide-sidebar .cw-shell-aside { display: none !important; }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Pages where the left nav rail is hidden ──────────────────────────────
+   These are immersive single-item views, focused forms, or sections with
+   their own internal navigation that make the rail redundant.
+   directory/[slug] is handled in directory.css.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* Single-item detail pages sharing pulse-layout--feed:
+   community/[slug], connect/[username], stoop/[id], pulse/[slug] */
+.cw-shell:has(.pulse-layout--feed) .ch-rail { display: none !important; }
+
+/* events/[slug] */
+.cw-shell:has(.evt-shell) .ch-rail { display: none !important; }
+
+/* events/submit form */
+.cw-shell:has(.evt-submit-page) .ch-rail { display: none !important; }
+
+/* hub/create form */
+.cw-shell:has(.hfc-page) .ch-rail { display: none !important; }
+
+/* directory/submit form */
+.cw-shell:has(.dir-submit-wrap) .ch-rail { display: none !important; }
+
+/* member/settings (all subpages share .sett-page) */
+.cw-shell:has(.sett-page) .ch-rail { display: none !important; }
+
+/* vendor dashboard and all vendor subpages */
+.cw-shell:has(.vd-page) .ch-rail { display: none !important; }
+
+/* When rail is hidden, let the content column expand */
+@media (min-width: 860px) {
+  .cw-shell:has(.pulse-layout--feed),
+  .cw-shell:has(.evt-shell),
+  .cw-shell:has(.evt-submit-page),
+  .cw-shell:has(.hfc-page),
+  .cw-shell:has(.dir-submit-wrap),
+  .cw-shell:has(.sett-page),
+  .cw-shell:has(.vd-page) {
+    max-width: 1100px;
+  }
+}

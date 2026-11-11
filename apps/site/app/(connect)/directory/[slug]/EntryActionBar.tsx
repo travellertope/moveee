@@ -8,6 +8,7 @@ import {
   statusLabel,
   type MediumOrOther,
   type ShelfStatus,
+  type DirectoryFollowStatus,
 } from "@/lib/reading-tracker";
 
 interface EntryState {
@@ -17,6 +18,12 @@ interface EntryState {
   rating: number;
 }
 
+// Types where it makes sense to log (consume/experience/visit)
+const LOG_TYPES    = new Set(["film", "book", "album", "tv-series", "food", "place"]);
+// Types where it makes sense to write a review
+const REVIEW_TYPES = new Set(["film", "book", "album", "tv-series", "food", "place", "artwork"]);
+// Types where the Follow action lives in the action bar (not in a standalone pill below the cover)
+const FOLLOW_BAR_TYPES = new Set(["person", "movement", "artwork", "genre", "concept", "fashion"]);
 
 export default function EntryActionBar({
   directoryId,
@@ -25,6 +32,7 @@ export default function EntryActionBar({
   entryTitle,
   quoteLinkRole,
   quoteLinkType,
+  typeSlug,
 }: {
   directoryId: number;
   isLoggedIn: boolean;
@@ -32,12 +40,15 @@ export default function EntryActionBar({
   entryTitle: string;
   quoteLinkRole: "author" | "source";
   quoteLinkType?: string;
+  typeSlug?: string;
 }) {
   const [state, setState]       = useState<EntryState | null>(null);
   const [logOpen, setLogOpen]   = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [busy, setBusy]         = useState(false);
+  const [followStatus, setFollowStatus] = useState<DirectoryFollowStatus | null>(null);
+  const [followBusy, setFollowBusy]     = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -47,7 +58,32 @@ export default function EntryActionBar({
     } catch {}
   }, [directoryId]);
 
+  const loadFollow = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/directory/${directoryId}/follow-status`, { cache: "no-store" });
+      if (res.ok) setFollowStatus(await res.json());
+    } catch {}
+  }, [directoryId]);
+
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!isLoggedIn || !typeSlug || !FOLLOW_BAR_TYPES.has(typeSlug)) return;
+    loadFollow();
+  }, [isLoggedIn, typeSlug, loadFollow]);
+
+  async function toggleFollow() {
+    if (followBusy || !followStatus) return;
+    const next = !followStatus.isFollowing;
+    setFollowStatus({ isFollowing: next, followersCount: followStatus.followersCount + (next ? 1 : -1) });
+    setFollowBusy(true);
+    try {
+      const res = await fetch(`/api/directory/${directoryId}/${next ? "follow" : "unfollow"}`, { method: "POST" });
+      if (res.ok) setFollowStatus(await res.json());
+      else loadFollow();
+    } catch { loadFollow(); }
+    setFollowBusy(false);
+  }
 
   useEffect(() => {
     function onOutside(e: MouseEvent) {
@@ -83,7 +119,16 @@ export default function EntryActionBar({
     setBusy(false);
   }
 
-  const hasLog = state && state.medium !== "other";
+  const showLog    = !typeSlug || LOG_TYPES.has(typeSlug);
+  const showReview = !typeSlug || REVIEW_TYPES.has(typeSlug);
+  const hasLog = showLog && state && state.medium !== "other";
+
+  // Follow button lives in the action bar for types that don't have Review or Log
+  const isFollowBarType = !!typeSlug && FOLLOW_BAR_TYPES.has(typeSlug);
+  // Show Follow in the Review slot when this type can't be reviewed
+  const showFollowInReviewSlot = !showReview && isFollowBarType;
+  // Show Follow in the Log slot when this type can be reviewed but not logged
+  const showFollowInLogSlot    = showReview && !showLog && isFollowBarType;
   const isSet  = !!state?.status;
   const medium = state?.medium ?? "book";
 
@@ -108,19 +153,39 @@ export default function EntryActionBar({
     <div className="dir-action-bar" ref={wrapRef}>
       <div className="dir-action-row">
 
-        {/* Review */}
-        <button
-          type="button"
-          className="dir-action-btn"
-          onClick={() => setReviewOpen(true)}
-          aria-label="Write a review"
-        >
-          <svg className="dir-action-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 11.5V14h2.5l7.5-7.5-2.5-2.5L2 11.5z"/>
-            <path d="M11.5 3.5l1-1 1 1-1 1-1-1z"/>
-          </svg>
-          <span className="dir-action-label">Review</span>
-        </button>
+        {/* Review slot — Review for reviewable types, Follow for follow-bar types that can't be reviewed */}
+        {showReview ? (
+          <button
+            type="button"
+            className="dir-action-btn"
+            onClick={() => setReviewOpen(true)}
+            aria-label="Write a review"
+          >
+            <svg className="dir-action-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 11.5V14h2.5l7.5-7.5-2.5-2.5L2 11.5z"/>
+              <path d="M11.5 3.5l1-1 1 1-1 1-1-1z"/>
+            </svg>
+            <span className="dir-action-label">Review</span>
+          </button>
+        ) : showFollowInReviewSlot && (
+          <button
+            type="button"
+            className={`dir-action-btn${followStatus?.isFollowing ? " dir-action-btn--active" : ""}`}
+            onClick={toggleFollow}
+            disabled={followBusy || (!followStatus && isLoggedIn)}
+            aria-label={followStatus?.isFollowing ? "Unfollow" : "Follow"}
+          >
+            <svg className="dir-action-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              {followStatus?.isFollowing
+                ? <><circle cx="6" cy="4.5" r="2.5"/><path d="M1 13c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/><path d="M11 7l1.5 1.5L15 6"/></>
+                : <><circle cx="6" cy="4.5" r="2.5"/><path d="M1 13c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/><path d="M12.5 6v4M10.5 8h4"/></>
+              }
+            </svg>
+            <span className="dir-action-label">
+              {followStatus?.isFollowing ? "Following" : "Follow"}
+            </span>
+          </button>
+        )}
 
         {/* Save a Line */}
         <button
@@ -135,8 +200,8 @@ export default function EntryActionBar({
           <span className="dir-action-label">Save Line</span>
         </button>
 
-        {/* Log */}
-        {hasLog ? (
+        {/* Log slot — Log for loggable types, Follow for follow-bar types that can be reviewed but not logged */}
+        {showLog && hasLog ? (
           <button
             type="button"
             className={`dir-action-btn${isSet ? " dir-action-btn--active" : ""}`}
@@ -155,12 +220,23 @@ export default function EntryActionBar({
               {isSet ? statusLabel(state!.status!, medium as MediumOrOther) : "Add to Log"}
             </span>
           </button>
-        ) : (
-          <button type="button" className="dir-action-btn" onClick={() => setReviewOpen(true)} aria-label="Write a review (no log for this type)">
+        ) : showFollowInLogSlot && (
+          <button
+            type="button"
+            className={`dir-action-btn${followStatus?.isFollowing ? " dir-action-btn--active" : ""}`}
+            onClick={toggleFollow}
+            disabled={followBusy || (!followStatus && isLoggedIn)}
+            aria-label={followStatus?.isFollowing ? "Unfollow" : "Follow"}
+          >
             <svg className="dir-action-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="8" cy="8" r="6"/><path d="M8 5v3h2.5"/>
+              {followStatus?.isFollowing
+                ? <><circle cx="6" cy="4.5" r="2.5"/><path d="M1 13c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/><path d="M11 7l1.5 1.5L15 6"/></>
+                : <><circle cx="6" cy="4.5" r="2.5"/><path d="M1 13c0-2.5 2.2-4.5 5-4.5s5 2 5 4.5"/><path d="M12.5 6v4M10.5 8h4"/></>
+              }
             </svg>
-            <span className="dir-action-label">Log</span>
+            <span className="dir-action-label">
+              {followStatus?.isFollowing ? "Following" : "Follow"}
+            </span>
           </button>
         )}
 

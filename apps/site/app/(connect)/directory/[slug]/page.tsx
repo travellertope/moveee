@@ -323,7 +323,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           {entry.databaseId && (
             <SocialProofLine directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
           )}
-          {entry.databaseId && (
+          {/* Follow pill — hidden for types where Follow lives in the action bar */}
+          {entry.databaseId && !["person", "movement", "artwork", "genre", "concept", "fashion"].includes(typeSlug) && (
             <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
           )}
 
@@ -376,13 +377,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             </div>
           )}
 
-          {/* Excerpt / description */}
-          {entry.excerpt && (
-            <div className={`dir-entry-description${typeSlug === "book" ? " dir-entry-description--dropcap" : ""}`}>
-              <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
-            </div>
-          )}
-
           {/* Action bar — Review / Save Line / Log / Improve */}
           {entry.databaseId && (
             <EntryActionBar
@@ -392,34 +386,52 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
               quoteLinkRole={quoteLinkRole}
               quoteLinkType={quoteLinkType || undefined}
+              typeSlug={typeSlug}
             />
           )}
 
-          {/* Full body content (gated if needed) */}
-          {canView ? (
-            entry.content ? (
-              <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content) }} />
-            ) : null
-          ) : (
-            <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
-          )}
+          {/* Article area — infobox floats right, description + body wrap to its left */}
+          <div className="dir-entry-article">
 
-          {/* Type-specific details section */}
-          {infoboxFields.some(f => infobox[f.key]) && (
-            <div className="dir-entry-specifics">
-              <h3 className="dir-entry-specifics-heading">{detailsHeading}</h3>
-              <div className="dir-entry-info-grid">
-                {infoboxFields.map(({ label, key }) =>
-                  infobox[key] ? (
-                    <div key={key} className="dir-entry-info-cell">
-                      <span className="dir-entry-info-label">{label}</span>
-                      <span className="dir-entry-info-value">{infobox[key]}</span>
-                    </div>
-                  ) : null
-                )}
+            {/* Wikipedia-style floating infobox */}
+            {infoboxFields.some(f => infobox[f.key]) && (
+              <aside className="dir-infobox" aria-label="Quick facts">
+                <div className="dir-infobox-header">
+                  <div className="dir-infobox-header-name">{decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}</div>
+                  <div className="dir-infobox-header-type">{typeLabel}</div>
+                </div>
+                <table className="dir-infobox-table">
+                  <tbody>
+                    {infoboxFields.map(({ label, key }) =>
+                      infobox[key] ? (
+                        <tr key={key} className="dir-infobox-row">
+                          <td className="dir-infobox-label">{label}</td>
+                          <td className="dir-infobox-value">{infobox[key]}</td>
+                        </tr>
+                      ) : null
+                    )}
+                  </tbody>
+                </table>
+              </aside>
+            )}
+
+            {/* Excerpt / description */}
+            {entry.excerpt && (
+              <div className={`dir-entry-description${typeSlug === "book" ? " dir-entry-description--dropcap" : ""}`}>
+                <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Full body content (gated if needed) */}
+            {canView ? (
+              entry.content ? (
+                <div className="dir-single-body" dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.content) }} />
+              ) : null
+            ) : (
+              <ContentGate accessLevel={accessLevel as "member-only" | "patron-only"} isLoggedIn={isLoggedIn} callbackUrl={`/directory/${slug}`} />
+            )}
+
+          </div>{/* /dir-entry-article */}
 
           {/* Selected Works */}
           {works.length > 0 && (
