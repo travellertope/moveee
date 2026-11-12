@@ -27,6 +27,7 @@ function toTitleCase(str: string): string {
 interface ReviewTarget {
   subtype: "place" | "food" | "book" | "film" | "music";
   entry?: TrendingDirectoryEntry;
+  tab?: "review" | "log";
 }
 
 interface Props {
@@ -119,7 +120,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                         <button
                           type="button"
                           className="dd-card-btn dd-card-btn--log"
-                          onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
+                          onClick={() => openReview({ subtype: cat.reviewSubtype, entry, tab: "log" })}
                         >
                           + Log
                         </button>
@@ -148,7 +149,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
           open={!!reviewTarget}
           onClose={() => setReviewTarget(null)}
           onSuccess={() => setReviewTarget(null)}
-          initialTab="review"
+          initialTab={reviewTarget.tab ?? "review"}
           initialReview={
             reviewTarget.entry
               ? {

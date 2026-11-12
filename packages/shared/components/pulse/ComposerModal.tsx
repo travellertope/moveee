@@ -7,7 +7,7 @@ import { renderMessageWithUpgradeLink } from "@/lib/linkifyUpgrade";
 import DirectorySearch from "@/components/composer/DirectorySearch";
 import MultiRating from "../composer/MultiRating";
 
-export type ComposerTab = "update" | "review" | "art" | "poll" | "quote" | "itinerary" | "event";
+export type ComposerTab = "update" | "review" | "art" | "poll" | "quote" | "itinerary" | "event" | "log";
 type ReviewSubtype = "place" | "food" | "music" | "book" | "film";
 
 const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
@@ -16,6 +16,22 @@ const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
   music: "music-review",
   book: "book-review",
   film: "film-review",
+};
+
+const LOG_TEMPLATE: Record<ReviewSubtype, string> = {
+  place: "place-log",
+  food: "food-log",
+  music: "music-log",
+  book: "book-log",
+  film: "film-log",
+};
+
+const LOG_VERB: Record<ReviewSubtype, string> = {
+  film:  "watched",
+  book:  "read",
+  music: "listened to",
+  place: "visited",
+  food:  "tried",
 };
 
 const CATEGORIES = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
@@ -295,6 +311,11 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [placePriceRange, setPlacePriceRange] = useState("");
   const [openingHours, setOpeningHours] = useState("");
 
+  // Log
+  const [logRating, setLogRating] = useState(0);
+  const [logNote, setLogNote]     = useState("");
+  const [logDate, setLogDate]     = useState("");
+
   // Shared
   const [categories, setCategories]       = useState<string[]>([]);
   const [galleryUrls, setGalleryUrls]     = useState<string[]>([]);
@@ -374,6 +395,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine("");
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
+    setLogRating(0); setLogNote(""); setLogDate("");
     setGalleryUrls([]); setError("");
     setCategories([]);
   }, []);
@@ -579,6 +601,28 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (p > 0) { payload.rsvp_price = p; payload.rsvp_price_currency = evCurrency; }
           }
           if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
+        } else if (activeTab === "log") {
+          if (!revEntry?.id) throw new Error("No entry selected.");
+          template_type = LOG_TEMPLATE[revSubtype];
+          payload.text = logNote.trim();
+          payload.linked_directory_id = revEntry.id;
+          if (revEntry.slug) payload.linked_directory_slug = revEntry.slug;
+          if (revSubtype === "film") {
+            payload.film_title = revEntry.title;
+            if (revEntry.thumbnail) payload.film_cover_url = revEntry.thumbnail;
+            if (logRating > 0) payload.film_overall_rating = logRating;
+          } else if (revSubtype === "book") {
+            payload.book_title = revEntry.title;
+            if (revEntry.thumbnail) payload.book_cover_url = revEntry.thumbnail;
+            if (logRating > 0) payload.book_overall_rating = logRating;
+          } else if (revSubtype === "music") {
+            payload.music_title = revEntry.title;
+            if (revEntry.thumbnail) payload.music_cover_url = revEntry.thumbnail;
+            if (logRating > 0) payload.music_overall_rating = logRating;
+          } else {
+            if (logRating > 0) payload.star_rating = logRating;
+          }
+          if (logDate) payload.log_date = logDate;
         }
 
         payload.template_type = template_type;
@@ -892,6 +936,50 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               <div className="cm-field">
                 <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
                 <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+              </div>
+            </>
+          )}
+
+          {/* ── LOG ── */}
+          {activeTab === "log" && (
+            <>
+              {revEntry && (
+                <div className="cm-log-entry-card">
+                  {revEntry.thumbnail && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={revEntry.thumbnail} alt="" className="cm-log-entry-thumb" />
+                  )}
+                  <div className="cm-log-entry-info">
+                    <span className="cm-log-entry-title">{revEntry.title}</span>
+                    <span className="cm-log-entry-verb">You {LOG_VERB[revSubtype]} this</span>
+                  </div>
+                </div>
+              )}
+              <div className="cm-field">
+                <label className="cm-label">Rating <span className="cm-label-opt">(optional)</span></label>
+                <StarRating value={logRating} onChange={setLogRating} />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">
+                  When did you {LOG_VERB[revSubtype]} it? <span className="cm-label-opt">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  className="cm-input"
+                  value={logDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setLogDate(e.target.value)}
+                />
+              </div>
+              <div className="cm-field">
+                <label className="cm-label">Any thoughts? <span className="cm-label-opt">(optional)</span></label>
+                <textarea
+                  className="cm-textarea"
+                  placeholder="A quick note — no pressure to write a full review…"
+                  value={logNote}
+                  onChange={e => setLogNote(e.target.value)}
+                  rows={3}
+                />
               </div>
             </>
           )}
@@ -1502,7 +1590,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               disabled={submitting || galleryUploading}
               onClick={handleSubmit}
             >
-              {submitting ? "Posting…" : "Publish Post"}
+              {submitting ? (activeTab === "log" ? "Logging…" : "Posting…") : (activeTab === "log" ? "Log it" : "Publish Post")}
             </button>
           </div>
         </div>
