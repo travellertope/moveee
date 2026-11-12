@@ -375,6 +375,10 @@ class Culture_Directory_Tools {
 			if ( isset( $page['missing'] ) ) {
 				continue;
 			}
+			// Skip disambiguation pages — they contain no useful content
+			if ( isset( $page['pageprops']['disambiguation'] ) ) {
+				continue;
+			}
 			$out[ $page['title'] ] = $page;
 		}
 
@@ -792,13 +796,27 @@ class Culture_Directory_Tools {
 
 			// Return the first result that shares at least one significant word
 			// with the original title (whole-word match, bidirectional).
+			// Skip disambiguation pages by title suffix.
 			foreach ( $titles as $candidate ) {
-				if ( ! empty( $candidate ) && self::wiki_title_matches( $validate_against, (string) $candidate ) ) {
+				if ( ! empty( $candidate )
+					&& strpos( (string) $candidate, '(disambiguation)' ) === false
+					&& self::wiki_title_matches( $validate_against, (string) $candidate ) ) {
 					return (string) $candidate;
 				}
 			}
 			return null;
 		};
+
+		// Pass 0: if the title already has a parenthetical qualifier (e.g. "The Thomas Crown Affair (1999 film)"),
+		// try fetching that exact Wikipedia title directly. wiki_fetch_pages_batch skips disambiguation pages,
+		// so if the exact article exists and is not a disambiguation page it's returned here.
+		if ( preg_match( '/\s*\([^)]+\)\s*$/', $title ) ) {
+			$pages = self::wiki_fetch_pages_batch( array( $title ) );
+			if ( ! empty( $pages ) ) {
+				$exact_page = reset( $pages );
+				return (string) ( $exact_page['title'] ?? $title );
+			}
+		}
 
 		// Pass 1: full title.
 		$result = $search( $title, $title );

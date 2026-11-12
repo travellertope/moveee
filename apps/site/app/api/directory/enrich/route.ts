@@ -159,7 +159,16 @@ async function findWikiTitle(q: string, type: string): Promise<string | null> {
       redirects: "resolve",
     });
     const titles: string[] = Array.isArray(data?.[1]) ? data[1] : [];
-    return titles.find(t => t && wikiTitleMatches(validateAgainst, t)) ?? null;
+    // Skip disambiguation pages by title suffix
+    return titles.find(t => t && !t.includes("(disambiguation)") && wikiTitleMatches(validateAgainst, t)) ?? null;
+  }
+
+  // Pass 0: if the title already has a parenthetical qualifier (e.g. "The Thomas Crown Affair (1999 film)"),
+  // try fetching that exact Wikipedia title directly — Wikipedia has dedicated articles for these.
+  // fetchWikiPageData returns null for disambiguation pages, so this naturally skips them.
+  if (/\s*\([^)]+\)\s*$/.test(q)) {
+    const exactPage = await fetchWikiPageData(q);
+    if (exactPage) return exactPage.title ?? q;
   }
 
   // Pass 1: full title
@@ -219,6 +228,8 @@ async function fetchWikiPageData(title: string) {
   const pages: Record<string, any> = data?.query?.pages ?? {};
   const page = Object.values(pages)[0] as any;
   if (!page || "missing" in page) return null;
+  // Disambiguation pages have no useful content — skip them
+  if ("disambiguation" in (page.pageprops ?? {})) return null;
   return page;
 }
 
