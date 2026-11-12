@@ -115,10 +115,9 @@ function DiscoverCard({
   onLog?: (entry: DiscoverEntry) => void;
 }) {
   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
-  const reviewSubtype = REVIEW_SUBTYPES[entry.type];
-  const isLoggable = LOG_TYPES.has(entry.type);
-  const showReview = !!onReview && !!reviewSubtype;
-  const showLog = !!onLog && isLoggable;
+  const reviewSubtype = REVIEW_SUBTYPES[entry.type] ?? "place";
+  const showReview = !!onReview;
+  const showLog = !!onLog;
   const showActions = showReview || showLog;
 
   return (

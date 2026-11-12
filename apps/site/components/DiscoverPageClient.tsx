@@ -51,8 +51,7 @@ export default function DiscoverPageClient({ initialType, initialRegion, viewerI
   }, [session, pendingReview]);
 
   function handleReview(entry: DiscoverEntry) {
-    const subtype = REVIEW_SUBTYPES[entry.type];
-    if (!subtype) return;
+    const subtype = REVIEW_SUBTYPES[entry.type] ?? "place";
     if (!session) {
       setPendingReview({ entry, subtype });
       window.dispatchEvent(new Event("open-auth-modal"));
