@@ -99,7 +99,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                         className="arc-cta dd-card-cta"
                         onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
                       >
-                        ✎ Write a review →
+                        + Write a review
                       </button>
                     </div>
                   );
