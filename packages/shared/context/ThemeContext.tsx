@@ -27,10 +27,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setThemeState(stored);
       applyTheme(stored);
     } else {
-      // Inline script in <head> already set data-theme from system preference —
-      // read it back so React state matches what's already painted.
-      const current = document.documentElement.getAttribute("data-theme");
-      setThemeState(current === "dark" ? "dark" : "light");
+      // No stored preference — resolve from the DOM attribute (set by the inline
+      // head script) or fall back to matchMedia. Always call applyTheme() to
+      // re-confirm the attribute in case React hydration cleared it.
+      const existing = document.documentElement.getAttribute("data-theme");
+      const resolved: ThemeMode =
+        existing === "dark" ? "dark" :
+        existing === "light" ? "light" :
+        (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      setThemeState(resolved);
+      applyTheme(resolved);
     }
   }, []);
 

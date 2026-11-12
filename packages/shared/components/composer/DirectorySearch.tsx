@@ -50,9 +50,13 @@ interface Props {
    * title/about/cover, deduped server-side by external ID) — no manual
    * quick-create form needed for these. */
   externalSource?: "google_books" | "spotify" | "tmdb" | "google_places";
+  /** Pre-populate the search input with this text so the user sees relevant
+   * results immediately (e.g. artist name when opening Save a Line from an
+   * album page). The user can still clear or change it. */
+  initialQuery?: string;
 }
 
-export default function DirectorySearch({ value, onChange, typeFilter, placeholder, aboutFieldLabel, externalSource }: Props) {
+export default function DirectorySearch({ value, onChange, typeFilter, placeholder, aboutFieldLabel, externalSource, initialQuery }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -73,6 +77,14 @@ export default function DirectorySearch({ value, onChange, typeFilter, placehold
   // Was silently swallowed before (see selectExternal()'s bare catch) — a
   // failed pick looked identical to a working tap, with zero feedback.
   const [externalError, setExternalError] = useState("");
+
+  // Seed the search input when a pre-fill is provided (e.g. artist from album page)
+  useEffect(() => {
+    if (initialQuery && !value) {
+      setQuery(initialQuery);
+      setOpen(true);
+    }
+  }, [initialQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (query.length < 2) { setResults([]); return; }

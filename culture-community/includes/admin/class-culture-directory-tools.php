@@ -21,6 +21,7 @@ class Culture_Directory_Tools {
 		add_action( 'wp_ajax_culture_dir_wiki_fetch',     array( __CLASS__, 'ajax_wiki_fetch' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_seed',      array( __CLASS__, 'ajax_wiki_seed' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_backfill',  array( __CLASS__, 'ajax_wiki_backfill' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_audit',     array( __CLASS__, 'ajax_wiki_audit' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
 
@@ -284,36 +285,68 @@ class Culture_Directory_Tools {
 
 		global $wpdb;
 
-		$batch_num  = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
-		$batch_size = 5;
-		$overwrite  = ! empty( $_POST['overwrite'] );
-		$offset     = $batch_num * $batch_size;
+		$batch_num    = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
+		$batch_size   = 5;
+		$overwrite    = ! empty( $_POST['overwrite'] );
+		$retry_failed = ! empty( $_POST['retry_failed'] );
+		$offset       = $batch_num * $batch_size;
 
-		// Count entries not yet Wikipedia-enriched (no _wiki_title meta row)
-		$total = (int) $wpdb->get_var(
-			"SELECT COUNT(DISTINCT p.ID)
-			 FROM {$wpdb->posts} p
-			 LEFT JOIN {$wpdb->postmeta} pm
-			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
-			 WHERE p.post_type = 'culture_directory'
-			   AND p.post_status = 'publish'
-			   AND pm.meta_value IS NULL"
-		);
+		if ( $retry_failed ) {
+			// Retry mode: entries that were previously searched but not found.
+			$total = (int) $wpdb->get_var(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value = '_not_found'"
+			);
 
-		// Get this batch
-		$ids = $wpdb->get_col( $wpdb->prepare(
-			"SELECT DISTINCT p.ID
-			 FROM {$wpdb->posts} p
-			 LEFT JOIN {$wpdb->postmeta} pm
-			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
-			 WHERE p.post_type = 'culture_directory'
-			   AND p.post_status = 'publish'
-			   AND pm.meta_value IS NULL
-			 ORDER BY p.ID ASC
-			 LIMIT %d OFFSET %d",
-			$batch_size,
-			$offset
-		) );
+			$ids = $wpdb->get_col( $wpdb->prepare(
+				"SELECT DISTINCT p.ID
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value = '_not_found'
+				 ORDER BY p.ID ASC
+				 LIMIT %d OFFSET %d",
+				$batch_size,
+				$offset
+			) );
+
+			// Clear the _not_found marker so a re-match can be saved.
+			foreach ( $ids as $id ) {
+				delete_post_meta( (int) $id, '_wiki_title' );
+			}
+		} else {
+			// Normal mode: entries not yet processed (no _wiki_title meta row).
+			$total = (int) $wpdb->get_var(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 LEFT JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value IS NULL"
+			);
+
+			$ids = $wpdb->get_col( $wpdb->prepare(
+				"SELECT DISTINCT p.ID
+				 FROM {$wpdb->posts} p
+				 LEFT JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_value IS NULL
+				 ORDER BY p.ID ASC
+				 LIMIT %d OFFSET %d",
+				$batch_size,
+				$offset
+			) );
+		}
 
 		if ( empty( $ids ) ) {
 			wp_send_json_success( array(
@@ -391,26 +424,256 @@ class Culture_Directory_Tools {
 		) );
 	}
 
+	/**
+	 * Audit all enriched directory entries for bad Wikipedia matches and clear them.
+	 *
+	 * Scans every published entry that has a _wiki_title set (and not _not_found),
+	 * runs wiki_title_matches() against it, and for every mismatch: deletes _wiki_title,
+	 * _wiki_url, and all dir_infobox_* meta so a subsequent backfill re-fetches
+	 * correct (or no) data.
+	 *
+	 * Returns: { checked, cleared, entries[] }
+	 */
+	public static function ajax_wiki_audit() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Insufficient permissions.' );
+		}
+
+		global $wpdb;
+
+		// Fetch all published entries that have a real (non-"_not_found") _wiki_title.
+		$rows = $wpdb->get_results(
+			"SELECT p.ID, p.post_title, pm.meta_value AS wiki_title
+			   FROM {$wpdb->posts} p
+			   INNER JOIN {$wpdb->postmeta} pm
+			       ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+			  WHERE p.post_type   = 'culture_directory'
+			    AND p.post_status = 'publish'
+			    AND pm.meta_value != '_not_found'",
+			ARRAY_A
+		);
+
+		$checked = 0;
+		$cleared = 0;
+		$entries = array();
+
+		foreach ( $rows as $row ) {
+			$post_id    = (int) $row['ID'];
+			$post_title = $row['post_title'];
+			$wiki_title = $row['wiki_title'];
+
+			$checked++;
+
+			if ( ! self::wiki_title_matches( $post_title, $wiki_title ) ) {
+				// Remove the Wikipedia tracking meta.
+				delete_post_meta( $post_id, '_wiki_title' );
+				delete_post_meta( $post_id, '_wiki_url' );
+
+				// Remove all infobox fields that the backfiller may have written.
+				$infobox_keys = $wpdb->get_col( $wpdb->prepare(
+					"SELECT DISTINCT meta_key FROM {$wpdb->postmeta}
+					  WHERE post_id = %d AND meta_key LIKE 'dir_infobox_%'",
+					$post_id
+				) );
+				foreach ( $infobox_keys as $key ) {
+					delete_post_meta( $post_id, $key );
+				}
+
+				$cleared++;
+				$entries[] = array(
+					'id'        => $post_id,
+					'title'     => $post_title,
+					'wiki_was'  => $wiki_title,
+				);
+			}
+		}
+
+		wp_send_json_success( array(
+			'checked' => $checked,
+			'cleared' => $cleared,
+			'entries' => $entries,
+		) );
+	}
+
+	/**
+	 * Strip diacritics from a UTF-8 string and return plain ASCII lowercase.
+	 * "Candomblé" → "candomble", "Ògún" → "ogun". Uses iconv TRANSLIT which
+	 * is available in virtually every PHP setup.
+	 */
+	private static function ascii_lower( string $text ): string {
+		$ascii = iconv( 'UTF-8', 'ASCII//TRANSLIT//IGNORE', $text );
+		return strtolower( $ascii !== false ? $ascii : $text );
+	}
+
+	/**
+	 * Checks whether a Wikipedia article title is a plausible match for the
+	 * original directory entry title. At least one significant word (4+ chars,
+	 * not a stopword) from the original must appear as a whole word in the
+	 * candidate, or vice versa.
+	 *
+	 * Handles:
+	 *  - Diacritics: "Candomblé" matches "Candomblé" after ASCII normalisation.
+	 *  - Simple plurals: "Festival" matches "Festivals" and vice versa.
+	 *  - Prevents false positives: "Water Margin" ≠ "Women on the Margins".
+	 */
+	private static function wiki_title_matches( string $original, string $candidate ): bool {
+		static $stopwords = array( 'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'also', 'more', 'over', 'some', 'have', 'been', 'were', 'their' );
+
+		$sig_words = function( string $text ) use ( $stopwords ): array {
+			$words = preg_split( '/[^a-z0-9]+/', self::ascii_lower( $text ), -1, PREG_SPLIT_NO_EMPTY );
+			return array_values( array_filter( $words, function( $w ) use ( $stopwords ) {
+				return strlen( $w ) >= 4 && ! in_array( $w, $stopwords, true );
+			} ) );
+		};
+
+		$orig_words = $sig_words( $original );
+		$cand_words = $sig_words( $candidate );
+
+		// Very short or all-stopword titles (e.g. "1984", "It") — skip validation.
+		if ( empty( $orig_words ) ) return true;
+
+		$cand_ascii = self::ascii_lower( $candidate );
+		$orig_ascii = self::ascii_lower( $original );
+
+		// Check a word (and its de-pluralised/pluralised form) against a haystack string.
+		// Plural tolerance is only applied when the stem is 7+ characters long, which
+		// avoids false positives like "margins" (stem "margin", 6 chars) matching "margin"
+		// in "Water Margin", while still allowing "festivals" (stem "festival", 8 chars)
+		// to match "festival" and vice versa.
+		$word_in = function( string $word, string $haystack ): bool {
+			if ( preg_match( '/\b' . preg_quote( $word, '/' ) . '\b/', $haystack ) ) {
+				return true;
+			}
+			// Plural query word → check stem in haystack (only for long stems).
+			if ( substr( $word, -1 ) === 's' ) {
+				$stem = substr( $word, 0, -1 );
+				if ( strlen( $stem ) >= 7 && preg_match( '/\b' . preg_quote( $stem, '/' ) . '\b/', $haystack ) ) {
+					return true;
+				}
+			}
+			// Singular query word → check pluralised form in haystack (only for long words).
+			if ( strlen( $word ) >= 7 && preg_match( '/\b' . preg_quote( $word, '/' ) . 's\b/', $haystack ) ) {
+				return true;
+			}
+			return false;
+		};
+
+		// For multi-word titles, require ≥2 matches in either direction so a
+		// single shared word can't cause cross-matching between unrelated titles
+		// (e.g. "Women on the Margins" ≠ "In the Margins").
+		$min_match = count( $orig_words ) >= 2 ? 2 : 1;
+
+		$orig_in_cand = 0;
+		foreach ( $orig_words as $word ) {
+			if ( $word_in( $word, $cand_ascii ) ) {
+				$orig_in_cand++;
+				if ( $orig_in_cand >= $min_match ) return true;
+			}
+		}
+
+		$cand_in_orig = 0;
+		foreach ( $cand_words as $word ) {
+			if ( $word_in( $word, $orig_ascii ) ) {
+				$cand_in_orig++;
+				if ( $cand_in_orig >= $min_match ) return true;
+			}
+		}
+
+		return false;
+	}
+
 	/** Search Wikipedia for the best-matching article title. */
 	private static function wiki_opensearch( string $title, string $entry_type ): ?string {
 		static $hints = array( 'film' => 'film', 'book' => 'novel', 'album' => 'album' );
-		$hint  = $hints[ $entry_type ] ?? '';
-		$query = $hint ? "$title $hint" : $title;
+		$hint = $hints[ $entry_type ] ?? '';
 
-		$url = add_query_arg( array(
-			'action'    => 'opensearch',
-			'search'    => $query,
-			'limit'     => '3',
-			'redirects' => 'resolve',
-			'format'    => 'json',
+		// Inner helper: run opensearch for a given query string and validate
+		// that the returned title is actually related to the original.
+		$search = function( string $q, string $validate_against ) use ( $hint ): ?string {
+			$query = $hint ? "$q $hint" : $q;
+			$url   = add_query_arg( array(
+				'action'    => 'opensearch',
+				'search'    => $query,
+				'limit'     => '5',
+				'redirects' => 'resolve',
+				'format'    => 'json',
+			), 'https://en.wikipedia.org/w/api.php' );
+
+			$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
+			if ( is_wp_error( $response ) ) return null;
+
+			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+			$titles = $body[1] ?? array();
+
+			// Return the first result that shares at least one significant word
+			// with the original title (whole-word match, bidirectional).
+			foreach ( $titles as $candidate ) {
+				if ( ! empty( $candidate ) && self::wiki_title_matches( $validate_against, (string) $candidate ) ) {
+					return (string) $candidate;
+				}
+			}
+			return null;
+		};
+
+		// Pass 1: full title.
+		$result = $search( $title, $title );
+		if ( $result ) return $result;
+
+		// Pass 2: strip trailing disambiguation suffix in parentheses —
+		// e.g. "Game of Thrones (TV series)" → "Game of Thrones",
+		//      "Squid Game (TV series)" → "Squid Game",
+		//      "Black Panther (film)" → "Black Panther".
+		$paren_base = preg_replace( '/\s*\([^)]+\)\s*$/', '', $title );
+		if ( $paren_base && $paren_base !== $title ) {
+			$result = $search( $paren_base, $paren_base );
+			if ( $result ) return $result;
+		}
+
+		// Pass 3: strip subtitle after ': ' — e.g. "The Tortured Poets Department: The Anthology"
+		// → "The Tortured Poets Department".
+		$colon_pos = strpos( $title, ': ' );
+		if ( $colon_pos !== false ) {
+			$colon_base = substr( $title, 0, $colon_pos );
+			$result     = $search( $colon_base, $colon_base );
+			if ( $result ) return $result;
+		}
+
+		// Pass 4: strip edition/variant suffix after ' - ' —
+		// e.g. "Sense and Sensibility - Illustrated Edition" → "Sense and Sensibility".
+		$dash_pos = strpos( $title, ' - ' );
+		if ( $dash_pos !== false ) {
+			$dash_base = substr( $title, 0, $dash_pos );
+			$result    = $search( $dash_base, $dash_base );
+			if ( $result ) return $result;
+		}
+
+		// Pass 5: Wikipedia CirrusSearch full-text — handles cases where the article title
+		// differs substantially from the stored entry title, e.g. "The Odyssey of Homer" → "Odyssey".
+		$query    = $hint ? "$title $hint" : $title;
+		$fts_url  = add_query_arg( array(
+			'action'   => 'query',
+			'list'     => 'search',
+			'srsearch' => $query,
+			'srlimit'  => '3',
+			'srinfo'   => '',
+			'srprop'   => 'titlesnippet',
+			'format'   => 'json',
 		), 'https://en.wikipedia.org/w/api.php' );
 
-		$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
-		if ( is_wp_error( $response ) ) return null;
+		$fts_response = wp_remote_get( $fts_url, array( 'timeout' => 10 ) );
+		if ( ! is_wp_error( $fts_response ) ) {
+			$fts_body    = json_decode( wp_remote_retrieve_body( $fts_response ), true );
+			$fts_results = $fts_body['query']['search'] ?? array();
+			foreach ( $fts_results as $fts_result ) {
+				$fts_title = $fts_result['title'] ?? '';
+				if ( $fts_title && self::wiki_title_matches( $title, $fts_title ) ) {
+					return (string) $fts_title;
+				}
+			}
+		}
 
-		$body   = json_decode( wp_remote_retrieve_body( $response ), true );
-		$titles = $body[1] ?? array();
-		return ! empty( $titles[0] ) ? (string) $titles[0] : null;
+		return null;
 	}
 
 	/**
@@ -737,6 +1000,18 @@ class Culture_Directory_Tools {
 					</p>
 				</div>
 
+				<?php
+				$backfill_not_found = (int) $wpdb->get_var(
+					"SELECT COUNT(DISTINCT p.ID)
+					 FROM {$wpdb->posts} p
+					 INNER JOIN {$wpdb->postmeta} pm
+					     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+					 WHERE p.post_type = 'culture_directory'
+					   AND p.post_status = 'publish'
+					   AND pm.meta_value = '_not_found'"
+				);
+				?>
+
 				<label style="display:block;margin-bottom:12px;">
 					<input type="checkbox" id="cdwb-overwrite">
 					<?php esc_html_e( 'Overwrite existing content and cover on all entries (AI-generated covers are always replaced even without this)', 'culture-community' ); ?>
@@ -745,11 +1020,26 @@ class Culture_Directory_Tools {
 				<button id="cdwb-start-btn" class="button button-primary" <?php echo $backfill_pending < 1 ? 'disabled' : ''; ?>>
 					<?php esc_html_e( 'Start backfill →', 'culture-community' ); ?>
 				</button>
+				<button id="cdwb-retry-btn" class="button button-secondary" style="margin-left:8px;" <?php echo $backfill_not_found < 1 ? 'disabled' : ''; ?>>
+					<?php printf( esc_html__( 'Retry %d not-found →', 'culture-community' ), $backfill_not_found ); ?>
+				</button>
 				<button id="cdwb-stop-btn" class="button" style="display:none;margin-left:8px;">
 					<?php esc_html_e( 'Stop', 'culture-community' ); ?>
 				</button>
 				<span class="spinner" id="cdwb-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
 				<div id="cdwb-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+			</div>
+
+			<div class="cdt-panel" style="margin-top:16px;">
+				<h3 style="margin-top:0;"><?php esc_html_e( 'Audit: clear bad Wikipedia matches', 'culture-community' ); ?></h3>
+				<p class="description">
+					<?php esc_html_e( 'Scans all enriched entries and removes data for any entry whose stored Wikipedia article title does not share a significant word with the entry\'s own title (e.g. "Water Margin" stored for "Women on the Margins"). Cleared entries will be re-processed on the next backfill run.', 'culture-community' ); ?>
+				</p>
+				<button id="cdwb-audit-btn" class="button button-secondary">
+					<?php esc_html_e( 'Audit & clear bad matches →', 'culture-community' ); ?>
+				</button>
+				<span class="spinner" id="cdwb-audit-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+				<div id="cdwb-audit-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
 			</div>
 
 			<?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
@@ -825,6 +1115,7 @@ class Culture_Directory_Tools {
 				var currentBatch = 0;
 				var totalProcessed = 0;
 				var totalUpdated = 0;
+				var retryMode = false;
 
 				function log(text, isError) {
 					var $log = $('#cdwb-log').show();
@@ -837,10 +1128,11 @@ class Culture_Directory_Tools {
 					if (!running) return;
 
 					$.post(ajaxUrl, {
-						action:    'culture_dir_wiki_backfill',
-						nonce:     nonce,
-						batch:     currentBatch,
-						overwrite: $('#cdwb-overwrite').is(':checked') ? '1' : '',
+						action:        'culture_dir_wiki_backfill',
+						nonce:         nonce,
+						batch:         currentBatch,
+						overwrite:     $('#cdwb-overwrite').is(':checked') ? '1' : '',
+						retry_failed:  retryMode ? '1' : '',
 					})
 					.done(function(res) {
 						if (!running) return;
@@ -882,28 +1174,75 @@ class Culture_Directory_Tools {
 
 				function stop() {
 					running = false;
-					$('#cdwb-start-btn').prop('disabled', false).show();
+					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', false);
 					$('#cdwb-stop-btn').hide();
 					$('#cdwb-spinner').hide();
 				}
 
-				$('#cdwb-start-btn').on('click', function() {
+				function start(isRetry) {
 					running = true;
+					retryMode = !!isRetry;
 					currentBatch = 0;
 					totalProcessed = 0;
 					totalUpdated = 0;
-					$(this).prop('disabled', true);
+					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', true);
 					$('#cdwb-stop-btn').show();
 					$('#cdwb-spinner').show();
 					$('#cdwb-log').empty().show();
+					if (isRetry) log('Retrying not-found entries with improved subtitle search…');
 					tick();
-				});
+				}
+
+				$('#cdwb-start-btn').on('click', function() { start(false); });
+				$('#cdwb-retry-btn').on('click', function() { start(true); });
 
 				$('#cdwb-stop-btn').on('click', function() {
 					log('Stopped by user.');
 					stop();
 				});
 			}());
+
+			/* ── Audit: clear bad Wikipedia matches ── */
+			$('#cdwb-audit-btn').on('click', function() {
+				var $btn     = $(this);
+				var $spinner = $('#cdwb-audit-spinner');
+				var $log     = $('#cdwb-audit-log');
+
+				$btn.prop('disabled', true);
+				$spinner.show();
+				$log.empty().show().append('<div>Scanning all enriched entries…</div>');
+
+				$.post(ajaxurl, {
+					action: 'culture_dir_wiki_audit',
+					nonce:  '<?php echo esc_js( wp_create_nonce( 'culture_dir_tools' ) ); ?>',
+				})
+				.done(function(res) {
+					$spinner.hide();
+					$btn.prop('disabled', false);
+					if (!res.success) {
+						$log.append('<div style="color:red;">Error: ' + (res.data || 'Unknown error') + '</div>');
+						return;
+					}
+					var d = res.data;
+					$log.append('<div><strong>' + d.checked + '</strong> entries checked, <strong>' + d.cleared + '</strong> bad matches cleared.</div>');
+					if (d.entries && d.entries.length) {
+						$log.append('<div style="margin-top:6px;color:#8a2d10;font-weight:600;">Cleared entries (will be re-processed on next backfill):</div>');
+						$.each(d.entries, function(i, e) {
+							$log.append('<div>✕ ' + $('<span>').text(e.title).html() + ' <span style="color:#999;">(was: ' + $('<span>').text(e.wiki_was).html() + ')</span></div>');
+						});
+					} else {
+						$log.append('<div style="color:green;">No bad matches found — all stored Wikipedia titles look correct.</div>');
+					}
+					if (d.cleared > 0) {
+						$log.append('<div style="margin-top:8px;">Run <strong>Start backfill</strong> to re-enrich the cleared entries.</div>');
+					}
+				})
+				.fail(function() {
+					$spinner.hide();
+					$btn.prop('disabled', false);
+					$log.append('<div style="color:red;">Request failed.</div>');
+				});
+			});
 
 			/* ── Wikipedia Seeder ── */
 			$('input[name="cdw-source"]').on('change', function() {

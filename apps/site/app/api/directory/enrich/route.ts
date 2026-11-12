@@ -92,17 +92,117 @@ const TYPE_HINT: Record<string, string> = {
   album: "album",
 };
 
+const STOPWORDS = new Set(["the", "and", "for", "with", "from", "that", "this", "into", "also", "more", "over", "some", "have", "been", "were", "their"]);
+
+/** Strip diacritics and return lowercase ASCII — "Candomblé" → "candomble". */
+function asciiLower(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+function sigWords(text: string): string[] {
+  return asciiLower(text)
+    .split(/[^a-z0-9]+/)
+    .filter(w => w.length >= 4 && !STOPWORDS.has(w));
+}
+
+/** Check whether a word (or its de-pluralised/pluralised form) appears as a whole word in haystack.
+ * Plural tolerance only applies for 7+ character stems to avoid false positives
+ * ("margins"→"margin" at 6 chars is excluded; "festivals"→"festival" at 8 chars is included). */
+function wordIn(word: string, haystack: string): boolean {
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (new RegExp(`\\b${esc(word)}\\b`).test(haystack)) return true;
+  // Plural query word → check stem (only for long stems, 7+ chars)
+  if (word.endsWith("s")) {
+    const stem = word.slice(0, -1);
+    if (stem.length >= 7 && new RegExp(`\\b${esc(stem)}\\b`).test(haystack)) return true;
+  }
+  // Singular query word → check plural form (only for long words, 7+ chars)
+  if (word.length >= 7 && new RegExp(`\\b${esc(word)}s\\b`).test(haystack)) return true;
+  return false;
+}
+
+/** Validates that a Wikipedia candidate title is plausibly related to the query
+ * by requiring significant word overlap in either direction. For multi-word
+ * titles, requires ≥2 matching words to prevent cross-matching on a single
+ * shared word (e.g. "Women on the Margins" ≠ "In the Margins"). */
+function wikiTitleMatches(original: string, candidate: string): boolean {
+  const origWords = sigWords(original);
+  if (!origWords.length) return true; // very short title — skip validation
+
+  const candAscii = asciiLower(candidate);
+  const origAscii = asciiLower(original);
+
+  // Single-word original: 1 match is enough. Multi-word: need ≥2 in either
+  // direction so one incidentally shared word can't cause a false positive.
+  const minMatch = origWords.length >= 2 ? 2 : 1;
+
+  let origInCand = 0;
+  for (const w of origWords) {
+    if (wordIn(w, candAscii) && ++origInCand >= minMatch) return true;
+  }
+  let candInOrig = 0;
+  for (const w of sigWords(candidate)) {
+    if (wordIn(w, origAscii) && ++candInOrig >= minMatch) return true;
+  }
+  return false;
+}
+
 async function findWikiTitle(q: string, type: string): Promise<string | null> {
   const hint = TYPE_HINT[type];
-  const query = hint ? `${q} ${hint}` : q;
-  const data = await wikiFetch({
-    action: "opensearch",
-    search: query,
-    limit: "3",
-    redirects: "resolve",
+
+  async function trySearch(query: string, validateAgainst: string): Promise<string | null> {
+    const hintedQuery = hint ? `${query} ${hint}` : query;
+    const data = await wikiFetch({
+      action: "opensearch",
+      search: hintedQuery,
+      limit: "5",
+      redirects: "resolve",
+    });
+    const titles: string[] = Array.isArray(data?.[1]) ? data[1] : [];
+    return titles.find(t => t && wikiTitleMatches(validateAgainst, t)) ?? null;
+  }
+
+  // Pass 1: full title
+  let result = await trySearch(q, q);
+  if (result) return result;
+
+  // Pass 2: strip trailing (TV series)/(film) etc.
+  const parenBase = q.replace(/\s*\([^)]+\)\s*$/, "");
+  if (parenBase && parenBase !== q) {
+    result = await trySearch(parenBase, parenBase);
+    if (result) return result;
+  }
+
+  // Pass 3: strip subtitle after ': '
+  const colonIdx = q.indexOf(": ");
+  if (colonIdx !== -1) {
+    const colonBase = q.slice(0, colonIdx);
+    result = await trySearch(colonBase, colonBase);
+    if (result) return result;
+  }
+
+  // Pass 4: strip edition suffix after ' - '
+  const dashIdx = q.indexOf(" - ");
+  if (dashIdx !== -1) {
+    const dashBase = q.slice(0, dashIdx);
+    result = await trySearch(dashBase, dashBase);
+    if (result) return result;
+  }
+
+  // Pass 5: CirrusSearch full-text
+  const ftsData = await wikiFetch({
+    action: "query",
+    list: "search",
+    srsearch: hint ? `${q} ${hint}` : q,
+    srlimit: "3",
+    srinfo: "",
+    srprop: "titlesnippet",
   });
-  const titles: string[] = Array.isArray(data?.[1]) ? data[1] : [];
-  return titles[0] ?? null;
+  const ftsResults: Array<{title: string}> = ftsData?.query?.search ?? [];
+  const ftsMatch = ftsResults.find(r => r.title && wikiTitleMatches(q, r.title));
+  if (ftsMatch) return ftsMatch.title;
+
+  return null;
 }
 
 async function fetchWikiPageData(title: string) {

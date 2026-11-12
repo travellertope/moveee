@@ -147,6 +147,73 @@ body:has(.cw-shell) {
   --glow-gold: 0 0 0 2px var(--gold), 0 0 10px 2px rgba(201, 150, 63, 0.45);
 }
 
+/* ── Dark mode via system preference (no stored data-theme attribute yet) ──
+   Mirrors the [data-theme="dark"] block above so dark-mode users see the
+   correct background even before React hydration sets the attribute. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body:has(.cw-shell) {
+    background: #1a1714;
+    background-image: none;
+  }
+  :root:not([data-theme="light"]) .cw-shell {
+    --bg-page: #1a1714;
+    --paper: #242018;
+    --paper-warm: #1a1612;
+    --paper-deep: #2d2820;
+    --paper-header: #2d2820;
+    --ink: #f3ece0;
+    --ink-soft: #d4c9b8;
+    --mute: #9e9288;
+    --rule: rgba(61, 53, 48, 0.6);
+    --rule-dark: #3d3530;
+    --ochre: #954f49;
+    --ochre-deep: #7d4944;
+    --gold: #c9963f;
+    --moss: #3d4a2a;
+    --success: #4a9b76;
+    --error: #e05d5d;
+    --warning: #f5a623;
+    --warning-dark: #d4a657;
+
+    --color-paper: #242018;
+    --color-paper-warm: #1a1612;
+    --color-paper-deep: #2d2820;
+    --color-ink: #f3ece0;
+    --color-ink-soft: #d4c9b8;
+    --color-mute: #9e9288;
+    --color-rule: rgba(61, 53, 48, 0.6);
+    --color-rule-dark: #3d3530;
+    --color-ochre: #954f49;
+    --color-ochre-deep: #7d4944;
+    --color-moss: #3d4a2a;
+    --color-gold: #c9963f;
+
+    --cat-pulse-bg: rgba(201, 150, 63, 0.18);
+    --cat-pulse-fg: #c9963f;
+    --cat-editorial-bg: rgba(212, 96, 58, 0.18);
+    --cat-editorial-fg: #954f49;
+    --cat-happening-bg: rgba(139, 133, 214, 0.18);
+    --cat-happening-fg: #a39ee8;
+    --cat-directory-bg: rgba(79, 174, 143, 0.18);
+    --cat-directory-fg: #6fc4a8;
+    --cat-quote-bg: rgba(184, 155, 217, 0.18);
+    --cat-quote-fg: #c4a8e0;
+    --cat-community-bg: rgba(111, 207, 115, 0.18);
+    --cat-community-fg: #81d885;
+    --cat-blue-fg: #6ab0f0;
+    --cat-blue-bg: rgba(106, 176, 240, 0.14);
+    --cat-rust-fg: #e0775a;
+    --cat-rust-bg: rgba(224, 119, 90, 0.14);
+    --cat-purple-fg: #b89bd9;
+    --cat-purple-bg: rgba(184, 155, 217, 0.18);
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.55);
+    --shadow-fab: 0 4px 12px rgba(212, 96, 58, 0.4);
+    --glow-gold: 0 0 0 2px var(--gold), 0 0 10px 2px rgba(201, 150, 63, 0.45);
+  }
+}
+
 /* ── Headings inside connect shell use Inter ── */
 .cw-shell h1,
 .cw-shell h2,

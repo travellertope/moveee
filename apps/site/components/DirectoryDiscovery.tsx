@@ -90,7 +90,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                         <div className="dd-card-rating">
                           <span className="dd-card-stars">{starString(entry.averageRating)}</span>
                           <span className="dd-card-meta">
-                            {entry.averageRating ? entry.averageRating.toFixed(1) : "New"} · {entry.reviewCount} review{entry.reviewCount !== 1 ? "s" : ""}
+                            {entry.averageRating ? entry.averageRating.toFixed(1) : "New"}
                           </span>
                         </div>
                       </Link>

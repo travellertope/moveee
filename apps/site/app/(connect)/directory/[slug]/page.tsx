@@ -255,6 +255,16 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     return null;
   })();
 
+  // Clean author/artist name for pre-filling the "Who said it?" field when
+  // the user opens Save a Line from a source-type entry (album, book, film)
+  const quoteAuthorName = (() => {
+    if (typeSlug === "book") return entry.aboutValue || infobox["author"] || null;
+    if (typeSlug === "album") return entry.aboutValue || infobox["artist"] || null;
+    if (typeSlug === "film") return infobox["director"] || null;
+    if (typeSlug === "tv-series") return infobox["creator"] || null;
+    return null;
+  })();
+
   // Which fields go in the type-specific details section
   const DETAILS_SECTION_LABEL: Record<string, string> = {
     book:        "Publication Info",
@@ -328,6 +338,20 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <DirectoryFollowButton directoryId={entry.databaseId} entryType={typeSlug} isLoggedIn={isLoggedIn} />
           )}
 
+          {/* Action bar — lives under the cover image */}
+          {entry.databaseId && (
+            <EntryActionBar
+              directoryId={entry.databaseId}
+              isLoggedIn={isLoggedIn}
+              slug={slug}
+              entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
+              quoteLinkRole={quoteLinkRole}
+              quoteLinkType={quoteLinkType || undefined}
+              typeSlug={typeSlug}
+              prefilledAuthor={quoteAuthorName || undefined}
+            />
+          )}
+
           {/* Book mood/pace (books only) */}
           {typeSlug === "book" && entry.databaseId && (
             <BookMoodPace directoryId={entry.databaseId} isLoggedIn={isLoggedIn} />
@@ -375,19 +399,6 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
                 <span key={i} className="dir-entry-tag">{pill}</span>
               ))}
             </div>
-          )}
-
-          {/* Action bar — Review / Save Line / Log / Improve */}
-          {entry.databaseId && (
-            <EntryActionBar
-              directoryId={entry.databaseId}
-              isLoggedIn={isLoggedIn}
-              slug={slug}
-              entryTitle={decodeHtml(entry.title ?? "").replace(/<[^>]*>/g, "")}
-              quoteLinkRole={quoteLinkRole}
-              quoteLinkType={quoteLinkType || undefined}
-              typeSlug={typeSlug}
-            />
           )}
 
           {/* Article area — infobox floats right, description + body wrap to its left */}
@@ -534,7 +545,7 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
           <div className="dir-community-section" style={{ marginTop: "2rem" }}>
             <div className="dir-community-header">
               <h2 className="dir-wiki-section-heading" style={{ marginBottom: 0 }}>
-                {typeSlug === "person" ? "Lines people saved" : "Lines saved from this"}
+                Quotes
               </h2>
               {directoryQuotes.length > 0 && (
                 <span className="dir-community-rating-count">

@@ -121,12 +121,13 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
-        {/* Set data-theme before paint — prevents light/dark flash on connect pages */}
+        {/* Set data-theme before paint — prevents light/dark flash on connect pages.
+            Split try/catch: localStorage errors must not prevent the matchMedia fallback. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("moveee-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`,
+            __html: `(function(){var t;try{t=localStorage.getItem("moveee-theme");}catch(e){}if(t!=="light"&&t!=="dark"){try{t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e){t="light";}}document.documentElement.setAttribute("data-theme",t);})();`,
           }}
         />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3ece0" />
