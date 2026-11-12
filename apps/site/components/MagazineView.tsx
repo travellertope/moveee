@@ -6,7 +6,6 @@ import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
 import MasonryRandomSection from "@/components/MasonryRandomSection";
 import CultureNewsSection from "@/components/CultureNewsSection";
-import KafartSection from "@/components/KafartSection";
 import JoinSection from "@/components/JoinSection";
 
 export default async function MagazineView({ edition }: { edition: EditionSlug }) {
@@ -17,7 +16,6 @@ export default async function MagazineView({ edition }: { edition: EditionSlug }
   let editorialStories: any[] = [];
   let digestStories: any[] = [];
   let opinionStories: any[] = [];
-  let kafartStories: any[] = [];
   let featureStory: any = null;
 
   try {
@@ -31,7 +29,6 @@ export default async function MagazineView({ edition }: { edition: EditionSlug }
     const { topPool, editorialStories: editorial, opinionStories: opinions, portraitStories: portraits, digestStories: digests } = sections;
 
     coverStory = cs;
-    kafartStories = rawKafart || [];
 
     const usedSlugs = new Set<string>(
       [...(rawKafart || []).map((s: any) => s.slug), cs?.slug].filter(Boolean)
@@ -81,8 +78,6 @@ export default async function MagazineView({ edition }: { edition: EditionSlug }
         eyebrowTitle={<>The <em>Lane</em></>}
         stories={portraitStories}
       />
-
-      <KafartSection stories={kafartStories} />
 
       <MasonryRandomSection
         eyebrowTitle={<><em>Reviews</em></>}
