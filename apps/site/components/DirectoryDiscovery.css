@@ -24,15 +24,12 @@
   color: var(--ink);
 }
 
-.dd-rail { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 8px; }
+.dd-rail { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 8px; }
 .dd-rail::-webkit-scrollbar { display: none; }
 
 .dd-card-wrap { flex: 0 0 auto; width: clamp(200px, 19vw, 258px); display: flex; flex-direction: column; }
 
-/* Card shape follows the real cover-art shape for each rail's type — a
-   film/book cover is portrait, an album/song cover is square; both read
-   fine (and fit more per row) at a narrower width than the landscape
-   place/food photos, which keep the base width/aspect-ratio above. */
+/* Card shape follows the real cover-art shape for each rail's type */
 .dd-rail--film .dd-card-wrap,
 .dd-rail--book .dd-card-wrap {
   width: clamp(150px, 13vw, 190px);
@@ -47,8 +44,53 @@
 .dd-rail--music .dd-card-img {
   aspect-ratio: 1/1;
 }
+.dd-rail--place .dd-card-img {
+  aspect-ratio: 3/2;
+}
+.dd-rail--food .dd-card-wrap {
+  width: clamp(220px, 20vw, 270px);
+}
+.dd-rail--food .dd-card-img {
+  aspect-ratio: 16/9;
+}
 
 .dd-card-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+
+/* Image shadow + hover zoom */
+.dd-card-img {
+  box-shadow: 0 1px 3px rgba(20, 17, 13, 0.12);
+  overflow: hidden;
+}
+.dd-card-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.dd-card-wrap:hover .dd-card-img img {
+  transform: scale(1.05);
+}
+
+/* Play overlay for film + music cards */
+.dd-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 17, 13, 0.18);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.dd-card-wrap:hover .dd-play-overlay { opacity: 1; }
+.dd-play-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
 
 /* Card title: sans-serif, small — overrides .arc-card h3's Fraunces 17px */
 .dd-card h3 {

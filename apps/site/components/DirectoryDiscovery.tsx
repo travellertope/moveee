@@ -68,12 +68,13 @@ export default function DirectoryDiscovery({ categories }: Props) {
             <div key={cat.key} className="dd-rail-group">
               <div className="dd-rail-hdr">
                 <h3>Trending {cat.label}</h3>
-                <Link href={`/discover?type=${cat.type}`} className="arc-viewall">See all {cat.label} →</Link>
+                <Link href={`/discover?type=${cat.type}`} className="arc-viewall">See all {cat.label} ›</Link>
               </div>
 
               <div className={`dd-rail dd-rail--${cat.key}`}>
                 {cat.entries.map((entry) => {
                   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7a6f5c" };
+                  const showPlay = cat.key === "film" || cat.key === "music";
                   return (
                     <div key={entry.id} className="dd-card-wrap">
                       <Link href={`/directory/${entry.slug}`} className="arc-card dd-card">
@@ -83,6 +84,13 @@ export default function DirectoryDiscovery({ categories }: Props) {
                             <img src={entry.thumbnail} alt="" loading="lazy" />
                           ) : (
                             <span className="dd-card-fallback" style={{ background: badge.color }}>{badge.emoji}</span>
+                          )}
+                          {showPlay && (
+                            <div className="dd-play-overlay" aria-hidden>
+                              <div className="dd-play-btn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5l9 5.5-9 5.5V2.5z"/></svg>
+                              </div>
+                            </div>
                           )}
                         </div>
                         <h3>{entry.title}</h3>
