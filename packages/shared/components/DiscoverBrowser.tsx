@@ -32,6 +32,19 @@ interface BrowseResponse {
 
 type SortOption = "relevant" | "recent" | "rating";
 
+type ReviewSubtype = "place" | "food" | "book" | "film" | "music";
+
+const REVIEW_SUBTYPES: Partial<Record<string, ReviewSubtype>> = {
+  place: "place",
+  food: "food",
+  book: "book",
+  album: "music",
+  film: "film",
+  "tv-series": "film",
+};
+
+const LOG_TYPES = new Set(["film", "book", "album", "tv-series", "food", "place"]);
+
 export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: string }> = {
   person:      { emoji: "👤", label: "PERSON",    color: "#B38238" },
   place:       { emoji: "🏛",  label: "PLACE",     color: "#2E7D32" },
@@ -92,64 +105,93 @@ function DiscoverCard({
   entry,
   rail,
   aspectRatio = "4/3",
+  onReview,
+  onLog,
 }: {
   entry: DiscoverEntry;
   rail?: boolean;
   aspectRatio?: string;
+  onReview?: (entry: DiscoverEntry) => void;
+  onLog?: (entry: DiscoverEntry) => void;
 }) {
   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7A6F5C" };
+  const reviewSubtype = REVIEW_SUBTYPES[entry.type] ?? "place";
+  const showReview = !!onReview;
+  const showLog = !!onLog;
+  const showActions = showReview || showLog;
+
   return (
-    <Link
-      href={`/directory/${entry.slug}`}
-      className={`disc-card${rail ? " disc-card--rail" : ""}`}
-    >
-      <div
-        className={`disc-card-img-wrap${rail ? " disc-card-img-wrap--rail" : ""}`}
-        style={!rail ? { aspectRatio } : undefined}
-      >
-        {entry.thumbnail ? (
-          <img src={entry.thumbnail} alt="" className="disc-card-img" loading="lazy" />
-        ) : (
-          <div className="disc-card-img-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
-        )}
-        <div className="disc-pill">
-          <span className="disc-pill-dot" style={{ background: badge.color }} />
-          <span className="disc-pill-label">{badge.label}</span>
+    <div className={`disc-card-outer${rail ? " disc-card-outer--rail" : ""}`}>
+      <Link href={`/directory/${entry.slug}`} className="disc-card">
+        <div
+          className={`disc-card-img-wrap${rail ? " disc-card-img-wrap--rail" : ""}`}
+          style={!rail ? { aspectRatio } : undefined}
+        >
+          {entry.thumbnail ? (
+            <img src={entry.thumbnail} alt="" className="disc-card-img" loading="lazy" />
+          ) : (
+            <div className="disc-card-img-fallback" style={{ background: badge.color }}>{badge.emoji}</div>
+          )}
+          <div className="disc-pill">
+            <span className="disc-pill-dot" style={{ background: badge.color }} />
+            <span className="disc-pill-label">{badge.label}</span>
+          </div>
+          {entry.isNew && <span className="disc-new-badge">New</span>}
         </div>
-        {entry.isNew && <span className="disc-new-badge">New</span>}
-      </div>
-      <div className="disc-card-body">
-        <h2 className="disc-card-title">{entry.title}</h2>
-        {entry.excerpt && <p className="disc-card-excerpt">{entry.excerpt}</p>}
-        <div className="disc-card-footer">
-          <span className="disc-card-attribution">
-            {entry.addedBy ? (
-              <>Added by{" "}
-                <Link
-                  href={`/connect/${entry.addedBy.username}`}
-                  className="disc-card-attribution-link"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  @{entry.addedBy.username}
-                </Link>
-              </>
-            ) : (
-              <>Added {daysAgo(entry.dateAdded)}d ago</>
-            )}
-          </span>
-          <button
-            type="button"
-            className="disc-bookmark-btn"
-            aria-label="Bookmark"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-          </button>
+        <div className="disc-card-body">
+          <h2 className="disc-card-title">{entry.title}</h2>
+          {entry.excerpt && <p className="disc-card-excerpt">{entry.excerpt}</p>}
+          <div className="disc-card-footer">
+            <span className="disc-card-attribution">
+              {entry.addedBy ? (
+                <>Added by{" "}
+                  <Link
+                    href={`/connect/${entry.addedBy.username}`}
+                    className="disc-card-attribution-link"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    @{entry.addedBy.username}
+                  </Link>
+                </>
+              ) : (
+                <>Added {daysAgo(entry.dateAdded)}d ago</>
+              )}
+            </span>
+            {entry.averageRating ? (
+              <span className="disc-card-star-row">
+                <span className="disc-card-star" aria-hidden>★</span>
+                <span className="disc-card-star-val">{entry.averageRating.toFixed(1)}</span>
+              </span>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {showActions && (
+        <div className="disc-card-actions">
+          {showReview && (
+            <button
+              type="button"
+              className="disc-card-btn disc-card-btn--review"
+              onClick={() => onReview!(entry)}
+            >
+              + Review
+            </button>
+          )}
+          {showReview && showLog && (
+            <span className="disc-card-actions-sep" aria-hidden>·</span>
+          )}
+          {showLog && (
+            <button
+              type="button"
+              className="disc-card-btn disc-card-btn--log"
+              onClick={() => onLog!(entry)}
+            >
+              + Log
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -205,10 +247,14 @@ export default function DiscoverBrowser({
   initialType = null,
   initialRegion = null,
   viewerInterests = [],
+  onReview,
+  onLog,
 }: {
   initialType?: string | null;
   initialRegion?: string | null;
   viewerInterests?: string[];
+  onReview?: (entry: DiscoverEntry) => void;
+  onLog?: (entry: DiscoverEntry) => void;
 }) {
   const interestTags = interestsToTagSet(viewerInterests);
   const [type, setType] = useState<string | null>(initialType);
@@ -373,7 +419,7 @@ export default function DiscoverBrowser({
           <>
             <div className="disc-section-heading">Picked for You</div>
             <div className="disc-rail">
-              {recommended.map((e) => <DiscoverCard key={`rec-${e.id}`} entry={e} rail />)}
+              {recommended.map((e) => <DiscoverCard key={`rec-${e.id}`} entry={e} rail onReview={onReview} onLog={onLog} />)}
             </div>
           </>
         )}
@@ -395,6 +441,8 @@ export default function DiscoverBrowser({
                     key={e.id}
                     entry={e}
                     aspectRatio={TYPE_ASPECT[e.type] ?? MASONRY_RATIOS[i % MASONRY_RATIOS.length]}
+                    onReview={onReview}
+                    onLog={onLog}
                   />
                 ))}
               </div>

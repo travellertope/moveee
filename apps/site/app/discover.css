@@ -193,9 +193,15 @@
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
 }
 
-.disc-card--rail {
+.disc-card-outer {
+  display: flex;
+  flex-direction: column;
+}
+.disc-card-outer .disc-card { width: 100%; }
+.disc-card-outer--rail {
   flex: 0 0 220px;
   width: 220px;
+  flex-shrink: 0;
 }
 
 /* Image area */
@@ -328,25 +334,52 @@
 }
 .disc-card-attribution-link:hover { color: var(--ochre); }
 
-.disc-bookmark-btn {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: none;
-  color: var(--mute);
-  cursor: pointer;
+/* Compact star rating in card footer */
+.disc-card-star-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md, 4px);
-  transition: color 0.15s, background 0.15s;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.disc-card-star {
+  color: var(--gold, #b38238);
+  font-size: 11px;
+  line-height: 1;
+}
+.disc-card-star-val {
+  font-size: 11px;
+  color: var(--mute);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* + Review · + Log action row below each card */
+.disc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 4px 2px;
+}
+.disc-card-actions-sep {
+  color: var(--mute);
+  font-size: 11px;
+  user-select: none;
+}
+.disc-card-btn {
+  background: none;
+  border: none;
   padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: color 0.15s;
 }
-.disc-bookmark-btn:hover {
-  color: var(--ochre);
-  background: color-mix(in srgb, var(--ochre) 8%, transparent);
-}
+.disc-card-btn--review { color: var(--ochre, #7a241c); }
+.disc-card-btn--review:hover { color: var(--ochre-deep, #5c1b15); }
+.disc-card-btn--log { color: var(--mute); }
+.disc-card-btn--log:hover { color: var(--ink); }
 
 /* ── Two-column layout — wraps everything top-to-bottom ── */
 .disc-body {
@@ -367,7 +400,7 @@
   column-gap: 14px;
   margin-bottom: 24px;
 }
-.disc-masonry .disc-card {
+.disc-masonry .disc-card-outer {
   break-inside: avoid;
   width: 100%;
   margin-bottom: 14px;

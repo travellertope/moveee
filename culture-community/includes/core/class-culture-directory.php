@@ -671,13 +671,14 @@ class Culture_Directory {
     // ── Discover: paginated browse with filters ──────────────────────────────
 
     /**
-     * GET /culture/v1/directory/browse?q=&type=&region=&sort=&page=&per_page=
+     * GET /culture/v1/directory/browse?q=&type=&genre=&region=&sort=&page=&per_page=
      *
      * Powers the Discover screen's "Recently Added" rail + 2-column grid, plus
      * the filter sheet's live "Show N entries" count (via the `total` field).
      * Public endpoint — no auth needed.
      *
      * - `type` accepts a comma-separated list of culture_dir_type slugs (multi-select).
+     * - `genre` accepts a comma-separated list of culture_dir_genre slugs; ANDed with type.
      * - `region` accepts a single slug from REGION_CITY_KEYWORDS, matched against
      *   _entry_city via substring (case-insensitive).
      * - `sort` is one of: relevant (title match relevance when `q` set, else recent),
@@ -692,6 +693,7 @@ class Culture_Directory {
 
         $q        = sanitize_text_field( $request->get_param( 'q' ) );
         $types    = array_filter( array_map( 'sanitize_key', explode( ',', (string) $request->get_param( 'type' ) ) ) );
+        $genres   = array_filter( array_map( 'sanitize_key', explode( ',', (string) $request->get_param( 'genre' ) ) ) );
         $region   = sanitize_key( $request->get_param( 'region' ) );
         $sort     = sanitize_key( $request->get_param( 'sort' ) ) ?: 'relevant';
         $page     = max( 1, (int) $request->get_param( 'page' ) );
@@ -704,12 +706,26 @@ class Culture_Directory {
             'paged'          => $page,
         );
 
-        if ( $types ) {
-            $args['tax_query'] = array( array(
-                'taxonomy' => 'culture_dir_type',
-                'field'    => 'slug',
-                'terms'    => $types,
-            ) );
+        if ( $types || $genres ) {
+            $tax_clauses = array();
+            if ( $types ) {
+                $tax_clauses[] = array(
+                    'taxonomy' => 'culture_dir_type',
+                    'field'    => 'slug',
+                    'terms'    => $types,
+                );
+            }
+            if ( $genres ) {
+                $tax_clauses[] = array(
+                    'taxonomy' => 'culture_dir_genre',
+                    'field'    => 'slug',
+                    'terms'    => $genres,
+                    'operator' => 'IN',
+                );
+            }
+            $args['tax_query'] = count( $tax_clauses ) === 1
+                ? $tax_clauses
+                : array_merge( array( 'relation' => 'AND' ), $tax_clauses );
         }
 
         $title_filter = null;

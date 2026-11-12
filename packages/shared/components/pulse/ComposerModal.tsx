@@ -18,6 +18,7 @@ const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
   film: "film-review",
 };
 
+
 const CATEGORIES = ["Music", "Fashion", "Art", "Film", "Food", "Sport", "Travel", "Ideas", "Literature", "Design", "Tech"];
 
 const QUOTE_TYPES = ["Person", "Book", "Film", "Speech", "Song"];

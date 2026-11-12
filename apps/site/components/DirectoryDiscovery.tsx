@@ -10,6 +10,7 @@ import "./DirectoryDiscovery.css";
 import "@/app/pulse-layout.css";
 
 const ComposerModal = dynamic(() => import("@/components/pulse/ComposerModal"), { ssr: false });
+const QuickLogModal = dynamic(() => import("@/components/QuickLogModal"), { ssr: false });
 
 const LOWERCASE_WORDS = new Set(["a","an","the","and","but","or","nor","for","so","yet","at","by","for","in","of","off","on","per","to","up","via"]);
 function toTitleCase(str: string): string {
@@ -24,14 +25,15 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
-function starString(rating: number | null): string {
-  const full = rating ? Math.round(rating) : 0;
-  return "★".repeat(full) + "☆".repeat(Math.max(0, 5 - full));
-}
-
 interface ReviewTarget {
   subtype: "place" | "food" | "book" | "film" | "music";
   entry?: TrendingDirectoryEntry;
+}
+
+interface LogTarget {
+  id: number;
+  title: string;
+  thumbnail: string | null;
 }
 
 interface Props {
@@ -41,21 +43,21 @@ interface Props {
 export default function DirectoryDiscovery({ categories }: Props) {
   const { data: session } = useSession();
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
-  // Set when "Write a review" is clicked while signed out — opens the
-  // review composer automatically once sign-in completes, instead of
-  // losing the click entirely behind a full-page redirect to /login.
   const [pendingTarget, setPendingTarget] = useState<ReviewTarget | null>(null);
+  const [logTarget, setLogTarget] = useState<LogTarget | null>(null);
 
   const openReview = useCallback((target: ReviewTarget) => {
     if (!session) {
       setPendingTarget(target);
-      // GlobalAuthModal (rendered in (magazine)/layout.tsx) listens for
-      // this — opens sign-in in place rather than navigating away.
       window.dispatchEvent(new Event("open-auth-modal"));
       return;
     }
     setReviewTarget(target);
   }, [session]);
+
+  const openLog = useCallback((entry: TrendingDirectoryEntry) => {
+    setLogTarget({ id: entry.id, title: entry.title, thumbnail: entry.thumbnail ?? null });
+  }, []);
 
   useEffect(() => {
     if (session && pendingTarget) {
@@ -108,20 +110,30 @@ export default function DirectoryDiscovery({ categories }: Props) {
                         </div>
                         <h3>{toTitleCase(entry.title)}</h3>
                         {entry.city && <p className="dd-card-city">{entry.city}</p>}
-                        <div className="dd-card-rating">
-                          <span className="dd-card-stars">{starString(entry.averageRating)}</span>
-                          <span className="dd-card-meta">
-                            {entry.averageRating ? entry.averageRating.toFixed(1) : "New"}
-                          </span>
-                        </div>
+                        {entry.averageRating ? (
+                          <div className="dd-card-rating">
+                            <span className="dd-card-star" aria-hidden>★</span>
+                            <span className="dd-card-meta">{entry.averageRating.toFixed(1)}</span>
+                          </div>
+                        ) : null}
                       </Link>
-                      <button
-                        type="button"
-                        className="arc-cta dd-card-cta"
-                        onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
-                      >
-                        + Write a review
-                      </button>
+                      <div className="dd-card-actions">
+                        <button
+                          type="button"
+                          className="dd-card-btn dd-card-btn--review"
+                          onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
+                        >
+                          + Review
+                        </button>
+                        <span className="dd-card-actions-sep" aria-hidden>·</span>
+                        <button
+                          type="button"
+                          className="dd-card-btn dd-card-btn--log"
+                          onClick={() => openLog(entry)}
+                        >
+                          + Log
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -163,6 +175,11 @@ export default function DirectoryDiscovery({ categories }: Props) {
           }
         />
       )}
+      <QuickLogModal
+        entry={logTarget}
+        isLoggedIn={!!session}
+        onClose={() => setLogTarget(null)}
+      />
     </section>
   );
 }
