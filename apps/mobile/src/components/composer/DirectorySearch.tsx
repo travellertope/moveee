@@ -71,6 +71,7 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
   const [newName, setNewName] = useState("");
   const [newCity, setNewCity] = useState("");
   const [newAbout, setNewAbout] = useState("");
+  const [newYear, setNewYear] = useState("");
 
   // External catalog search
   const [externalResults, setExternalResults] = useState<ExternalResult[]>([]);
@@ -148,18 +149,25 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
     setLoading(true);
     setErrorMsg(null);
     try {
+      const aboutValue = aboutFieldLabel ? newAbout.trim() || undefined : undefined;
+      const yearValue = newYear.trim() || undefined;
+      const infoboxFields: Record<string, string> = {};
+      if (yearValue) infoboxFields.year = yearValue;
+      if (aboutFieldLabel && aboutValue) infoboxFields[aboutFieldLabel.toLowerCase()] = aboutValue;
       const entry = await api.post<DirectoryEntry>(`${PROXY}/directory/quick-create`, {
         title: newName.trim(),
         entry_type: typeFilter || "place",
         city: aboutFieldLabel ? undefined : newCity.trim() || undefined,
         about_label: aboutFieldLabel || undefined,
-        about_value: aboutFieldLabel ? newAbout.trim() || undefined : undefined,
+        about_value: aboutValue,
+        infobox: Object.keys(infoboxFields).length ? infoboxFields : undefined,
       });
       onSelect(entry);
       setCreating(false);
       setNewName("");
       setNewCity("");
       setNewAbout("");
+      setNewYear("");
     } catch (err) {
       setErrorMsg(describeError(err));
     } finally {
@@ -266,6 +274,17 @@ export default function DirectorySearch({ onSelect, selected, label, placeholder
             placeholderTextColor={colors.ghost}
           />
         )}
+        {aboutFieldLabel ? (
+          <TextInput
+            style={styles.input}
+            value={newYear}
+            onChangeText={setNewYear}
+            placeholder="Year (optional)"
+            placeholderTextColor={colors.ghost}
+            keyboardType="number-pad"
+            maxLength={4}
+          />
+        ) : null}
         <View style={styles.createBtns}>
           <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={!newName.trim() || loading}>
             {loading ? <ActivityIndicator color={colors.paper} size="small" /> : <Text style={styles.createBtnText}>Add</Text>}

@@ -36,16 +36,15 @@ const PER_CATEGORY = 6;
 // Fetch more than needed so we have enough after filtering to thumbnail-only.
 const FETCH_PER_CATEGORY = 18;
 
-async function fetchRandomWithThumbnails(type: string, seed: number): Promise<TrendingDirectoryEntry[]> {
+async function fetchRecentWithThumbnails(type: string): Promise<TrendingDirectoryEntry[]> {
   try {
     const params = new URLSearchParams({
       type,
-      sort: "random",
-      seed: String(seed),
+      sort: "recent",
       per_page: String(FETCH_PER_CATEGORY),
     });
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/browse?${params.toString()}`, {
-      cache: "no-store",
+      next: { revalidate: 300 },
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -57,13 +56,10 @@ async function fetchRandomWithThumbnails(type: string, seed: number): Promise<Tr
   }
 }
 
-/** Random directory entries (with thumbnails) grouped by type, reshuffled on
- * every homepage load. Categories with no entries are dropped. */
+/** Latest directory entries (with thumbnails) grouped by type.
+ * Categories with no entries are dropped. */
 export async function fetchTrendingDirectory(): Promise<TrendingCategory[]> {
-  // One seed per page load — same value across all category fetches so the
-  // ordering is coherent, but fresh on every request.
-  const seed = Math.floor(Math.random() * 2_147_483_647);
-  const results = await Promise.all(CATEGORY_DEFS.map((c) => fetchRandomWithThumbnails(c.type, seed)));
+  const results = await Promise.all(CATEGORY_DEFS.map((c) => fetchRecentWithThumbnails(c.type)));
   return CATEGORY_DEFS
     .map((c, i) => ({ ...c, entries: results[i] }))
     .filter((c) => c.entries.length > 0);

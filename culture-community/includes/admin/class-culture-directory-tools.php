@@ -18,10 +18,13 @@ class Culture_Directory_Tools {
 	public static function init() {
 		add_action( 'admin_menu',            array( __CLASS__, 'register_menu' ) );
 		// Wikipedia seeder
-		add_action( 'wp_ajax_culture_dir_wiki_fetch',     array( __CLASS__, 'ajax_wiki_fetch' ) );
-		add_action( 'wp_ajax_culture_dir_wiki_seed',      array( __CLASS__, 'ajax_wiki_seed' ) );
-		add_action( 'wp_ajax_culture_dir_wiki_backfill',  array( __CLASS__, 'ajax_wiki_backfill' ) );
-		add_action( 'wp_ajax_culture_dir_wiki_audit',     array( __CLASS__, 'ajax_wiki_audit' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_fetch',          array( __CLASS__, 'ajax_wiki_fetch' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_seed',           array( __CLASS__, 'ajax_wiki_seed' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_backfill',       array( __CLASS__, 'ajax_wiki_backfill' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_audit',          array( __CLASS__, 'ajax_wiki_audit' ) );
+		// Per-entry refetch metabox
+		add_action( 'wp_ajax_culture_dir_wiki_refetch_single', array( __CLASS__, 'ajax_wiki_refetch_single' ) );
+		add_action( 'add_meta_boxes',        array( __CLASS__, 'register_wiki_metabox' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
 
@@ -41,6 +44,187 @@ class Culture_Directory_Tools {
 			return;
 		}
 		wp_add_inline_style( 'wp-admin', self::inline_css() );
+	}
+
+	// ── Per-entry Wikipedia metabox ───────────────────────────────────────────
+
+	public static function register_wiki_metabox() {
+		add_meta_box(
+			'culture_dir_wiki',
+			'Wikipedia / Wikidata',
+			array( __CLASS__, 'render_wiki_metabox' ),
+			'culture_directory',
+			'side',
+			'default'
+		);
+	}
+
+	public static function render_wiki_metabox( WP_Post $post ) {
+		$wiki_title = get_post_meta( $post->ID, '_wiki_title', true );
+		$wiki_url   = get_post_meta( $post->ID, '_wiki_url',   true );
+
+		// Gather existing infobox values
+		global $wpdb;
+		$infobox_rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT meta_key, meta_value FROM {$wpdb->postmeta}
+			  WHERE post_id = %d AND meta_key LIKE 'dir_infobox_%'
+			  ORDER BY meta_key",
+			$post->ID
+		), ARRAY_A );
+		$infobox = array();
+		foreach ( $infobox_rows as $row ) {
+			$label = str_replace( 'dir_infobox_', '', $row['meta_key'] );
+			$infobox[ $label ] = $row['meta_value'];
+		}
+
+		$nonce = wp_create_nonce( 'culture_dir_tools' );
+		?>
+		<div id="cdir-wiki-box" style="font-size:13px;">
+			<?php if ( $wiki_title && $wiki_title !== '_not_found' ) : ?>
+				<p style="margin:0 0 6px;">
+					<strong>Matched:</strong>
+					<?php if ( $wiki_url ) : ?>
+						<a href="<?php echo esc_url( $wiki_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $wiki_title ); ?></a>
+					<?php else : ?>
+						<?php echo esc_html( $wiki_title ); ?>
+					<?php endif; ?>
+				</p>
+			<?php elseif ( $wiki_title === '_not_found' ) : ?>
+				<p style="margin:0 0 6px;color:#a00;">Not found on Wikipedia.</p>
+			<?php else : ?>
+				<p style="margin:0 0 6px;color:#666;">Not yet searched.</p>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $infobox ) ) : ?>
+				<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+					<?php foreach ( $infobox as $label => $value ) : ?>
+						<tr>
+							<td style="padding:2px 6px 2px 0;color:#666;white-space:nowrap;text-transform:capitalize;"><?php echo esc_html( str_replace( '_', ' ', $label ) ); ?></td>
+							<td style="padding:2px 0;word-break:break-word;"><?php echo esc_html( $value ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+			<?php endif; ?>
+
+			<button type="button" id="cdir-wiki-refetch-btn"
+				data-post-id="<?php echo (int) $post->ID; ?>"
+				data-nonce="<?php echo esc_attr( $nonce ); ?>"
+				class="button button-secondary" style="width:100%;">
+				Refetch from Wikipedia
+			</button>
+			<div id="cdir-wiki-refetch-msg" style="margin-top:6px;font-size:12px;"></div>
+		</div>
+		<script>
+		(function(){
+			var btn = document.getElementById('cdir-wiki-refetch-btn');
+			var msg = document.getElementById('cdir-wiki-refetch-msg');
+			if (!btn) return;
+			btn.addEventListener('click', function(){
+				btn.disabled = true;
+				btn.textContent = 'Fetching…';
+				msg.textContent = '';
+				var fd = new FormData();
+				fd.append('action',  'culture_dir_wiki_refetch_single');
+				fd.append('nonce',   btn.dataset.nonce);
+				fd.append('post_id', btn.dataset.postId);
+				fetch(ajaxurl, { method:'POST', body: fd })
+					.then(function(r){ return r.json(); })
+					.then(function(d){
+						btn.disabled = false;
+						btn.textContent = 'Refetch from Wikipedia';
+						if (d.success) {
+							msg.style.color = '#096';
+							var info = d.data;
+							var parts = [];
+							if (info.wiki_title) parts.push('Matched: ' + info.wiki_title);
+							if (info.infobox_saved && info.infobox_saved.length) parts.push('Saved: ' + info.infobox_saved.join(', '));
+							if (!parts.length) parts.push('No new data found.');
+							msg.textContent = parts.join(' · ');
+							if (info.infobox_saved && info.infobox_saved.length) {
+								setTimeout(function(){ location.reload(); }, 1200);
+							}
+						} else {
+							msg.style.color = '#a00';
+							msg.textContent = (d.data && d.data.message) ? d.data.message : 'Fetch failed.';
+						}
+					})
+					.catch(function(){ btn.disabled=false; btn.textContent='Refetch from Wikipedia'; msg.style.color='#a00'; msg.textContent='Network error.'; });
+			});
+		})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * AJAX: Refetch Wikipedia/Wikidata data for a single directory entry.
+	 * Always overwrites infobox fields (force fresh data).
+	 */
+	public static function ajax_wiki_refetch_single() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+		}
+
+		$post_id = (int) ( $_POST['post_id'] ?? 0 );
+		$post    = $post_id ? get_post( $post_id ) : null;
+
+		if ( ! $post || 'culture_directory' !== $post->post_type ) {
+			wp_send_json_error( array( 'message' => 'Post not found.' ) );
+		}
+
+		$terms      = wp_get_object_terms( $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
+		$entry_type = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0] : '';
+
+		// Clear previous wiki tracking so a fresh search can overwrite it
+		delete_post_meta( $post_id, '_wiki_title' );
+		delete_post_meta( $post_id, '_wiki_url' );
+
+		$wiki_title = self::wiki_opensearch( $post->post_title, $entry_type );
+
+		if ( ! $wiki_title ) {
+			update_post_meta( $post_id, '_wiki_title', '_not_found' );
+			wp_send_json_error( array( 'message' => 'No Wikipedia article found for "' . esc_html( $post->post_title ) . '".' ) );
+		}
+
+		$pages = self::wiki_fetch_pages_batch( array( $wiki_title ) );
+		$page  = $pages[ $wiki_title ] ?? null;
+		if ( ! $page ) {
+			foreach ( $pages as $pt => $pd ) {
+				if ( strcasecmp( $pt, $wiki_title ) === 0 ) { $page = $pd; break; }
+			}
+		}
+
+		if ( ! $page ) {
+			update_post_meta( $post_id, '_wiki_title', '_not_found' );
+			wp_send_json_error( array( 'message' => 'Wikipedia article not found after fetch.' ) );
+		}
+
+		$real_title = $page['title'] ?? $wiki_title;
+
+		// Apply all wiki data with overwrite=true so infobox always updates
+		$changes = self::apply_wiki_data_to_post( $post_id, $post, $page, true, $entry_type );
+
+		update_post_meta( $post_id, '_wiki_title', $real_title );
+		update_post_meta( $post_id, '_wiki_url',
+			'https://en.wikipedia.org/wiki/' . rawurlencode( str_replace( ' ', '_', $real_title ) )
+		);
+
+		// Collect which infobox keys were saved
+		global $wpdb;
+		$infobox_keys = $wpdb->get_col( $wpdb->prepare(
+			"SELECT meta_key FROM {$wpdb->postmeta}
+			  WHERE post_id = %d AND meta_key LIKE 'dir_infobox_%'",
+			$post_id
+		) );
+		$infobox_labels = array_map( function( $k ) {
+			return str_replace( array( 'dir_infobox_', '_' ), array( '', ' ' ), $k );
+		}, $infobox_keys );
+
+		wp_send_json_success( array(
+			'wiki_title'    => $real_title,
+			'changes'       => $changes,
+			'infobox_saved' => $infobox_labels,
+		) );
 	}
 
 	// ── AJAX: Wikipedia seeder ────────────────────────────────────────────────
@@ -189,6 +373,10 @@ class Culture_Directory_Tools {
 
 		foreach ( $pages as $page ) {
 			if ( isset( $page['missing'] ) ) {
+				continue;
+			}
+			// Skip disambiguation pages — they contain no useful content
+			if ( isset( $page['pageprops']['disambiguation'] ) ) {
 				continue;
 			}
 			$out[ $page['title'] ] = $page;
@@ -608,13 +796,27 @@ class Culture_Directory_Tools {
 
 			// Return the first result that shares at least one significant word
 			// with the original title (whole-word match, bidirectional).
+			// Skip disambiguation pages by title suffix.
 			foreach ( $titles as $candidate ) {
-				if ( ! empty( $candidate ) && self::wiki_title_matches( $validate_against, (string) $candidate ) ) {
+				if ( ! empty( $candidate )
+					&& strpos( (string) $candidate, '(disambiguation)' ) === false
+					&& self::wiki_title_matches( $validate_against, (string) $candidate ) ) {
 					return (string) $candidate;
 				}
 			}
 			return null;
 		};
+
+		// Pass 0: if the title already has a parenthetical qualifier (e.g. "The Thomas Crown Affair (1999 film)"),
+		// try fetching that exact Wikipedia title directly. wiki_fetch_pages_batch skips disambiguation pages,
+		// so if the exact article exists and is not a disambiguation page it's returned here.
+		if ( preg_match( '/\s*\([^)]+\)\s*$/', $title ) ) {
+			$pages = self::wiki_fetch_pages_batch( array( $title ) );
+			if ( ! empty( $pages ) ) {
+				$exact_page = reset( $pages );
+				return (string) ( $exact_page['title'] ?? $title );
+			}
+		}
 
 		// Pass 1: full title.
 		$result = $search( $title, $title );
@@ -759,10 +961,21 @@ class Culture_Directory_Tools {
 			if ( empty( $claim_arr ) ) continue;
 
 			$is_multi = ! empty( $spec['multi'] );
-			$max      = $is_multi ? ( $spec['max'] ?? 5 ) : 1;
+			$max      = $is_multi ? ( $spec['max'] ?? 5 ) : PHP_INT_MAX;
 			$values   = array();
 
-			foreach ( array_slice( $claim_arr, 0, $is_multi ? $max : 1 ) as $claim ) {
+			// Sort so preferred-rank claims come first; iterate all claims and
+			// skip deprecated/novalue/somevalue sentinels rather than slicing up
+			// front — a sentinel as the first entry would otherwise silently drop
+			// the whole field (e.g. a director with a novalue placeholder claim).
+			$sorted_claims = $claim_arr;
+			usort( $sorted_claims, function( $a, $b ) {
+				$rank = array( 'preferred' => 0, 'normal' => 1, 'deprecated' => 2 );
+				return ( $rank[ $a['rank'] ?? 'normal' ] ?? 1 ) - ( $rank[ $b['rank'] ?? 'normal' ] ?? 1 );
+			} );
+
+			foreach ( $sorted_claims as $claim ) {
+				if ( count( $values ) >= $max ) break;
 				if ( ( $claim['rank'] ?? '' ) === 'deprecated' ) continue;
 				$snak = $claim['mainsnak'] ?? array();
 				if ( ( $snak['snaktype'] ?? '' ) !== 'value' ) continue;
