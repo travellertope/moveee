@@ -5365,7 +5365,7 @@ class Culture_Mobile_API {
              FROM {$wpdb->posts} p
              INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '_linked_directory_id' AND pm.meta_value = %d
              WHERE p.post_type = 'culture_post' AND p.post_status = 'publish'
-             ORDER BY p.post_date DESC LIMIT 5",
+             ORDER BY p.post_date DESC LIMIT 50",
             $pid
         ), ARRAY_A );
 

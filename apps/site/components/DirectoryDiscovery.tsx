@@ -11,6 +11,19 @@ import "@/app/pulse-layout.css";
 
 const ComposerModal = dynamic(() => import("@/components/pulse/ComposerModal"), { ssr: false });
 
+const LOWERCASE_WORDS = new Set(["a","an","the","and","but","or","nor","for","so","yet","at","by","for","in","of","off","on","per","to","up","via"]);
+function toTitleCase(str: string): string {
+  return str
+    .split(" ")
+    .map((word, i) => {
+      const lower = word.toLowerCase();
+      return (i === 0 || !LOWERCASE_WORDS.has(lower))
+        ? lower.charAt(0).toUpperCase() + lower.slice(1)
+        : lower;
+    })
+    .join(" ");
+}
+
 function starString(rating: number | null): string {
   const full = rating ? Math.round(rating) : 0;
   return "★".repeat(full) + "☆".repeat(Math.max(0, 5 - full));
@@ -93,7 +106,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                             </div>
                           )}
                         </div>
-                        <h3>{entry.title}</h3>
+                        <h3>{toTitleCase(entry.title)}</h3>
                         {entry.city && <p className="dd-card-city">{entry.city}</p>}
                         <div className="dd-card-rating">
                           <span className="dd-card-stars">{starString(entry.averageRating)}</span>

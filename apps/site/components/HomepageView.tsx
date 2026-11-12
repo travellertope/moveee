@@ -140,28 +140,7 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
 
       <HomepageCommunityStream items={communityItems} />
 
-      <MasonryRandomSection
-        eyebrowTitle={<>The <em>Front</em> Page</>}
-        viewAllHref="/magazine"
-        stories={featuredPool}
-      />
-
-      <MasonryRandomSection
-        eyebrowTitle={<>The <em>Lane</em></>}
-        stories={portraitStories}
-      />
-
       <KafartSection stories={kafartStories} />
-
-      <MasonryRandomSection
-        eyebrowTitle={<><em>Reviews</em></>}
-        stories={digestStories}
-      />
-
-      <MasonryRandomSection
-        eyebrowTitle={<><em>Viewpoints</em></>}
-        stories={opinionStories}
-      />
 
       <JoinSection edition={edition} featureStory={featureStory} />
     </div>

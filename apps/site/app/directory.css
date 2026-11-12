@@ -2348,7 +2348,26 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.4s ease;
 }
+.dir-entry-related-card:hover .dir-entry-related-img { transform: scale(1.05); }
+
+/* Type-aware aspect ratios — mirrors the homepage DirectoryDiscovery rails */
+.dir-entry-related-thumb--album   { aspect-ratio: 1/1; }
+.dir-entry-related-thumb--food    { aspect-ratio: 16/9; }
+.dir-entry-related-thumb--place   { aspect-ratio: 3/2; }
+/* film, book, person, artwork, tv-series, etc. keep the default 2/3 portrait */
+
+/* Emoji fallback when no cover image */
+.dir-entry-related-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;
+}
+
 .dir-entry-related-title {
   font-size: 12px;
   font-weight: 600;
