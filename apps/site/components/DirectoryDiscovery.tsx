@@ -10,6 +10,7 @@ import "./DirectoryDiscovery.css";
 import "@/app/pulse-layout.css";
 
 const ComposerModal = dynamic(() => import("@/components/pulse/ComposerModal"), { ssr: false });
+const QuickLogModal = dynamic(() => import("@/components/QuickLogModal"), { ssr: false });
 
 const LOWERCASE_WORDS = new Set(["a","an","the","and","but","or","nor","for","so","yet","at","by","for","in","of","off","on","per","to","up","via"]);
 function toTitleCase(str: string): string {
@@ -27,7 +28,12 @@ function toTitleCase(str: string): string {
 interface ReviewTarget {
   subtype: "place" | "food" | "book" | "film" | "music";
   entry?: TrendingDirectoryEntry;
-  tab?: "review" | "log";
+}
+
+interface LogTarget {
+  id: number;
+  title: string;
+  thumbnail: string | null;
 }
 
 interface Props {
@@ -38,17 +44,20 @@ export default function DirectoryDiscovery({ categories }: Props) {
   const { data: session } = useSession();
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
   const [pendingTarget, setPendingTarget] = useState<ReviewTarget | null>(null);
+  const [logTarget, setLogTarget] = useState<LogTarget | null>(null);
 
   const openReview = useCallback((target: ReviewTarget) => {
     if (!session) {
       setPendingTarget(target);
-      // GlobalAuthModal (rendered in (magazine)/layout.tsx) listens for
-      // this — opens sign-in in place rather than navigating away.
       window.dispatchEvent(new Event("open-auth-modal"));
       return;
     }
     setReviewTarget(target);
   }, [session]);
+
+  const openLog = useCallback((entry: TrendingDirectoryEntry) => {
+    setLogTarget({ id: entry.id, title: entry.title, thumbnail: entry.thumbnail ?? null });
+  }, []);
 
   useEffect(() => {
     if (session && pendingTarget) {
@@ -120,7 +129,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
                         <button
                           type="button"
                           className="dd-card-btn dd-card-btn--log"
-                          onClick={() => openReview({ subtype: cat.reviewSubtype, entry, tab: "log" })}
+                          onClick={() => openLog(entry)}
                         >
                           + Log
                         </button>
@@ -149,7 +158,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
           open={!!reviewTarget}
           onClose={() => setReviewTarget(null)}
           onSuccess={() => setReviewTarget(null)}
-          initialTab={reviewTarget.tab ?? "review"}
+          initialTab="review"
           initialReview={
             reviewTarget.entry
               ? {
@@ -166,6 +175,11 @@ export default function DirectoryDiscovery({ categories }: Props) {
           }
         />
       )}
+      <QuickLogModal
+        entry={logTarget}
+        isLoggedIn={!!session}
+        onClose={() => setLogTarget(null)}
+      />
     </section>
   );
 }
