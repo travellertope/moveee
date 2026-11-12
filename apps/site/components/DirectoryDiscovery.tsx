@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { TYPE_BADGE } from "@/components/DiscoverBrowser";
+import AudioPreviewButton from "@/components/pulse/AudioPreviewButton";
 import type { TrendingCategory, TrendingDirectoryEntry } from "@/lib/fetchTrendingDirectory";
 import "./DirectoryDiscovery.css";
 import "@/app/pulse-layout.css";
@@ -89,23 +90,22 @@ export default function DirectoryDiscovery({ categories }: Props) {
               <div className={`dd-rail dd-rail--${cat.key}`}>
                 {cat.entries.map((entry) => {
                   const badge = TYPE_BADGE[entry.type] ?? { emoji: "✦", label: "ENTRY", color: "#7a6f5c" };
-                  const showPlay = cat.key === "film" || cat.key === "music";
+                  const showPreview = cat.key === "film" || cat.key === "music";
                   return (
                     <div key={entry.id} className="dd-card-wrap">
                       <Link href={`/directory/${entry.slug}`} className="arc-card dd-card">
                         <div className="arc-card-img dd-card-img">
-                          {entry.thumbnail ? (
+                          {showPreview ? (
+                            <AudioPreviewButton
+                              src={entry.previewUrl ?? undefined}
+                              coverUrl={entry.thumbnail ?? undefined}
+                              fill
+                            />
+                          ) : entry.thumbnail ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={entry.thumbnail} alt="" loading="lazy" />
                           ) : (
                             <span className="dd-card-fallback" style={{ background: badge.color }}>{badge.emoji}</span>
-                          )}
-                          {showPlay && (
-                            <div className="dd-play-overlay" aria-hidden>
-                              <div className="dd-play-btn">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5l9 5.5-9 5.5V2.5z"/></svg>
-                              </div>
-                            </div>
                           )}
                         </div>
                         <h3>{toTitleCase(entry.title)}</h3>

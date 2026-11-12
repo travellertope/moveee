@@ -212,14 +212,16 @@
 .disc-card-img-wrap--rail {
   height: 160px;
 }
-.disc-card-img {
+.disc-card-img,
+.disc-card-img-wrap > div > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   transition: transform 0.5s ease;
 }
-.disc-card:hover .disc-card-img { transform: scale(1.04); }
+.disc-card:hover .disc-card-img,
+.disc-card:hover .disc-card-img-wrap > div > img { transform: scale(1.04); }
 
 .disc-card-img-fallback {
   width: 100%;

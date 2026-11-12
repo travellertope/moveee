@@ -9,6 +9,7 @@ export interface TrendingDirectoryEntry {
   city: string;
   averageRating: number | null;
   reviewCount: number;
+  previewUrl?: string | null;
 }
 
 export interface TrendingCategory {
