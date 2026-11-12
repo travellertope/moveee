@@ -630,16 +630,32 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
             <p className="dir-wiki-sidebar-empty">No related entries yet.</p>
           ) : (
             <div className="dir-entry-related-grid">
-              {relatedEntries.map((e: any) => (
+              {relatedEntries.map((e: any) => {
+                const eType = e.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "";
+                const eCover = e.featuredImage?.node?.sourceUrl || e.externalCoverUrl || null;
+                const RELATED_BADGE: Record<string, { emoji: string; color: string }> = {
+                  film: { emoji: "🎬", color: "#1a1a2e" }, book: { emoji: "📖", color: "#2d4a3e" },
+                  album: { emoji: "🎵", color: "#2a1a3e" }, food: { emoji: "🍽️", color: "#3e2a1a" },
+                  place: { emoji: "📍", color: "#1a2d3e" }, person: { emoji: "👤", color: "#2e2a1a" },
+                  artwork: { emoji: "🎨", color: "#3e1a2a" }, "tv-series": { emoji: "📺", color: "#1a3e2a" },
+                  genre: { emoji: "🎶", color: "#2a3e1a" }, movement: { emoji: "✊", color: "#3e2a2a" },
+                  concept: { emoji: "💭", color: "#1a2a3e" }, fashion: { emoji: "👗", color: "#3e1a3a" },
+                };
+                const badge = RELATED_BADGE[eType] ?? { emoji: "✦", color: "#7a6f5c" };
+                return (
                 <Link key={e.slug} href={`/directory/${e.slug}`} className="dir-entry-related-card">
-                  <div className="dir-entry-related-thumb">
-                    {e.featuredImage?.node?.sourceUrl && (
-                      <img src={e.featuredImage.node.sourceUrl} alt="" className="dir-entry-related-img" />
+                  <div className={`dir-entry-related-thumb dir-entry-related-thumb--${eType || "default"}`}>
+                    {eCover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={eCover} alt="" className="dir-entry-related-img" />
+                    ) : (
+                      <span className="dir-entry-related-fallback" style={{ background: badge.color }}>{badge.emoji}</span>
                     )}
                   </div>
                   <span className="dir-entry-related-title">{e.title}</span>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           )}
           <div style={{ marginTop: "12px" }}>
