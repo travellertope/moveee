@@ -580,6 +580,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (p > 0) { payload.rsvp_price = p; payload.rsvp_price_currency = evCurrency; }
           }
           if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
+        }
+
         payload.template_type = template_type;
         if (hubId) payload.hub_id = hubId;
 

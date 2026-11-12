@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import DiscoverBrowser from "@/components/DiscoverBrowser";
+import DiscoverPageClient from "@/components/DiscoverPageClient";
 import "../../discover.css";
 
 export const metadata = {
@@ -36,7 +36,7 @@ export default async function DiscoverPage({
   return (
     <div className="disc-page-bg">
       <div className="disc-wrap">
-        <DiscoverBrowser
+        <DiscoverPageClient
           initialType={type ?? null}
           initialRegion={initialRegion}
           viewerInterests={viewerInterests}
