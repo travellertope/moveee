@@ -35,33 +35,37 @@ const CATEGORY_DEFS: Omit<TrendingCategory, "entries">[] = [
 ];
 
 const PER_CATEGORY = 6;
+// Fetch more than needed so we have enough after filtering to thumbnail-only.
+const FETCH_PER_CATEGORY = 18;
 
-async function fetchEntries(type: string, sort: "trending" | "recent"): Promise<TrendingDirectoryEntry[]> {
+async function fetchRandomWithThumbnails(type: string, seed: number): Promise<TrendingDirectoryEntry[]> {
   try {
-    const params = new URLSearchParams({ type, sort, per_page: String(PER_CATEGORY) });
+    const params = new URLSearchParams({
+      type,
+      sort: "random",
+      seed: String(seed),
+      per_page: String(FETCH_PER_CATEGORY),
+    });
     const res = await fetch(`${WP_URL}/wp-json/culture/v1/directory/browse?${params.toString()}`, {
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return data?.entries ?? [];
+    const entries: TrendingDirectoryEntry[] = data?.entries ?? [];
+    // Keep only entries that have a cover/thumbnail image, then cap at PER_CATEGORY.
+    return entries.filter((e) => e.thumbnail).slice(0, PER_CATEGORY);
   } catch {
     return [];
   }
 }
 
-async function fetchCategoryEntries(type: string): Promise<TrendingDirectoryEntry[]> {
-  const trending = await fetchEntries(type, "trending");
-  if (trending.length > 0) return trending;
-  // Same fallback PulseFeed.tsx's own "Trending Now" sidebar widget uses —
-  // a freshly-launched directory type may have nothing trending yet.
-  return fetchEntries(type, "recent");
-}
-
-/** Trending/recent directory entries grouped by type, for the homepage's
- * "Discovery" rails. Categories with no entries at all are dropped. */
+/** Random directory entries (with thumbnails) grouped by type, reshuffled on
+ * every homepage load. Categories with no entries are dropped. */
 export async function fetchTrendingDirectory(): Promise<TrendingCategory[]> {
-  const results = await Promise.all(CATEGORY_DEFS.map((c) => fetchCategoryEntries(c.type)));
+  // One seed per page load — same value across all category fetches so the
+  // ordering is coherent, but fresh on every request.
+  const seed = Math.floor(Math.random() * 2_147_483_647);
+  const results = await Promise.all(CATEGORY_DEFS.map((c) => fetchRandomWithThumbnails(c.type, seed)));
   return CATEGORY_DEFS
     .map((c, i) => ({ ...c, entries: results[i] }))
     .filter((c) => c.entries.length > 0);
