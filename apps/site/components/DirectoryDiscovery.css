@@ -106,21 +106,37 @@
 }
 
 .dd-card-city { margin-top: -2px; }
-.dd-card-rating { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
-.dd-card-stars { color: var(--gold); font-size: 13px; letter-spacing: 1px; }
+.dd-card-rating { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.dd-card-star { color: var(--gold); font-size: 11px; line-height: 1; }
 .dd-card-meta { font-size: 11px; color: var(--mute); }
 
-/* Write a review: gray by default, ochre on hover — overrides .arc-cta's always-ochre */
-.dd-card-cta {
+/* Two-button action row */
+.dd-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+}
+.dd-card-actions-sep {
+  color: var(--rule);
+  font-size: 11px;
+  line-height: 1;
+  user-select: none;
+}
+.dd-card-btn {
   background: none;
   border: none;
-  text-align: left;
-  padding: 8px 0 0;
+  padding: 0;
   cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--mute);
   transition: color 0.15s ease;
 }
-.dd-card-cta:hover { color: var(--ochre); }
+.dd-card-btn--review:hover { color: var(--ochre); }
+.dd-card-btn--log:hover { color: var(--ink); }
 
 .dd-cta-banner {
   margin-top: 40px;

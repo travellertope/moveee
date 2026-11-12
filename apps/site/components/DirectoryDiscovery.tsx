@@ -24,11 +24,6 @@ function toTitleCase(str: string): string {
     .join(" ");
 }
 
-function starString(rating: number | null): string {
-  const full = rating ? Math.round(rating) : 0;
-  return "★".repeat(full) + "☆".repeat(Math.max(0, 5 - full));
-}
-
 interface ReviewTarget {
   subtype: "place" | "food" | "book" | "film" | "music";
   entry?: TrendingDirectoryEntry;
@@ -41,9 +36,6 @@ interface Props {
 export default function DirectoryDiscovery({ categories }: Props) {
   const { data: session } = useSession();
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
-  // Set when "Write a review" is clicked while signed out — opens the
-  // review composer automatically once sign-in completes, instead of
-  // losing the click entirely behind a full-page redirect to /login.
   const [pendingTarget, setPendingTarget] = useState<ReviewTarget | null>(null);
 
   const openReview = useCallback((target: ReviewTarget) => {
@@ -108,20 +100,30 @@ export default function DirectoryDiscovery({ categories }: Props) {
                         </div>
                         <h3>{toTitleCase(entry.title)}</h3>
                         {entry.city && <p className="dd-card-city">{entry.city}</p>}
-                        <div className="dd-card-rating">
-                          <span className="dd-card-stars">{starString(entry.averageRating)}</span>
-                          <span className="dd-card-meta">
-                            {entry.averageRating ? entry.averageRating.toFixed(1) : "New"}
-                          </span>
-                        </div>
+                        {entry.averageRating ? (
+                          <div className="dd-card-rating">
+                            <span className="dd-card-star" aria-hidden>★</span>
+                            <span className="dd-card-meta">{entry.averageRating.toFixed(1)}</span>
+                          </div>
+                        ) : null}
                       </Link>
-                      <button
-                        type="button"
-                        className="arc-cta dd-card-cta"
-                        onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
-                      >
-                        + Write a review
-                      </button>
+                      <div className="dd-card-actions">
+                        <button
+                          type="button"
+                          className="dd-card-btn dd-card-btn--review"
+                          onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
+                        >
+                          + Review
+                        </button>
+                        <span className="dd-card-actions-sep" aria-hidden>·</span>
+                        <button
+                          type="button"
+                          className="dd-card-btn dd-card-btn--log"
+                          onClick={() => openReview({ subtype: cat.reviewSubtype, entry })}
+                        >
+                          + Log
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
