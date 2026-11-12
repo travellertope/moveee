@@ -1,6 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
-import HomepageView from "@/components/HomepageView";
+import MagazineView from "@/components/MagazineView";
 
 export const revalidate = 300;
 
@@ -26,5 +26,5 @@ export const metadata: Metadata = {
 };
 
 export default async function MagazinePage() {
-  return <HomepageView edition="global" />;
+  return <MagazineView edition="global" />;
 }
