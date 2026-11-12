@@ -274,10 +274,14 @@ async function fetchWikidataInbox(
     const claimArr = claims[propId];
     if (!claimArr?.length) continue;
 
-    // Take first ranked claim only
-    const best = claimArr.find((c: any) => c.rank !== "deprecated") ?? claimArr[0];
-    const snak = best?.mainsnak;
-    if (!snak || snak.snaktype !== "value") continue;
+    // Prefer preferred-rank claims with a real value, then fall back to any
+    // non-deprecated claim with a real value. A novalue/somevalue sentinel as
+    // the first claim would otherwise silently drop the whole field.
+    const best =
+      claimArr.find((c: any) => c.rank === "preferred" && c.mainsnak?.snaktype === "value") ??
+      claimArr.find((c: any) => c.rank !== "deprecated" && c.mainsnak?.snaktype === "value");
+    if (!best) continue;
+    const snak = best.mainsnak;
 
     const val = snak.datavalue?.value;
     if (!val) continue;

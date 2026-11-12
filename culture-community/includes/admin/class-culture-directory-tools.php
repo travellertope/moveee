@@ -961,10 +961,21 @@ class Culture_Directory_Tools {
 			if ( empty( $claim_arr ) ) continue;
 
 			$is_multi = ! empty( $spec['multi'] );
-			$max      = $is_multi ? ( $spec['max'] ?? 5 ) : 1;
+			$max      = $is_multi ? ( $spec['max'] ?? 5 ) : PHP_INT_MAX;
 			$values   = array();
 
-			foreach ( array_slice( $claim_arr, 0, $is_multi ? $max : 1 ) as $claim ) {
+			// Sort so preferred-rank claims come first; iterate all claims and
+			// skip deprecated/novalue/somevalue sentinels rather than slicing up
+			// front — a sentinel as the first entry would otherwise silently drop
+			// the whole field (e.g. a director with a novalue placeholder claim).
+			$sorted_claims = $claim_arr;
+			usort( $sorted_claims, function( $a, $b ) {
+				$rank = array( 'preferred' => 0, 'normal' => 1, 'deprecated' => 2 );
+				return ( $rank[ $a['rank'] ?? 'normal' ] ?? 1 ) - ( $rank[ $b['rank'] ?? 'normal' ] ?? 1 );
+			} );
+
+			foreach ( $sorted_claims as $claim ) {
+				if ( count( $values ) >= $max ) break;
 				if ( ( $claim['rank'] ?? '' ) === 'deprecated' ) continue;
 				$snak = $claim['mainsnak'] ?? array();
 				if ( ( $snak['snaktype'] ?? '' ) !== 'value' ) continue;
