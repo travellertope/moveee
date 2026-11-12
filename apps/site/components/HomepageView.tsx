@@ -146,16 +146,6 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
         stories={featuredPool}
       />
 
-      <section className="arc-section">
-        <div className="wrap">
-          <div className="arc-hdr">
-            <h2>From The <em>Shop</em></h2>
-            <a href="/lifestyle" className="arc-viewall">Shop all →</a>
-          </div>
-          <ShopRail products={shopProducts} />
-        </div>
-      </section>
-
       <MasonryRandomSection
         eyebrowTitle={<>The <em>Lane</em></>}
         stories={portraitStories}
