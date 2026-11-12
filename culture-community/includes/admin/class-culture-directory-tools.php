@@ -559,14 +559,25 @@ class Culture_Directory_Tools {
 			return false;
 		};
 
-		// Any original significant word appearing as a whole word in the candidate?
+		// For multi-word titles, require ≥2 matches in either direction so a
+		// single shared word can't cause cross-matching between unrelated titles
+		// (e.g. "Women on the Margins" ≠ "In the Margins").
+		$min_match = count( $orig_words ) >= 2 ? 2 : 1;
+
+		$orig_in_cand = 0;
 		foreach ( $orig_words as $word ) {
-			if ( $word_in( $word, $cand_ascii ) ) return true;
+			if ( $word_in( $word, $cand_ascii ) ) {
+				$orig_in_cand++;
+				if ( $orig_in_cand >= $min_match ) return true;
+			}
 		}
 
-		// Any candidate significant word appearing as a whole word in the original?
+		$cand_in_orig = 0;
 		foreach ( $cand_words as $word ) {
-			if ( $word_in( $word, $orig_ascii ) ) return true;
+			if ( $word_in( $word, $orig_ascii ) ) {
+				$cand_in_orig++;
+				if ( $cand_in_orig >= $min_match ) return true;
+			}
 		}
 
 		return false;

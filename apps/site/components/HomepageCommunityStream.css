@@ -155,7 +155,7 @@
   -webkit-line-clamp: 6;
 }
 .hcs-card__text:not(.hcs-card__text--quote) {
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
 }
 .hcs-card__ldquo,
 .hcs-card__rdquo {

@@ -122,9 +122,9 @@ function wordIn(word: string, haystack: string): boolean {
 }
 
 /** Validates that a Wikipedia candidate title is plausibly related to the query
- * by requiring at least one significant word (4+ chars, non-stopword) to appear
- * as a whole word in both directions. Handles diacritics and simple plurals.
- * Prevents false positives like "Water Margin" matching "Women on the Margins". */
+ * by requiring significant word overlap in either direction. For multi-word
+ * titles, requires ≥2 matching words to prevent cross-matching on a single
+ * shared word (e.g. "Women on the Margins" ≠ "In the Margins"). */
 function wikiTitleMatches(original: string, candidate: string): boolean {
   const origWords = sigWords(original);
   if (!origWords.length) return true; // very short title — skip validation
@@ -132,11 +132,17 @@ function wikiTitleMatches(original: string, candidate: string): boolean {
   const candAscii = asciiLower(candidate);
   const origAscii = asciiLower(original);
 
+  // Single-word original: 1 match is enough. Multi-word: need ≥2 in either
+  // direction so one incidentally shared word can't cause a false positive.
+  const minMatch = origWords.length >= 2 ? 2 : 1;
+
+  let origInCand = 0;
   for (const w of origWords) {
-    if (wordIn(w, candAscii)) return true;
+    if (wordIn(w, candAscii) && ++origInCand >= minMatch) return true;
   }
+  let candInOrig = 0;
   for (const w of sigWords(candidate)) {
-    if (wordIn(w, origAscii)) return true;
+    if (wordIn(w, origAscii) && ++candInOrig >= minMatch) return true;
   }
   return false;
 }
