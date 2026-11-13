@@ -838,20 +838,25 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {/* ── REVIEW ── */}
           {activeTab === "review" && (
             <>
-              <div className="cm-field">
-                <label className="cm-label">Review type</label>
-                <select
-                  className="cm-input"
-                  value={revSubtype}
-                  onChange={e => { const sub = e.target.value as ReviewSubtype; setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGallery([]); }}
-                  aria-label="Review type"
-                >
-                  {(["place", "food", "music", "book", "film"] as ReviewSubtype[]).map(sub => (
-                    <option key={sub} value={sub}>
-                      {{ place: "Place", food: "Food", music: "Music", book: "Book", film: "Film" }[sub]}
-                    </option>
-                  ))}
-                </select>
+              <div className="cm-rev-type-row" role="group" aria-label="Review type">
+                {([
+                  { key: "place", icon: "📍", label: "Place" },
+                  { key: "food",  icon: "🍽",  label: "Food"  },
+                  { key: "music", icon: "🎵", label: "Music" },
+                  { key: "book",  icon: "📖", label: "Book"  },
+                  { key: "film",  icon: "🎬", label: "Film"  },
+                ] as { key: ReviewSubtype; icon: string; label: string }[]).map(({ key, icon, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`cm-rev-type-btn${revSubtype === key ? " cm-rev-type-btn--active" : ""}`}
+                    onClick={() => { setRevSubtype(key); setRevEntry(null); setRevTitle(""); setGallery([]); }}
+                    aria-pressed={revSubtype === key}
+                  >
+                    <span className="cm-rev-type-icon" aria-hidden="true">{icon}</span>
+                    <span className="cm-rev-type-label">{label}</span>
+                  </button>
+                ))}
               </div>
               <div className="cm-field">
                 <>
@@ -864,7 +869,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     typeFilter={{ place: "place", food: "place", book: "book", music: "album", film: "film" }[revSubtype]}
                     aboutFieldLabel={{ book: "Author", music: "Artist", film: "Director" }[revSubtype as "book" | "music" | "film"] ?? undefined}
                     externalSource={({ place: "google_places", food: "google_places", book: "google_books", music: "spotify", film: "tmdb" } as const)[revSubtype]}
-                    placeholder={{ place: "Search for a place on Google Maps…", food: "Search for a restaurant or café…", book: "Search for a book…", music: "Search for an album…", film: "Search for a film…" }[revSubtype]}
+                    placeholder={{ place: "Place name…", food: "Restaurant or café name…", book: "Book title…", music: "Album title…", film: "Film title…" }[revSubtype]}
                   />
                 </>
               </div>
@@ -1503,7 +1508,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   value={evOrganiser}
                   onChange={entry => setEvOrganiser(entry)}
                   typeFilter="person"
-                  placeholder="Search for an organiser in the directory…"
+                  placeholder="Organiser name…"
                   aboutFieldLabel="Known for"
                 />
               </div>

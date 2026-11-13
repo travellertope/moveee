@@ -742,6 +742,40 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+/* Review type segmented control */
+.cm-rev-type-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.cm-rev-type-btn {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 7px;
+  background: var(--paper-deep, #ece6d8);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-lg, 6px);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cm-rev-type-btn:hover { border-color: var(--ochre, #7a241c); }
+.cm-rev-type-btn--active {
+  border-color: var(--ochre, #7a241c);
+  background: color-mix(in srgb, var(--ochre, #7a241c) 10%, var(--paper-deep, #ece6d8));
+}
+.cm-rev-type-icon { font-size: 1.15rem; line-height: 1; }
+.cm-rev-type-label {
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
 .cm-label-opt {
   font-weight: 400;
   text-transform: none;
