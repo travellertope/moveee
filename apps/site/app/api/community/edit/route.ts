@@ -22,6 +22,9 @@ export async function POST(req: NextRequest) {
     text?: string;
     tag?: string;
     template_type?: string;
+    // Art / Itinerary fields
+    showcase_title?: string;
+    itinerary_title?: string;
     // Event fields
     event_title?: string;
     event_date?: string;
@@ -106,7 +109,11 @@ export async function POST(req: NextRequest) {
     };
   } else {
     updateBody.content = `<p>${escHtml(text!.trim()).replace(/\n/g, "</p><p>")}</p>`;
-    if (tag) updateBody.meta = { community_tag: tag };
+    const metaFields: Record<string, any> = {};
+    if (tag) metaFields.community_tag = tag;
+    if (body.showcase_title !== undefined) metaFields._showcase_title = body.showcase_title.trim();
+    if (body.itinerary_title !== undefined) metaFields._itinerary_title = body.itinerary_title.trim();
+    if (Object.keys(metaFields).length > 0) updateBody.meta = metaFields;
   }
 
   const res = await fetch(`${BASE}/community-posts/${postId}`, {

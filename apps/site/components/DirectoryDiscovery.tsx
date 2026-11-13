@@ -72,18 +72,11 @@ export default function DirectoryDiscovery({ categories }: Props) {
   return (
     <section className="arc-section dd-section">
       <div className="wrap">
-        <div className="arc-hdr dd-hdr">
-          <div className="dd-hdr-copy">
-            <h2>What the community is <em>discovering</em> right now</h2>
-          </div>
-          <Link href="/discover" className="arc-viewall">See the full directory →</Link>
-        </div>
-
         {categories.map((cat) => {
           return (
             <div key={cat.key} className="dd-rail-group">
               <div className="dd-rail-hdr">
-                <h3>Trending {cat.label}</h3>
+                <h3>Featured {cat.label}</h3>
                 <Link href={`/discover?type=${cat.type}`} className="arc-viewall">See all {cat.label} ›</Link>
               </div>
 

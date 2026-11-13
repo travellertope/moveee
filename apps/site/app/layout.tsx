@@ -124,10 +124,10 @@ export default async function RootLayout({
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         {/* Set data-theme before paint — prevents light/dark flash on connect pages.
-            Split try/catch: localStorage errors must not prevent the matchMedia fallback. */}
+            Defaults to dark when no stored preference exists (connect app is dark by default). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t;try{t=localStorage.getItem("moveee-theme");}catch(e){}if(t!=="light"&&t!=="dark"){try{t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}catch(e){t="light";}}document.documentElement.setAttribute("data-theme",t);})();`,
+            __html: `(function(){var t;try{t=localStorage.getItem("moveee-theme");}catch(e){}if(t!=="light"&&t!=="dark"){t="dark";}document.documentElement.setAttribute("data-theme",t);})();`,
           }}
         />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3ece0" />

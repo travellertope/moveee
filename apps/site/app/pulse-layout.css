@@ -1,11 +1,11 @@
 /* ── Shared Pulse/Connect feed layout ─────────────────────────────── */
 
-/* Feed background token — slate-50 in light mode */
+/* Feed background token — slate-50 in light mode, dark ink in dark mode */
 :root { --feed-bg: #f7f8fb; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --feed-bg: var(--paper, #1a1714); }
+  :root:not([data-theme="light"]) { --feed-bg: #1a1714; }
 }
-:root[data-theme="dark"] { --feed-bg: var(--paper, #1a1714); }
+:root[data-theme="dark"] { --feed-bg: #1a1714; }
 
 .pulse-layout {
   display: grid;
@@ -1069,6 +1069,40 @@
   font-weight: 600;
   color: var(--ink-soft, var(--mute));
   text-align: center;
+}
+
+/* Upload progress overlay */
+.cm-gallery-uploading {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+@keyframes cm-spin {
+  to { transform: rotate(360deg); }
+}
+.cm-gallery-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cm-spin 0.7s linear infinite;
+}
+.cm-gallery-error-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(180, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: default;
 }
 
 /* 2-column grid for small paired fields */

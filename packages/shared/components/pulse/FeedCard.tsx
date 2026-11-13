@@ -18,6 +18,7 @@ import ImageLightbox from "./ImageLightbox";
 import AudioPreviewButton from "./AudioPreviewButton";
 
 const CommunityDetailModal = dynamic(() => import("./CommunityDetailModal"), { ssr: false });
+const ComposerModal = dynamic(() => import("./ComposerModal"), { ssr: false });
 
 function PollDisplay({ postId, options, expiresAt }: { postId?: string; options: { text: string; votes: number }[]; expiresAt?: string }) {
   const [voted, setVoted] = useState<number | null>(null);
@@ -767,13 +768,7 @@ export default function FeedCard({
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [deleting, setDeleting] = useState(false);
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [editOpen, setEditOpen] = useState(false);
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [editText, setEditText] = useState("");
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [editing, setEditing] = useState(false);
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [editError, setEditError] = useState("");
+    const [editComposerOpen, setEditComposerOpen] = useState(false);
     // Only detect orientation for event cards; other community cards don't use it.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const [eventImgOrientation, setEventImgOrientation] = useState<"landscape"|"portrait"|"square"|"unknown">(
@@ -826,28 +821,6 @@ export default function FeedCard({
         setDeleting(false);
         setDeleteConfirm(false);
       }
-    }
-
-    async function handleEdit() {
-      if (!editText.trim()) return;
-      setEditing(true);
-      setEditError("");
-      try {
-        const res = await fetch("/api/community/edit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ postId: item.wpId, text: editText }),
-        });
-        const d = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setEditError(d.error ?? "Edit failed.");
-        } else {
-          setEditOpen(false);
-        }
-      } catch {
-        setEditError("Network error.");
-      }
-      setEditing(false);
     }
 
     async function submitReport(reason: string) {
@@ -1564,7 +1537,7 @@ export default function FeedCard({
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {canEdit && (
                   <button
-                    onClick={() => { setOwnerMenuOpen(false); setEditText(item.body ?? item.excerpt ?? ""); setEditOpen(true); }}
+                    onClick={() => { setOwnerMenuOpen(false); setEditComposerOpen(true); }}
                     style={{
                       width: "100%", padding: "0.75rem 1rem",
                       background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
@@ -1653,65 +1626,13 @@ export default function FeedCard({
           </>
         )}
 
-        {/* Edit modal (Pro only) */}
-        {editOpen && (
-          <>
-            <div onClick={(e) => { e.stopPropagation(); if (!editing) setEditOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(20,17,13,0.55)" }} />
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-                width: "min(540px, 100%)", zIndex: 9001,
-                background: "var(--paper, #f3ece0)",
-                borderRadius: "20px 20px 0 0",
-                padding: "0.75rem 1.25rem 1.5rem",
-                boxShadow: "0 -8px 32px rgba(20,17,13,0.18)",
-                maxHeight: "80vh", display: "flex", flexDirection: "column",
-              }}
-            >
-              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(20,17,13,0.2)", margin: "0 auto 1.1rem", flexShrink: 0 }} />
-              <p style={{ margin: "0 0 0.85rem", fontSize: "0.85rem", fontWeight: 700, color: "var(--ink)", flexShrink: 0 }}>Edit post</p>
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                rows={6}
-                style={{
-                  width: "100%", padding: "0.75rem", fontSize: "0.9rem", lineHeight: 1.55,
-                  border: "1px solid var(--rule, #e8e2d8)", borderRadius: "var(--radius-lg, 6px)",
-                  background: "#fff", color: "var(--ink)", fontFamily: "inherit",
-                  resize: "vertical", flex: "1 1 auto", minHeight: "100px", boxSizing: "border-box",
-                }}
-              />
-              {editError && <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "#c0392b" }}>{editError}</p>}
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.85rem", flexShrink: 0 }}>
-                <button
-                  onClick={() => { if (!editing) setEditOpen(false); }}
-                  disabled={editing}
-                  style={{
-                    flex: 1, padding: "0.75rem", background: "transparent",
-                    border: "1px solid var(--rule, #e8e2d8)", borderRadius: "var(--radius-lg, 6px)",
-                    cursor: "pointer", fontSize: "0.85rem", color: "var(--mute)", fontFamily: "inherit", fontWeight: 600,
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEdit}
-                  disabled={editing || !editText.trim()}
-                  style={{
-                    flex: 2, padding: "0.75rem",
-                    background: "var(--ochre, #7a241c)", border: "none",
-                    borderRadius: "var(--radius-lg, 6px)", cursor: editing ? "not-allowed" : "pointer",
-                    fontSize: "0.85rem", color: "#fff", fontFamily: "inherit", fontWeight: 700,
-                    opacity: (editing || !editText.trim()) ? 0.7 : 1,
-                  }}
-                >
-                  {editing ? "Saving…" : "Save changes"}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+        {/* Edit modal (Pro only) — full ComposerModal pre-filled with current post data */}
+        <ComposerModal
+          open={editComposerOpen}
+          editItem={item}
+          onClose={() => setEditComposerOpen(false)}
+          onSuccess={() => { setEditComposerOpen(false); router.refresh(); }}
+        />
       </>
     );
   }

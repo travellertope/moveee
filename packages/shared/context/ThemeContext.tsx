@@ -19,7 +19,7 @@ function applyTheme(theme: ThemeMode) {
 }
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemeMode>("light");
+  const [theme, setThemeState] = useState<ThemeMode>("dark");
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
@@ -28,13 +28,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       applyTheme(stored);
     } else {
       // No stored preference — resolve from the DOM attribute (set by the inline
-      // head script) or fall back to matchMedia. Always call applyTheme() to
-      // re-confirm the attribute in case React hydration cleared it.
+      // head script) or fall back to dark (connect app default). Always call
+      // applyTheme() to re-confirm the attribute in case React hydration cleared it.
       const existing = document.documentElement.getAttribute("data-theme");
       const resolved: ThemeMode =
         existing === "dark" ? "dark" :
         existing === "light" ? "light" :
-        (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        "dark";
       setThemeState(resolved);
       applyTheme(resolved);
     }

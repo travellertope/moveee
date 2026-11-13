@@ -270,6 +270,7 @@ export async function POST(req: NextRequest) {
       content: htmlContent,
       status: postStatus,
       comment_status: "open",
+      author: Number(userId),
       meta: {
         community_author_name:   authorName,
         community_author_id:     authorId,
