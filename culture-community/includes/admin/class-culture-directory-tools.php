@@ -1122,20 +1122,38 @@ class Culture_Directory_Tools {
 
 		// Update cover meta:
 		//   • always when no cover exists
-		//   • always when the entry was AI-generated (_ai_generated=1)
+		//   • always when the entry was AI-generated (_ai_generated=1 or _culture_dir_ai_generated=1)
 		//   • when overwrite is explicitly requested
-		// A manually set WP featured image is never touched (admin intent).
-		if ( $cover ) {
-			$has_thumb = (bool) get_the_post_thumbnail_url( $post_id, 'thumbnail' );
-			$has_meta  = get_post_meta( $post_id, '_external_cover_url', true )
-			          ?: get_post_meta( $post_id, '_culture_dir_image_url', true );
-			$is_ai     = get_post_meta( $post_id, '_ai_generated', true ) === '1';
+		// A manually set WP featured image (has_thumb=true AND not AI-flagged) is never touched.
+		// When a Wikipedia article is found but has no thumbnail and overwrite=true, clear AI flags
+		// so the entry is not forever stuck showing AI art.
+		$has_thumb = (bool) get_the_post_thumbnail_url( $post_id, 'thumbnail' );
+		$has_meta  = get_post_meta( $post_id, '_external_cover_url', true )
+		          ?: get_post_meta( $post_id, '_culture_dir_image_url', true );
+		// Check both meta keys — _ai_generated is used by directory-tools seeder;
+		// _culture_dir_ai_generated is set by the auto-populate/submit pipeline.
+		$is_ai     = get_post_meta( $post_id, '_ai_generated', true ) === '1'
+		          || get_post_meta( $post_id, '_culture_dir_ai_generated', true ) === '1';
 
-			if ( ! $has_thumb && ( ! $has_meta || $is_ai || $overwrite ) ) {
-				update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
-				update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
-				$changes[] = 'cover';
+		if ( $cover ) {
+			// Never replace a manually-set WP featured thumbnail unless it's AI-generated.
+			if ( ! $has_thumb || $is_ai ) {
+				if ( ! $has_meta || $is_ai || $overwrite ) {
+					update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
+					update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
+					// Clear both AI flags now that a real image is in place.
+					delete_post_meta( $post_id, '_ai_generated' );
+					delete_post_meta( $post_id, '_culture_dir_ai_generated' );
+					$changes[] = 'cover';
+				}
 			}
+		} elseif ( $overwrite && $is_ai ) {
+			// No Wikipedia thumbnail available but we confirmed the article exists and an
+			// explicit overwrite was requested — clear the AI flags so the entry is no
+			// longer treated as AI-generated even though no replacement image was found.
+			delete_post_meta( $post_id, '_ai_generated' );
+			delete_post_meta( $post_id, '_culture_dir_ai_generated' );
+			$changes[] = 'ai_flag_cleared';
 		}
 
 		// Fetch and save Wikidata structured fields (director, year, cast, genre, etc.)
