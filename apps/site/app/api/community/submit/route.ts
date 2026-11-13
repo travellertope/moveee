@@ -182,6 +182,9 @@ export async function POST(req: NextRequest) {
 
   const content = (text ?? "").trim();
   if (templateType === "event") {
+    if (!event_title?.trim()) {
+      return NextResponse.json({ error: "Event name is required." }, { status: 400 });
+    }
     if (!event_date) {
       return NextResponse.json({ error: "Event start date is required." }, { status: 400 });
     }
@@ -251,7 +254,7 @@ export async function POST(req: NextRequest) {
   const escHtml = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const title = templateType === "event"
-    ? (event_title?.trim() || content.slice(0, 150) || "").slice(0, 150)
+    ? event_title!.trim().slice(0, 150)
     : content.slice(0, 80) + (content.length > 80 ? "…" : "");
   const htmlContent = content ? `<p>${escHtml(content).replace(/\n/g, "</p><p>")}</p>` : "";
 

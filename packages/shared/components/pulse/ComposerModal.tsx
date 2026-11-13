@@ -220,6 +220,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [revContent, setRevContent] = useState("");
 
   // Art
+  const [artTitle, setArtTitle]     = useState("");
   const [artContent, setArtContent] = useState("");
 
   // Poll
@@ -236,6 +237,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [qReflection, setQReflection] = useState("");
 
   // Itinerary
+  const [iTitle, setITitle]         = useState("");
   const [iOverview, setIOverview]   = useState("");
   const [stops, setStops]           = useState<Stop[]>([
     { id: "a", name: "", location: "", note: "", image_url: "" },
@@ -243,6 +245,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   ]);
 
   // Event
+  const [evTitle, setEvTitle]       = useState("");
   const [evDate, setEvDate]         = useState("");
   const [evEndDate, setEvEndDate]   = useState("");
   const [evVenue, setEvVenue]       = useState("");
@@ -318,7 +321,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Auto-infer hubs from content + #hashtags (all in background)
   useEffect(() => {
-    const combined = [updContent, revTitle, revContent, artContent, pollQ, qText, qSource, iOverview, evDesc].join(" ");
+    const combined = [updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc].join(" ");
     const inferred = inferCategories(combined);
     // Tab-specific primary category takes the first slot
     let primary: string | null = null;
@@ -333,7 +336,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     } else {
       setCategories(inferred);
     }
-  }, [activeTab, revSubtype, updContent, revTitle, revContent, artContent, pollQ, qText, qSource, iOverview, evDesc]);
+  }, [activeTab, revSubtype, updContent, revTitle, revContent, artTitle, artContent, pollQ, qText, qSource, iTitle, iOverview, evTitle, evDesc]);
 
   // Auto-compute overall star rating from breakdown when set
   useEffect(() => {
@@ -355,12 +358,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const resetAll = useCallback(() => {
     setUpdContent("");
     setRevTitle(""); setRevContent(""); setRevRating(5); setRevSubtype("place"); setRevEntry(null);
-    setArtContent("");
+    setArtTitle(""); setArtContent("");
     setPollQ(""); setPollOpts(["", ""]);
     setQText(""); setQAuthorEntry(null); setQSource(""); setQSourceEntry(null); setQType(""); setQReflection("");
-    setIOverview("");
+    setITitle(""); setIOverview("");
     setStops([{ id: "a", name: "", location: "", note: "", image_url: "" }, { id: "b", name: "", location: "", note: "", image_url: "" }]);
-    setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
+    setEvTitle(""); setEvDate(""); setEvEndDate(""); setEvVenue(""); setEvCity("");
     setEvDesc(""); setEvAdmission(""); setEvTicketUrl("");
     setEvAddress(""); setEvCategory(""); setEvOrganiser(null); setEvRsvpEnabled(false); setEvCapacity("");
     setPollDuration("3"); setPollDescription("");
@@ -519,7 +522,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         } else if (activeTab === "art") {
           template_type = "project";
           if (!artContent.trim()) throw new Error("Description is required");
-          payload.text = artContent.trim();
+          payload.text = artTitle.trim() ? `${artTitle.trim()}\n\n${artContent.trim()}` : artContent.trim();
           if (showcaseMedium) payload.showcase_medium = showcaseMedium;
           if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
         } else if (activeTab === "poll") {
@@ -537,7 +540,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         } else if (activeTab === "itinerary") {
           template_type = "itinerary";
           if (!iOverview.trim()) throw new Error("Overview is required");
-          payload.text = iOverview.trim();
+          payload.text = iTitle.trim() ? `${iTitle.trim()}\n\n${iOverview.trim()}` : iOverview.trim();
           const validStops = stops.filter(s => s.name.trim());
           if (validStops.length === 0) throw new Error("Add at least one stop");
           payload.itinerary_stops = validStops.map(s => ({
@@ -553,9 +556,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           if (iBestTime.trim()) payload.itinerary_best_time = iBestTime.trim();
         } else if (activeTab === "event") {
           template_type = "event";
+          if (!evTitle.trim()) throw new Error("Event title is required");
           if (!evDate) throw new Error("Event date is required");
-          payload.text = evDesc.trim();
-          payload.event_title = evDesc.trim().slice(0, 150) || evVenue.trim() || evCity.trim() || "";
+          payload.text = evDesc.trim() || evTitle.trim();
+          payload.event_title = evTitle.trim();
           payload.event_date = evDate;
           if (evEndDate) payload.event_end_date = evEndDate;
           payload.event_venue = evVenue.trim();
@@ -886,6 +890,15 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "art" && (
             <>
               <div className="cm-field">
+                <label className="cm-label">Artwork title <span className="cm-label-opt">(optional)</span></label>
+                <input
+                  className="cm-input"
+                  placeholder="Name of the piece or project…"
+                  value={artTitle}
+                  onChange={e => setArtTitle(e.target.value)}
+                />
+              </div>
+              <div className="cm-field">
                 <label className="cm-label">Medium <span className="cm-label-opt">(optional)</span></label>
                 <select
                   className="cm-input"
@@ -1074,6 +1087,15 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "itinerary" && (
             <>
               <div className="cm-field">
+                <label className="cm-label">Itinerary title</label>
+                <input
+                  className="cm-input"
+                  placeholder="e.g. 48 Hours in Lagos"
+                  value={iTitle}
+                  onChange={e => setITitle(e.target.value)}
+                />
+              </div>
+              <div className="cm-field">
                 <label className="cm-label">City / destination <span className="cm-label-opt">(optional)</span></label>
                 <input
                   className="cm-input"
@@ -1203,6 +1225,15 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {/* ── EVENT ── */}
           {activeTab === "event" && (
             <>
+              <div className="cm-field">
+                <label className="cm-label">Event title</label>
+                <input
+                  className="cm-input"
+                  placeholder="What's the event called?"
+                  value={evTitle}
+                  onChange={e => setEvTitle(e.target.value)}
+                />
+              </div>
               <div className="cm-field">
                 <label className="cm-label">Category <span className="cm-label-opt">(optional)</span></label>
                 {/* Single-select, so a dropdown reads clearer than a 12-pill row */}
