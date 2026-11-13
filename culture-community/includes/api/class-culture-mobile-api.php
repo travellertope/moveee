@@ -4162,7 +4162,7 @@ class Culture_Mobile_API {
                 $inline_video_url = $yt_inline_match[0];
             }
 
-            $body_text   = trim( wp_strip_all_tags( $with_breaks ) );
+            $body_text   = html_entity_decode( trim( wp_strip_all_tags( $with_breaks ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
             $link_url    = get_post_meta( $post->ID, 'community_link_url', true ) ?: '';
             $source      = '';
             if ( $link_url ) {
@@ -4182,7 +4182,7 @@ class Culture_Mobile_API {
             return array(
                 'id'                      => 'community-' . $post->ID,
                 'type'                    => 'community',
-                'title'                   => $body_text ?: get_the_title( $post ),
+                'title'                   => $body_text ?: html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
                 'slug'                    => $post->post_name,
                 'date'                    => self::gmt_iso( $post->post_date_gmt ),
                 'image'                   => get_post_meta( $post->ID, 'community_image_url', true ) ?: ( get_post_meta( $post->ID, '_community_image_url', true ) ?: null ),
