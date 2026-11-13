@@ -1,11 +1,11 @@
 /* ── Shared Pulse/Connect feed layout ─────────────────────────────── */
 
-/* Feed background token — slate-50 in light mode */
+/* Feed background token — slate-50 in light mode, dark ink in dark mode */
 :root { --feed-bg: #f7f8fb; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --feed-bg: var(--paper, #1a1714); }
+  :root:not([data-theme="light"]) { --feed-bg: #1a1714; }
 }
-:root[data-theme="dark"] { --feed-bg: var(--paper, #1a1714); }
+:root[data-theme="dark"] { --feed-bg: #1a1714; }
 
 .pulse-layout {
   display: grid;
