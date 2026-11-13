@@ -1071,6 +1071,40 @@
   text-align: center;
 }
 
+/* Upload progress overlay */
+.cm-gallery-uploading {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+@keyframes cm-spin {
+  to { transform: rotate(360deg); }
+}
+.cm-gallery-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cm-spin 0.7s linear infinite;
+}
+.cm-gallery-error-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(180, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: default;
+}
+
 /* 2-column grid for small paired fields */
 .cm-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 500px) { .cm-grid-2 { grid-template-columns: 1fr; } }

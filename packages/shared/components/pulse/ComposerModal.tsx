@@ -9,6 +9,14 @@ import MultiRating from "../composer/MultiRating";
 import type { FeedItem } from "@/lib/unified-feed";
 
 export type ComposerTab = "update" | "review" | "art" | "poll" | "quote" | "itinerary" | "event";
+
+type GalleryImage = {
+  id: string;
+  localUrl: string;   // blob URL — shown immediately as preview
+  serverUrl?: string; // set after upload completes
+  uploading: boolean;
+  uploadError?: string;
+};
 type ReviewSubtype = "place" | "food" | "music" | "book" | "film";
 
 const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
@@ -176,24 +184,33 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
-function MultiImageUpload({ urls, onUpload, onRemove, uploading, max = 4 }: {
-  urls: string[]; onUpload: (f: File) => void; onRemove: (idx: number) => void; uploading: boolean; max?: number;
+function MultiImageUpload({ gallery, onUpload, onRemove, max = 4 }: {
+  gallery: GalleryImage[]; onUpload: (f: File) => void; onRemove: (id: string) => void; max?: number;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="cm-gallery-grid">
-      {urls.map((url, i) => (
-        <div key={i} className="cm-gallery-thumb">
-          <img src={url} alt={`Photo ${i + 1}`} />
-          <button type="button" className="cm-gallery-remove" onClick={() => onRemove(i)} aria-label="Remove photo">✕</button>
+      {gallery.map((img) => (
+        <div key={img.id} className="cm-gallery-thumb">
+          <img src={img.localUrl} alt="Upload preview" />
+          {img.uploading && (
+            <div className="cm-gallery-uploading">
+              <div className="cm-gallery-spinner" />
+            </div>
+          )}
+          {img.uploadError && !img.uploading && (
+            <div className="cm-gallery-error-overlay" title={img.uploadError}>⚠</div>
+          )}
+          {!img.uploading && (
+            <button type="button" className="cm-gallery-remove" onClick={() => onRemove(img.id)} aria-label="Remove photo">✕</button>
+          )}
         </div>
       ))}
-      {urls.length < max && (
+      {gallery.length < max && (
         <button
           type="button"
-          className={`cm-gallery-add${uploading ? " cm-gallery-add--uploading" : ""}`}
-          onClick={() => !uploading && inputRef.current?.click()}
-          disabled={uploading}
+          className="cm-gallery-add"
+          onClick={() => inputRef.current?.click()}
           aria-label="Add photo"
         >
           <input
@@ -204,14 +221,14 @@ function MultiImageUpload({ urls, onUpload, onRemove, uploading, max = 4 }: {
             style={{ display: "none" }}
             onChange={e => {
               if (e.target.files?.length) {
-                const remaining = max - urls.length;
+                const remaining = max - gallery.length;
                 Array.from(e.target.files).slice(0, remaining).forEach(f => onUpload(f));
                 e.target.value = "";
               }
             }}
           />
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-          <span className="cm-gallery-add-label">{uploading ? "Uploading…" : urls.length === 0 ? "Add photos" : "Add more"}</span>
+          <span className="cm-gallery-add-label">{gallery.length === 0 ? "Add photos" : "Add more"}</span>
         </button>
       )}
     </div>
@@ -310,8 +327,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
   // Shared
   const [categories, setCategories]       = useState<string[]>([]);
-  const [galleryUrls, setGalleryUrls]     = useState<string[]>([]);
-  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [gallery, setGallery]             = useState<GalleryImage[]>([]);
+  const galleryUploading                  = gallery.some(g => g.uploading);
   const [submitting, setSubmitting]       = useState(false);
   const [error, setError]                 = useState("");
   const [profilePrompt, setProfilePrompt] = useState(false);
@@ -447,31 +464,36 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine("");
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
-    setGalleryUrls([]); setError("");
+    setGallery([]); setError("");
     setCategories([]);
   }, []);
 
   const MAX_GALLERY = 4;
 
-  async function handleGalleryImageUpload(file: File) {
-    setGalleryUploading(true);
+  function handleGalleryImageUpload(file: File) {
+    const id = Math.random().toString(36).slice(2);
+    const localUrl = URL.createObjectURL(file);
+    setGallery(prev => [...prev, { id, localUrl, uploading: true }].slice(0, MAX_GALLERY));
     setError("");
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/community/upload-image", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      setGalleryUrls(prev => [...prev, data.url].slice(0, MAX_GALLERY));
-    } catch (e: any) {
-      setError(e.message || "Image upload failed");
-    } finally {
-      setGalleryUploading(false);
-    }
+    const fd = new FormData();
+    fd.append("file", file);
+    fetch("/api/community/upload-image", { method: "POST", body: fd })
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.error || "Upload failed");
+        setGallery(prev => prev.map(g => g.id === id ? { ...g, uploading: false, serverUrl: data.url } : g));
+      })
+      .catch((e: any) => {
+        setGallery(prev => prev.map(g => g.id === id ? { ...g, uploading: false, uploadError: e.message || "Upload failed" } : g));
+      });
   }
 
-  function removeGalleryImage(idx: number) {
-    setGalleryUrls(prev => prev.filter((_, i) => i !== idx));
+  function removeGalleryImage(id: string) {
+    setGallery(prev => {
+      const img = prev.find(g => g.id === id);
+      if (img) URL.revokeObjectURL(img.localUrl);
+      return prev.filter(g => g.id !== id);
+    });
   }
 
   async function handleStopImageUpload(stopId: string, file: File) {
@@ -586,7 +608,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           template_type = "post";
           if (!updContent.trim()) throw new Error("Post content is required");
           payload.text = updContent.trim();
-          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
+          const uploaded = gallery.filter(g => g.serverUrl).map(g => g.serverUrl!);
+          if (uploaded.length > 0) { payload.imageUrl = uploaded[0]; payload.gallery_images = uploaded; }
         } else if (activeTab === "review") {
           template_type = REVIEW_TEMPLATE[revSubtype];
           if (!revContent.trim()) throw new Error("Review content is required");
@@ -657,13 +680,15 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (openingHours.trim()) payload.opening_hours = openingHours.trim();
           }
           payload.star_rating = revRating;
-          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
+          const uploaded = gallery.filter(g => g.serverUrl).map(g => g.serverUrl!);
+          if (uploaded.length > 0) { payload.imageUrl = uploaded[0]; payload.gallery_images = uploaded; }
         } else if (activeTab === "art") {
           template_type = "project";
           if (!artContent.trim()) throw new Error("Description is required");
           payload.text = artTitle.trim() ? `${artTitle.trim()}\n\n${artContent.trim()}` : artContent.trim();
           if (showcaseMedium) payload.showcase_medium = showcaseMedium;
-          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
+          const uploaded = gallery.filter(g => g.serverUrl).map(g => g.serverUrl!);
+          if (uploaded.length > 0) { payload.imageUrl = uploaded[0]; payload.gallery_images = uploaded; }
         } else if (activeTab === "poll") {
           template_type = "poll";
           if (!pollQ.trim()) throw new Error("Poll question is required");
@@ -717,7 +742,8 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             const p = parseInt(evRsvpPrice, 10);
             if (p > 0) { payload.rsvp_price = p; payload.rsvp_price_currency = evCurrency; }
           }
-          if (galleryUrls.length > 0) { payload.imageUrl = galleryUrls[0]; payload.gallery_images = galleryUrls; }
+          const uploaded = gallery.filter(g => g.serverUrl).map(g => g.serverUrl!);
+          if (uploaded.length > 0) { payload.imageUrl = uploaded[0]; payload.gallery_images = uploaded; }
         }
 
         payload.template_type = template_type;
@@ -774,7 +800,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={`cm-tab${activeTab === tab.key ? " cm-tab--active" : ""}`}
-                onClick={() => { setActiveTab(tab.key); setGalleryUrls([]); }}
+                onClick={() => { setActiveTab(tab.key); setGallery([]); }}
               >
                 <span aria-hidden="true">{tab.icon}</span>
                 {tab.label}
@@ -803,7 +829,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {!editItem && (
                 <div className="cm-field">
                   <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
-                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                  <MultiImageUpload gallery={gallery} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} />
                 </div>
               )}
             </>
@@ -817,7 +843,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 <select
                   className="cm-input"
                   value={revSubtype}
-                  onChange={e => { const sub = e.target.value as ReviewSubtype; setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGalleryUrls([]); }}
+                  onChange={e => { const sub = e.target.value as ReviewSubtype; setRevSubtype(sub); setRevEntry(null); setRevTitle(""); setGallery([]); }}
                   aria-label="Review type"
                 >
                   {(["place", "food", "music", "book", "film"] as ReviewSubtype[]).map(sub => (
@@ -1025,7 +1051,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {!editItem && (
                 <div className="cm-field">
                   <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
-                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                  <MultiImageUpload gallery={gallery} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} />
                 </div>
               )}
             </>
@@ -1069,7 +1095,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {!editItem && (
                 <div className="cm-field">
                   <label className="cm-label">Visuals <span className="cm-label-opt">(up to 4)</span></label>
-                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                  <MultiImageUpload gallery={gallery} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} />
                 </div>
               )}
             </>
@@ -1587,7 +1613,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {!editItem && (
                 <div className="cm-field">
                   <label className="cm-label">Cover banner <span className="cm-label-opt">(optional, up to 4)</span></label>
-                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                  <MultiImageUpload gallery={gallery} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} />
                 </div>
               )}
             </>
