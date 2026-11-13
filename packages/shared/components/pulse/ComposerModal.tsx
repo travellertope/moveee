@@ -17,7 +17,7 @@ type GalleryImage = {
   uploading: boolean;
   uploadError?: string;
 };
-type ReviewSubtype = "place" | "food" | "music" | "book" | "film";
+type ReviewSubtype = "place" | "food" | "music" | "book" | "film"; // food hidden from UI but kept in type for existing posts
 
 const REVIEW_TEMPLATE: Record<ReviewSubtype, string> = {
   place: "hidden-gem",
@@ -243,7 +243,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [updContent, setUpdContent] = useState("");
 
   // Review
-  const [revSubtype, setRevSubtype] = useState<ReviewSubtype>("place");
+  const [revSubtype, setRevSubtype] = useState<ReviewSubtype>("film");
   const [revTitle, setRevTitle]     = useState("");
   const [revEntry, setRevEntry]     = useState<any>(null);
   const [revRating, setRevRating]   = useState(5);
@@ -817,7 +817,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "update" && (
             <>
               <div className="cm-field">
-                <label className="cm-label">What&rsquo;s on your mind?</label>
                 <textarea
                   className="cm-textarea"
                   placeholder="Share what's happening in culture right now…"
@@ -840,11 +839,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             <>
               <div className="cm-rev-type-row" role="group" aria-label="Review type">
                 {([
-                  { key: "place", icon: "📍", label: "Place" },
-                  { key: "food",  icon: "🍽",  label: "Food"  },
-                  { key: "music", icon: "🎵", label: "Music" },
-                  { key: "book",  icon: "📖", label: "Book"  },
                   { key: "film",  icon: "🎬", label: "Film"  },
+                  { key: "book",  icon: "📖", label: "Book"  },
+                  { key: "music", icon: "🎵", label: "Music" },
+                  { key: "place", icon: "📍", label: "Place" },
                 ] as { key: ReviewSubtype; icon: string; label: string }[]).map(({ key, icon, label }) => (
                   <button
                     key={key}
@@ -860,16 +858,13 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-field">
                 <>
-                  <label className="cm-label">
-                    {{ place: "Place", food: "Restaurant / dish", book: "Book", music: "Album", film: "Film" }[revSubtype]}
-                  </label>
                   <DirectorySearch
                     value={revEntry}
                     onChange={(entry) => { setRevEntry(entry); if (entry) setRevTitle(entry.title); }}
-                    typeFilter={{ place: "place", food: "place", book: "book", music: "album", film: "film" }[revSubtype]}
+                    typeFilter={({ place: "place", food: "place", book: "book", music: "album", film: "film" } as Record<ReviewSubtype, string>)[revSubtype] ?? "place"}
                     aboutFieldLabel={{ book: "Author", music: "Artist", film: "Director" }[revSubtype as "book" | "music" | "film"] ?? undefined}
                     externalSource={({ place: "google_places", food: "google_places", book: "google_books", music: "spotify", film: "tmdb" } as const)[revSubtype]}
-                    placeholder={{ place: "Place name…", food: "Restaurant or café name…", book: "Book title…", music: "Album title…", film: "Film title…" }[revSubtype]}
+                    placeholder={({ place: "Place, restaurant or venue name…", food: "Place, restaurant or venue name…", book: "Book title…", music: "Album title…", film: "Film title…" } as Record<ReviewSubtype, string>)[revSubtype] ?? "Search…"}
                   />
                 </>
               </div>
@@ -983,7 +978,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     </div>
                   </div>
                   <div className="cm-field">
-                    <label className="cm-label">Opening hours <span className="cm-label-opt">(optional)</span></label>
                     <input
                       className="cm-input"
                       placeholder="e.g. Mon–Fri 9am–6pm…"
@@ -1003,11 +997,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               )}
 
               <div className="cm-field">
-                <label className="cm-label">Your review</label>
                 <textarea
                   className="cm-textarea"
                   placeholder={
-                    { place: "What makes it worth visiting?", food: "How was the taste, vibe, value?", music: "What does this make you feel?", book: "What stayed with you?", film: "What made it memorable?" }[revSubtype]
+                    ({ place: "What makes it worth visiting?", food: "What makes it worth visiting?", music: "What does this make you feel?", book: "What stayed with you?", film: "What made it memorable?" } as Record<ReviewSubtype, string>)[revSubtype]
                   }
                   value={revContent}
                   onChange={e => setRevContent(e.target.value)}
@@ -1018,10 +1011,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               {/* Favourite quote / lyric / line */}
               {revSubtype === "book" && (
                 <div className="cm-field">
-                  <label className="cm-label">Favourite quote <span className="cm-label-opt">(optional)</span></label>
                   <textarea
                     className="cm-textarea cm-textarea--serif"
-                    placeholder="A line that stayed with you…"
+                    placeholder="A line that stayed with you… (optional)"
                     value={bookFavQuote}
                     onChange={e => setBookFavQuote(e.target.value)}
                     rows={2}
@@ -1030,10 +1022,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               )}
               {revSubtype === "music" && (
                 <div className="cm-field">
-                  <label className="cm-label">Favourite lyric <span className="cm-label-opt">(optional)</span></label>
                   <textarea
                     className="cm-textarea cm-textarea--serif"
-                    placeholder="A lyric that hit different…"
+                    placeholder="A lyric that hit different… (optional)"
                     value={musicFavLyric}
                     onChange={e => setMusicFavLyric(e.target.value)}
                     rows={2}
@@ -1042,10 +1033,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               )}
               {revSubtype === "film" && (
                 <div className="cm-field">
-                  <label className="cm-label">Favourite line <span className="cm-label-opt">(optional)</span></label>
                   <textarea
                     className="cm-textarea cm-textarea--serif"
-                    placeholder="A line from the film…"
+                    placeholder="A line from the film… (optional)"
                     value={filmFavLine}
                     onChange={e => setFilmFavLine(e.target.value)}
                     rows={2}
@@ -1066,7 +1056,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "art" && (
             <>
               <div className="cm-field">
-                <label className="cm-label">Artwork title <span className="cm-label-opt">(optional)</span></label>
                 <input
                   className="cm-input"
                   placeholder="Name of the piece or project…"
@@ -1088,7 +1077,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </select>
               </div>
               <div className="cm-field">
-                <label className="cm-label">Curator&rsquo;s note</label>
                 <textarea
                   className="cm-textarea"
                   placeholder="Tell us about this work — the concept, the process, what inspired it…"
@@ -1110,7 +1098,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "poll" && (
             <>
               <div className="cm-field">
-                <label className="cm-label">Your question</label>
                 <input
                   className="cm-input"
                   placeholder="Ask the community something…"
@@ -1119,7 +1106,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">Context <span className="cm-label-opt">(optional)</span></label>
                 <textarea
                   className="cm-textarea"
                   placeholder="Add some background or context for your question…"
@@ -1201,7 +1187,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
               {/* The quote */}
               <div className="cm-field">
-                <label className="cm-label">The quote</label>
                 <textarea
                   className="cm-textarea cm-textarea--serif"
                   placeholder='"The quote that moved you…"'
@@ -1237,10 +1222,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               ) : qType !== "Person" ? (
                 <div className="cm-field">
-                  <label className="cm-label">Source <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
-                    placeholder="e.g. speech, article, interview…"
+                    placeholder="Source — speech, article, interview… (optional)"
                     value={qSource}
                     onChange={e => setQSource(e.target.value)}
                   />
@@ -1249,7 +1233,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
 
               {/* Why does this resonate? */}
               <div className="cm-field">
-                <label className="cm-label">Why does this resonate? <span className="cm-label-opt">(optional)</span></label>
                 <textarea
                   className="cm-textarea"
                   placeholder="Share why this quote stayed with you…"
@@ -1265,7 +1248,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "itinerary" && (
             <>
               <div className="cm-field">
-                <label className="cm-label">Itinerary title</label>
                 <input
                   className="cm-input"
                   placeholder="e.g. 48 Hours in Lagos"
@@ -1274,7 +1256,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">City / destination <span className="cm-label-opt">(optional)</span></label>
                 <input
                   className="cm-input"
                   placeholder="e.g. Lagos, Paris, New York…"
@@ -1310,7 +1291,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                <label className="cm-label">Overview / tagline</label>
                 <textarea
                   className="cm-textarea"
                   placeholder="Set the scene — who's this for, what's the vibe?"
@@ -1320,7 +1300,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">Best time to visit <span className="cm-label-opt">(optional)</span></label>
                 <input
                   className="cm-input"
                   placeholder="e.g. Spring, December, dry season…"
@@ -1404,7 +1383,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {activeTab === "event" && (
             <>
               <div className="cm-field">
-                <label className="cm-label">Event title</label>
                 <input
                   className="cm-input"
                   placeholder="What's the event called?"
@@ -1475,7 +1453,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               <div className="cm-grid-2">
                 <div className="cm-field">
-                  <label className="cm-label">Venue name</label>
                   <input
                     className="cm-input"
                     placeholder="Venue or space name…"
@@ -1484,7 +1461,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   />
                 </div>
                 <div className="cm-field">
-                  <label className="cm-label">City</label>
                   <input
                     className="cm-input"
                     placeholder="e.g. London"
@@ -1494,7 +1470,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               </div>
               <div className="cm-field">
-                <label className="cm-label">Address <span className="cm-label-opt">(optional)</span></label>
                 <input
                   className="cm-input"
                   placeholder="Full street address…"
@@ -1503,7 +1478,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">Organiser <span className="cm-label-opt">(optional)</span></label>
                 <DirectorySearch
                   value={evOrganiser}
                   onChange={entry => setEvOrganiser(entry)}
@@ -1513,7 +1487,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 />
               </div>
               <div className="cm-field">
-                <label className="cm-label">Description</label>
                 <textarea
                   className="cm-textarea"
                   placeholder="Tell people what to expect…"
@@ -1549,11 +1522,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   </div>
                 </div>
                 <div className="cm-field">
-                  <label className="cm-label">External Ticket/RSVP link <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
                     type="url"
-                    placeholder="https://…"
+                    placeholder="External ticket or RSVP link…"
                     value={evTicketUrl}
                     onChange={e => setEvTicketUrl(e.target.value)}
                   />
@@ -1576,7 +1548,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               </div>
               {evRsvpEnabled && (
                 <div className="cm-field">
-                  <label className="cm-label">Capacity <span className="cm-label-opt">(optional)</span></label>
                   <input
                     className="cm-input"
                     type="number"
@@ -1589,7 +1560,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               )}
               {evRsvpEnabled && (session?.user as any)?.tier === "patron" && (
                 <div className="cm-field">
-                  <label className="cm-label">RSVP price <span className="cm-label-opt">(optional — leave blank for free)</span></label>
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <select
                       className="cm-input"
