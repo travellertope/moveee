@@ -1949,7 +1949,8 @@ select.mem-field-input { cursor: pointer; }
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-  .sett-wrap { padding: 16px 16px 40px; }
+  .sett-wrap { padding: 16px 16px 40px; flex-direction: column; }
+  .sett-wrap > .cw-shell-aside { display: none; }
   .sett-tabs-bar { padding: 0 16px; }
   .sett-tab { padding: 14px 12px 12px; font-size: 11px; }
   .sett-tab--active::after { left: 12px; right: 12px; }
