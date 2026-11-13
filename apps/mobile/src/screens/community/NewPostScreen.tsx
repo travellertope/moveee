@@ -378,7 +378,6 @@ export default function NewPostScreen() {
   const [foodPriceRange, setFoodPriceRange] = useState("");
 
   // Creative Showcase extras
-  const [showcaseTitle, setShowcaseTitle] = useState("");
   const [showcaseMedium, setShowcaseMedium] = useState("");
   const [showcaseCollaborator, setShowcaseCollaborator] = useState<MemberResult | null>(null);
 
@@ -444,7 +443,6 @@ export default function NewPostScreen() {
   }, [text, template, linkPreviewDismissed]);
 
   // Itinerary extras
-  const [itineraryTitle, setItineraryTitle] = useState("");
   const [itineraryBudget, setItineraryBudget] = useState("");
   const [itineraryDuration, setItineraryDuration] = useState("");
   const [itineraryBestTime, setItineraryBestTime] = useState("");
@@ -463,7 +461,6 @@ export default function NewPostScreen() {
   const [pollDescription, setPollDescription] = useState("");
 
   // Event state
-  const [eventTitle, setEventTitle] = useState("");
   const [eventDate, setEventDate] = useState<Date | null>(null);
   const [eventEndDate, setEventEndDate] = useState<Date | null>(null);
   const [eventVenue, setEventVenue] = useState("");
@@ -616,7 +613,6 @@ const uploadImages = async (): Promise<string[]> => {
 
   const validateAndSubmit = async () => {
     if (template === "project") {
-      if (!showcaseTitle.trim()) { Alert.alert("Title required", "Add a title for your work."); return; }
       if (text.trim().length < 10) { Alert.alert("Description too short", "Tell us about the work."); return; }
       if (images.length === 0) { Alert.alert("Media required", "Add at least one image of your work."); return; }
     } else if (template === "book-review") {
@@ -633,12 +629,10 @@ const uploadImages = async (): Promise<string[]> => {
       if (filmOverallRating === 0) { Alert.alert("Rating required", "Give an overall rating."); return; }
       if (text.trim().length < 50) { Alert.alert("Review too short", "Write at least 50 characters."); return; }
     } else if (template === "itinerary") {
-      if (!itineraryTitle.trim()) { Alert.alert("Title required", "Add a trip title."); return; }
       if (stops.filter((s) => s.name.trim()).length < 2) {
         Alert.alert("Stops required", "Add at least 2 stops."); return;
       }
     } else if (template === "event") {
-      if (!eventTitle.trim()) { Alert.alert("Title required", "Add an event title."); return; }
       if (!eventDate) { Alert.alert("Date required", "Select a start date and time."); return; }
     } else if (template === "hidden-gem") {
       if (!linkedEntry) { Alert.alert("Place required", "Please link a directory entry."); return; }
@@ -748,7 +742,7 @@ const uploadImages = async (): Promise<string[]> => {
       const uploadedUrls = await uploadImages();
 
       const body: Record<string, unknown> = {
-        content:          template === "event" ? (eventTitle.trim() + (text.trim() ? "\n\n" + text.trim() : "")) : text,
+        content:          text,
         tag:              template === "food-review" ? "Food" : sectionTag,
         template_type:    template,
         gallery_images:   uploadedUrls.length > 1 ? uploadedUrls : undefined,
@@ -785,7 +779,6 @@ const uploadImages = async (): Promise<string[]> => {
         body.price_range         = foodPriceRange || undefined;
       }
       if (template === "project") {
-        body.showcase_title      = showcaseTitle.trim();
         body.showcase_medium     = showcaseMedium || undefined;
         body.collaborator            = showcaseCollaborator?.displayName || undefined;
         body.collaborator_username   = showcaseCollaborator?.username || undefined;
@@ -798,7 +791,6 @@ const uploadImages = async (): Promise<string[]> => {
         body.poll_description    = pollDescription.trim() || undefined;
       }
       if (template === "itinerary") {
-        body.itinerary_title     = itineraryTitle.trim();
         body.itinerary_stops     = stops.filter((s) => s.name.trim());
         body.itinerary_city      = itineraryCity.trim() || undefined;
         body.itinerary_budget    = itineraryBudget || undefined;
@@ -849,18 +841,18 @@ const uploadImages = async (): Promise<string[]> => {
 
   const isSubmitDisabled = useMemo(() => {
     if (submitting) return true;
-    if (template === "event") return !eventTitle.trim() || !eventDate;
-    if (template === "project") return !showcaseTitle.trim() || text.trim().length < 10 || images.length === 0;
+    if (template === "event") return !eventDate;
+    if (template === "project") return text.trim().length < 10 || images.length === 0;
     if (template === "book-review") return !bookEntry || !bookStatus || bookOverallRating === 0 || text.trim().length < 50;
     if (template === "music-review") return !musicEntry || musicOverallRating === 0 || text.trim().length < 50;
     if (template === "film-review") return !filmEntry || filmOverallRating === 0 || text.trim().length < 50;
-    if (template === "itinerary") return !itineraryTitle.trim() || stops.filter((s) => s.name.trim()).length < 2;
+    if (template === "itinerary") return stops.filter((s) => s.name.trim()).length < 2;
     if (template === "hidden-gem") return !linkedEntry || text.trim().length < tmpl.minText;
     return text.length < tmpl.minText;
-  }, [submitting, template, text, eventTitle, eventDate, showcaseTitle, images.length,
+  }, [submitting, template, text, eventDate, images.length,
     bookEntry, bookStatus, bookOverallRating, musicEntry, musicOverallRating,
     filmEntry, filmOverallRating,
-    itineraryTitle, stops, linkedEntry, tmpl.minText]);
+    stops, linkedEntry, tmpl.minText]);
 
   /** Gates the wizard's "Next" button — lighter, per-step version of the
    * validateAndSubmit()/isSubmitDisabled checks above, so a step can't be
@@ -889,21 +881,21 @@ const uploadImages = async (): Promise<string[]> => {
         if (step === 1) return filmOverallRating > 0 && text.trim().length >= 50;
         return true;
       case "project":
-        if (step === 0) return showcaseTitle.trim().length > 0 && text.trim().length >= 10;
+        if (step === 0) return text.trim().length >= 10;
         return true;
       case "itinerary":
-        if (step === 0) return itineraryTitle.trim().length > 0;
+        if (step === 0) return true;
         if (step === 1) return stops.filter((s) => s.name.trim()).length >= 2;
         return true;
       case "event":
-        if (step === 0) return !!eventTitle.trim() && !!eventDate;
+        if (step === 0) return !!eventDate;
         return true;
       default:
         return true;
     }
   }, [template, step, linkedEntry, text, tmpl.minText, foodEntry, foodRatings.taste,
     bookEntry, bookStatus, bookOverallRating, musicEntry, musicOverallRating,
-    filmEntry, filmOverallRating, showcaseTitle, itineraryTitle, stops, eventTitle, eventDate]);
+    filmEntry, filmOverallRating, stops, eventDate]);
 
   // ── Toolbar ──────────────────────────────────────────────────────────────────
   const toolbarIcons = useMemo(() => {
@@ -1245,16 +1237,6 @@ const uploadImages = async (): Promise<string[]> => {
     <>
       {showSection("text") && (
         <>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Title of your work *</Text>
-            <TextInput
-              style={styles.input}
-              value={showcaseTitle}
-              onChangeText={setShowcaseTitle}
-              placeholder="What is this piece called?"
-              placeholderTextColor={c.ghost}
-            />
-          </View>
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Medium</Text>
             <View style={styles.chipRow}>
@@ -1635,16 +1617,6 @@ const uploadImages = async (): Promise<string[]> => {
       {showSection("text") && (
         <>
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Trip title *</Text>
-            <TextInput
-              style={styles.input}
-              value={itineraryTitle}
-              onChangeText={setItineraryTitle}
-              placeholder="e.g. A perfect weekend in Lagos"
-              placeholderTextColor={c.ghost}
-            />
-          </View>
-          <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>City / Region</Text>
             {renderPrefixedInput("📍", itineraryCity, setItineraryCity, "e.g. Lagos, London, Tokyo…")}
           </View>
@@ -1691,15 +1663,6 @@ const uploadImages = async (): Promise<string[]> => {
             <Ionicons name="calendar-outline" size={14} color={c.mute} />
             <Text style={styles.eventBannerText}>This will be added to the Moveee events calendar.</Text>
           </View>
-          <TextInput
-            style={styles.eventTitleInput}
-            value={eventTitle}
-            onChangeText={setEventTitle}
-            placeholder="Event name *"
-            placeholderTextColor={c.ghost}
-            autoFocus
-          />
-
           {/* 2-col date grid */}
           <View style={[styles.eventDateGrid, { marginTop: space[3] }]}>
             <View style={styles.eventDateGridRow}>
