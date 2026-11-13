@@ -840,6 +840,13 @@ class Culture_Post_Types {
                 return $v ? (string) $v : null;
             },
         ) );
+        register_graphql_field( 'CultureDirectory', 'externalPreviewUrl', array(
+            'type'    => 'String',
+            'resolve' => function( $post ) {
+                $v = get_post_meta( $post->databaseId, '_external_preview_url', true );
+                return $v ? (string) $v : null;
+            },
+        ) );
         register_graphql_field( 'CultureDirectory', 'websiteUrl', array(
             'type'    => 'String',
             'resolve' => function( $post ) {

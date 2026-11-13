@@ -9,6 +9,7 @@ import { getAccessLevel, canViewContent } from "@/lib/access";
 import "../../../directory.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 import DirectoryLightboxImage from "./DirectoryLightboxImage";
+import AudioPreviewButton from "@/components/pulse/AudioPreviewButton";
 import BookMoodPace from "./BookMoodPace";
 import EntryActionBar from "./EntryActionBar";
 import SocialProofLine from "./SocialProofLine";
@@ -318,7 +319,13 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
         {/* LEFT — Cover image + rating + actions */}
         <div className="dir-entry-image-col">
           <div className={`dir-entry-cover dir-entry-cover--${coverAspect}${typeSlug === "book" ? " dir-entry-cover--book" : ""}`}>
-            {img ? (
+            {(typeSlug === "film" || typeSlug === "album") && entry.externalPreviewUrl ? (
+              <AudioPreviewButton
+                src={entry.externalPreviewUrl}
+                coverUrl={img ?? undefined}
+                fill
+              />
+            ) : img ? (
               <DirectoryLightboxImage className="dir-entry-cover-lightbox" src={img} alt={entry.title ?? ""}>
                 <Image src={img} alt={entry.title ?? ""} fill style={{ objectFit: "cover" }} sizes="(max-width: 768px) 100vw, 400px" />
               </DirectoryLightboxImage>

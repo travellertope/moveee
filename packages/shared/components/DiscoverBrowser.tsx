@@ -6,6 +6,7 @@ import "@/app/discover.css";
 import { interestsToTagSet } from "@/lib/interest-mappings";
 import { openSearchModal } from "@/lib/searchModalBus";
 import { emitDiscoverFilters, onDiscoverFilters } from "@/lib/discoverFiltersBus";
+import AudioPreviewButton from "@/components/pulse/AudioPreviewButton";
 
 export interface DiscoverEntry {
   id: number;
@@ -21,6 +22,7 @@ export interface DiscoverEntry {
   dateAdded: string;
   isNew: boolean;
   addedBy?: { username: string; displayName: string } | null;
+  previewUrl?: string | null;
 }
 
 interface BrowseResponse {
@@ -127,7 +129,13 @@ function DiscoverCard({
           className={`disc-card-img-wrap${rail ? " disc-card-img-wrap--rail" : ""}`}
           style={!rail ? { aspectRatio } : undefined}
         >
-          {entry.thumbnail ? (
+          {entry.previewUrl ? (
+            <AudioPreviewButton
+              src={entry.previewUrl}
+              coverUrl={entry.thumbnail ?? undefined}
+              fill
+            />
+          ) : entry.thumbnail ? (
             <img src={entry.thumbnail} alt="" className="disc-card-img" loading="lazy" />
           ) : (
             <div className="disc-card-img-fallback" style={{ background: badge.color }}>{badge.emoji}</div>

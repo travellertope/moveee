@@ -22,6 +22,8 @@ class Culture_Directory_Tools {
 		add_action( 'wp_ajax_culture_dir_wiki_seed',           array( __CLASS__, 'ajax_wiki_seed' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_backfill',       array( __CLASS__, 'ajax_wiki_backfill' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_audit',          array( __CLASS__, 'ajax_wiki_audit' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_infobox_fill',   array( __CLASS__, 'ajax_wiki_infobox_fill' ) );
+		add_action( 'wp_ajax_culture_dir_wiki_title_cleanup',  array( __CLASS__, 'ajax_wiki_title_cleanup' ) );
 		// Per-entry refetch metabox
 		add_action( 'wp_ajax_culture_dir_wiki_refetch_single', array( __CLASS__, 'ajax_wiki_refetch_single' ) );
 		add_action( 'add_meta_boxes',        array( __CLASS__, 'register_wiki_metabox' ) );
@@ -391,23 +393,33 @@ class Culture_Directory_Tools {
 		$excerpt = '';
 		$content = '';
 
+		// Strip Wikipedia disambiguation suffix for the display title: "(2026 film)", "(novel)", etc.
+		$display_title = trim( preg_replace( '/\s*\([^)]+\)\s*$/', '', $title ) );
+		if ( empty( $display_title ) ) $display_title = $title;
+
 		if ( $extract ) {
 			$dot     = strpos( $extract, '. ' );
 			$excerpt = $dot !== false
 				? substr( $extract, 0, $dot + 1 )
 				: substr( $extract, 0, 220 );
 
-			$paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $extract ) ) );
+			// Content starts AFTER the first sentence so the app does not show the excerpt twice.
+			$content_text = ( $dot !== false && $dot + 2 < strlen( $extract ) )
+				? ltrim( substr( $extract, $dot + 2 ) )
+				: $extract;
+
+			$paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $content_text ) ) );
 			$content = implode( "\n\n", array_map( function ( $p ) {
 				return '<p>' . wp_kses_post( $p ) . '</p>';
 			}, $paras ) );
 		}
 
-		if ( empty( $excerpt ) ) $excerpt = $title;
-		if ( empty( $content ) ) $content = '<p>' . esc_html( $title ) . '</p>';
+		if ( empty( $excerpt ) ) $excerpt = $display_title;
+		if ( empty( $content ) ) $content = '<p>' . esc_html( $display_title ) . '</p>';
 
-		// Skip if a directory entry with this exact title already exists
-		$existing = get_page_by_title( $title, OBJECT, 'culture_directory' );
+		// Skip if a directory entry with this exact (Wikipedia or display) title already exists.
+		$existing = get_page_by_title( $title, OBJECT, 'culture_directory' )
+		         ?? get_page_by_title( $display_title, OBJECT, 'culture_directory' );
 		if ( $existing ) {
 			return 0;
 		}
@@ -415,7 +427,7 @@ class Culture_Directory_Tools {
 		$post_id = wp_insert_post( array(
 			'post_type'    => 'culture_directory',
 			'post_status'  => 'pending',
-			'post_title'   => $title,
+			'post_title'   => $display_title,
 			'post_excerpt' => wp_strip_all_tags( $excerpt ),
 			'post_content' => $content,
 		), true );
@@ -1157,6 +1169,182 @@ class Culture_Directory_Tools {
 		}, $posts );
 	}
 
+	// ── AJAX: Infobox backfill for seeded entries missing Wikidata fields ────
+
+	/**
+	 * Finds entries with _wiki_title set (any post status, non-"_not_found") but
+	 * no dir_infobox_* meta. For each, re-fetches the Wikipedia page to get the
+	 * Wikidata QID, then fetches and saves structured infobox fields.
+	 *
+	 * POST params: nonce, batch (int), overwrite (bool)
+	 * Returns: { processed, updated, batch, total, done, results[] }
+	 */
+	public static function ajax_wiki_infobox_fill() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+		}
+
+		@set_time_limit( 120 );
+		global $wpdb;
+
+		$batch_num  = max( 0, (int) ( $_POST['batch'] ?? 0 ) );
+		$batch_size = 5;
+		$overwrite  = ! empty( $_POST['overwrite'] );
+		$offset     = $batch_num * $batch_size;
+
+		// Entries that have a matched Wikipedia title but no dir_infobox_* meta at all.
+		$total = (int) $wpdb->get_var(
+			"SELECT COUNT(DISTINCT p.ID)
+			 FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm
+			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+			 LEFT JOIN {$wpdb->postmeta} pm2
+			     ON pm2.post_id = p.ID AND pm2.meta_key LIKE 'dir_infobox_%'
+			 WHERE p.post_type = 'culture_directory'
+			   AND pm.meta_value != '_not_found'
+			   AND pm2.meta_key IS NULL"
+		);
+
+		$ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT DISTINCT p.ID
+			 FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm
+			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+			 LEFT JOIN {$wpdb->postmeta} pm2
+			     ON pm2.post_id = p.ID AND pm2.meta_key LIKE 'dir_infobox_%'
+			 WHERE p.post_type = 'culture_directory'
+			   AND pm.meta_value != '_not_found'
+			   AND pm2.meta_key IS NULL
+			 ORDER BY p.ID ASC
+			 LIMIT %d OFFSET %d",
+			$batch_size,
+			$offset
+		) );
+
+		if ( empty( $ids ) ) {
+			wp_send_json_success( array(
+				'processed' => 0,
+				'updated'   => 0,
+				'batch'     => $batch_num,
+				'total'     => $total,
+				'done'      => true,
+				'results'   => array(),
+			) );
+		}
+
+		$updated = 0;
+		$results = array();
+
+		foreach ( $ids as $post_id ) {
+			$post = get_post( (int) $post_id );
+			if ( ! $post ) continue;
+
+			$wiki_title = get_post_meta( (int) $post_id, '_wiki_title', true );
+			if ( ! $wiki_title || $wiki_title === '_not_found' ) continue;
+
+			$terms      = wp_get_object_terms( (int) $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
+			$entry_type = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0] : '';
+
+			// Re-fetch the Wikipedia page to get the Wikidata QID.
+			$pages = self::wiki_fetch_pages_batch( array( $wiki_title ) );
+			$page  = $pages[ $wiki_title ] ?? null;
+			if ( ! $page ) {
+				foreach ( $pages as $pt => $pd ) {
+					if ( strcasecmp( $pt, $wiki_title ) === 0 ) { $page = $pd; break; }
+				}
+			}
+
+			if ( ! $page ) {
+				$results[] = array( 'title' => $post->post_title, 'found' => false, 'msg' => 'Page not found on Wikipedia' );
+				continue;
+			}
+
+			$qid = $page['pageprops']['wikibase_item'] ?? '';
+			if ( ! $qid || ! $entry_type ) {
+				$results[] = array( 'title' => $post->post_title, 'found' => true, 'msg' => empty( $qid ) ? 'No Wikidata QID' : 'No entry type set' );
+				continue;
+			}
+
+			$wd_fields = self::wiki_wikidata_fields( $qid, $entry_type );
+			if ( ! empty( $wd_fields ) ) {
+				$saved = self::save_infobox_to_acf( (int) $post_id, $wd_fields, $overwrite );
+				if ( ! empty( $saved ) ) {
+					$updated++;
+					$results[] = array( 'title' => $post->post_title, 'found' => true, 'msg' => 'Saved: ' . implode( ', ', $saved ) );
+					continue;
+				}
+			}
+
+			$results[] = array( 'title' => $post->post_title, 'found' => true, 'msg' => 'No Wikidata fields returned for QID ' . $qid );
+		}
+
+		$done = count( $ids ) < $batch_size;
+
+		wp_send_json_success( array(
+			'processed' => count( $ids ),
+			'updated'   => $updated,
+			'batch'     => $batch_num,
+			'total'     => $total,
+			'done'      => $done,
+			'results'   => $results,
+		) );
+	}
+
+	// ── AJAX: Title cleanup for seeded entries with disambiguation suffixes ───
+
+	/**
+	 * Strips Wikipedia disambiguation suffixes like "(2026 film)" from the
+	 * post_title of all entries with _external_source = 'wikipedia'.
+	 * Leaves _wiki_title (the original Wikipedia title) untouched.
+	 *
+	 * Returns: { checked, updated, entries[] }
+	 */
+	public static function ajax_wiki_title_cleanup() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+		}
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			"SELECT p.ID, p.post_title
+			 FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm
+			     ON pm.post_id = p.ID AND pm.meta_key = '_external_source'
+			 WHERE p.post_type = 'culture_directory'
+			   AND pm.meta_value = 'wikipedia'",
+			ARRAY_A
+		);
+
+		$checked = 0;
+		$updated = 0;
+		$entries = array();
+
+		foreach ( $rows as $row ) {
+			$checked++;
+			$old_title = $row['post_title'];
+			$new_title = trim( preg_replace( '/\s*\([^)]+\)\s*$/', '', $old_title ) );
+
+			if ( empty( $new_title ) || $new_title === $old_title ) continue;
+
+			wp_update_post( array(
+				'ID'         => (int) $row['ID'],
+				'post_title' => $new_title,
+			) );
+
+			$updated++;
+			$entries[] = array( 'old' => $old_title, 'new' => $new_title );
+		}
+
+		wp_send_json_success( array(
+			'checked' => $checked,
+			'updated' => $updated,
+			'entries' => $entries,
+		) );
+	}
+
 	// ── Page renderer ─────────────────────────────────────────────────────────
 
 	public static function render_page() {
@@ -1253,6 +1441,39 @@ class Culture_Directory_Tools {
 				</button>
 				<span class="spinner" id="cdwb-audit-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
 				<div id="cdwb-audit-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+			</div>
+
+			<?php /* ── INFOBOX BACKFILL PANEL ── */ ?>
+			<div class="cdt-panel">
+				<h2><?php esc_html_e( 'Infobox Backfill (Seeded Entries)', 'culture-community' ); ?></h2>
+				<p class="description">
+					<?php esc_html_e( 'Populates missing Wikidata structured fields (director, year, cast, genre, etc.) for entries that were seeded from Wikipedia but are lacking infobox data. Only entries that already have a matched Wikipedia title but no dir_infobox_* meta are processed — others are skipped automatically.', 'culture-community' ); ?>
+				</p>
+
+				<p>
+					<label>
+						<input type="checkbox" id="cdif-overwrite">
+						<?php esc_html_e( 'Overwrite existing infobox fields (if any)', 'culture-community' ); ?>
+					</label>
+				</p>
+
+				<button id="cdif-start-btn" class="button button-secondary"><?php esc_html_e( 'Start infobox backfill →', 'culture-community' ); ?></button>
+				<button id="cdif-stop-btn" class="button" style="display:none;"><?php esc_html_e( 'Stop', 'culture-community' ); ?></button>
+				<span class="spinner" id="cdif-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+				<div id="cdif-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+			</div>
+
+			<?php /* ── TITLE CLEANUP PANEL ── */ ?>
+			<div class="cdt-panel">
+				<h3 style="margin-top:0;"><?php esc_html_e( 'Clean up seeded entry titles', 'culture-community' ); ?></h3>
+				<p class="description">
+					<?php esc_html_e( 'Strips Wikipedia disambiguation suffixes like "(2026 film)" or "(novel)" from the display title of all Wikipedia-seeded entries. The original Wikipedia title stored in _wiki_title is left untouched.', 'culture-community' ); ?>
+				</p>
+				<button id="cdt-title-cleanup-btn" class="button button-secondary">
+					<?php esc_html_e( 'Clean up titles →', 'culture-community' ); ?>
+				</button>
+				<span class="spinner" id="cdt-title-cleanup-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+				<div id="cdt-title-cleanup-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
 			</div>
 
 			<?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
@@ -1448,6 +1669,112 @@ class Culture_Directory_Tools {
 					}
 					if (d.cleared > 0) {
 						$log.append('<div style="margin-top:8px;">Run <strong>Start backfill</strong> to re-enrich the cleared entries.</div>');
+					}
+				})
+				.fail(function() {
+					$spinner.hide();
+					$btn.prop('disabled', false);
+					$log.append('<div style="color:red;">Request failed.</div>');
+				});
+			});
+
+			/* ── Infobox Backfill ── */
+			(function() {
+				var running = false;
+				var currentBatch = 0;
+				var totalProcessed = 0;
+				var totalUpdated = 0;
+
+				function log(text, isError) {
+					var $log = $('#cdif-log').show();
+					var color = isError ? '#d63638' : '#3c434a';
+					$log.append('<div style="color:' + color + ';">' + $('<span>').text(text).html() + '</div>');
+					$log.scrollTop($log[0].scrollHeight);
+				}
+
+				function tick() {
+					if (!running) return;
+					$.post(ajaxUrl, {
+						action:    'culture_dir_wiki_infobox_fill',
+						nonce:     nonce,
+						batch:     currentBatch,
+						overwrite: $('#cdif-overwrite').is(':checked') ? '1' : '',
+					})
+					.done(function(res) {
+						if (!running) return;
+						if (!res.success) {
+							log('Error: ' + (res.data && res.data.message ? res.data.message : 'unknown'), true);
+							stop();
+							return;
+						}
+						var d = res.data;
+						totalProcessed += d.processed;
+						totalUpdated   += d.updated;
+						currentBatch++;
+
+						(d.results || []).forEach(function(r) {
+							log((r.found ? '✓' : '–') + ' ' + r.title + ' — ' + (r.msg || ''));
+						});
+
+						log('Batch ' + currentBatch + ': ' + d.processed + ' processed, ' + d.updated + ' updated.');
+
+						if (d.done) {
+							log('Done — ' + totalProcessed + ' checked, ' + totalUpdated + ' infoboxes saved.', false);
+							stop();
+							return;
+						}
+						setTimeout(tick, 400);
+					})
+					.fail(function() { log('Request failed — stopping.', true); stop(); });
+				}
+
+				function stop() {
+					running = false;
+					$('#cdif-start-btn').prop('disabled', false);
+					$('#cdif-stop-btn').hide();
+					$('#cdif-spinner').hide();
+				}
+
+				$('#cdif-start-btn').on('click', function() {
+					running = true;
+					currentBatch = 0;
+					totalProcessed = 0;
+					totalUpdated = 0;
+					$('#cdif-start-btn').prop('disabled', true);
+					$('#cdif-stop-btn').show();
+					$('#cdif-spinner').show();
+					$('#cdif-log').empty().show();
+					tick();
+				});
+
+				$('#cdif-stop-btn').on('click', function() { log('Stopped by user.'); stop(); });
+			}());
+
+			/* ── Title Cleanup ── */
+			$('#cdt-title-cleanup-btn').on('click', function() {
+				var $btn     = $(this).prop('disabled', true);
+				var $spinner = $('#cdt-title-cleanup-spinner').show();
+				var $log     = $('#cdt-title-cleanup-log').empty().show().append('<div>Scanning seeded entries…</div>');
+
+				$.post(ajaxUrl, {
+					action: 'culture_dir_wiki_title_cleanup',
+					nonce:  nonce,
+				})
+				.done(function(res) {
+					$spinner.hide();
+					$btn.prop('disabled', false);
+					if (!res.success) {
+						$log.append('<div style="color:red;">Error: ' + (res.data && res.data.message ? res.data.message : 'unknown') + '</div>');
+						return;
+					}
+					var d = res.data;
+					$log.append('<div><strong>' + d.checked + '</strong> entries checked, <strong>' + d.updated + '</strong> titles cleaned.</div>');
+					if (d.entries && d.entries.length) {
+						$.each(d.entries, function(i, e) {
+							$log.append('<div>✓ ' + $('<span>').text(e.old).html() + ' → <em>' + $('<span>').text(e.new).html() + '</em></div>');
+						});
+					} else {
+						$log.append('<div style="color:green;">No disambiguation suffixes found — all titles already clean.</div>');
 					}
 				})
 				.fail(function() {

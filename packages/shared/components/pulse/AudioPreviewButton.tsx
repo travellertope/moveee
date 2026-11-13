@@ -7,13 +7,16 @@ interface Props {
   src?: string;
   /** Album cover image URL — if omitted just the button circle is shown. */
   coverUrl?: string;
-  /** Square size in px for the cover / button area (default 64). */
+  /** Square size in px for the cover / button area (default 64). Ignored when fill=true. */
   size?: number;
+  /** Fill the parent container (width/height 100%) instead of using a fixed size.
+   * Use this when the button is placed inside a sized card image wrapper. */
+  fill?: boolean;
 }
 
 /** Album cover with an overlay play/pause button for iTunes 30s preview clips.
  * Stops propagation so it doesn't trigger the card's click-to-open handler. */
-export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) {
+export default function AudioPreviewButton({ src, coverUrl, size = 64, fill = false }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
@@ -46,8 +49,11 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
 
   if (!src && !coverUrl) return null;
 
-  const coverRadius = size >= 60 ? "var(--radius-xl)" : "var(--radius-md)";
-  const btnSize = Math.round(size * 0.44);
+  // fill mode: button fills its container (sized by CSS); fixed size mode: explicit px square.
+  const coverRadius = fill ? "inherit" : size >= 60 ? "var(--radius-xl)" : "var(--radius-md)";
+  // Button/icon sizing: in fill mode use 44px as the reference dimension for the overlay circle.
+  const refSize = fill ? 44 : size;
+  const btnSize = Math.round(refSize * 0.44);
   const iconSize = Math.round(btnSize * 0.42);
   const spinnerSize = Math.round(btnSize * 0.55);
 
@@ -56,8 +62,9 @@ export default function AudioPreviewButton({ src, coverUrl, size = 64 }: Props) 
       style={{
         position: "relative",
         flexShrink: 0,
-        width: size,
-        height: size,
+        ...(fill
+          ? { width: "100%", height: "100%" }
+          : { width: size, height: size }),
         borderRadius: coverRadius,
         overflow: "hidden",
         background: coverUrl ? "transparent" : "rgba(20,17,13,0.08)",

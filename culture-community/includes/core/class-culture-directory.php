@@ -901,6 +901,9 @@ class Culture_Directory {
                 'dateAdded'     => $post->post_date,
                 'isNew'         => substr( $post->post_date, 0, 10 ) === $today,
                 'addedBy'       => isset( $author_map[ $post->post_author ] ) ? $author_map[ $post->post_author ] : null,
+                // iTunes 30s preview URL — stored on quick-create from iTunes catalog;
+                // meta cache was primed above by update_meta_cache() so this is a cache hit.
+                'previewUrl'    => get_post_meta( $post->ID, '_external_preview_url', true ) ?: null,
             );
         }
 
