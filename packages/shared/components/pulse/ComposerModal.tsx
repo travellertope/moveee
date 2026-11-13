@@ -6,6 +6,7 @@ import { isProfileComplete } from "@/lib/profileComplete";
 import { renderMessageWithUpgradeLink } from "@/lib/linkifyUpgrade";
 import DirectorySearch from "@/components/composer/DirectorySearch";
 import MultiRating from "../composer/MultiRating";
+import type { FeedItem } from "@/lib/unified-feed";
 
 export type ComposerTab = "update" | "review" | "art" | "poll" | "quote" | "itinerary" | "event";
 type ReviewSubtype = "place" | "food" | "music" | "book" | "film";
@@ -126,6 +127,16 @@ interface InitialReview {
   entry: { id: number; title: string; slug?: string; thumbnail?: string | null; city?: string; about?: string };
 }
 
+function templateTypeToTab(t?: string): ComposerTab {
+  if (t === "event") return "event";
+  if (t === "project") return "art";
+  if (t === "itinerary") return "itinerary";
+  if (t === "poll") return "poll";
+  if (t === "quote") return "quote";
+  if (t === "book-review" || t === "music-review" || t === "film-review" || t === "food-review" || t === "hidden-gem") return "review";
+  return "update";
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -134,6 +145,8 @@ interface Props {
   hubId?: number;
   initialQuote?: InitialQuote;
   initialReview?: InitialReview;
+  /** When set, opens the modal in edit mode pre-filled with this post's data. */
+  editItem?: FeedItem;
 }
 
 function averageRating(vals: Record<string, number>): number {
@@ -205,7 +218,7 @@ function MultiImageUpload({ urls, onUpload, onRemove, uploading, max = 4 }: {
   );
 }
 
-export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId, initialQuote, initialReview }: Props) {
+export default function ComposerModal({ open, onClose, onSuccess, initialTab = "update", hubId, initialQuote, initialReview, editItem }: Props) {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<ComposerTab>(initialTab);
 
@@ -303,21 +316,81 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   const [error, setError]                 = useState("");
   const [profilePrompt, setProfilePrompt] = useState(false);
 
-  // Sync initialTab when it changes (star button sets review)
+  // Sync tab + pre-fill state when modal opens
   useEffect(() => {
-    if (open) {
-      setActiveTab(initialTab);
-      if (initialQuote?.authorEntry) setQAuthorEntry(initialQuote.authorEntry);
-      if (initialQuote?.sourceEntry) setQSourceEntry(initialQuote.sourceEntry);
-      if (initialQuote?.quoteType)   setQType(initialQuote.quoteType);
-      setQAuthorInitialQuery(initialQuote?.authorName);
-      if (initialReview) {
-        setRevSubtype(initialReview.subtype);
-        setRevEntry(initialReview.entry);
-        setRevTitle(initialReview.entry.title);
+    if (!open) return;
+    if (editItem) {
+      const tab = templateTypeToTab(editItem.templateType);
+      setActiveTab(tab);
+      if (tab === "update") {
+        setUpdContent(editItem.title ?? "");
+        if (editItem.communityTag) setCategories([editItem.communityTag]);
+      } else if (tab === "art") {
+        setArtTitle(editItem.showcaseTitle ?? "");
+        setArtContent(editItem.title ?? "");
+        if (editItem.communityTag) setCategories([editItem.communityTag]);
+      } else if (tab === "itinerary") {
+        setITitle(editItem.itineraryTitle ?? "");
+        setIOverview(editItem.title ?? "");
+        if (editItem.itineraryStops?.length) {
+          setStops(editItem.itineraryStops.map((s, i) => ({
+            id: String.fromCharCode(97 + i),
+            name: s.name,
+            location: "",
+            note: s.note ?? "",
+            image_url: s.image_url ?? "",
+          })));
+        }
+        if (editItem.communityTag) setCategories([editItem.communityTag]);
+      } else if (tab === "event") {
+        setEvTitle(editItem.eventPostTitle ?? "");
+        setEvDate(editItem.eventDate ?? "");
+        setEvEndDate(editItem.endDate ?? "");
+        setEvVenue(editItem.location ?? "");
+        setEvCity(editItem.city ?? "");
+        setEvDesc(editItem.title ?? "");
+        setEvAddress(editItem.venueAddress ?? "");
+        const adm = editItem.admission ?? "";
+        if (adm && adm !== "Free") {
+          const parts = adm.split(" ");
+          setEvCurrency(parts[0] ?? "NGN");
+          setEvAdmission(parts.slice(1).join(" "));
+        } else {
+          setEvAdmission("");
+        }
+        setEvTicketUrl(editItem.ticketUrl ?? "");
+        setEvCategory(editItem.eventCategory ?? "");
+        setEvRsvpEnabled(editItem.rsvpEnabled ?? false);
+        setEvCapacity(editItem.rsvpCapacity ? String(editItem.rsvpCapacity) : "");
+      } else if (tab === "review") {
+        const subtypeMap: Record<string, ReviewSubtype> = {
+          "book-review": "book", "music-review": "music",
+          "film-review": "film", "food-review": "food", "hidden-gem": "place",
+        };
+        const sub = (subtypeMap[editItem.templateType ?? ""] ?? "place") as ReviewSubtype;
+        setRevSubtype(sub);
+        setRevTitle(editItem.title ?? "");
+        if (editItem.communityTag) setCategories([editItem.communityTag]);
+      } else if (tab === "poll") {
+        setPollQ(editItem.title ?? "");
+        if (editItem.pollOptions?.length) {
+          setPollOpts(editItem.pollOptions.map(o => o.text));
+        }
       }
+      return;
     }
-  }, [open, initialTab, initialQuote, initialReview]);
+    // Normal (non-edit) open
+    setActiveTab(initialTab);
+    if (initialQuote?.authorEntry) setQAuthorEntry(initialQuote.authorEntry);
+    if (initialQuote?.sourceEntry) setQSourceEntry(initialQuote.sourceEntry);
+    if (initialQuote?.quoteType)   setQType(initialQuote.quoteType);
+    setQAuthorInitialQuery(initialQuote?.authorName);
+    if (initialReview) {
+      setRevSubtype(initialReview.subtype);
+      setRevEntry(initialReview.entry);
+      setRevTitle(initialReview.entry.title);
+    }
+  }, [open, initialTab, initialQuote, initialReview, editItem]);
 
   // Auto-infer hubs from content + #hashtags (all in background)
   useEffect(() => {
@@ -421,6 +494,72 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     if (!isProfileComplete(session)) { setProfilePrompt(true); return; }
     setSubmitting(true);
     try {
+      if (editItem) {
+        const editPayload: Record<string, any> = {
+          postId: editItem.wpId,
+          tag: categories[0] ?? "",
+        };
+        if (activeTab === "update") {
+          if (!updContent.trim()) throw new Error("Post content is required");
+          editPayload.template_type = "post";
+          editPayload.text = updContent.trim();
+        } else if (activeTab === "art") {
+          if (!artContent.trim()) throw new Error("Description is required");
+          editPayload.template_type = "project";
+          editPayload.text = artTitle.trim() ? `${artTitle.trim()}\n\n${artContent.trim()}` : artContent.trim();
+          editPayload.showcase_title = artTitle.trim();
+        } else if (activeTab === "itinerary") {
+          if (!iOverview.trim()) throw new Error("Overview is required");
+          editPayload.template_type = "itinerary";
+          editPayload.text = iTitle.trim() ? `${iTitle.trim()}\n\n${iOverview.trim()}` : iOverview.trim();
+          editPayload.itinerary_title = iTitle.trim();
+          const validStops = stops.filter(s => s.name.trim());
+          editPayload.itinerary_stops = validStops.map(s => ({
+            name: s.name.trim(), lat: 0, lng: 0,
+            note: [s.location.trim(), s.note.trim()].filter(Boolean).join(" — "),
+            image_url: s.image_url || "",
+          }));
+        } else if (activeTab === "event") {
+          if (!evTitle.trim()) throw new Error("Event title is required");
+          if (!evDate) throw new Error("Event date is required");
+          editPayload.template_type = "event";
+          editPayload.text = evDesc.trim() || evTitle.trim();
+          editPayload.event_title = evTitle.trim();
+          editPayload.event_date = evDate;
+          if (evEndDate) editPayload.event_end_date = evEndDate;
+          editPayload.event_venue = evVenue.trim();
+          editPayload.event_city = evCity.trim();
+          editPayload.event_address = evAddress.trim() || evVenue.trim();
+          editPayload.event_admission = evAdmission.trim() ? `${evCurrency} ${evAdmission.trim()}` : "Free";
+          if (evTicketUrl.trim()) editPayload.ticket_url = evTicketUrl.trim();
+          if (evCategory) editPayload.event_category = evCategory;
+          editPayload.rsvp_enabled = evRsvpEnabled;
+          if (evRsvpEnabled && evCapacity.trim()) editPayload.rsvp_capacity = parseInt(evCapacity);
+        } else if (activeTab === "review") {
+          if (!revContent.trim()) throw new Error("Review content is required");
+          editPayload.template_type = REVIEW_TEMPLATE[revSubtype];
+          const entryTitle = revEntry?.title || revTitle.trim();
+          editPayload.text = entryTitle ? `${entryTitle}\n\n${revContent.trim()}` : revContent.trim();
+        } else if (activeTab === "poll") {
+          if (!pollQ.trim()) throw new Error("Poll question is required");
+          editPayload.template_type = "poll";
+          editPayload.text = pollQ.trim();
+        } else {
+          throw new Error("This post type cannot be edited.");
+        }
+        const editRes = await fetch("/api/community/edit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editPayload),
+        });
+        const editData = await editRes.json().catch(() => ({}));
+        if (!editRes.ok) throw new Error((editData as any).error || "Edit failed.");
+        resetAll();
+        onClose();
+        onSuccess?.();
+        return;
+      }
+
       if (activeTab === "quote") {
         if (!qText.trim()) throw new Error("Quote text is required");
         if (!qAuthorEntry) throw new Error("Search the directory to pick who said this.");
@@ -619,28 +758,30 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         {/* Header */}
         <div className="cm-header">
           <div className="cm-header-title">
-            <span className="cm-title">Create Post</span>
-            <span className="cm-type-badge">{tabLabel}</span>
+            <span className="cm-title">{editItem ? "Edit post" : "Create Post"}</span>
+            {!editItem && <span className="cm-type-badge">{tabLabel}</span>}
           </div>
           <button type="button" className="cm-close" onClick={handleClose} aria-label="Close">✕</button>
         </div>
 
-        {/* Tab strip */}
-        <div className="cm-tabs" role="tablist">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.key}
-              className={`cm-tab${activeTab === tab.key ? " cm-tab--active" : ""}`}
-              onClick={() => { setActiveTab(tab.key); setGalleryUrls([]); }}
-            >
-              <span aria-hidden="true">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Tab strip — hidden in edit mode */}
+        {!editItem && (
+          <div className="cm-tabs" role="tablist">
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.key}
+                className={`cm-tab${activeTab === tab.key ? " cm-tab--active" : ""}`}
+                onClick={() => { setActiveTab(tab.key); setGalleryUrls([]); }}
+              >
+                <span aria-hidden="true">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Body */}
         <div className="cm-body">
@@ -659,10 +800,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   rows={5}
                 />
               </div>
-              <div className="cm-field">
-                <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
-                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
-              </div>
+              {!editItem && (
+                <div className="cm-field">
+                  <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
+                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                </div>
+              )}
             </>
           )}
 
@@ -879,10 +1022,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                 </div>
               )}
 
-              <div className="cm-field">
-                <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
-                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
-              </div>
+              {!editItem && (
+                <div className="cm-field">
+                  <label className="cm-label">Photos <span className="cm-label-opt">(optional, up to 4)</span></label>
+                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                </div>
+              )}
             </>
           )}
 
@@ -921,10 +1066,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   rows={5}
                 />
               </div>
-              <div className="cm-field">
-                <label className="cm-label">Visuals <span className="cm-label-opt">(up to 4)</span></label>
-                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
-              </div>
+              {!editItem && (
+                <div className="cm-field">
+                  <label className="cm-label">Visuals <span className="cm-label-opt">(up to 4)</span></label>
+                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                </div>
+              )}
             </>
           )}
 
@@ -1437,10 +1584,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   <p className="cm-label-opt" style={{ marginTop: "4px" }}>Platform takes 20% commission. Payouts processed manually.</p>
                 </div>
               )}
-              <div className="cm-field">
-                <label className="cm-label">Cover banner <span className="cm-label-opt">(optional, up to 4)</span></label>
-                <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
-              </div>
+              {!editItem && (
+                <div className="cm-field">
+                  <label className="cm-label">Cover banner <span className="cm-label-opt">(optional, up to 4)</span></label>
+                  <MultiImageUpload urls={galleryUrls} onUpload={handleGalleryImageUpload} onRemove={removeGalleryImage} uploading={galleryUploading} />
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1492,7 +1641,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
               disabled={submitting || galleryUploading}
               onClick={handleSubmit}
             >
-              {submitting ? "Posting…" : "Publish Post"}
+              {submitting ? (editItem ? "Saving…" : "Posting…") : (editItem ? "Save changes" : "Publish Post")}
             </button>
           </div>
         </div>
