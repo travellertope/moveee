@@ -36,7 +36,11 @@ class Culture_Post_Types {
         if ( is_admin() ) {
             add_action( 'quick_edit_custom_box',  array( __CLASS__, 'dir_quick_edit_box' ), 10, 2 );
             add_action( 'bulk_edit_custom_box',   array( __CLASS__, 'dir_bulk_edit_box' ),  10, 2 );
-            add_action( 'save_post_culture_directory', array( __CLASS__, 'save_dir_quick_bulk_edit' ), 20 );
+            // Quick edit saves via inline-save AJAX → save_post fires with $_POST intact.
+            add_action( 'save_post_culture_directory', array( __CLASS__, 'save_dir_quick_edit' ), 20 );
+            // Bulk edit submits a real form to edit.php — handle it on load-edit.php before
+            // WP's own bulk-save loop, since $_POST is not guaranteed inside save_post there.
+            add_action( 'load-edit.php', array( __CLASS__, 'process_dir_bulk_edit' ) );
             add_action( 'admin_enqueue_scripts',  array( __CLASS__, 'enqueue_dir_quick_edit_js' ) );
         }
     }
@@ -2454,25 +2458,47 @@ class Culture_Post_Types {
     }
 
     /**
-     * Processes our custom Type/Genre add-remove fields on quick edit and bulk edit saves.
-     * Blank field → no change.
-     * "drama, sci-fi" → append those terms to existing.
-     * "-drama, -comedy" → remove those terms from existing.
-     * Mixed → both in one pass.
+     * Quick edit save (inline-save AJAX) — fires via save_post_culture_directory.
+     * $_POST is fully intact for AJAX requests so this is reliable here.
      */
-    public static function save_dir_quick_bulk_edit( int $post_id ): void {
-        // Only process when our fields are present (quick/bulk edit, not regular saves).
+    public static function save_dir_quick_edit( int $post_id ): void {
+        // Only inline-save AJAX, not regular post saves or bulk edit.
+        if ( ( $_POST['action'] ?? '' ) !== 'inline-save' ) return;
         if ( ! isset( $_POST['culture_dir_type_edit'] ) && ! isset( $_POST['culture_dir_genre_edit'] ) ) return;
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+        if ( ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'] ?? '', 'culture_dir_quick_edit' ) ) return;
 
-        // Nonce present in quick edit (not in bulk — WP already validated the bulk nonce).
-        if ( isset( $_POST['culture_dir_quick_edit_nonce'] ) &&
-             ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'], 'culture_dir_quick_edit' ) ) {
-            return;
+        self::apply_dir_tax_edit( $post_id );
+    }
+
+    /**
+     * Bulk edit save — fires on load-edit.php before WP's own bulk-save loop.
+     * Handles all selected culture_directory posts in one pass.
+     */
+    public static function process_dir_bulk_edit(): void {
+        if ( ( $_POST['action'] ?? '' ) !== 'edit' ) return;
+        if ( empty( $_POST['post'] ) ) return;
+        if ( ( $_POST['post_type'] ?? '' ) !== 'culture_directory' ) return;
+        if ( ! isset( $_POST['culture_dir_type_edit'] ) && ! isset( $_POST['culture_dir_genre_edit'] ) ) return;
+
+        // Verify the standard bulk-edit nonce (action = bulk-{post_type}s).
+        $pt = sanitize_key( $_POST['post_type'] ?? 'post' );
+        if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-' . $pt . 's' ) ) return;
+
+        foreach ( array_map( 'intval', (array) $_POST['post'] ) as $post_id ) {
+            $post = get_post( $post_id );
+            if ( ! $post || $post->post_type !== 'culture_directory' ) continue;
+            if ( ! current_user_can( 'edit_post', $post_id ) ) continue;
+            self::apply_dir_tax_edit( $post_id );
         }
+    }
 
+    /**
+     * Shared helper: applies the add/remove taxonomy logic from $_POST to one post.
+     * Blank field → no change. "drama" → add. "-drama" → remove. Mixed → both.
+     */
+    private static function apply_dir_tax_edit( int $post_id ): void {
         $map = array(
             'culture_dir_type'  => sanitize_text_field( wp_unslash( $_POST['culture_dir_type_edit']  ?? '' ) ),
             'culture_dir_genre' => sanitize_text_field( wp_unslash( $_POST['culture_dir_genre_edit'] ?? '' ) ),
@@ -2493,8 +2519,7 @@ class Culture_Post_Types {
             }
 
             if ( $to_add ) {
-                // append=true so we never blow away terms we're not touching
-                wp_set_object_terms( $post_id, $to_add, $taxonomy, true );
+                wp_set_object_terms( $post_id, $to_add, $taxonomy, true ); // append
             }
 
             foreach ( $to_remove as $slug_or_name ) {
