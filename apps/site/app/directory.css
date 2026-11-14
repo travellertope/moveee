@@ -2324,14 +2324,19 @@
   margin: 0 0 20px;
 }
 .dir-entry-related-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.dir-entry-related-grid::-webkit-scrollbar { display: none; }
 .dir-entry-related-card {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   text-decoration: none;
   transition: opacity 0.12s;
 }
@@ -2352,27 +2357,20 @@
 }
 .dir-entry-related-card:hover .dir-entry-related-img { transform: scale(1.05); }
 
-/* Type-aware aspect ratios — mirrors the homepage DirectoryDiscovery rails */
+/* Type-aware aspect ratios */
 .dir-entry-related-thumb--album   { aspect-ratio: 1/1; }
 .dir-entry-related-thumb--food    { aspect-ratio: 16/9; }
 .dir-entry-related-thumb--place   { aspect-ratio: 3/2; }
-/* film, book, person, artwork, tv-series, etc. keep the default 2/3 portrait */
-
-/* Emoji fallback when no cover image */
-.dir-entry-related-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 32px;
-}
 
 .dir-entry-related-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--dir-ink);
   line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ── Responsive ── */
@@ -2400,7 +2398,7 @@
     grid-template-columns: 1fr 1fr;
   }
   .dir-entry-related-grid {
-    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
 }
 

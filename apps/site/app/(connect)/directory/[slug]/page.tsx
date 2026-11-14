@@ -89,6 +89,10 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     const allEntries = await getDirectoryEntriesWithFallback(200);
     const scored: { entry: any; score: number }[] = allEntries
       .filter((e: any) => e.slug !== slug)
+      .filter((e: any) => {
+        // Only include entries that have a real photo — no placeholders/fallbacks shown
+        return !!(e.featuredImage?.node?.sourceUrl || e.externalCoverUrl);
+      })
       .map((e: any) => {
         const eType = e.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "";
         const eInterests: string[] = (e.cultureInterests?.nodes ?? []).map((n: any) => n.slug);
