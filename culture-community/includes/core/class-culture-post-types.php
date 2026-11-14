@@ -32,16 +32,6 @@ class Culture_Post_Types {
         add_action( 'created_issue',          array( __CLASS__, 'issue_save_meta' ) );
         add_action( 'edited_issue',           array( __CLASS__, 'issue_save_meta' ) );
 
-        // Directory quick/bulk edit — custom add/remove taxonomy UI
-        if ( is_admin() ) {
-            add_action( 'quick_edit_custom_box',  array( __CLASS__, 'dir_quick_edit_box' ), 10, 2 );
-            add_action( 'bulk_edit_custom_box',   array( __CLASS__, 'dir_bulk_edit_box' ),  10, 2 );
-            // Handles both quick edit (inline-save AJAX) and bulk edit (action=edit).
-            // WP calls wp_update_post() per post during bulk edit which fires save_post,
-            // and $_POST is intact at that point since no redirect has happened yet.
-            add_action( 'save_post_culture_directory', array( __CLASS__, 'save_dir_quick_edit' ), 20 );
-            add_action( 'admin_enqueue_scripts',  array( __CLASS__, 'enqueue_dir_quick_edit_js' ) );
-        }
     }
 
     /**
@@ -1765,7 +1755,7 @@ class Culture_Post_Types {
             'show_admin_column'   => true,
             'show_in_nav_menus'   => false,
             'show_tagcloud'       => false,
-            'show_in_quick_edit'  => false, // replaced by dir_quick_edit_box / dir_bulk_edit_box
+            'show_in_quick_edit'  => true,
             'show_in_rest'        => true,
             'rest_base'           => 'culture-dir-type',
             'rewrite'             => false,
@@ -1793,7 +1783,7 @@ class Culture_Post_Types {
             'show_admin_column'   => true,
             'show_in_nav_menus'   => false,
             'show_tagcloud'       => false,
-            'show_in_quick_edit'  => false, // replaced by dir_quick_edit_box / dir_bulk_edit_box
+            'show_in_quick_edit'  => true,
             'show_in_rest'        => true,
             'rest_base'           => 'culture-dir-genre',
             'rewrite'             => false,
@@ -2400,180 +2390,4 @@ class Culture_Post_Types {
         return $args;
     }
 
-    // ── Directory quick/bulk edit: add & remove Type + Genre ─────────────────
-
-    /**
-     * Renders our custom taxonomy fields inside the Quick Edit row.
-     * Fires once per column; we render everything inside the culture_dir_genre
-     * column slot to avoid duplicate output.
-     */
-    public static function dir_quick_edit_box( string $column_name, string $post_type ): void {
-        if ( $post_type !== 'culture_directory' || $column_name !== 'taxonomy-culture_dir_genre' ) return;
-        wp_nonce_field( 'culture_dir_quick_edit', 'culture_dir_quick_edit_nonce' );
-        ?>
-        <fieldset class="inline-edit-col-right culture-dir-tax-edit">
-        <div class="inline-edit-col">
-            <label class="inline-edit-culture-dir-type">
-                <span class="title">Entry Type</span>
-                <input type="text" name="culture_dir_type_edit" class="culture-dir-type-edit"
-                       placeholder="e.g. film  (prefix with - to remove)" autocomplete="off" />
-                <span class="culture-dir-tax-current culture-dir-type-current"></span>
-            </label>
-            <label class="inline-edit-culture-dir-genre">
-                <span class="title">Genre</span>
-                <input type="text" name="culture_dir_genre_edit" class="culture-dir-genre-edit"
-                       placeholder="e.g. drama, -comedy" autocomplete="off" />
-                <span class="culture-dir-tax-current culture-dir-genre-current"></span>
-            </label>
-            <p class="culture-dir-tax-hint">Blank = no change &nbsp;·&nbsp; <code>-drama</code> removes &nbsp;·&nbsp; <code>drama</code> adds</p>
-        </div>
-        </fieldset>
-        <?php
-    }
-
-    /**
-     * Renders our custom taxonomy fields inside the Bulk Edit panel.
-     * Same column trigger as quick edit but no current-value hint (multiple posts).
-     */
-    public static function dir_bulk_edit_box( string $column_name, string $post_type ): void {
-        if ( $post_type !== 'culture_directory' || $column_name !== 'taxonomy-culture_dir_genre' ) return;
-        ?>
-        <fieldset class="inline-edit-col-right culture-dir-tax-edit">
-        <div class="inline-edit-col">
-            <label class="inline-edit-culture-dir-type">
-                <span class="title">Entry Type</span>
-                <input type="text" name="culture_dir_type_edit" class="culture-dir-type-edit"
-                       placeholder="e.g. film  (prefix with - to remove)" autocomplete="off" />
-            </label>
-            <label class="inline-edit-culture-dir-genre">
-                <span class="title">Genre</span>
-                <input type="text" name="culture_dir_genre_edit" class="culture-dir-genre-edit"
-                       placeholder="e.g. drama, -comedy" autocomplete="off" />
-            </label>
-            <p class="culture-dir-tax-hint">Blank = no change &nbsp;·&nbsp; <code>-drama</code> removes &nbsp;·&nbsp; <code>drama</code> adds</p>
-        </div>
-        </fieldset>
-        <?php
-    }
-
-    /**
-     * Saves taxonomy add/remove for both quick edit and bulk edit.
-     *
-     * Quick edit:  $_POST['action'] === 'inline-save'  — AJAX, $_POST is fully intact.
-     * Bulk edit:   $_POST['action'] === 'edit'          — WP calls wp_update_post() per
-     *              post which fires this hook; WP has already verified its own nonce by
-     *              this point, so we only nonce-check the quick-edit path.
-     */
-    public static function save_dir_quick_edit( int $post_id ): void {
-        $action = $_POST['action'] ?? '';
-        $is_quick = ( $action === 'inline-save' );
-        $is_bulk  = ( $action === 'edit' || ( $_POST['action2'] ?? '' ) === 'edit' );
-
-        if ( ! $is_quick && ! $is_bulk ) return;
-        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-        if ( ! current_user_can( 'edit_post', $post_id ) ) return;
-
-        // Quick edit has its own nonce; bulk edit is already authenticated by WP.
-        if ( $is_quick && ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'] ?? '', 'culture_dir_quick_edit' ) ) return;
-
-        // Only proceed if at least one of our custom fields is present.
-        if ( ( $_POST['culture_dir_type_edit'] ?? '' ) === '' && ( $_POST['culture_dir_genre_edit'] ?? '' ) === '' ) return;
-
-        self::apply_dir_tax_edit( $post_id );
-    }
-
-    /**
-     * Shared helper: applies the add/remove taxonomy logic from $_POST to one post.
-     * Blank field → no change. "drama" → add. "-drama" → remove. Mixed → both.
-     */
-    private static function apply_dir_tax_edit( int $post_id ): void {
-        $map = array(
-            'culture_dir_type'  => sanitize_text_field( wp_unslash( $_POST['culture_dir_type_edit']  ?? '' ) ),
-            'culture_dir_genre' => sanitize_text_field( wp_unslash( $_POST['culture_dir_genre_edit'] ?? '' ) ),
-        );
-
-        foreach ( $map as $taxonomy => $raw ) {
-            if ( $raw === '' ) continue;
-
-            $to_add    = array();
-            $to_remove = array();
-
-            foreach ( array_filter( array_map( 'trim', explode( ',', $raw ) ) ) as $part ) {
-                if ( strpos( $part, '-' ) === 0 ) {
-                    $to_remove[] = ltrim( $part, '-' );
-                } else {
-                    $to_add[] = $part;
-                }
-            }
-
-            if ( $to_add ) {
-                wp_set_object_terms( $post_id, $to_add, $taxonomy, true ); // append
-            }
-
-            foreach ( $to_remove as $slug_or_name ) {
-                $term = get_term_by( 'slug', $slug_or_name, $taxonomy )
-                     ?: get_term_by( 'name', $slug_or_name, $taxonomy );
-                if ( $term && ! is_wp_error( $term ) ) {
-                    wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
-                }
-            }
-        }
-    }
-
-    /**
-     * Enqueues a tiny inline script on the culture_directory list table that
-     * pre-fills the "currently assigned" hint text when the Quick Edit row opens.
-     */
-    public static function enqueue_dir_quick_edit_js( string $hook ): void {
-        global $post_type;
-        if ( $hook !== 'edit.php' ) return;
-        // $post_type may not be set yet on the first call; check the query string too.
-        $pt = $post_type ?? ( $_GET['post_type'] ?? '' );
-        if ( $pt !== 'culture_directory' ) return;
-
-        // Piggyback on WP's own inline-edit script (always enqueued on edit.php).
-        wp_add_inline_script( 'inline-edit-post', <<<'JS'
-(function($) {
-    if (typeof inlineEditPost === 'undefined') return;
-    var origEdit = inlineEditPost.edit;
-    inlineEditPost.edit = function(id) {
-        origEdit.apply(this, arguments);
-        var postId = (typeof id === 'object') ? parseInt(this.getId(id), 10) : parseInt(id, 10);
-        var $row   = $('#post-' + postId);
-        if (!$row.length) return;
-
-        var typeTerms  = [];
-        var genreTerms = [];
-        $row.find('.column-taxonomy-culture_dir_type a').each(function() {
-            typeTerms.push($(this).text().trim());
-        });
-        $row.find('.column-taxonomy-culture_dir_genre a').each(function() {
-            genreTerms.push($(this).text().trim());
-        });
-
-        var $editRow = $('#edit-' + postId);
-        $editRow.find('.culture-dir-type-current').text(typeTerms.length  ? 'Currently: ' + typeTerms.join(', ')  : '');
-        $editRow.find('.culture-dir-genre-current').text(genreTerms.length ? 'Currently: ' + genreTerms.join(', ') : '');
-
-        // Clear the inputs each time the row opens so blank = no change is unambiguous.
-        $editRow.find('input[name="culture_dir_type_edit"]').val('');
-        $editRow.find('input[name="culture_dir_genre_edit"]').val('');
-    };
-})(jQuery);
-JS
-        );
-
-        // Small style tweak for the hint text.
-        wp_add_inline_style( 'wp-admin', '
-            .culture-dir-tax-edit .culture-dir-tax-current {
-                display: block; font-size: 11px; color: #757575; margin-top: 2px;
-            }
-            .culture-dir-tax-hint {
-                font-size: 11px; color: #757575; margin: 6px 0 0;
-            }
-            .culture-dir-tax-hint code {
-                background: #f0f0f0; padding: 1px 4px; border-radius: 2px;
-            }
-        ' );
-    }
 }
