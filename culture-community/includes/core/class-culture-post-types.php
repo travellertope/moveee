@@ -36,11 +36,10 @@ class Culture_Post_Types {
         if ( is_admin() ) {
             add_action( 'quick_edit_custom_box',  array( __CLASS__, 'dir_quick_edit_box' ), 10, 2 );
             add_action( 'bulk_edit_custom_box',   array( __CLASS__, 'dir_bulk_edit_box' ),  10, 2 );
-            // Quick edit saves via inline-save AJAX → save_post fires with $_POST intact.
+            // Handles both quick edit (inline-save AJAX) and bulk edit (action=edit).
+            // WP calls wp_update_post() per post during bulk edit which fires save_post,
+            // and $_POST is intact at that point since no redirect has happened yet.
             add_action( 'save_post_culture_directory', array( __CLASS__, 'save_dir_quick_edit' ), 20 );
-            // Bulk edit submits a real form to edit.php — handle it on load-edit.php before
-            // WP's own bulk-save loop, since $_POST is not guaranteed inside save_post there.
-            add_action( 'load-edit.php', array( __CLASS__, 'process_dir_bulk_edit' ) );
             add_action( 'admin_enqueue_scripts',  array( __CLASS__, 'enqueue_dir_quick_edit_js' ) );
         }
     }
@@ -2458,44 +2457,29 @@ class Culture_Post_Types {
     }
 
     /**
-     * Quick edit save (inline-save AJAX) — fires via save_post_culture_directory.
-     * $_POST is fully intact for AJAX requests so this is reliable here.
+     * Saves taxonomy add/remove for both quick edit and bulk edit.
+     *
+     * Quick edit:  $_POST['action'] === 'inline-save'  — AJAX, $_POST is fully intact.
+     * Bulk edit:   $_POST['action'] === 'edit'          — WP calls wp_update_post() per
+     *              post which fires this hook; WP has already verified its own nonce by
+     *              this point, so we only nonce-check the quick-edit path.
      */
     public static function save_dir_quick_edit( int $post_id ): void {
-        // Only inline-save AJAX, not regular post saves or bulk edit.
-        if ( ( $_POST['action'] ?? '' ) !== 'inline-save' ) return;
-        if ( ! isset( $_POST['culture_dir_type_edit'] ) && ! isset( $_POST['culture_dir_genre_edit'] ) ) return;
+        $action = $_POST['action'] ?? '';
+        $is_quick = ( $action === 'inline-save' );
+        $is_bulk  = ( $action === 'edit' || ( $_POST['action2'] ?? '' ) === 'edit' );
+
+        if ( ! $is_quick && ! $is_bulk ) return;
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
-        if ( ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'] ?? '', 'culture_dir_quick_edit' ) ) return;
+
+        // Quick edit has its own nonce; bulk edit is already authenticated by WP.
+        if ( $is_quick && ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'] ?? '', 'culture_dir_quick_edit' ) ) return;
+
+        // Only proceed if at least one of our custom fields is present.
+        if ( ( $_POST['culture_dir_type_edit'] ?? '' ) === '' && ( $_POST['culture_dir_genre_edit'] ?? '' ) === '' ) return;
 
         self::apply_dir_tax_edit( $post_id );
-    }
-
-    /**
-     * Bulk edit save — fires on load-edit.php before WP's own bulk-save loop.
-     * Handles all selected culture_directory posts in one pass.
-     */
-    public static function process_dir_bulk_edit(): void {
-        // Handle both top (action) and bottom (action2) bulk-actions dropdowns.
-        $action_val = ( ( $_POST['action'] ?? '' ) !== '-1' )
-            ? ( $_POST['action']  ?? '' )
-            : ( $_POST['action2'] ?? '' );
-        if ( $action_val !== 'edit' ) return;
-        if ( empty( $_POST['post'] ) ) return;
-        if ( ( $_POST['post_type'] ?? '' ) !== 'culture_directory' ) return;
-        if ( ! isset( $_POST['culture_dir_type_edit'] ) && ! isset( $_POST['culture_dir_genre_edit'] ) ) return;
-
-        // WP_Posts_List_Table generates the bulk-edit nonce as 'bulk-' . $labels->name.
-        // For culture_directory the label name is 'Community Directory'.
-        if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-Community Directory' ) ) return;
-
-        foreach ( array_map( 'intval', (array) $_POST['post'] ) as $post_id ) {
-            $post = get_post( $post_id );
-            if ( ! $post || $post->post_type !== 'culture_directory' ) continue;
-            if ( ! current_user_can( 'edit_post', $post_id ) ) continue;
-            self::apply_dir_tax_edit( $post_id );
-        }
     }
 
     /**
