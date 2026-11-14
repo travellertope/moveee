@@ -2465,8 +2465,21 @@ class Culture_Post_Types {
      */
     public static function save_dir_quick_edit( int $post_id ): void {
         $action   = $_POST['action'] ?? '';
+        $action2  = $_POST['action2'] ?? '';
         $is_quick = ( $action === 'inline-save' );
-        $is_bulk  = ( $action === 'edit' || ( $_POST['action2'] ?? '' ) === 'edit' );
+        $is_bulk  = ( $action === 'edit' || $action2 === 'edit' );
+
+        $log = sprintf(
+            "[CDIR %s] save_dir post_id=%d action=%s action2=%s is_quick=%d is_bulk=%d autosave=%d\n"
+            . "  type_edit=%s genre_edit=%s type_bulk=%s genre_bulk=%s\n",
+            date('H:i:s'), $post_id, $action, $action2, (int)$is_quick, (int)$is_bulk,
+            (int)( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ),
+            $_POST['culture_dir_type_edit']  ?? '(unset)',
+            $_POST['culture_dir_genre_edit'] ?? '(unset)',
+            $_POST['culture_dir_type_bulk']  ?? '(unset)',
+            $_POST['culture_dir_genre_bulk'] ?? '(unset)'
+        );
+        file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt', $log, FILE_APPEND );
 
         if ( ! $is_quick && ! $is_bulk ) return;
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
@@ -2478,8 +2491,12 @@ class Culture_Post_Types {
         $type_key  = $is_bulk ? 'culture_dir_type_bulk'  : 'culture_dir_type_edit';
         $genre_key = $is_bulk ? 'culture_dir_genre_bulk' : 'culture_dir_genre_edit';
 
-        if ( ( $_POST[ $type_key ] ?? '' ) === '' && ( $_POST[ $genre_key ] ?? '' ) === '' ) return;
+        if ( ( $_POST[ $type_key ] ?? '' ) === '' && ( $_POST[ $genre_key ] ?? '' ) === '' ) {
+            file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt', "  → SKIPPED (both fields empty)\n", FILE_APPEND );
+            return;
+        }
 
+        file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt', "  → calling apply type_key=$type_key genre_key=$genre_key\n", FILE_APPEND );
         self::apply_dir_tax_edit( $post_id, $type_key, $genre_key );
     }
 
@@ -2507,15 +2524,24 @@ class Culture_Post_Types {
                 }
             }
 
+            file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
+                "  apply tax=$taxonomy raw=$raw add=" . json_encode($to_add) . " remove=" . json_encode($to_remove) . "\n", FILE_APPEND );
+
             if ( $to_add ) {
-                wp_set_object_terms( $post_id, $to_add, $taxonomy, true ); // append
+                $r = wp_set_object_terms( $post_id, $to_add, $taxonomy, true );
+                file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
+                    "  add result=" . ( is_wp_error($r) ? $r->get_error_message() : json_encode($r) ) . "\n", FILE_APPEND );
             }
 
             foreach ( $to_remove as $slug_or_name ) {
                 $term = get_term_by( 'slug', strtolower( $slug_or_name ), $taxonomy )
                      ?: get_term_by( 'name', $slug_or_name, $taxonomy );
+                file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
+                    "  remove slug_or_name=$slug_or_name term=" . ( $term ? "id={$term->term_id} slug={$term->slug}" : 'NOT FOUND' ) . "\n", FILE_APPEND );
                 if ( $term && ! is_wp_error( $term ) ) {
-                    wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
+                    $r = wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
+                    file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
+                        "  remove result=" . json_encode($r) . "\n", FILE_APPEND );
                 }
             }
         }
