@@ -2477,14 +2477,18 @@ class Culture_Post_Types {
      * Handles all selected culture_directory posts in one pass.
      */
     public static function process_dir_bulk_edit(): void {
-        if ( ( $_POST['action'] ?? '' ) !== 'edit' ) return;
+        // Handle both top (action) and bottom (action2) bulk-actions dropdowns.
+        $action_val = ( ( $_POST['action'] ?? '' ) !== '-1' )
+            ? ( $_POST['action']  ?? '' )
+            : ( $_POST['action2'] ?? '' );
+        if ( $action_val !== 'edit' ) return;
         if ( empty( $_POST['post'] ) ) return;
         if ( ( $_POST['post_type'] ?? '' ) !== 'culture_directory' ) return;
         if ( ! isset( $_POST['culture_dir_type_edit'] ) && ! isset( $_POST['culture_dir_genre_edit'] ) ) return;
 
-        // Verify the standard bulk-edit nonce (action = bulk-{post_type}s).
-        $pt = sanitize_key( $_POST['post_type'] ?? 'post' );
-        if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-' . $pt . 's' ) ) return;
+        // WP_Posts_List_Table generates the bulk-edit nonce as 'bulk-' . $labels->name.
+        // For culture_directory the label name is 'Community Directory'.
+        if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-Community Directory' ) ) return;
 
         foreach ( array_map( 'intval', (array) $_POST['post'] ) as $post_id ) {
             $post = get_post( $post_id );
