@@ -4,7 +4,7 @@
 
 .hphero {
   position: relative;
-  height: clamp(360px, 46vw, 520px);
+  height: clamp(560px, 80vh, 920px);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -121,6 +121,6 @@
 
 /* ── Mobile ── */
 @media (max-width: 480px) {
-  .hphero { height: clamp(320px, 90vw, 420px); }
+  .hphero { height: clamp(480px, 85vh, 680px); }
   .hphero-body { padding: 0 20px; }
 }
