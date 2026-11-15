@@ -1,6 +1,14 @@
+"use client";
+
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useSession } from "next-auth/react";
 import type { TrendingCategory, TrendingDirectoryEntry } from "@/lib/fetchTrendingDirectory";
 import "./RecentlyReviewedRail.css";
+
+const ComposerModal = dynamic(() => import("@/components/pulse/ComposerModal"), { ssr: false });
+const QuickLogModal = dynamic(() => import("@/components/QuickLogModal"), { ssr: false });
 
 function titleCase(str: string): string {
   const SKIP = new Set(["a","an","the","and","but","or","for","in","of","on","to","at","by","via","nor","so","yet","off","up","per"]);
@@ -16,13 +24,23 @@ function titleCase(str: string): string {
 function StarRating({ rating }: { rating: number }) {
   const full = Math.round(rating);
   return (
-    <span className="rrr-card-star" aria-label={`${rating.toFixed(1)} out of 5`}>
+    <span className="rrr-stars" aria-label={`${rating.toFixed(1)} out of 5`}>
       {"★".repeat(full)}{"☆".repeat(Math.max(0, 5 - full))}
+      <span className="rrr-stars-val">{rating.toFixed(1)}</span>
     </span>
   );
 }
 
-function ReviewCard({ entry, railKey }: { entry: TrendingDirectoryEntry; railKey: string }) {
+type ReviewSubtype = "place" | "food" | "book" | "film" | "music";
+
+interface CardProps {
+  entry: TrendingDirectoryEntry;
+  reviewSubtype: ReviewSubtype;
+  onReview: (entry: TrendingDirectoryEntry) => void;
+  onLog: (entry: TrendingDirectoryEntry) => void;
+}
+
+function ReviewCard({ entry, reviewSubtype, onReview, onLog }: CardProps) {
   return (
     <div className="rrr-card-wrap">
       <Link href={`/directory/${entry.slug}`} className="rrr-card">
@@ -34,6 +52,9 @@ function ReviewCard({ entry, railKey }: { entry: TrendingDirectoryEntry; railKey
         </div>
         <div className="rrr-card-info">
           <h3>{titleCase(entry.title)}</h3>
+          {entry.creator && (
+            <p className="rrr-card-creator">{entry.creator}</p>
+          )}
           {entry.averageRating != null && (
             <div className="rrr-card-rating">
               <StarRating rating={entry.averageRating} />
@@ -42,8 +63,28 @@ function ReviewCard({ entry, railKey }: { entry: TrendingDirectoryEntry; railKey
               )}
             </div>
           )}
+          {entry.excerpt && (
+            <p className="rrr-card-excerpt">{entry.excerpt}</p>
+          )}
         </div>
       </Link>
+      <div className="rrr-card-actions">
+        <button
+          type="button"
+          className="rrr-card-btn"
+          onClick={() => onReview(entry)}
+        >
+          + Review
+        </button>
+        <span className="rrr-card-sep" aria-hidden>·</span>
+        <button
+          type="button"
+          className="rrr-card-btn"
+          onClick={() => onLog(entry)}
+        >
+          + Log
+        </button>
+      </div>
     </div>
   );
 }
@@ -52,40 +93,76 @@ interface Props {
   category: TrendingCategory;
 }
 
-const SECTION_LABEL: Record<string, string> = {
-  film: "Recently Reviewed",
-  music: "Recently Reviewed",
-  book: "Recently Reviewed",
-};
-
-const VIEW_ALL_LABEL: Record<string, string> = {
-  film: "See all films",
-  music: "See all music",
-  book: "See all books",
-};
-
 export default function RecentlyReviewedRail({ category }: Props) {
-  if (category.entries.length === 0) return null;
+  const { data: session } = useSession();
+  const [reviewEntry, setReviewEntry] = useState<TrendingDirectoryEntry | null>(null);
+  const [logEntry, setLogEntry] = useState<{ id: number; title: string; thumbnail: string | null } | null>(null);
+  const [pendingEntry, setPendingEntry] = useState<TrendingDirectoryEntry | null>(null);
 
-  const label = SECTION_LABEL[category.key] ?? "Recently Reviewed";
-  const viewAllLabel = VIEW_ALL_LABEL[category.key] ?? `See all ${category.label.toLowerCase()}`;
+  const openReview = useCallback((entry: TrendingDirectoryEntry) => {
+    if (!session) {
+      setPendingEntry(entry);
+      window.dispatchEvent(new Event("open-auth-modal"));
+      return;
+    }
+    setReviewEntry(entry);
+  }, [session]);
+
+  const openLog = useCallback((entry: TrendingDirectoryEntry) => {
+    setLogEntry({ id: entry.id, title: entry.title, thumbnail: entry.thumbnail ?? null });
+  }, []);
+
+  if (category.entries.length === 0) return null;
 
   return (
     <section className="arc-section rrr-section">
       <div className="wrap">
         <div className="rrr-hdr">
-          <p className="rrr-hdr-title">{label} <strong>{category.label}</strong></p>
+          <p className="rrr-hdr-title">
+            Recently Reviewed <strong>{category.label}</strong>
+          </p>
           <Link href={`/discover?type=${category.type}`} className="rrr-viewall">
-            {viewAllLabel} ›
+            See all {category.label.toLowerCase()} ›
           </Link>
         </div>
 
         <div className={`rrr-rail rrr-rail--${category.key}`}>
           {category.entries.slice(0, 5).map((entry) => (
-            <ReviewCard key={entry.id} entry={entry} railKey={category.key} />
+            <ReviewCard
+              key={entry.id}
+              entry={entry}
+              reviewSubtype={category.reviewSubtype}
+              onReview={openReview}
+              onLog={openLog}
+            />
           ))}
         </div>
       </div>
+
+      {reviewEntry && (
+        <ComposerModal
+          open
+          onClose={() => setReviewEntry(null)}
+          onSuccess={() => setReviewEntry(null)}
+          initialTab="review"
+          initialReview={{
+            subtype: category.reviewSubtype,
+            entry: {
+              id: reviewEntry.id,
+              title: reviewEntry.title,
+              slug: reviewEntry.slug,
+              thumbnail: reviewEntry.thumbnail,
+              city: reviewEntry.city,
+            },
+          }}
+        />
+      )}
+
+      <QuickLogModal
+        entry={logEntry}
+        isLoggedIn={!!session}
+        onClose={() => setLogEntry(null)}
+      />
     </section>
   );
 }
