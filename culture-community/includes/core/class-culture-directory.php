@@ -954,7 +954,7 @@ class Culture_Directory {
 
         // Find post IDs where any creator meta key contains the person's name.
         $like   = '%' . $wpdb->esc_like( $name ) . '%';
-        $keys   = array( 'dir_infobox_artist', 'dir_infobox_author', 'dir_infobox_director', 'dir_infobox_creator' );
+        $keys   = array( 'dir_infobox_artist', 'dir_infobox_author', 'dir_infobox_director', 'dir_infobox_creator', 'dir_infobox_starring' );
         $in_sql = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
         $args   = array_merge( $keys, array( $like ) );
 
