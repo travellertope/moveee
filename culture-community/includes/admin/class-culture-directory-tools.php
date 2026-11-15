@@ -375,6 +375,26 @@ class Culture_Directory_Tools {
 		$titles     = array_map( 'sanitize_text_field', (array) ( $_POST['titles'] ?? array() ) );
 		$entry_type = sanitize_text_field( $_POST['entry_type'] ?? 'concept' );
 
+		// Build extra taxonomy terms map: taxonomy_slug => [term_name, ...]
+		$extra_terms     = array();
+		$raw_extra_terms = $_POST['extra_terms'] ?? array();
+		if ( is_array( $raw_extra_terms ) ) {
+			foreach ( $raw_extra_terms as $taxonomy => $csv ) {
+				$taxonomy = sanitize_key( $taxonomy );
+				if ( ! taxonomy_exists( $taxonomy ) ) {
+					continue;
+				}
+				$tax_obj = get_taxonomy( $taxonomy );
+				if ( ! in_array( 'culture_directory', (array) $tax_obj->object_type, true ) ) {
+					continue;
+				}
+				$term_names = array_values( array_filter( array_map( 'sanitize_text_field', array_map( 'trim', explode( ',', $csv ) ) ) ) );
+				if ( $term_names ) {
+					$extra_terms[ $taxonomy ] = $term_names;
+				}
+			}
+		}
+
 		if ( empty( $titles ) ) {
 			wp_send_json_error( array( 'message' => 'No titles provided.' ) );
 		}
@@ -400,6 +420,24 @@ class Culture_Directory_Tools {
 
 				$post_id = self::create_wiki_directory_entry( $title, $page ?? array(), $entry_type );
 				if ( $post_id ) {
+					// Apply extra taxonomy terms (create new terms if they don't exist).
+					foreach ( $extra_terms as $taxonomy => $term_names ) {
+						$term_ids = array();
+						foreach ( $term_names as $name ) {
+							$term = get_term_by( 'name', $name, $taxonomy );
+							if ( $term ) {
+								$term_ids[] = (int) $term->term_id;
+							} else {
+								$inserted = wp_insert_term( $name, $taxonomy );
+								if ( ! is_wp_error( $inserted ) ) {
+									$term_ids[] = (int) $inserted['term_id'];
+								}
+							}
+						}
+						if ( $term_ids ) {
+							wp_set_object_terms( $post_id, $term_ids, $taxonomy, true );
+						}
+					}
 					$seeded++;
 					$results[] = array( 'title' => $title, 'success' => true );
 				} else {
@@ -1584,6 +1622,20 @@ class Culture_Directory_Tools {
 						</td>
 					</tr>
 					<tr>
+						<th><label for="cdw-tax-culture_dir_genre"><?php esc_html_e( 'Genre', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="text" id="cdw-tax-culture_dir_genre" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. indie pop, dream pop', 'culture-community' ); ?>">
+							<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cdw-tax-culture_interest"><?php esc_html_e( 'Interests', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="text" id="cdw-tax-culture_interest" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. music, culture', 'culture-community' ); ?>">
+							<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th><label><?php esc_html_e( 'Source', 'culture-community' ); ?></label></th>
 						<td>
 							<label><input type="radio" name="cdw-source" value="category" checked> Wikipedia Category</label>
@@ -2072,6 +2124,12 @@ class Culture_Directory_Tools {
 				if (!titles.length) { alert('Select at least one article.'); return; }
 
 				var entryType   = $('#cdw-entry-type').val();
+				var extraTerms  = {};
+				$('.cdw-extra-tax').each(function() {
+					var taxName = $(this).attr('id').replace('cdw-tax-', '');
+					var val = $(this).val().trim();
+					if (val) extraTerms[taxName] = val;
+				});
 				var $btn        = $(this).prop('disabled', true);
 				var $sp         = $('#cdw-seed-spinner').show();
 				var $res        = $('#cdw-seed-result').hide().html('');
@@ -2109,10 +2167,11 @@ class Culture_Directory_Tools {
 					}
 
 					$.post(ajaxUrl, {
-						action:     'culture_dir_wiki_seed',
-						nonce:      nonce,
-						titles:     chunk,
-						entry_type: entryType,
+						action:      'culture_dir_wiki_seed',
+						nonce:       nonce,
+						titles:      chunk,
+						entry_type:  entryType,
+						extra_terms: extraTerms,
 					})
 					.done(function(r) {
 						if (!r.success) {
