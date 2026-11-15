@@ -2,19 +2,15 @@ import React from "react";
 import { type EditionSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
-import { fetchHomepagePulse } from "@/lib/fetchHomepagePulse";
 import { fetchTrendingDirectory, type TrendingCategory } from "@/lib/fetchTrendingDirectory";
+import HomepageHero, { type HeroSlide } from "@/components/HomepageHero";
+import RecentlyReviewedRail from "@/components/RecentlyReviewedRail";
 import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
 import DirectoryDiscovery from "@/components/DirectoryDiscovery";
-import MasonryRandomSection from "@/components/MasonryRandomSection";
 import CultureNewsSection from "@/components/CultureNewsSection";
-import HomepageCommunityStream from "@/components/HomepageCommunityStream";
-import ShopRail from "@/components/ShopRail";
 import JoinSection from "@/components/JoinSection";
 import KafartSection from "@/components/KafartSection";
-
-import type { FeedItem } from "@/lib/unified-feed";
 
 interface HomeSections {
   coverStory: any;
@@ -27,7 +23,6 @@ interface HomeSections {
   opinionStories: any[];
   featureStory: any | null;
   kafartStories: any[];
-  communityItems: FeedItem[];
   trendingCategories: TrendingCategory[];
 }
 
@@ -42,17 +37,15 @@ const EMPTY: HomeSections = {
   opinionStories: [],
   featureStory: null,
   kafartStories: [],
-  communityItems: [],
   trendingCategories: [],
 };
 
 async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
   try {
-    const [homepageData, sections, newsletters, communityItems, trendingCategories] = await Promise.all([
+    const [homepageData, sections, newsletters, trendingCategories] = await Promise.all([
       fetchHomepageData(),
       getMagazineSections("global"),
       getNewslettersWithFallback(10).catch(() => []),
-      fetchHomepagePulse().catch(() => []),
       fetchTrendingDirectory().catch(() => []),
     ]);
 
@@ -99,7 +92,6 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       opinionStories: dedup(opinionStories),
       featureStory,
       kafartStories: rawKafart || [],
-      communityItems,
       trendingCategories,
     };
   } catch (err: any) {
@@ -112,20 +104,30 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
   const {
     coverStory,
     carouselStories,
-    featuredPool,
-    shopProducts,
-    portraitStories,
     editorialStories,
-    digestStories,
-    opinionStories,
     featureStory,
     kafartStories,
-    communityItems,
     trendingCategories,
   } = await loadHomeSections(edition);
 
+  // Use carousel story images as hero background slides (real CMS editorial photos)
+  const heroSlides: HeroSlide[] = carouselStories
+    .filter((s) => s.image)
+    .slice(0, 4)
+    .map((s) => ({ image: s.image as string, alt: s.alt || s.title || "" }));
+
+  const filmCategory = trendingCategories.find((c) => c.key === "film");
+  const musicCategory = trendingCategories.find((c) => c.key === "music");
+  const bookCategory = trendingCategories.find((c) => c.key === "book");
+
   return (
     <div className="hpv2">
+      <HomepageHero slides={heroSlides} />
+
+      {filmCategory && <RecentlyReviewedRail category={filmCategory} />}
+      {musicCategory && <RecentlyReviewedRail category={musicCategory} />}
+      {bookCategory && <RecentlyReviewedRail category={bookCategory} />}
+
       <FullBleedHero story={coverStory} />
 
       <section className="masthead" id="mainMasthead">
@@ -137,8 +139,6 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
       <DirectoryDiscovery categories={trendingCategories} />
 
       <CultureNewsSection stories={editorialStories} />
-
-      <HomepageCommunityStream items={communityItems} />
 
       <KafartSection stories={kafartStories} />
 
