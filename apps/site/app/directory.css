@@ -1005,7 +1005,10 @@
 }
 
 .dir-single-body p {
-  margin: 0 0 20px;
+  margin: 0 0 1.4em !important;
+}
+.dir-single-body p:last-child {
+  margin-bottom: 0 !important;
 }
 
 .dir-single-body ul {

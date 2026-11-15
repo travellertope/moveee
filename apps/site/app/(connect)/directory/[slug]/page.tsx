@@ -437,8 +437,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               </aside>
             )}
 
-            {/* Excerpt / description */}
-            {entry.excerpt && (
+            {/* Excerpt — only shown when there is no body content */}
+            {entry.excerpt && !entry.content && (
               <div className={`dir-entry-description${typeSlug === "book" ? " dir-entry-description--dropcap" : ""}`}>
                 <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
               </div>
