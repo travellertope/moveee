@@ -1495,7 +1495,7 @@ export default function FeedCard({
                     onClick={(e) => { e.stopPropagation(); submitReport(r); }}
                     style={{
                       width: "100%", padding: "0.75rem 1rem",
-                      background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                      background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                       borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                       textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
                       fontFamily: "inherit", fontWeight: 500, textTransform: "capitalize",
@@ -1543,7 +1543,7 @@ export default function FeedCard({
                     onClick={() => { setOwnerMenuOpen(false); setEditComposerOpen(true); }}
                     style={{
                       width: "100%", padding: "0.75rem 1rem",
-                      background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                      background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                       borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                       textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
                       fontFamily: "inherit", fontWeight: 500,
@@ -1556,7 +1556,7 @@ export default function FeedCard({
                   onClick={() => { setOwnerMenuOpen(false); setDeleteConfirm(true); }}
                   style={{
                     width: "100%", padding: "0.75rem 1rem",
-                    background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                    background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                     borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                     textAlign: "left", fontSize: "0.88rem", color: "#c0392b",
                     fontFamily: "inherit", fontWeight: 500,

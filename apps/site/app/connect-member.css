@@ -1770,7 +1770,7 @@ select.mem-field-input { cursor: pointer; }
    ═══════════════════════════════════════════════════════ */
 
 .sett-page {
-  background: #f7f8fb;
+  background: var(--bg-page, #f7f8fb);
   min-height: 100vh;
 }
 .sett-wrap {
@@ -1785,8 +1785,8 @@ select.mem-field-input { cursor: pointer; }
   flex: 1;
   min-width: 0;
   max-width: 820px;
-  background: #fff;
-  border: 1px solid #e8eaf0;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e8eaf0);
   border-radius: var(--radius-xl, 12px);
   box-shadow: 0 1px 6px rgba(20,17,13,0.07);
   overflow: hidden;
@@ -1796,7 +1796,7 @@ select.mem-field-input { cursor: pointer; }
 .sett-tabs-bar {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid #e8eaf0;
+  border-bottom: 1px solid var(--rule, #e8eaf0);
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -1859,7 +1859,7 @@ select.mem-field-input { cursor: pointer; }
   align-items: center;
   gap: 16px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #e8eaf0;
+  border-bottom: 1px solid var(--rule, #e8eaf0);
   flex-wrap: wrap;
 }
 
@@ -1919,7 +1919,7 @@ select.mem-field-input { cursor: pointer; }
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid #e8eaf0;
+  border-top: 1px solid var(--rule, #e8eaf0);
   flex-wrap: wrap;
 }
 .sett-saved-msg { font-size: 12px; color: #2e7d32; font-weight: 600; }
@@ -1943,7 +1943,7 @@ select.mem-field-input { cursor: pointer; }
 /* ── Section divider (between sections inside sett-body) ── */
 .sett-divider {
   border: none;
-  border-top: 1px solid #e8eaf0;
+  border-top: 1px solid var(--rule, #e8eaf0);
   margin: 0;
 }
 
@@ -1958,6 +1958,16 @@ select.mem-field-input { cursor: pointer; }
   .sett-form-grid { grid-template-columns: 1fr; }
   .sett-form-field--full { grid-column: 1; }
   .sett-interest-grid { grid-template-columns: 1fr 1fr; }
+}
+/* At narrow phone widths the card should sit flush edge-to-edge */
+@media (max-width: 480px) {
+  .sett-page { padding: 0; }
+  .sett-wrap { padding: 0 0 40px; }
+  .sett-shell { border-radius: 0; border-left: none; border-right: none; max-width: none; }
+  .sett-tabs-bar { padding: 0 12px; }
+  .sett-tab { padding: 13px 10px 11px; font-size: 10.5px; }
+  .sett-tab--active::after { left: 10px; right: 10px; }
+  .sett-body { padding: 20px 14px; }
 }
 
 /* ── Interests tab ── */
