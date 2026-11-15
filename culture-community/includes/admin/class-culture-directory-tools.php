@@ -353,15 +353,15 @@ class Culture_Directory_Tools {
 	/** Fetch page extracts + thumbnails + Wikidata QID for up to 20 titles in one API call. */
 	private static function wiki_fetch_pages_batch( array $titles ): array {
 		$url = add_query_arg( array(
-			'action'      => 'query',
-			'prop'        => 'extracts|pageimages|pageprops',
-			'exintro'     => '1',
-			'exsentences' => '10',
-			'pithumbsize' => '640',
-			'pilicense'   => 'any',
-			'titles'      => implode( '|', $titles ),
-			'redirects'   => '1',
-			'format'      => 'json',
+			'action'       => 'query',
+			'prop'         => 'extracts|pageimages|pageprops',
+			'exintro'      => '1',
+			'exPlainText'  => '1',
+			'pithumbsize'  => '640',
+			'pilicense'    => 'any',
+			'titles'       => implode( '|', $titles ),
+			'redirects'    => '1',
+			'format'       => 'json',
 		), 'https://en.wikipedia.org/w/api.php' );
 
 		$response = wp_remote_get( $url, array( 'timeout' => 20 ) );
