@@ -254,8 +254,8 @@ export default function CommunityRadarSection({ events }: CommunityRadarSectionP
         {/* Submission form */}
         {showForm && (
           <div style={{
-            background: "#f5f5f5",
-            border: "1px solid #e0dbd1",
+            background: "var(--paper-deep, #f5f5f5)",
+            border: "1px solid var(--rule, #e0dbd1)",
             borderRadius: "2px",
             padding: "2rem",
             marginBottom: "2.5rem",

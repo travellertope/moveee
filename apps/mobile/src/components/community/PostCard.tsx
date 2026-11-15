@@ -13,6 +13,7 @@ import type { Tier } from "../../types";
 import TierBadge from "../ui/TierBadge";
 import TimeAgo from "../ui/TimeAgo";
 import Avatar from "../ui/Avatar";
+import { useColors } from "../../hooks/useColors";
 
 // Not the unified FeedItem shape — a raw community_post API response,
 // same loose/pragmatic style as the local CommunityPost interfaces in
@@ -40,6 +41,7 @@ interface Props {
 
 export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props) {
   const [reported, setReported] = useState(false);
+  const c = useColors();
 
   const submitReport = async (reason: "spam" | "harassment" | "inappropriate") => {
     try {
@@ -62,7 +64,7 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.95}>
+    <TouchableOpacity style={[styles.card, { backgroundColor: c.paper }]} onPress={onPress} activeOpacity={0.95}>
       <TouchableOpacity style={styles.authorRow} onPress={onAuthorPress}>
         <Avatar
           uri={post.author.avatarUrl}
@@ -72,7 +74,7 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
         />
         <View style={styles.authorMeta}>
           <View style={styles.nameRow}>
-            <Text style={styles.authorName}>{post.author.name}</Text>
+            <Text style={[styles.authorName, { color: c.ink }]}>{post.author.name}</Text>
             <TierBadge tier={post.author.tier} />
           </View>
           <TimeAgo date={post.publishedAt} />
@@ -89,7 +91,7 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
         </View>
       ) : null}
 
-      <Text style={styles.content} numberOfLines={6}>
+      <Text style={[styles.content, { color: c.ink }]} numberOfLines={6}>
         {post.content}
       </Text>
 
@@ -102,14 +104,14 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
           <Ionicons
             name={post.liked ? "heart" : "heart-outline"}
             size={20}
-            color={post.liked ? "#c0392b" : "#9e9e9e"}
+            color={post.liked ? "#c0392b" : c.mute}
           />
-          <Text style={styles.actionCount}>{post.likeCount}</Text>
+          <Text style={[styles.actionCount, { color: c.mute }]}>{post.likeCount}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionBtn} onPress={onPress}>
-          <Ionicons name="chatbubble-outline" size={20} color="#9e9e9e" />
-          <Text style={styles.actionCount}>{post.commentCount}</Text>
+          <Ionicons name="chatbubble-outline" size={20} color={c.mute} />
+          <Text style={[styles.actionCount, { color: c.mute }]}>{post.commentCount}</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -118,7 +120,7 @@ export default function PostCard({ post, onPress, onLike, onAuthorPress }: Props
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "transparent", /* overridden at render time by useColors */
     marginHorizontal: 12,
     marginVertical: 6,
     borderRadius: 12,
@@ -137,14 +139,14 @@ const styles = StyleSheet.create({
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#e0d8cc" },
   authorMeta: { flex: 1, marginLeft: 10 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  authorName: { fontWeight: "600", fontSize: 14, color: "#14110d" },
+  authorName: { fontWeight: "600", fontSize: 14 },
   pendingBadge: {
     flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start",
     backgroundColor: "#fef3c7", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3,
     marginBottom: 8,
   },
   pendingText: { fontSize: 11, color: "#9a6b1f", fontWeight: "600" },
-  content: { fontSize: 15, color: "#14110d", lineHeight: 22, marginBottom: 10 },
+  content: { fontSize: 15, lineHeight: 22, marginBottom: 10 },
   postImage: {
     width: "100%",
     height: 200,

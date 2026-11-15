@@ -14,7 +14,7 @@ export default function Loading() {
       <div style={{ height: "50vh", ...shimmer, borderRadius: 0 }} />
 
       {/* Filter bar */}
-      <div style={{ height: "48px", background: "#f5f5f5", borderBottom: "1px solid #e8e2d8" }} />
+      <div style={{ height: "48px", background: "var(--paper-deep)", borderBottom: "1px solid var(--rule, #e8e2d8)" }} />
 
       {/* Cards */}
       <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "3rem 2rem", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "2rem" }}>
