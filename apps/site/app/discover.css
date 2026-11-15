@@ -299,6 +299,16 @@
 }
 .disc-card:hover .disc-card-title { color: var(--ochre, #7a241c); }
 
+.disc-card-creator {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .disc-card-excerpt {
   font-size: 12.5px;
   line-height: 1.5;

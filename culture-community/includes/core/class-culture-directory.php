@@ -904,6 +904,9 @@ class Culture_Directory {
                 // iTunes 30s preview URL — stored on quick-create from iTunes catalog;
                 // meta cache was primed above by update_meta_cache() so this is a cache hit.
                 'previewUrl'    => get_post_meta( $post->ID, '_external_preview_url', true ) ?: null,
+                // Primary creator credit for the card subtitle — artist/author/director
+                // varies by type; meta cache is primed above so these are cache hits.
+                'creator'       => self::get_creator_for_type( $post->ID, $type_slug ),
             );
         }
 
@@ -914,6 +917,24 @@ class Culture_Directory {
             'perPage' => $per_page,
             'seed'    => $seed ?: null,
         ) );
+    }
+
+    /**
+     * Returns the primary creator credit for a directory entry card (album artist,
+     * book author, film director, tv-series creator, artwork artist). Returns '' when
+     * the type has no meaningful single-credit field or the meta is empty.
+     */
+    private static function get_creator_for_type( int $post_id, string $type_slug ): string {
+        $meta_key = '';
+        switch ( $type_slug ) {
+            case 'album':   $meta_key = 'dir_infobox_artist';   break;
+            case 'book':    $meta_key = 'dir_infobox_author';   break;
+            case 'film':    $meta_key = 'dir_infobox_director'; break;
+            case 'tv-series': $meta_key = 'dir_infobox_creator'; break;
+            case 'artwork': $meta_key = 'dir_infobox_artist';   break;
+        }
+        if ( ! $meta_key ) return '';
+        return (string) ( get_post_meta( $post_id, $meta_key, true ) ?: '' );
     }
 
     // ── Phase 3: Quick-create stub ───────────────────────────────────────────
