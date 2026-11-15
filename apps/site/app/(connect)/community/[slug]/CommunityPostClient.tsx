@@ -175,7 +175,7 @@ function CommentItem({
   return (
     <div>
       <div style={{
-        background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "12px", padding: "0.9rem 1rem",
+        background: "var(--paper-deep, #f8f6f2)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "12px", padding: "0.9rem 1rem",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.45rem" }}>
           <Avatar name={comment.author_name} size={28} />
@@ -204,7 +204,7 @@ function CommentItem({
         }}>
           {replies.map(reply => (
             <div key={reply.id} style={{
-              background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "12px", padding: "0.75rem 1rem",
+              background: "var(--paper-deep, #f8f6f2)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "12px", padding: "0.75rem 1rem",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
                 <Avatar name={reply.author_name} size={24} bg="#f0ece4" border="#e0d8ce" color="#7a6f5c" />
@@ -481,7 +481,7 @@ export default function CommunityPostClient({
       {/* Music review */}
       {templateType === "music-review" && musicTitle && (
         <CardLink slug={linkedDirectorySlug}>
-        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
+        <div style={{ background: "var(--paper-deep, #f8f6f2)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             <div onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
               <AudioPreviewButton src={musicPreviewUrl} coverUrl={musicCoverUrl} size={100} />
@@ -521,7 +521,7 @@ export default function CommunityPostClient({
       {/* Book review */}
       {templateType === "book-review" && bookTitle && (
         <CardLink slug={linkedDirectorySlug}>
-        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
+        <div style={{ background: "var(--paper-deep, #f8f6f2)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             {bookCoverUrl && (
               <img src={bookCoverUrl} alt={bookTitle} style={{ width: 78, height: 110, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
@@ -561,7 +561,7 @@ export default function CommunityPostClient({
       {/* Film review */}
       {templateType === "film-review" && filmTitle && (
         <CardLink slug={linkedDirectorySlug}>
-        <div style={{ background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
+        <div style={{ background: "var(--paper-deep, #f8f6f2)", border: "1px solid rgba(20,17,13,0.08)", borderRadius: "var(--radius-xl,12px)", padding: "14px", marginBottom: "1rem", cursor: linkedDirectorySlug ? "pointer" : undefined }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
             {filmCoverUrl && (
               <img src={filmCoverUrl} alt={filmTitle} style={{ width: 78, height: 110, borderRadius: "var(--radius-md,4px)", objectFit: "cover", flexShrink: 0 }} loading="lazy" />
@@ -731,8 +731,8 @@ export default function CommunityPostClient({
               placeholder={replyTo ? `Reply to ${replyTo.name}…` : "Share your thoughts…"}
               rows={3}
               style={{
-                width: "100%", background: "#f8f6f2", border: "1px solid rgba(20,17,13,0.08)",
-                borderRadius: "12px", color: "#14110d",
+                width: "100%", background: "var(--paper-deep, #f8f6f2)", border: "1px solid rgba(20,17,13,0.08)",
+                borderRadius: "12px", color: "var(--ink, #14110d)",
                 fontFamily: "var(--font-inter), 'Inter', sans-serif",
                 fontSize: "0.9rem", lineHeight: 1.6, resize: "vertical",
                 outline: "none", padding: "0.75rem 1rem", boxSizing: "border-box",
@@ -760,9 +760,9 @@ export default function CommunityPostClient({
           <button
             onClick={() => window.dispatchEvent(new Event("open-auth-modal"))}
             style={{
-              width: "100%", background: "#f8f6f2",
+              width: "100%", background: "var(--paper-deep, #f8f6f2)",
               border: "1px solid rgba(20,17,13,0.1)",
-              borderRadius: "12px", padding: "1rem", color: "#7a6f5c",
+              borderRadius: "12px", padding: "1rem", color: "var(--mute, #7a6f5c)",
               fontSize: "0.9rem", textAlign: "center", cursor: "pointer",
               fontFamily: "var(--font-inter), 'Inter', sans-serif",
             }}
@@ -797,7 +797,7 @@ export default function CommunityPostClient({
                 onClick={() => submitReport(r)}
                 style={{
                   width: "100%", padding: "0.75rem 1rem",
-                  background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                  background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                   borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                   textAlign: "left", fontSize: "0.88rem", color: "var(--ink, #14110d)",
                   fontFamily: "inherit", fontWeight: 500,
@@ -834,14 +834,14 @@ export default function CommunityPostClient({
             {canEdit && (
               <button
                 onClick={() => { setOwnerMenuOpen(false); setEditText(text); setEditOpen(true); }}
-                style={{ width: "100%", padding: "0.8rem 1rem", background: "#fff", border: "1px solid #e0d8ce", borderRadius: "6px", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "#14110d", fontFamily: "inherit", fontWeight: 500 }}
+                style={{ width: "100%", padding: "0.8rem 1rem", background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e0d8ce)", borderRadius: "6px", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "var(--ink, #14110d)", fontFamily: "inherit", fontWeight: 500 }}
               >
                 Edit post
               </button>
             )}
             <button
               onClick={() => { setOwnerMenuOpen(false); setDeleteConfirm(true); }}
-              style={{ width: "100%", padding: "0.8rem 1rem", background: "#fff", border: "1px solid #e0d8ce", borderRadius: "6px", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "#c62828", fontFamily: "inherit", fontWeight: 500 }}
+              style={{ width: "100%", padding: "0.8rem 1rem", background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e0d8ce)", borderRadius: "6px", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "#c62828", fontFamily: "inherit", fontWeight: 500 }}
             >
               Delete post
             </button>
@@ -887,7 +887,7 @@ export default function CommunityPostClient({
             value={editText}
             onChange={e => setEditText(e.target.value.slice(0, 2000))}
             rows={6}
-            style={{ width: "100%", background: "#f8f6f2", border: "1px solid #e0d8ce", borderRadius: "4px", color: "#14110d", fontFamily: "inherit", fontSize: "0.9rem", lineHeight: 1.6, resize: "vertical", outline: "none", padding: "0.75rem 1rem", boxSizing: "border-box" }}
+            style={{ width: "100%", background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e0d8ce)", borderRadius: "4px", color: "var(--ink, #14110d)", fontFamily: "inherit", fontSize: "0.9rem", lineHeight: 1.6, resize: "vertical", outline: "none", padding: "0.75rem 1rem", boxSizing: "border-box" }}
           />
           {editError && <p style={{ color: "#7a241c", fontSize: "0.78rem", margin: "0.4rem 0 0" }}>{editError}</p>}
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>

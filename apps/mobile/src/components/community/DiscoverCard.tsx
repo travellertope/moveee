@@ -16,6 +16,7 @@ export interface DiscoverEntry {
   reviewCount: number;
   dateAdded: string;
   isNew: boolean;
+  creator?: string | null;
 }
 
 export const TYPE_BADGE: Record<string, { emoji: string; label: string; color: string }> = {
@@ -70,6 +71,9 @@ export default function DiscoverCard({ entry, c, compact, onPress }: Props) {
           {badge.emoji} {badge.label}
         </Text>
         <Text style={styles.title} numberOfLines={2}>{entry.title}</Text>
+        {entry.creator ? (
+          <Text style={styles.creator} numberOfLines={1}>{entry.creator}</Text>
+        ) : null}
         {!compact && entry.excerpt ? (
           <Text style={styles.excerpt} numberOfLines={3}>{entry.excerpt}</Text>
         ) : null}
@@ -128,6 +132,13 @@ const createStyles = (c: ColorPalette) =>
       fontSize: fontSize.sm,
       color: c.ink,
       lineHeight: 17,
+    },
+    creator: {
+      fontFamily: fonts.sans,
+      fontSize: fontSize.xs,
+      color: c.inkSoft,
+      lineHeight: 15,
+      marginTop: 2,
     },
     excerpt: {
       fontFamily: fonts.sans,

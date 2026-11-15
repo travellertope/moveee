@@ -23,6 +23,7 @@ export interface DiscoverEntry {
   isNew: boolean;
   addedBy?: { username: string; displayName: string } | null;
   previewUrl?: string | null;
+  creator?: string | null;
 }
 
 interface BrowseResponse {
@@ -148,6 +149,7 @@ function DiscoverCard({
         </div>
         <div className="disc-card-body">
           <h2 className="disc-card-title">{entry.title}</h2>
+          {entry.creator && <p className="disc-card-creator">{entry.creator}</p>}
           {entry.excerpt && <p className="disc-card-excerpt">{entry.excerpt}</p>}
           <div className="disc-card-footer">
             <span className="disc-card-attribution">

@@ -526,15 +526,19 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (index: n
     );
   }
 
-  // Multi-image strip — images fill the available card width evenly so 2 photos
-  // take 50% each, 3 take 33%, 4 take 25%, rather than leaving empty space.
+  // Scrollable carousel — shows ~2 images at a time, scroll to see more
   return (
     <div
       style={{
         display: "flex",
-        gap: "6px",
+        gap: "8px",
         marginBottom: "0.6rem",
-      }}
+        overflowX: "auto",
+        scrollSnapType: "x mandatory",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+      } as React.CSSProperties}
     >
       {images.map((img, i) => (
         <img
@@ -543,16 +547,15 @@ function GalleryCarousel({ images, onTap }: { images: string[]; onTap: (index: n
           alt=""
           onClick={() => onTap(i)}
           style={{
-            flex: "1 1 0",
-            minWidth: 0,
-            maxWidth: "220px",
+            flex: "0 0 calc(50% - 4px)",
+            width: "calc(50% - 4px)",
             aspectRatio: "1",
-            height: "auto",
             objectFit: "cover",
             display: "block",
             borderRadius: "8px",
             border: "1px solid var(--rule)",
             cursor: "zoom-in",
+            scrollSnapAlign: "start",
           }}
           loading="lazy"
         />
@@ -1492,7 +1495,7 @@ export default function FeedCard({
                     onClick={(e) => { e.stopPropagation(); submitReport(r); }}
                     style={{
                       width: "100%", padding: "0.75rem 1rem",
-                      background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                      background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                       borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                       textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
                       fontFamily: "inherit", fontWeight: 500, textTransform: "capitalize",
@@ -1540,7 +1543,7 @@ export default function FeedCard({
                     onClick={() => { setOwnerMenuOpen(false); setEditComposerOpen(true); }}
                     style={{
                       width: "100%", padding: "0.75rem 1rem",
-                      background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                      background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                       borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                       textAlign: "left", fontSize: "0.88rem", color: "var(--ink)",
                       fontFamily: "inherit", fontWeight: 500,
@@ -1553,7 +1556,7 @@ export default function FeedCard({
                   onClick={() => { setOwnerMenuOpen(false); setDeleteConfirm(true); }}
                   style={{
                     width: "100%", padding: "0.75rem 1rem",
-                    background: "#fff", border: "1px solid var(--rule, #e8e2d8)",
+                    background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule, #e8e2d8)",
                     borderRadius: "var(--radius-lg, 6px)", cursor: "pointer",
                     textAlign: "left", fontSize: "0.88rem", color: "#c0392b",
                     fontFamily: "inherit", fontWeight: 500,

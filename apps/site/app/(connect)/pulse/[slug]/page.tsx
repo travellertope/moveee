@@ -153,7 +153,7 @@ export default async function PulseStoryPage({
         .pulse-story-body p:last-child { margin-bottom: 0; }
       `}</style>
 
-      <div style={{ background: "#ffffff" }}>
+      <div style={{ background: "var(--paper)" }}>
         {/* Same 2-column track as /feed (.pulse-layout--feed: timeline +
             right rail, no separate content-type sidebar) — this page is an
             extension of the feed, not a distinct section with its own nav. */}

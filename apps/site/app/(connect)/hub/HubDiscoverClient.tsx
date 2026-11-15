@@ -37,7 +37,7 @@ function HubCard({ hub }: { hub: Hub }) {
       ) : (
         <div style={{
           width: "100%", height: 100, borderRadius: "var(--radius-md, 4px)",
-          background: "#f2f2f2", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "var(--paper-deep, #f2f2f2)", display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "1.6rem",
         }}>
           🏷
@@ -135,7 +135,7 @@ export default function HubDiscoverClient({
       <div style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid #e8e2d8", display: "flex", gap: 8, flexWrap: "wrap" }}>
         <div style={{
           flex: "1 1 200px", display: "flex", alignItems: "center", gap: 8,
-          background: "#f5f5f5", border: "1px solid rgba(42,36,28,.15)", borderRadius: "999px",
+          background: "var(--paper-deep, #f5f5f5)", border: "1px solid rgba(42,36,28,.15)", borderRadius: "999px",
           padding: "8px 14px",
         }}>
           <span style={{ fontSize: "0.85rem", color: "#7a6f5c" }}>🔍</span>

@@ -31,6 +31,7 @@ class Culture_Post_Types {
         add_action( 'issue_edit_form_fields', array( __CLASS__, 'issue_edit_form_fields' ), 10, 2 );
         add_action( 'created_issue',          array( __CLASS__, 'issue_save_meta' ) );
         add_action( 'edited_issue',           array( __CLASS__, 'issue_save_meta' ) );
+
     }
 
     /**
@@ -2388,4 +2389,5 @@ class Culture_Post_Types {
 
         return $args;
     }
+
 }

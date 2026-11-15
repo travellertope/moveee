@@ -181,7 +181,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
 
             {/* Hub hero card */}
             <article style={{
-              background: "#fff",
+              background: "var(--paper, #fff)",
               borderRadius: "var(--radius-xl, 12px)",
               border: "1px solid var(--rule, #e8e2d8)",
               overflow: "hidden",
@@ -251,7 +251,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                 {!hub.isOfficial && hub.category && !hub.coverImageUrl && (
                   <div style={{ marginBottom: "0.5rem" }}>
                     <span style={{
-                      background: "#f7f5f2", color: "#7a6f5c",
+                      background: "var(--paper-deep, #f7f5f2)", color: "var(--mute, #7a6f5c)",
                       fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
                       textTransform: "uppercase", padding: "0.15rem 0.5rem",
                       borderRadius: "var(--radius-full, 9999px)",
@@ -351,7 +351,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                 href={`/cluster/${hub.clusterId}`}
                 style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  background: "#fff", borderBottom: "1px solid var(--rule, #e8e2d8)",
+                  background: "var(--paper, #fff)", borderBottom: "1px solid var(--rule, #e8e2d8)",
                   padding: "0.9rem 1.25rem", textDecoration: "none", color: "inherit",
                 }}
               >
@@ -368,7 +368,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
 
             {/* Related events */}
             {relatedEvents.length > 0 && (
-              <div style={{ background: "#fff", borderBottom: "1px solid var(--rule, #e8e2d8)", padding: "1rem 1.25rem" }}>
+              <div style={{ background: "var(--paper, #fff)", borderBottom: "1px solid var(--rule, #e8e2d8)", padding: "1rem 1.25rem" }}>
                 <p style={{
                   color: "#7a6f5c", fontSize: "0.6rem", fontWeight: 700,
                   letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 0.6rem",
@@ -385,7 +385,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                       {ev.imageUrl ? (
                         <img src={ev.imageUrl} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: "var(--radius-md, 4px)" }} />
                       ) : (
-                        <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md, 4px)", background: "#f2f2f2" }} />
+                        <div style={{ width: 44, height: 44, borderRadius: "var(--radius-md, 4px)", background: "var(--paper-deep, #f2f2f2)" }} />
                       )}
                       <div style={{ flex: 1 }}>
                         <p style={{ margin: "0 0 0.15rem", fontSize: "0.82rem", color: "#14110d", fontWeight: 600 }}>{ev.title}</p>
@@ -413,7 +413,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
 
             {/* About Moveee */}
             <div style={{
-              background: "#fff",
+              background: "var(--paper, #fff)",
               border: "1px solid var(--rule, #e8e2d8)",
               borderRadius: "var(--radius-xl, 12px)",
               padding: "1rem 1.25rem",
@@ -443,7 +443,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
             {/* Trending in this Hub */}
             {topPosts.length > 0 && (
               <div style={{
-                background: "#fff",
+                background: "var(--paper, #fff)",
                 border: "1px solid var(--rule, #e8e2d8)",
                 borderRadius: "var(--radius-xl, 12px)",
                 overflow: "hidden",
@@ -452,7 +452,7 @@ export default async function HubPage({ params }: { params: Promise<{ slug: stri
                 <div style={{
                   padding: "0.65rem 1.25rem",
                   borderBottom: "1px solid var(--rule, #e8e2d8)",
-                  background: "#fafaf9",
+                  background: "var(--paper-deep, #fafaf9)",
                 }}>
                   <p style={{
                     color: "#3a342b", fontSize: "0.6rem", fontWeight: 700,

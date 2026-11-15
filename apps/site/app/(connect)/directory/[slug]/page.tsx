@@ -1,4 +1,4 @@
-import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback, getDirectoryPosts, getDirectoryEvents, type DirectoryEvent } from "@/lib/wp";
+import { getWPData, GET_DIRECTORY_ENTRY_BY_SLUG, getDirectoryEntriesWithFallback, getDirectoryPosts, getDirectoryEvents, getPersonWorks, type DirectoryEvent, type PersonWork } from "@/lib/wp";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -89,6 +89,10 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
     const allEntries = await getDirectoryEntriesWithFallback(200);
     const scored: { entry: any; score: number }[] = allEntries
       .filter((e: any) => e.slug !== slug)
+      .filter((e: any) => {
+        // Only include entries that have a real photo — no placeholders/fallbacks shown
+        return !!(e.featuredImage?.node?.sourceUrl || e.externalCoverUrl);
+      })
       .map((e: any) => {
         const eType = e.cultureDirectoryTypes?.nodes?.[0]?.slug ?? "";
         const eInterests: string[] = (e.cultureInterests?.nodes ?? []).map((n: any) => n.slug);
@@ -109,13 +113,18 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
   const twitterHandle   = entry.twitterHandle   ?? "";
   const infobox: Record<string, string> = entry.infobox ?? {};
 
-  const [communityData, directoryEvents] = await Promise.all([
+  const personName = typeSlug === "person"
+    ? (entry.title ?? "").replace(/<[^>]*>/g, "").trim()
+    : "";
+
+  const [communityData, directoryEvents, personWorks] = await Promise.all([
     entry.databaseId
       ? getDirectoryPosts(entry.databaseId)
       : Promise.resolve({ posts: [], quotes: [], summary: { total_posts: 0, average_rating: null, by_template: {}, total_quotes: 0 } }),
     entry.databaseId
       ? getDirectoryEvents(entry.databaseId)
       : Promise.resolve([] as DirectoryEvent[]),
+    personName ? getPersonWorks(personName) : Promise.resolve([] as PersonWork[]),
   ]);
   const { posts: communityPosts, summary: communitySummary } = communityData;
   const directoryQuotes = communityData.quotes ?? [];
@@ -433,8 +442,8 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               </aside>
             )}
 
-            {/* Excerpt / description */}
-            {entry.excerpt && (
+            {/* Excerpt — only shown when there is no body content */}
+            {entry.excerpt && !entry.content && (
               <div className={`dir-entry-description${typeSlug === "book" ? " dir-entry-description--dropcap" : ""}`}>
                 <p dangerouslySetInnerHTML={{ __html: sanitizeHtml(entry.excerpt.replace(/<[^>]*>/g, "")) }} />
               </div>
@@ -469,6 +478,51 @@ export default async function DirectoryEntryPage({ params }: { params: Promise<{
               </div>
             </div>
           )}
+
+          {/* Person — works in the directory (albums, books, films, etc.) */}
+          {typeSlug === "person" && personWorks.length > 0 && (() => {
+            const TYPE_LABEL: Record<string, string> = {
+              album: "Albums", book: "Books", film: "Films",
+              "tv-series": "TV Series", artwork: "Artworks",
+            };
+            const groups: Record<string, PersonWork[]> = {};
+            for (const w of personWorks) {
+              if (!groups[w.type]) groups[w.type] = [];
+              groups[w.type].push(w);
+            }
+            const order = ["album", "book", "film", "tv-series", "artwork"];
+            const sorted = order.filter(t => groups[t]).concat(
+              Object.keys(groups).filter(t => !order.includes(t))
+            );
+            return (
+              <div className="dir-person-works">
+                <h3 className="dir-entry-specifics-heading">In the Directory</h3>
+                {sorted.map(type => (
+                  <div key={type} className="dir-person-works-group">
+                    <h4 className="dir-person-works-type">{TYPE_LABEL[type] ?? type}</h4>
+                    <div className="dir-person-works-grid">
+                      {groups[type].map(w => (
+                        <Link key={w.id} href={`/directory/${w.slug}`} className="dir-person-work-card">
+                          <div className="dir-person-work-cover">
+                            {w.thumbnail ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={w.thumbnail} alt="" className="dir-person-work-img" loading="lazy" />
+                            ) : (
+                              <div className="dir-person-work-placeholder" />
+                            )}
+                          </div>
+                          <div className="dir-person-work-info">
+                            <span className="dir-person-work-title">{w.title}</span>
+                            {w.year && <span className="dir-person-work-year">{w.year}</span>}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Added date */}
           {date && <p className="dir-entry-added-date">Added to directory {date}</p>}

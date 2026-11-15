@@ -1770,7 +1770,7 @@ select.mem-field-input { cursor: pointer; }
    ═══════════════════════════════════════════════════════ */
 
 .sett-page {
-  background: #f7f8fb;
+  background: var(--bg-page, #f7f8fb);
   min-height: 100vh;
 }
 .sett-wrap {
@@ -1785,8 +1785,8 @@ select.mem-field-input { cursor: pointer; }
   flex: 1;
   min-width: 0;
   max-width: 820px;
-  background: #fff;
-  border: 1px solid #e8eaf0;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e8eaf0);
   border-radius: var(--radius-xl, 12px);
   box-shadow: 0 1px 6px rgba(20,17,13,0.07);
   overflow: hidden;
@@ -1796,7 +1796,7 @@ select.mem-field-input { cursor: pointer; }
 .sett-tabs-bar {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid #e8eaf0;
+  border-bottom: 1px solid var(--rule, #e8eaf0);
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -1859,7 +1859,7 @@ select.mem-field-input { cursor: pointer; }
   align-items: center;
   gap: 16px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #e8eaf0;
+  border-bottom: 1px solid var(--rule, #e8eaf0);
   flex-wrap: wrap;
 }
 
@@ -1919,7 +1919,7 @@ select.mem-field-input { cursor: pointer; }
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid #e8eaf0;
+  border-top: 1px solid var(--rule, #e8eaf0);
   flex-wrap: wrap;
 }
 .sett-saved-msg { font-size: 12px; color: #2e7d32; font-weight: 600; }
@@ -1943,7 +1943,7 @@ select.mem-field-input { cursor: pointer; }
 /* ── Section divider (between sections inside sett-body) ── */
 .sett-divider {
   border: none;
-  border-top: 1px solid #e8eaf0;
+  border-top: 1px solid var(--rule, #e8eaf0);
   margin: 0;
 }
 
@@ -1958,6 +1958,16 @@ select.mem-field-input { cursor: pointer; }
   .sett-form-grid { grid-template-columns: 1fr; }
   .sett-form-field--full { grid-column: 1; }
   .sett-interest-grid { grid-template-columns: 1fr 1fr; }
+}
+/* At narrow phone widths the card should sit flush edge-to-edge */
+@media (max-width: 480px) {
+  .sett-page { padding: 0; }
+  .sett-wrap { padding: 0 0 40px; }
+  .sett-shell { border-radius: 0; border-left: none; border-right: none; max-width: none; }
+  .sett-tabs-bar { padding: 0 12px; }
+  .sett-tab { padding: 13px 10px 11px; font-size: 10.5px; }
+  .sett-tab--active::after { left: 10px; right: 10px; }
+  .sett-body { padding: 20px 14px; }
 }
 
 /* ── Interests tab ── */
@@ -2286,7 +2296,7 @@ select.mem-field-input { cursor: pointer; }
    ═══════════════════════════════════════════════════ */
 
 .acct-page {
-  background: #f7f8fb;
+  background: var(--bg-page, #f7f8fb);
   min-height: 100vh;
 }
 
@@ -2404,8 +2414,8 @@ select.mem-field-input { cursor: pointer; }
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
+  border: 1.5px solid var(--rule, #e2e8f0);
+  background: var(--paper-deep, #f8f6f2);
   color: var(--ink-soft);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   transition: border-color 0.12s, color 0.12s;
@@ -2525,8 +2535,8 @@ select.mem-field-input { cursor: pointer; }
 @media (max-width: 560px) { .acct-stats { grid-template-columns: repeat(2, 1fr); } }
 
 .acct-stat-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e2e8f0);
   border-radius: var(--radius-2xl);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   padding: 18px;
@@ -2645,7 +2655,7 @@ select.mem-field-input { cursor: pointer; }
   margin-top: 6px;
 }
 .acct-stat-sub--pill {
-  background: #f7f8fb;
+  background: var(--paper-deep, #f7f8fb);
   border-radius: var(--radius-md);
   padding: 3px 8px;
   display: inline-block;
@@ -2663,8 +2673,8 @@ select.mem-field-input { cursor: pointer; }
 @media (max-width: 860px) { .acct-body { grid-template-columns: 1fr; } }
 
 .acct-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e2e8f0);
   border-radius: var(--radius-2xl);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   padding: 24px;
@@ -2677,8 +2687,8 @@ select.mem-field-input { cursor: pointer; }
   justify-content: space-between;
   margin: -24px -24px 20px;
   padding: 16px 24px;
-  background: #f7f8fb;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--paper-deep, #f7f8fb);
+  border-bottom: 1px solid var(--rule, #e2e8f0);
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }
 
@@ -2696,8 +2706,8 @@ select.mem-field-input { cursor: pointer; }
   font-size: 12px;
   font-weight: 700;
   color: var(--mute);
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--paper, #fff);
+  border: 1px solid var(--rule, #e2e8f0);
   border-radius: var(--radius-full);
   padding: 3px 10px;
 }
@@ -3486,7 +3496,7 @@ select.mem-field-input { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 16px;
-  background: #fff;
+  background: var(--paper, #fff);
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-xl, 12px);
   padding: 20px 22px;
@@ -3577,7 +3587,7 @@ select.mem-field-input { cursor: pointer; }
 @media (max-width: 420px) { .dash-stat-grid { grid-template-columns: repeat(2, 1fr); } }
 
 .dash-stat-card {
-  background: #fff;
+  background: var(--paper, #fff);
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-xl, 12px);
   padding: 16px 14px 14px;
@@ -3621,7 +3631,7 @@ select.mem-field-input { cursor: pointer; }
 
 /* Chart card */
 .dash-chart-card {
-  background: #fff;
+  background: var(--paper, #fff);
   border: 1px solid var(--rule, #e8e2d8);
   border-radius: var(--radius-xl, 12px);
   padding: 18px 22px;
@@ -4530,7 +4540,7 @@ select.mem-field-input { cursor: pointer; }
   font-weight: 600;
   border: 1.5px solid var(--rule);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--paper, #fff);
   color: var(--ink-soft);
   cursor: pointer;
   transition: border-color .15s, color .15s, background .15s;
@@ -4553,7 +4563,7 @@ select.mem-field-input { cursor: pointer; }
   font-weight: 600;
   border: 1.5px solid var(--rule);
   border-radius: var(--radius-full);
-  background: #fff;
+  background: var(--paper, #fff);
   color: var(--ink-soft);
   cursor: pointer;
   transition: border-color .15s, color .15s;
@@ -4586,7 +4596,7 @@ select.mem-field-input { cursor: pointer; }
   font-size: 0.84rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--paper, #fff);
   color: var(--ink);
   outline: none;
   box-sizing: border-box;
@@ -4637,7 +4647,7 @@ select.mem-field-input { cursor: pointer; }
   font-weight: 600;
   border: 1.5px solid var(--rule);
   border-radius: var(--radius-full);
-  background: #fff;
+  background: var(--paper, #fff);
   color: var(--ink-soft);
   cursor: pointer;
   transition: border-color .15s, color .15s;
@@ -4733,7 +4743,7 @@ select.mem-field-input { cursor: pointer; }
   padding: 10px 8px;
   border: 1.5px solid var(--rule);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--paper, #fff);
   cursor: pointer;
   text-align: center;
   transition: border-color .15s;

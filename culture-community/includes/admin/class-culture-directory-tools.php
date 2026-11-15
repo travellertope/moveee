@@ -233,7 +233,11 @@ class Culture_Directory_Tools {
 
 	/**
 	 * Fetch article titles from a Wikipedia category or a manual list.
-	 * POST params: nonce, source ("category"|"manual"), category (string), titles (string)
+	 *
+	 * POST params:
+	 *   nonce, source ("category"|"manual"), category (string), titles (string)
+	 *   recursive  (1|"") — also return subcategories for client-side queue crawl
+	 *   cmcontinue (string) — pagination token from a previous recursive call
 	 */
 	public static function ajax_wiki_fetch() {
 		check_ajax_referer( 'culture_dir_tools', 'nonce' );
@@ -241,7 +245,10 @@ class Culture_Directory_Tools {
 			wp_send_json_error( array( 'message' => 'Forbidden.' ) );
 		}
 
-		$source = sanitize_text_field( $_POST['source'] ?? 'category' );
+		$source     = sanitize_text_field( $_POST['source'] ?? 'category' );
+		$recursive  = ! empty( $_POST['recursive'] );
+		// cmcontinue is an opaque Wikipedia pagination token — don't sanitize it
+		$cmcontinue = wp_unslash( $_POST['cmcontinue'] ?? '' );
 
 		if ( $source === 'manual' ) {
 			$raw   = sanitize_textarea_field( $_POST['titles'] ?? '' );
@@ -250,49 +257,108 @@ class Culture_Directory_Tools {
 				wp_send_json_error( array( 'message' => 'No titles provided.' ) );
 			}
 			$titles = array_slice( $lines, 0, 100 );
-		} else {
-			$category = sanitize_text_field( $_POST['category'] ?? '' );
-			if ( empty( $category ) ) {
-				wp_send_json_error( array( 'message' => 'No category provided.' ) );
-			}
-			if ( stripos( $category, 'Category:' ) !== 0 ) {
-				$category = 'Category:' . $category;
-			}
 
-			$url = add_query_arg( array(
-				'action'      => 'query',
-				'list'        => 'categorymembers',
-				'cmtitle'     => $category,
-				'cmlimit'     => '100',
-				'cmtype'      => 'page',
-				'cmnamespace' => '0',
-				'format'      => 'json',
-			), 'https://en.wikipedia.org/w/api.php' );
+			$existing   = self::get_all_directory_titles();
+			$new_titles = array_values( array_filter( $titles, function( $t ) use ( $existing ) {
+				return ! in_array( strtolower( trim( $t ) ), $existing, true );
+			} ) );
 
-			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
-			if ( is_wp_error( $response ) ) {
-				wp_send_json_error( array( 'message' => $response->get_error_message() ) );
-			}
-
-			$body    = json_decode( wp_remote_retrieve_body( $response ), true );
-			$members = $body['query']['categorymembers'] ?? array();
-			if ( empty( $members ) ) {
-				wp_send_json_error( array( 'message' => "Category '$category' returned no articles. Check the spelling." ) );
-			}
-
-			$titles = array_column( $members, 'title' );
+			wp_send_json_success( array(
+				'titles'        => $new_titles,
+				'subcategories' => array(),
+				'skipped'       => count( $titles ) - count( $new_titles ),
+				'total'         => count( $titles ),
+				'continue'      => '',
+			) );
+			return;
 		}
 
-		// Filter out titles already in the directory (published or pending)
-		$existing   = self::get_all_directory_titles();
-		$new_titles = array_values( array_filter( $titles, function( $t ) use ( $existing ) {
-			return ! in_array( strtolower( trim( $t ) ), $existing, true );
-		} ) );
+		// ── Category mode ──────────────────────────────────────────────────────
+		$category = sanitize_text_field( rawurldecode( wp_unslash( $_POST['category'] ?? '' ) ) );
+		if ( empty( $category ) ) {
+			wp_send_json_error( array( 'message' => 'No category provided.' ) );
+		}
+		if ( stripos( $category, 'Category:' ) !== 0 ) {
+			$category = 'Category:' . $category;
+		}
 
+		$params = array(
+			'action'  => 'query',
+			'list'    => 'categorymembers',
+			'cmtitle' => $category,
+			'cmlimit' => $recursive ? '500' : '100',
+			'cmtype'  => $recursive ? 'page|subcat' : 'page',
+			'format'  => 'json',
+		);
+		if ( ! $recursive ) {
+			$params['cmnamespace'] = '0'; // pages only in simple mode
+		}
+		if ( $cmcontinue !== '' ) {
+			$params['cmcontinue'] = $cmcontinue;
+		}
+
+		$url      = 'https://en.wikipedia.org/w/api.php?' . http_build_query( $params );
+		$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( array( 'message' => $response->get_error_message() ) );
+		}
+
+		$body           = json_decode( wp_remote_retrieve_body( $response ), true );
+		$members        = $body['query']['categorymembers'] ?? array();
+		$continue_token = $body['continue']['cmcontinue'] ?? '';
+
+		if ( empty( $members ) && $continue_token === '' ) {
+			if ( $recursive ) {
+				// An empty subcategory is not a fatal error in recursive mode.
+				wp_send_json_success( array(
+					'titles'        => array(),
+					'subcategories' => array(),
+					'skipped'       => 0,
+					'total'         => 0,
+					'continue'      => '',
+				) );
+				return;
+			}
+			wp_send_json_error( array( 'message' => "Category '$category' returned no articles. Check the spelling." ) );
+		}
+
+		$page_titles   = array();
+		$subcategories = array();
+		foreach ( $members as $m ) {
+			if ( (int) ( $m['ns'] ?? 0 ) === 14 ) {
+				// Subcategory — strip "Category:" prefix so the client can pass it back as-is
+				$subcategories[] = (string) preg_replace( '/^Category:/i', '', (string) $m['title'] );
+			} else {
+				$page_titles[] = (string) $m['title'];
+			}
+		}
+
+		// In non-recursive mode filter duplicates now (expensive call, done once).
+		// In recursive mode, skip — a fresh set of titles is returned per sub-call
+		// and the seed step deduplicates at create time anyway.
+		if ( ! $recursive ) {
+			$existing    = self::get_all_directory_titles();
+			$new_titles  = array_values( array_filter( $page_titles, function( $t ) use ( $existing ) {
+				return ! in_array( strtolower( trim( $t ) ), $existing, true );
+			} ) );
+
+			wp_send_json_success( array(
+				'titles'        => $new_titles,
+				'subcategories' => $subcategories,
+				'skipped'       => count( $page_titles ) - count( $new_titles ),
+				'total'         => count( $page_titles ),
+				'continue'      => $continue_token,
+			) );
+			return;
+		}
+
+		// Recursive mode — return raw titles, dedup handled client-side + at seed time.
 		wp_send_json_success( array(
-			'titles'  => $new_titles,
-			'skipped' => count( $titles ) - count( $new_titles ),
-			'total'   => count( $titles ),
+			'titles'        => $page_titles,
+			'subcategories' => $subcategories,
+			'skipped'       => 0,
+			'total'         => count( $page_titles ),
+			'continue'      => $continue_token,
 		) );
 	}
 
@@ -308,6 +374,26 @@ class Culture_Directory_Tools {
 
 		$titles     = array_map( 'sanitize_text_field', (array) ( $_POST['titles'] ?? array() ) );
 		$entry_type = sanitize_text_field( $_POST['entry_type'] ?? 'concept' );
+
+		// Build extra taxonomy terms map: taxonomy_slug => [term_name, ...]
+		$extra_terms     = array();
+		$raw_extra_terms = $_POST['extra_terms'] ?? array();
+		if ( is_array( $raw_extra_terms ) ) {
+			foreach ( $raw_extra_terms as $taxonomy => $csv ) {
+				$taxonomy = sanitize_key( $taxonomy );
+				if ( ! taxonomy_exists( $taxonomy ) ) {
+					continue;
+				}
+				$tax_obj = get_taxonomy( $taxonomy );
+				if ( ! in_array( 'culture_directory', (array) $tax_obj->object_type, true ) ) {
+					continue;
+				}
+				$term_names = array_values( array_filter( array_map( 'sanitize_text_field', array_map( 'trim', explode( ',', $csv ) ) ) ) );
+				if ( $term_names ) {
+					$extra_terms[ $taxonomy ] = $term_names;
+				}
+			}
+		}
 
 		if ( empty( $titles ) ) {
 			wp_send_json_error( array( 'message' => 'No titles provided.' ) );
@@ -334,6 +420,24 @@ class Culture_Directory_Tools {
 
 				$post_id = self::create_wiki_directory_entry( $title, $page ?? array(), $entry_type );
 				if ( $post_id ) {
+					// Apply extra taxonomy terms (create new terms if they don't exist).
+					foreach ( $extra_terms as $taxonomy => $term_names ) {
+						$term_ids = array();
+						foreach ( $term_names as $name ) {
+							$term = get_term_by( 'name', $name, $taxonomy );
+							if ( $term ) {
+								$term_ids[] = (int) $term->term_id;
+							} else {
+								$inserted = wp_insert_term( $name, $taxonomy );
+								if ( ! is_wp_error( $inserted ) ) {
+									$term_ids[] = (int) $inserted['term_id'];
+								}
+							}
+						}
+						if ( $term_ids ) {
+							wp_set_object_terms( $post_id, $term_ids, $taxonomy, true );
+						}
+					}
 					$seeded++;
 					$results[] = array( 'title' => $title, 'success' => true );
 				} else {
@@ -353,15 +457,15 @@ class Culture_Directory_Tools {
 	/** Fetch page extracts + thumbnails + Wikidata QID for up to 20 titles in one API call. */
 	private static function wiki_fetch_pages_batch( array $titles ): array {
 		$url = add_query_arg( array(
-			'action'      => 'query',
-			'prop'        => 'extracts|pageimages|pageprops',
-			'exintro'     => '1',
-			'exsentences' => '10',
-			'pithumbsize' => '640',
-			'pilicense'   => 'any',
-			'titles'      => implode( '|', $titles ),
-			'redirects'   => '1',
-			'format'      => 'json',
+			'action'       => 'query',
+			'prop'         => 'extracts|pageimages|pageprops',
+			'exintro'      => '1',
+			'exPlainText'  => '1',
+			'pithumbsize'  => '640',
+			'pilicense'    => 'any',
+			'titles'       => implode( '|', $titles ),
+			'redirects'    => '1',
+			'format'       => 'json',
 		), 'https://en.wikipedia.org/w/api.php' );
 
 		$response = wp_remote_get( $url, array( 'timeout' => 20 ) );
@@ -1122,20 +1226,38 @@ class Culture_Directory_Tools {
 
 		// Update cover meta:
 		//   • always when no cover exists
-		//   • always when the entry was AI-generated (_ai_generated=1)
+		//   • always when the entry was AI-generated (_ai_generated=1 or _culture_dir_ai_generated=1)
 		//   • when overwrite is explicitly requested
-		// A manually set WP featured image is never touched (admin intent).
-		if ( $cover ) {
-			$has_thumb = (bool) get_the_post_thumbnail_url( $post_id, 'thumbnail' );
-			$has_meta  = get_post_meta( $post_id, '_external_cover_url', true )
-			          ?: get_post_meta( $post_id, '_culture_dir_image_url', true );
-			$is_ai     = get_post_meta( $post_id, '_ai_generated', true ) === '1';
+		// A manually set WP featured image (has_thumb=true AND not AI-flagged) is never touched.
+		// When a Wikipedia article is found but has no thumbnail and overwrite=true, clear AI flags
+		// so the entry is not forever stuck showing AI art.
+		$has_thumb = (bool) get_the_post_thumbnail_url( $post_id, 'thumbnail' );
+		$has_meta  = get_post_meta( $post_id, '_external_cover_url', true )
+		          ?: get_post_meta( $post_id, '_culture_dir_image_url', true );
+		// Check both meta keys — _ai_generated is used by directory-tools seeder;
+		// _culture_dir_ai_generated is set by the auto-populate/submit pipeline.
+		$is_ai     = get_post_meta( $post_id, '_ai_generated', true ) === '1'
+		          || get_post_meta( $post_id, '_culture_dir_ai_generated', true ) === '1';
 
-			if ( ! $has_thumb && ( ! $has_meta || $is_ai || $overwrite ) ) {
-				update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
-				update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
-				$changes[] = 'cover';
+		if ( $cover ) {
+			// Never replace a manually-set WP featured thumbnail unless it's AI-generated.
+			if ( ! $has_thumb || $is_ai ) {
+				if ( ! $has_meta || $is_ai || $overwrite ) {
+					update_post_meta( $post_id, '_external_cover_url', esc_url_raw( $cover ) );
+					update_post_meta( $post_id, '_culture_dir_image_url', esc_url_raw( $cover ) );
+					// Clear both AI flags now that a real image is in place.
+					delete_post_meta( $post_id, '_ai_generated' );
+					delete_post_meta( $post_id, '_culture_dir_ai_generated' );
+					$changes[] = 'cover';
+				}
 			}
+		} elseif ( $overwrite && $is_ai ) {
+			// No Wikipedia thumbnail available but we confirmed the article exists and an
+			// explicit overwrite was requested — clear the AI flags so the entry is no
+			// longer treated as AI-generated even though no replacement image was found.
+			delete_post_meta( $post_id, '_ai_generated' );
+			delete_post_meta( $post_id, '_culture_dir_ai_generated' );
+			$changes[] = 'ai_flag_cleared';
 		}
 
 		// Fetch and save Wikidata structured fields (director, year, cast, genre, etc.)
@@ -1500,6 +1622,20 @@ class Culture_Directory_Tools {
 						</td>
 					</tr>
 					<tr>
+						<th><label for="cdw-tax-culture_dir_genre"><?php esc_html_e( 'Genre', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="text" id="cdw-tax-culture_dir_genre" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. indie pop, dream pop', 'culture-community' ); ?>">
+							<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cdw-tax-culture_interest"><?php esc_html_e( 'Interests', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="text" id="cdw-tax-culture_interest" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. music, culture', 'culture-community' ); ?>">
+							<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th><label><?php esc_html_e( 'Source', 'culture-community' ); ?></label></th>
 						<td>
 							<label><input type="radio" name="cdw-source" value="category" checked> Wikipedia Category</label>
@@ -1514,6 +1650,13 @@ class Culture_Directory_Tools {
 							<p class="description"><?php esc_html_e( 'The "Category:…" prefix is optional — it will be added automatically.', 'culture-community' ); ?></p>
 						</td>
 					</tr>
+					<tr id="cdw-row-recursive">
+						<th></th>
+						<td>
+							<label><input type="checkbox" id="cdw-recursive"> <?php esc_html_e( 'Crawl subcategories (recursive)', 'culture-community' ); ?></label>
+							<p class="description"><?php esc_html_e( 'Use for umbrella categories like "Indie pop albums by American artists" that contain subcategories rather than direct article members. Crawls up to 3 levels deep.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
 					<tr id="cdw-row-manual" style="display:none;">
 						<th><label for="cdw-manual-titles"><?php esc_html_e( 'Titles', 'culture-community' ); ?></label></th>
 						<td>
@@ -1525,6 +1668,7 @@ class Culture_Directory_Tools {
 				<button id="cdw-fetch-btn" class="button button-secondary"><?php esc_html_e( 'Fetch article list →', 'culture-community' ); ?></button>
 				<span class="spinner" id="cdw-fetch-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
 				<div id="cdw-fetch-result" class="cdt-result" style="display:none;"></div>
+				<div id="cdw-recursive-progress" style="display:none;margin-top:8px;padding:8px 10px;background:#f0f0f1;border:1px solid #c3c4c7;border-radius:3px;font-size:13px;"></div>
 
 				<div id="cdw-seed-panel" style="display:none;margin-top:20px;">
 					<div id="cdw-checklist" style="max-height:280px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;margin-bottom:12px;background:#fafafa;font-size:13px;"></div>
@@ -1788,60 +1932,186 @@ class Culture_Directory_Tools {
 			$('input[name="cdw-source"]').on('change', function() {
 				var v = $(this).val();
 				$('#cdw-row-category').toggle(v === 'category');
+				$('#cdw-row-recursive').toggle(v === 'category');
 				$('#cdw-row-manual').toggle(v === 'manual');
 			});
 
+			/* Shared helper: populate the checklist and show the seed panel. */
+			function cdwShowChecklist(titles, summaryHtml) {
+				$('#cdw-fetch-result').html(summaryHtml).show();
+				var $list = $('#cdw-checklist').empty();
+				titles.forEach(function(t) {
+					$list.append(
+						'<label style="display:block;padding:3px 0;"><input type="checkbox" class="cdw-title-cb" value="' +
+						$('<span>').text(t).html().replace(/"/g, '&quot;') +
+						'" checked> ' + $('<span>').text(t).html() + '</label>'
+					);
+				});
+				$('#cdw-seed-panel').show();
+			}
+
 			$('#cdw-fetch-btn').on('click', function() {
-				var source   = $('input[name="cdw-source"]:checked').val();
-				var category = $('#cdw-category').val().trim();
-				var manual   = $('#cdw-manual-titles').val().trim();
+				var source    = $('input[name="cdw-source"]:checked').val();
+				var category  = $('#cdw-category').val().trim();
+				var manual    = $('#cdw-manual-titles').val().trim();
+				var recursive = source === 'category' && $('#cdw-recursive').is(':checked');
 
 				if (source === 'category' && !category) { alert('Enter a Wikipedia category slug.'); return; }
 				if (source === 'manual'   && !manual)   { alert('Enter at least one title.'); return; }
 
-				var $btn = $(this).prop('disabled', true);
-				var $sp  = $('#cdw-fetch-spinner').show();
-				var $res = $('#cdw-fetch-result').hide();
+				var $btn  = $(this).prop('disabled', true);
+				var $sp   = $('#cdw-fetch-spinner').show();
+				var $res  = $('#cdw-fetch-result').hide().html('');
+				var $prog = $('#cdw-recursive-progress').hide().html('');
 				$('#cdw-seed-panel').hide();
 
-				$.post(ajaxUrl, {
-					action:   'culture_dir_wiki_fetch',
-					nonce:    nonce,
-					source:   source,
-					category: category,
-					titles:   manual,
-				})
-				.done(function(r) {
-					if (!r.success) {
-						$res.html('<div class="notice notice-error inline"><p>' + $('<span>').text(r.data.message).html() + '</p></div>').show();
-						return;
-					}
-					var d       = r.data;
-					var titles  = d.titles || [];
-					var skipped = d.skipped || 0;
+				/* ── Simple (non-recursive) fetch ── */
+				if (!recursive) {
+					$.post(ajaxUrl, {
+						action:   'culture_dir_wiki_fetch',
+						nonce:    nonce,
+						source:   source,
+						category: category,
+						titles:   manual,
+					})
+					.done(function(r) {
+						if (!r.success) {
+							$res.html('<div class="notice notice-error inline"><p>' + $('<span>').text(r.data.message).html() + '</p></div>').show();
+							return;
+						}
+						var d       = r.data;
+						var titles  = d.titles || [];
+						var skipped = d.skipped || 0;
 
-					if (!titles.length) {
-						$res.html('<div class="notice notice-warning inline"><p>No new articles found (all ' + d.total + ' already in directory).</p></div>').show();
-						return;
-					}
+						if (!titles.length) {
+							$res.html('<div class="notice notice-warning inline"><p>No new articles found (all ' + d.total + ' already in directory).</p></div>').show();
+							return;
+						}
 
-					$res.html(
-						'<p class="description">' + titles.length + ' new article(s) found' +
-						(skipped ? ' · ' + skipped + ' already in directory (skipped)' : '') + '.</p>'
-					).show();
-
-					var $list = $('#cdw-checklist').empty();
-					titles.forEach(function(t) {
-						$list.append(
-							'<label style="display:block;padding:3px 0;"><input type="checkbox" class="cdw-title-cb" value="' +
-							$('<span>').text(t).html().replace(/"/g, '&quot;') +
-							'" checked> ' + $('<span>').text(t).html() + '</label>'
+						cdwShowChecklist(
+							titles,
+							'<p class="description">' + titles.length + ' new article(s) found' +
+							(skipped ? ' · ' + skipped + ' already in directory (skipped)' : '') + '.</p>'
 						);
+					})
+					.fail(function() { $res.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show(); })
+					.always(function() { $btn.prop('disabled', false); $sp.hide(); });
+					return;
+				}
+
+				/* ── Recursive subcategory crawl ── */
+				// Queue items: { category: string, cmcontinue: string, depth: int }
+				var queue      = [{category: category, cmcontinue: '', depth: 0}];
+				var allTitles  = [];              // ordered, for display
+				var titleSet   = {};             // for fast dedup
+				var visitedCats = {};            // prevent loops
+				var catsProcessed = 0;
+				var stopped    = false;
+				var MAX_DEPTH  = 3;
+				var MAX_TITLES = 3000;
+
+				$sp.show();
+				$prog.show();
+
+				function updateProgress() {
+					$prog.html(
+						'<strong>Crawling:</strong> ' + catsProcessed + ' categor' + (catsProcessed === 1 ? 'y' : 'ies') +
+						' scanned · ' + allTitles.length + ' articles found · ' + queue.length + ' remaining in queue…'
+					);
+				}
+
+				function finish() {
+					stopped = true;
+					$btn.prop('disabled', false);
+					$sp.hide();
+
+					if (!allTitles.length) {
+						$res.html('<div class="notice notice-warning inline"><p>No articles found in this category or its subcategories.</p></div>').show();
+						$prog.hide();
+						return;
+					}
+
+					$prog.html(
+						'<strong>Done.</strong> Crawled ' + catsProcessed + ' subcategor' + (catsProcessed === 1 ? 'y' : 'ies') +
+						', found ' + allTitles.length + ' article' + (allTitles.length === 1 ? '' : 's') + '.'
+					);
+
+					cdwShowChecklist(
+						allTitles,
+						'<p class="description"><strong>' + allTitles.length + ' article(s) found</strong> across ' + catsProcessed + ' subcategories.</p>'
+					);
+				}
+
+				function step() {
+					if (stopped || !queue.length || allTitles.length >= MAX_TITLES) {
+						finish();
+						return;
+					}
+
+					var item = queue.shift();
+					var catKey = item.category.toLowerCase();
+
+					// Skip if already visited (loop prevention)
+					if (item.cmcontinue === '' && visitedCats[catKey]) {
+						step();
+						return;
+					}
+					if (item.cmcontinue === '') {
+						visitedCats[catKey] = true;
+						catsProcessed++;
+					}
+
+					updateProgress();
+
+					$.post(ajaxUrl, {
+						action:     'culture_dir_wiki_fetch',
+						nonce:      nonce,
+						source:     'category',
+						category:   item.category,
+						recursive:  '1',
+						cmcontinue: item.cmcontinue,
+					})
+					.done(function(r) {
+						if (stopped) return;
+
+						if (r.success) {
+							var d = r.data;
+
+							// Accumulate titles (dedup)
+							(d.titles || []).forEach(function(t) {
+								var key = t.toLowerCase();
+								if (!titleSet[key] && allTitles.length < MAX_TITLES) {
+									titleSet[key] = true;
+									allTitles.push(t);
+								}
+							});
+
+							// Pagination: if more pages exist for this category, re-queue it
+							if (d.continue) {
+								queue.unshift({category: item.category, cmcontinue: d.continue, depth: item.depth});
+							}
+
+							// Enqueue subcategories (up to MAX_DEPTH)
+							if (item.depth < MAX_DEPTH) {
+								(d.subcategories || []).forEach(function(subcat) {
+									var sk = subcat.toLowerCase();
+									if (!visitedCats[sk]) {
+										queue.push({category: subcat, cmcontinue: '', depth: item.depth + 1});
+									}
+								});
+							}
+						}
+						// Silently skip errors on subcategories; don't abort the crawl
+
+						// 300 ms between requests — stay within Wikipedia's rate limits
+						setTimeout(step, 300);
+					})
+					.fail(function() {
+						if (!stopped) setTimeout(step, 500); // retry delay on network error
 					});
-					$('#cdw-seed-panel').show();
-				})
-				.fail(function() { $res.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show(); })
-				.always(function() { $btn.prop('disabled', false); $sp.hide(); });
+				}
+
+				step();
 			});
 
 			$('#cdw-check-all').on('change', function() {
@@ -1853,37 +2123,78 @@ class Culture_Directory_Tools {
 				$('.cdw-title-cb:checked').each(function() { titles.push($(this).val()); });
 				if (!titles.length) { alert('Select at least one article.'); return; }
 
-				var entryType = $('#cdw-entry-type').val();
-				var $btn = $(this).prop('disabled', true);
-				var $sp  = $('#cdw-seed-spinner').show();
-				var $res = $('#cdw-seed-result').hide().html('');
+				var entryType   = $('#cdw-entry-type').val();
+				var extraTerms  = {};
+				$('.cdw-extra-tax').each(function() {
+					var taxName = $(this).attr('id').replace('cdw-tax-', '');
+					var val = $(this).val().trim();
+					if (val) extraTerms[taxName] = val;
+				});
+				var $btn        = $(this).prop('disabled', true);
+				var $sp         = $('#cdw-seed-spinner').show();
+				var $res        = $('#cdw-seed-result').hide().html('');
+				var BATCH       = 50; // matches server-side hard cap
+				var totalSeeded = 0;
+				var totalSkip   = 0;
+				var allResults  = [];
+				var offset      = 0;
 
-				$.post(ajaxUrl, {
-					action:     'culture_dir_wiki_seed',
-					nonce:      nonce,
-					titles:     titles,
-					entry_type: entryType,
-				})
-				.done(function(r) {
-					if (!r.success) {
-						$res.html('<div class="notice notice-error inline"><p>' + $('<span>').text(r.data.message).html() + '</p></div>').show();
+				function seedBatch() {
+					var chunk = titles.slice(offset, offset + BATCH);
+					if (!chunk.length) {
+						// All batches done
+						var html = '<div class="notice notice-success inline"><p><strong>' +
+							totalSeeded + ' entr' + (totalSeeded === 1 ? 'y' : 'ies') + ' created as pending.</strong>';
+						if (totalSkip) html += ' ' + totalSkip + ' skipped (already exist).';
+						html += '</p></div>';
+						if (allResults.length) {
+							html += '<ul style="margin-top:8px;max-height:200px;overflow-y:auto;font-size:12px;">';
+							allResults.forEach(function(r) {
+								html += '<li>' + (r.success ? '&#10003;' : '&#8211;') + ' ' + $('<span>').text(r.title).html() + '</li>';
+							});
+							html += '</ul>';
+						}
+						$res.html(html).show();
+						$btn.prop('disabled', false);
+						$sp.hide();
 						return;
 					}
-					var d    = r.data;
-					var html = '<div class="notice notice-success inline"><p><strong>' + d.seeded + ' entr' + (d.seeded === 1 ? 'y' : 'ies') + ' created as pending.</strong>';
-					if (d.skipped) html += ' ' + d.skipped + ' skipped (already exist).';
-					html += '</p></div>';
-					if (d.results && d.results.length) {
-						html += '<ul style="margin-top:8px;max-height:200px;overflow-y:auto;font-size:12px;">';
-						d.results.forEach(function(r) {
-							html += '<li>' + (r.success ? '&#10003;' : '&#8211;') + ' ' + $('<span>').text(r.title).html() + '</li>';
-						});
-						html += '</ul>';
+
+					// Show progress for large imports
+					if (titles.length > BATCH) {
+						$res.html('<p class="description">Seeding batch ' + Math.floor(offset / BATCH + 1) +
+							' of ' + Math.ceil(titles.length / BATCH) + '…</p>').show();
 					}
-					$res.html(html).show();
-				})
-				.fail(function() { $res.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show(); })
-				.always(function() { $btn.prop('disabled', false); $sp.hide(); });
+
+					$.post(ajaxUrl, {
+						action:      'culture_dir_wiki_seed',
+						nonce:       nonce,
+						titles:      chunk,
+						entry_type:  entryType,
+						extra_terms: extraTerms,
+					})
+					.done(function(r) {
+						if (!r.success) {
+							$res.html('<div class="notice notice-error inline"><p>' + $('<span>').text(r.data.message).html() + '</p></div>').show();
+							$btn.prop('disabled', false);
+							$sp.hide();
+							return;
+						}
+						var d = r.data;
+						totalSeeded += (d.seeded || 0);
+						totalSkip   += (d.skipped || 0);
+						allResults   = allResults.concat(d.results || []);
+						offset      += BATCH;
+						setTimeout(seedBatch, 200);
+					})
+					.fail(function() {
+						$res.html('<div class="notice notice-error inline"><p>Request failed on batch ' + (offset / BATCH + 1) + '.</p></div>').show();
+						$btn.prop('disabled', false);
+						$sp.hide();
+					});
+				}
+
+				seedBatch();
 			});
 
 		}(jQuery));

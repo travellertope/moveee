@@ -832,7 +832,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <button
                 onClick={() => { setOwnerMenuOpen(false); setEditOpen(true); }}
-                style={{ width: "100%", padding: "0.8rem 1rem", background: "#fff", border: "1px solid var(--rule)", borderRadius: "var(--radius-lg)", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "var(--ink)", fontFamily: "inherit", fontWeight: 500 }}
+                style={{ width: "100%", padding: "0.8rem 1rem", background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule)", borderRadius: "var(--radius-lg)", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "var(--ink)", fontFamily: "inherit", fontWeight: 500 }}
               >
                 Edit event
               </button>
@@ -862,7 +862,7 @@ export default function EventDetailModal({ item, onClose }: Props) {
                     const res = await fetch("/api/community/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ postId: item.wpId, reason: r }) });
                     setReportState(res.ok ? "sent" : "error");
                   } catch { setReportState("error"); }
-                }} style={{ width: "100%", padding: "0.75rem 1rem", background: "#fff", border: "1px solid var(--rule)", borderRadius: "var(--radius-lg)", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "var(--ink)", fontFamily: "inherit", fontWeight: 500, textTransform: "capitalize" }}>
+                }} style={{ width: "100%", padding: "0.75rem 1rem", background: "var(--paper-deep, #f8f6f2)", border: "1px solid var(--rule)", borderRadius: "var(--radius-lg)", cursor: "pointer", textAlign: "left", fontSize: "0.88rem", color: "var(--ink)", fontFamily: "inherit", fontWeight: 500, textTransform: "capitalize" }}>
                   {r}
                 </button>
               ))}
