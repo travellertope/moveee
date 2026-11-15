@@ -290,9 +290,9 @@ const Header = () => {
 
             <nav className="toolbar-nav" aria-label="Site navigation">
               <Link href="/magazine" className="toolbar-nav-link" data-active={active("/magazine") || undefined}>Magazine</Link>
-              <Link href="/literary" className="toolbar-nav-link" data-active={active("/literary") || undefined}>Literary</Link>
-              <Link href="/commons" className="toolbar-nav-link" data-active={active("/commons") || undefined}>Commons</Link>
               <Link href="/newsletter" className="toolbar-nav-link" data-active={active("/newsletter") || undefined}>Newsletter</Link>
+              <Link href="/stoop" className="toolbar-nav-link" data-active={active("/stoop") || undefined}>Stoop</Link>
+              <Link href="/lifestyle" className="toolbar-nav-link" data-active={active("/lifestyle") || undefined}>Lifestyle</Link>
             </nav>
 
             <div className="toolbar-icons">
