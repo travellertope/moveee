@@ -1020,6 +1020,16 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Recently-reviewed: directory entries that have recent user reviews, with review tease.
+        register_rest_route( 'culture/v1', '/directory/recently-reviewed', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'handle_recently_reviewed_directory' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'per_type' => array( 'type' => 'integer', 'default' => 6 ),
+            ),
+        ) );
+
         // Person works — albums/books/films/tv-series in the directory credited to a person.
         register_rest_route( 'culture/v1', '/directory/person-works', array(
             'methods'             => 'GET',
@@ -7417,5 +7427,215 @@ class Culture_REST_API {
             'pinCode'          => $result['pinCode'] ?? null,
             'cardNumber'       => $result['cardNumber'] ?? null,
         ) );
+    }
+
+    /**
+     * GET /culture/v1/directory/recently-reviewed
+     *
+     * Returns directory entries that users have recently reviewed, grouped by type
+     * (film / music / book), each with the most recent review as a tease card.
+     * Uses raw SQL throughout — no WP_Query — for speed.
+     * Sections with zero entries are returned as empty arrays; callers should
+     * hide those sections entirely.
+     */
+    public static function handle_recently_reviewed_directory( WP_REST_Request $request ) {
+        global $wpdb;
+
+        $per_type = max( 1, min( 10, (int) ( $request->get_param( 'per_type' ) ?: 6 ) ) );
+        $empty    = array( 'film' => array(), 'music' => array(), 'book' => array() );
+
+        // 1. Grab the most recent published review posts that link to a directory
+        //    entry.  We fetch up to per_type * 5 candidates per type (3 types)
+        //    so deduplication leaves us with enough unique entries.
+        $limit = $per_type * 5 * 3;
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT
+                 cp.ID            AS post_id,
+                 cp.post_content,
+                 tm.meta_value    AS template_type,
+                 dm.meta_value    AS linked_dir_id,
+                 am.meta_value    AS author_id_meta
+             FROM {$wpdb->posts} cp
+             INNER JOIN {$wpdb->postmeta} tm
+                 ON tm.post_id = cp.ID AND tm.meta_key = '_template_type'
+                 AND tm.meta_value IN ('film-review','music-review','book-review')
+             INNER JOIN {$wpdb->postmeta} dm
+                 ON dm.post_id = cp.ID AND dm.meta_key = '_linked_directory_id'
+                 AND dm.meta_value != '' AND dm.meta_value != '0'
+             LEFT JOIN {$wpdb->postmeta} am
+                 ON am.post_id = cp.ID AND am.meta_key = 'community_author_id'
+             WHERE cp.post_type = 'culture_post' AND cp.post_status = 'publish'
+             ORDER BY cp.post_date DESC
+             LIMIT %d",
+            $limit
+        ), ARRAY_A );
+
+        if ( empty( $rows ) ) {
+            return rest_ensure_response( $empty );
+        }
+
+        // 2. Deduplicate: keep the most recent review per (type, dir_id) pair.
+        $type_map = array(
+            'film-review'  => 'film',
+            'music-review' => 'music',
+            'book-review'  => 'book',
+        );
+        $seen     = array(); // "type:dir_id" => true
+        $kept     = array(); // type => [row, ...]
+        $dir_ids  = array();
+        $post_ids = array();
+
+        foreach ( $rows as $row ) {
+            $type   = $type_map[ $row['template_type'] ] ?? null;
+            $dir_id = (int) $row['linked_dir_id'];
+            if ( ! $type || $dir_id <= 0 ) continue;
+
+            $key = $type . ':' . $dir_id;
+            if ( isset( $seen[ $key ] ) ) continue;
+            $seen[ $key ] = true;
+
+            if ( ! isset( $kept[ $type ] ) ) $kept[ $type ] = array();
+            if ( count( $kept[ $type ] ) >= $per_type ) continue;
+
+            $kept[ $type ][] = $row;
+            $dir_ids[]       = $dir_id;
+            $post_ids[]      = (int) $row['post_id'];
+        }
+
+        if ( empty( $post_ids ) ) {
+            return rest_ensure_response( $empty );
+        }
+
+        // 3. Batch-fetch review post rating metas.
+        $post_ids_in = implode( ',', array_map( 'intval', array_unique( $post_ids ) ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $pmeta_rows = $wpdb->get_results(
+            "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta}
+             WHERE post_id IN ({$post_ids_in})
+             AND meta_key IN ('_film_overall_rating','_music_overall_rating','_book_overall_rating')",
+            ARRAY_A
+        );
+        $post_meta_map = array();
+        foreach ( $pmeta_rows as $m ) {
+            $post_meta_map[ (int) $m['post_id'] ][ $m['meta_key'] ] = $m['meta_value'];
+        }
+
+        // 4. Collect author IDs, batch-fetch user display names + avatars.
+        $author_ids = array();
+        foreach ( $rows as $row ) {
+            $uid = (int) $row['author_id_meta'];
+            if ( $uid > 0 ) $author_ids[] = $uid;
+        }
+        $author_ids = array_unique( $author_ids );
+        $user_map   = array();
+        if ( ! empty( $author_ids ) ) {
+            $uids_in = implode( ',', array_map( 'intval', $author_ids ) );
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $users = $wpdb->get_results(
+                "SELECT u.ID, u.user_login, u.display_name, um.meta_value AS avatar_url
+                 FROM {$wpdb->users} u
+                 LEFT JOIN {$wpdb->usermeta} um
+                     ON um.user_id = u.ID AND um.meta_key = '_culture_avatar_url'
+                 WHERE u.ID IN ({$uids_in})",
+                ARRAY_A
+            );
+            foreach ( $users as $u ) {
+                $user_map[ (int) $u['ID'] ] = $u;
+            }
+        }
+
+        // 5. Batch-fetch directory entry data (title, slug, thumbnail, avg rating, review count).
+        $dir_ids_unique = array_unique( array_map( 'intval', $dir_ids ) );
+        update_meta_cache( 'post', $dir_ids_unique );
+
+        $dir_ids_in = implode( ',', $dir_ids_unique );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $dir_posts = $wpdb->get_results(
+            "SELECT ID, post_title, post_name
+             FROM {$wpdb->posts}
+             WHERE ID IN ({$dir_ids_in}) AND post_status = 'publish'",
+            ARRAY_A
+        );
+        $dir_post_map = array();
+        foreach ( $dir_posts as $dp ) {
+            $dir_post_map[ (int) $dp['ID'] ] = $dp;
+        }
+
+        // Type-slug for get_creator_for_type: batch via term_relationships.
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $term_rows = $wpdb->get_results(
+            "SELECT tr.object_id, t.slug
+             FROM {$wpdb->term_relationships} tr
+             INNER JOIN {$wpdb->term_taxonomy} tt
+                 ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'culture_dir_type'
+             INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+             WHERE tr.object_id IN ({$dir_ids_in})",
+            ARRAY_A
+        );
+        $dir_type_map = array();
+        foreach ( $term_rows as $tr ) {
+            $dir_type_map[ (int) $tr['object_id'] ] = $tr['slug'];
+        }
+
+        // 6. Build response.
+        $rating_key_map = array(
+            'film-review'  => '_film_overall_rating',
+            'music-review' => '_music_overall_rating',
+            'book-review'  => '_book_overall_rating',
+        );
+        $result = array( 'film' => array(), 'music' => array(), 'book' => array() );
+
+        foreach ( $kept as $type => $type_rows ) {
+            foreach ( $type_rows as $row ) {
+                $post_id = (int) $row['post_id'];
+                $dir_id  = (int) $row['linked_dir_id'];
+
+                if ( ! isset( $dir_post_map[ $dir_id ] ) ) continue;
+                $dp = $dir_post_map[ $dir_id ];
+
+                // Thumbnail fallback chain (same as handle_browse).
+                $thumbnail = get_post_meta( $dir_id, '_external_cover_url', true )
+                    ?: get_post_meta( $dir_id, '_culture_dir_image_url', true )
+                    ?: ( get_the_post_thumbnail_url( $dir_id, 'medium' ) ?: null );
+
+                $type_slug  = $dir_type_map[ $dir_id ] ?? '';
+                $avg_rating = (float) ( get_post_meta( $dir_id, '_average_rating', true ) ?: 0 );
+                $rev_count  = (int)   ( get_post_meta( $dir_id, '_community_review_count', true ) ?: 0 );
+
+                // Reviewer info.
+                $author_id = (int) $row['author_id_meta'];
+                $reviewer  = ( $author_id > 0 && isset( $user_map[ $author_id ] ) ) ? $user_map[ $author_id ] : null;
+
+                // Individual rating for this review.
+                $rk            = $rating_key_map[ $row['template_type'] ];
+                $review_rating = isset( $post_meta_map[ $post_id ][ $rk ] )
+                    ? (float) $post_meta_map[ $post_id ][ $rk ]
+                    : null;
+
+                // Strip HTML and trim review text.
+                $review_excerpt = wp_trim_words( wp_strip_all_tags( $row['post_content'] ), 25 );
+
+                $result[ $type ][] = array(
+                    'id'            => $dir_id,
+                    'title'         => $dp['post_title'],
+                    'slug'          => $dp['post_name'],
+                    'thumbnail'     => $thumbnail,
+                    'creator'       => self::get_creator_for_type( $dir_id, $type_slug ),
+                    'averageRating' => $avg_rating > 0 ? $avg_rating : null,
+                    'reviewCount'   => $rev_count,
+                    'recentReview'  => array(
+                        'postId'           => $post_id,
+                        'reviewerName'     => $reviewer ? $reviewer['display_name'] : 'Anonymous',
+                        'reviewerUsername' => $reviewer ? $reviewer['user_login']    : '',
+                        'reviewerAvatar'   => ( $reviewer && $reviewer['avatar_url'] ) ? $reviewer['avatar_url'] : null,
+                        'rating'           => $review_rating,
+                        'excerpt'          => $review_excerpt,
+                    ),
+                );
+            }
+        }
+
+        return rest_ensure_response( $result );
     }
 }

@@ -59,14 +59,18 @@ export default function HomepageHero({ slides }: Props) {
       <div className="hphero-overlay" />
 
       <div className="hphero-body">
-        <h1>Your social culture discovery and diary</h1>
+        <h1>
+          Discover, review &amp; earn{" "}
+          <em className="hphero-h1-reward">rewards</em>
+          {" "}for the culture you live
+        </h1>
         <p className="hphero-sub">
           The Moveee is your social culture discovery and diary. Earn redeemable rewards for
           engaging in the film, music, experiences, and books you enjoy.
         </p>
         <div className="hphero-ctas">
-          <a href="/connect/register" className="hphero-cta hphero-cta--primary">Join free</a>
-          <a href="/discover" className="hphero-cta hphero-cta--ghost">Explore culture</a>
+          <a href="/connect/register" className="hphero-cta hphero-cta--primary">Start your diary — it&apos;s free</a>
+          <a href="/#mainMasthead" className="hphero-cta hphero-cta--ghost">Explore the magazine</a>
         </div>
       </div>
 

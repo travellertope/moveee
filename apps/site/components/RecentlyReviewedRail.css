@@ -1,8 +1,7 @@
 /* ── RECENTLY REVIEWED RAIL ──
    Reuses .arc-section / .wrap from homepage-v2.css for consistent
-   section spacing and max-width. Card styles are distinct from
-   DirectoryDiscovery's .dd-card to allow different proportions and
-   a cleaner "recently reviewed" presentation. */
+   section spacing and max-width. Cards link directly to the directory
+   entry and show the most recent user review as a tease. */
 
 .rrr-section { padding-top: 48px; padding-bottom: 0; }
 .rrr-section:first-of-type { padding-top: 56px; }
@@ -55,9 +54,9 @@
 }
 .rrr-rail::-webkit-scrollbar { display: none; }
 
-/* ── Card wrapper + link ── */
-.rrr-card-wrap { flex: 0 0 auto; display: flex; flex-direction: column; }
+/* ── Card ── */
 .rrr-card {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   color: inherit;
@@ -66,17 +65,14 @@
 .rrr-card:hover .rrr-card-img img { transform: scale(1.05); }
 
 /* ── Type-specific widths and aspect ratios ── */
-/* Film: poster 2:3 */
-.rrr-rail--film .rrr-card-wrap { width: clamp(130px, 11vw, 165px); }
-.rrr-rail--film .rrr-card-img  { aspect-ratio: 2 / 3; }
+.rrr-rail--film .rrr-card   { width: clamp(140px, 12vw, 175px); }
+.rrr-rail--film .rrr-card-img { aspect-ratio: 2 / 3; }
 
-/* Music: square album art 1:1 */
-.rrr-rail--music .rrr-card-wrap { width: clamp(150px, 13vw, 190px); }
-.rrr-rail--music .rrr-card-img  { aspect-ratio: 1 / 1; }
+.rrr-rail--music .rrr-card  { width: clamp(155px, 13vw, 195px); }
+.rrr-rail--music .rrr-card-img { aspect-ratio: 1 / 1; }
 
-/* Book: portrait 3:4 */
-.rrr-rail--book .rrr-card-wrap { width: clamp(130px, 11vw, 160px); }
-.rrr-rail--book .rrr-card-img  { aspect-ratio: 3 / 4; }
+.rrr-rail--book .rrr-card   { width: clamp(140px, 12vw, 170px); }
+.rrr-rail--book .rrr-card-img { aspect-ratio: 3 / 4; }
 
 /* ── Card image ── */
 .rrr-card-img {
@@ -97,6 +93,7 @@
 /* ── Card info ── */
 .rrr-card-info {
   padding: 8px 2px 0;
+  flex: 1;
 }
 .rrr-card-info h3 {
   font-family: "DM Sans", system-ui, sans-serif;
@@ -104,19 +101,18 @@
   font-weight: 700;
   line-height: 1.3;
   color: var(--ink);
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Creator subtitle (artist / author / director) */
 .rrr-card-creator {
   font-family: "DM Sans", system-ui, sans-serif;
   font-size: 11px;
   color: var(--mute);
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -125,8 +121,8 @@
 .rrr-card-rating {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 3px;
+  gap: 3px;
+  margin-bottom: 6px;
 }
 .rrr-stars {
   font-size: 11px;
@@ -138,7 +134,6 @@
   font-family: "DM Sans", system-ui, sans-serif;
   font-size: 11px;
   color: var(--mute);
-  margin-left: 2px;
 }
 .rrr-card-count {
   font-family: "DM Sans", system-ui, sans-serif;
@@ -146,45 +141,72 @@
   color: var(--mute);
 }
 
-/* Short entry excerpt */
-.rrr-card-excerpt {
+/* ── Review tease block ── */
+.rrr-review-tease {
+  border-top: 1px solid var(--rule);
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+.rrr-review-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.rrr-review-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.rrr-review-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ochre);
+  color: #fff;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.rrr-review-name {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.rrr-review-rating {
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: .02em;
+  flex-shrink: 0;
+}
+
+.rrr-review-excerpt {
   font-family: "DM Sans", system-ui, sans-serif;
   font-size: 11px;
   line-height: 1.45;
   color: var(--mute);
-  margin: 2px 0 0;
+  margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-/* Review / Log action buttons */
-.rrr-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  padding: 0 2px;
-}
-.rrr-card-btn {
-  font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ochre);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  line-height: 1;
-}
-.rrr-card-btn:hover { text-decoration: underline; }
-.rrr-card-sep {
-  font-size: 11px;
-  color: var(--rule);
-  line-height: 1;
+  font-style: italic;
 }
 
 /* ── Dark mode ── */
 [data-theme="dark"] .rrr-card-info h3 { color: var(--paper); }
 [data-theme="dark"] .rrr-card-img { background: rgba(255, 255, 255, .06); }
+[data-theme="dark"] .rrr-review-tease { border-top-color: rgba(255,255,255,.1); }
