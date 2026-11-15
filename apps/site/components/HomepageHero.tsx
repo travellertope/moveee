@@ -19,16 +19,14 @@ export default function HomepageHero({ slides }: Props) {
     const container = containerRef.current;
     if (!container) return;
     const slideEls = Array.from(container.querySelectorAll<HTMLElement>(".hphero-slide"));
-    const dotEls = Array.from(container.querySelectorAll<HTMLElement>(".hphero-dot"));
     if (slideEls.length < 2) return;
 
     let currentIdx = 0;
 
     const goTo = (nextIdx: number) => {
       slideEls[currentIdx].classList.remove("active");
-      dotEls[currentIdx]?.classList.remove("active");
       currentIdx = nextIdx;
-      // Replace img node so the CSS animation restarts
+      // Replace img node so the CSS animation restarts cleanly
       const nextSlide = slideEls[currentIdx];
       const img = nextSlide.querySelector("img");
       if (img) {
@@ -36,20 +34,11 @@ export default function HomepageHero({ slides }: Props) {
         img.replaceWith(clone);
       }
       slideEls[currentIdx].classList.add("active");
-      dotEls[currentIdx]?.classList.add("active");
     };
 
     const timer = setInterval(() => {
       goTo((currentIdx + 1) % slideEls.length);
     }, 7000);
-
-    // Dot click handlers
-    dotEls.forEach((dot, i) => {
-      dot.addEventListener("click", () => {
-        clearInterval(timer);
-        goTo(i);
-      });
-    });
 
     return () => clearInterval(timer);
   }, []);
@@ -81,20 +70,6 @@ export default function HomepageHero({ slides }: Props) {
         </div>
       </div>
 
-      {slides.length > 1 && (
-        <div className="hphero-dots" role="tablist" aria-label="Hero slides">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              role="tab"
-              className={`hphero-dot${i === 0 ? " active" : ""}`}
-              aria-label={`Slide ${i + 1}`}
-              aria-selected={i === 0}
-            />
-          ))}
-        </div>
-      )}
     </section>
   );
 }

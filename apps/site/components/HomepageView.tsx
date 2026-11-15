@@ -110,11 +110,13 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     trendingCategories,
   } = await loadHomeSections(edition);
 
-  // Use carousel story images as hero background slides (real CMS editorial photos)
-  const heroSlides: HeroSlide[] = carouselStories
-    .filter((s) => s.image)
-    .slice(0, 4)
-    .map((s) => ({ image: s.image as string, alt: s.alt || s.title || "" }));
+  // Static hero background slides — the user-provided cinematic photos
+  const heroSlides: HeroSlide[] = [
+    { image: "/hero/avif-web.jpg",     alt: "Cinema audience" },
+    { image: "/hero/frankie-web.jpg",  alt: "Music studio session" },
+    { image: "/hero/christin-web.jpg", alt: "Books on a shelf" },
+    { image: "/hero/cinema-crowd.jpg", alt: "Cinema crowd" },
+  ];
 
   const filmCategory = trendingCategories.find((c) => c.key === "film");
   const musicCategory = trendingCategories.find((c) => c.key === "music");
