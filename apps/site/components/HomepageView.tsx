@@ -130,7 +130,11 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
       {musicCategory && <RecentlyReviewedRail category={musicCategory} />}
       {bookCategory && <RecentlyReviewedRail category={bookCategory} />}
 
-      <FullBleedHero story={coverStory} />
+      <section className="arc-section fbh-section">
+        <div className="wrap">
+          <FullBleedHero story={coverStory} kicker="From the Magazine" />
+        </div>
+      </section>
 
       <section className="masthead" id="mainMasthead">
         <div className="wrap">
