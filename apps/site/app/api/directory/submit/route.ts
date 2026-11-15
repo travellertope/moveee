@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     excerpt: excerpt.trim(),
     content: content.trim(),
     entry_type: entryType ?? "concept",
-    ai_generated: aiGenerated !== false,
+    ai_generated: aiGenerated === true,
   };
   if (improvingSlug) submitPayload.improving_slug = improvingSlug;
   if (infobox && typeof infobox === "object") submitPayload.infobox = infobox;

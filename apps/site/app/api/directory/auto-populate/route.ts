@@ -430,6 +430,7 @@ async function submitEntry(
             body: JSON.stringify({
               content: real.match.description,
               excerpt: real.match.description,
+              mark_ai_generated: true,
             }),
             cache: "no-store",
           }).catch(() => {});

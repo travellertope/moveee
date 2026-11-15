@@ -1215,7 +1215,13 @@ class Culture_Directory {
         );
         wp_update_post( $update_data );
 
-        update_post_meta( $post_id, '_culture_dir_ai_generated', '1' );
+        // Only mark as AI-generated when the caller explicitly opts in.
+        // Human-initiated enrichments (community composer quick-create
+        // fire-and-forget) must NOT set this flag — the entry was
+        // created by a person, not an automated seeder.
+        if ( (bool) $request->get_param( 'mark_ai_generated' ) ) {
+            update_post_meta( $post_id, '_culture_dir_ai_generated', '1' );
+        }
 
         if ( $entry_type && taxonomy_exists( 'culture_dir_type' ) ) {
             wp_set_object_terms( $post_id, $entry_type, 'culture_dir_type' );
