@@ -3130,3 +3130,24 @@ export async function getDirectoryEvents(directoryId: number): Promise<Directory
     return Array.isArray(data?.events) ? data.events : [];
   } catch { return []; }
 }
+
+export interface PersonWork {
+  id: number;
+  title: string;
+  slug: string;
+  type: "album" | "book" | "film" | "tv-series" | "artwork" | string;
+  year: string;
+  thumbnail: string | null;
+}
+
+export async function getPersonWorks(personName: string): Promise<PersonWork[]> {
+  try {
+    const res = await fetch(
+      `${WP_BASE_URL}/wp-json/culture/v1/directory/person-works?name=${encodeURIComponent(personName)}`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.works) ? data.works : [];
+  } catch { return []; }
+}

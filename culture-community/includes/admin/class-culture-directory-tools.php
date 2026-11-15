@@ -259,7 +259,7 @@ class Culture_Directory_Tools {
 				$category = 'Category:' . $category;
 			}
 
-			$url = add_query_arg( array(
+			$url = 'https://en.wikipedia.org/w/api.php?' . http_build_query( array(
 				'action'      => 'query',
 				'list'        => 'categorymembers',
 				'cmtitle'     => $category,
@@ -267,7 +267,7 @@ class Culture_Directory_Tools {
 				'cmtype'      => 'page',
 				'cmnamespace' => '0',
 				'format'      => 'json',
-			), 'https://en.wikipedia.org/w/api.php' );
+			) );
 
 			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
 			if ( is_wp_error( $response ) ) {

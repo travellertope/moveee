@@ -937,6 +937,99 @@ class Culture_Directory {
         return (string) ( get_post_meta( $post_id, $meta_key, true ) ?: '' );
     }
 
+    /**
+     * GET /culture/v1/directory/person-works?name=…
+     *
+     * Returns directory entries (albums, books, films, tv-series, artwork)
+     * where the person's name appears in any creator-credit infobox field.
+     * Used to auto-populate a "Works in the Directory" section on person pages.
+     */
+    public static function handle_person_works( WP_REST_Request $request ): WP_REST_Response {
+        global $wpdb;
+
+        $name = sanitize_text_field( $request->get_param( 'name' ) );
+        if ( strlen( $name ) < 2 ) {
+            return rest_ensure_response( array( 'works' => array() ) );
+        }
+
+        // Find post IDs where any creator meta key contains the person's name.
+        $like   = '%' . $wpdb->esc_like( $name ) . '%';
+        $keys   = array( 'dir_infobox_artist', 'dir_infobox_author', 'dir_infobox_director', 'dir_infobox_creator' );
+        $in_sql = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+        $args   = array_merge( $keys, array( $like ) );
+
+        $post_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT DISTINCT post_id FROM {$wpdb->postmeta}
+             WHERE meta_key IN ($in_sql) AND meta_value LIKE %s",
+            $args
+        ) );
+
+        if ( empty( $post_ids ) ) {
+            return rest_ensure_response( array( 'works' => array() ) );
+        }
+
+        // Limit to 40 entries, ordered by date desc.
+        $placeholder = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+        $posts = $wpdb->get_results( $wpdb->prepare(
+            "SELECT ID, post_title, post_name, post_date FROM {$wpdb->posts}
+             WHERE ID IN ($placeholder) AND post_status = 'publish' AND post_type = 'culture_directory'
+             ORDER BY post_date DESC LIMIT 40",
+            $post_ids
+        ) );
+
+        if ( empty( $posts ) ) {
+            return rest_ensure_response( array( 'works' => array() ) );
+        }
+
+        $result_ids = wp_list_pluck( $posts, 'ID' );
+        update_meta_cache( 'post', $result_ids );
+
+        // Batch-load thumbnails.
+        $thumb_ids_raw = array();
+        foreach ( $result_ids as $pid ) {
+            $tid = get_post_meta( $pid, '_thumbnail_id', true );
+            if ( $tid ) $thumb_ids_raw[ $pid ] = (int) $tid;
+        }
+        $thumb_map = array();
+        if ( $thumb_ids_raw ) {
+            $att_ids  = array_unique( array_values( $thumb_ids_raw ) );
+            $ph2      = implode( ',', array_fill( 0, count( $att_ids ), '%d' ) );
+            $att_rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT ID, guid FROM {$wpdb->posts} WHERE ID IN ($ph2)", $att_ids
+            ), OBJECT_K );
+            foreach ( $thumb_ids_raw as $pid => $att_id ) {
+                if ( isset( $att_rows[ $att_id ] ) ) $thumb_map[ $pid ] = $att_rows[ $att_id ]->guid;
+            }
+        }
+
+        $works = array();
+        foreach ( $posts as $post ) {
+            $pid        = (int) $post->ID;
+            $type_terms = get_the_terms( $pid, 'culture_dir_type' );
+            $type_slug  = ( $type_terms && ! is_wp_error( $type_terms ) ) ? $type_terms[0]->slug : '';
+
+            // Only surface work-type entries (not other persons, places, etc.)
+            if ( ! in_array( $type_slug, array( 'album', 'book', 'film', 'tv-series', 'artwork' ), true ) ) continue;
+
+            $year = get_post_meta( $pid, 'dir_infobox_year', true )
+                 ?: get_post_meta( $pid, 'dir_infobox_year_published', true )
+                 ?: get_post_meta( $pid, 'dir_infobox_years', true );
+
+            $works[] = array(
+                'id'        => $pid,
+                'title'     => $post->post_title,
+                'slug'      => $post->post_name,
+                'type'      => $type_slug,
+                'year'      => $year ?: '',
+                'thumbnail' => $thumb_map[ $pid ]
+                    ?? ( get_post_meta( $pid, '_external_cover_url', true )
+                        ?: ( get_post_meta( $pid, '_culture_dir_image_url', true ) ?: null ) ),
+            );
+        }
+
+        return rest_ensure_response( array( 'works' => $works ) );
+    }
+
     // ── Phase 3: Quick-create stub ───────────────────────────────────────────
 
     /**

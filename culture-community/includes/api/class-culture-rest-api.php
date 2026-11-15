@@ -1020,6 +1020,16 @@ class Culture_REST_API {
             ),
         ) );
 
+        // Person works — albums/books/films/tv-series in the directory credited to a person.
+        register_rest_route( 'culture/v1', '/directory/person-works', array(
+            'methods'             => 'GET',
+            'callback'            => array( 'Culture_Directory', 'handle_person_works' ),
+            'permission_callback' => '__return_true',
+            'args'                => array(
+                'name' => array( 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ),
+            ),
+        ) );
+
         // Phase 3 — inline directory stub creation from post composer.
         register_rest_route( 'culture/v1', '/directory/quick-create', array(
             'methods'             => 'POST',
