@@ -83,7 +83,7 @@
   gap: 10px;
   width: 100%;
   max-width: 520px;
-  background: #fff;
+  background: var(--paper, #fff);
   border: none;
   border-radius: 999px;
   padding: 14px 20px;
@@ -182,7 +182,7 @@
 .disc-card {
   display: block;
   text-decoration: none;
-  background: #fff;
+  background: var(--paper, #fff);
   border-radius: var(--radius-2xl, 20px);
   border: 1px solid var(--rule, #f0ece9);
   overflow: hidden;
@@ -449,7 +449,7 @@
 .disc-load-more {
   display: block;
   margin: 0 auto 32px;
-  background: #fff;
+  background: var(--paper, #fff);
   border: 2px solid var(--rule, #e8e3dd);
   border-radius: 999px;
   padding: 11px 28px;
@@ -717,7 +717,7 @@
   padding: 5px 10px;
   border-radius: var(--radius-full, 9999px);
   border: 1px solid var(--rule, #e8e3dd);
-  background: #fff;
+  background: var(--paper, #fff);
   color: var(--ink);
   font-size: 10.5px;
   font-weight: 700;
