@@ -15,14 +15,6 @@ function titleCase(str: string): string {
     .join(" ");
 }
 
-function StarRating({ rating }: { rating: number }) {
-  const full = Math.round(rating);
-  return (
-    <span className="rrr-stars" aria-label={`${rating.toFixed(1)} out of 5`}>
-      {"★".repeat(full)}{"☆".repeat(Math.max(0, 5 - full))}
-    </span>
-  );
-}
 
 function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey: string }) {
   const { recentReview: rev } = entry;
@@ -36,36 +28,19 @@ function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey:
       </div>
       <div className="rrr-card-info">
         <h3>{titleCase(entry.title)}</h3>
-        {entry.creator && (
-          <p className="rrr-card-creator">{entry.creator}</p>
-        )}
-        {entry.averageRating != null && (
-          <div className="rrr-card-rating">
-            <StarRating rating={entry.averageRating} />
-            <span className="rrr-stars-val">{entry.averageRating.toFixed(1)}</span>
-            {entry.reviewCount > 0 && (
-              <span className="rrr-card-count">({entry.reviewCount})</span>
-            )}
-          </div>
+        {rev.reviewerUsername && (
+          <p className="rrr-card-reviewed-by">
+            Reviewed by{" "}
+            <span className="rrr-card-username">@{rev.reviewerUsername}</span>
+          </p>
         )}
         {/* Review tease */}
         <div className="rrr-review-tease">
-          <div className="rrr-review-meta">
-            {rev.reviewerAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={rev.reviewerAvatar} alt={rev.reviewerName} className="rrr-review-avatar" loading="lazy" />
-            ) : (
-              <span className="rrr-review-avatar rrr-review-avatar--fallback">
-                {rev.reviewerName.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="rrr-review-name">{rev.reviewerName}</span>
-            {rev.rating != null && (
-              <span className="rrr-review-rating">
-                {"★".repeat(Math.round(rev.rating))}
-              </span>
-            )}
-          </div>
+          {rev.rating != null && (
+            <span className="rrr-review-stars">
+              {"★".repeat(Math.round(rev.rating))}{"☆".repeat(Math.max(0, 5 - Math.round(rev.rating)))}
+            </span>
+          )}
           {rev.excerpt && (
             <p className="rrr-review-excerpt">&ldquo;{rev.excerpt}&rdquo;</p>
           )}
