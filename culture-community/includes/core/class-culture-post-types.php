@@ -2483,23 +2483,41 @@ class Culture_Post_Types {
      * save_post fires later but $_POST is empty by then — so we act here instead.
      */
     public static function process_dir_bulk_edit(): void {
-        $action = $_POST['action'] ?? '-1';
-        $action2 = $_POST['action2'] ?? '-1';
+        $log_file = WP_CONTENT_DIR . '/cdir-debug.txt';
+        $action   = $_POST['action']    ?? '-1';
+        $action2  = $_POST['action2']   ?? '-1';
+        $pt       = $_POST['post_type'] ?? '';
+
+        // Log every load-edit.php call so we know the hook is firing.
+        $entry  = '[CDIR-BULK ' . date( 'H:i:s' ) . '] process_dir_bulk_edit fired';
+        $entry .= ' action=' . $action . ' action2=' . $action2 . ' post_type=' . $pt . "\n";
+        $entry .= '  type_bulk=' . ( isset( $_POST['culture_dir_type_bulk']  ) ? '"' . $_POST['culture_dir_type_bulk']  . '"' : '(unset)' ) . "\n";
+        $entry .= '  genre_bulk=' . ( isset( $_POST['culture_dir_genre_bulk'] ) ? '"' . $_POST['culture_dir_genre_bulk'] . '"' : '(unset)' ) . "\n";
+        file_put_contents( $log_file, $entry, FILE_APPEND );
+
         if ( $action !== 'edit' && $action2 !== 'edit' ) return;
-        if ( ( $_POST['post_type'] ?? '' ) !== 'culture_directory' ) return;
+        if ( $pt !== 'culture_directory' ) return;
 
         $type_raw  = sanitize_text_field( wp_unslash( $_POST['culture_dir_type_bulk']  ?? '' ) );
         $genre_raw = sanitize_text_field( wp_unslash( $_POST['culture_dir_genre_bulk'] ?? '' ) );
-        if ( $type_raw === '' && $genre_raw === '' ) return;
+        if ( $type_raw === '' && $genre_raw === '' ) {
+            file_put_contents( $log_file, '  -> both fields blank, returning' . "\n", FILE_APPEND );
+            return;
+        }
 
-        if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-Community Directory' ) ) return;
+        $nonce_ok = wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-Community Directory' );
+        file_put_contents( $log_file, '  -> nonce_ok=' . ( $nonce_ok ? '1' : '0' ) . ' post_count=' . count( (array) ( $_POST['post'] ?? [] ) ) . "\n", FILE_APPEND );
+        if ( ! $nonce_ok ) return;
 
         $post_ids = array_map( 'intval', (array) ( $_POST['post'] ?? array() ) );
+        $updated  = 0;
         foreach ( $post_ids as $post_id ) {
             if ( $post_id > 0 && current_user_can( 'edit_post', $post_id ) ) {
                 self::apply_dir_tax_edit( $post_id, $type_raw, $genre_raw );
+                $updated++;
             }
         }
+        file_put_contents( $log_file, '  -> updated ' . $updated . ' posts' . "\n", FILE_APPEND );
     }
 
     /**
