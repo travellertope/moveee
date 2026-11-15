@@ -74,10 +74,7 @@ export default function RecentlyReviewedRail({ category }: Props) {
     <section className="arc-section rrr-section">
       <div className="wrap">
         <div className="rrr-hdr">
-          <div>
-            <p className="rrr-hdr-label">{label}</p>
-            <h2>{category.label}</h2>
-          </div>
+          <p className="rrr-hdr-title">{label} <strong>{category.label}</strong></p>
           <Link href={`/discover?type=${category.type}`} className="rrr-viewall">
             {viewAllLabel} ›
           </Link>
