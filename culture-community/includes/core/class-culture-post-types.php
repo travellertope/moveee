@@ -40,6 +40,7 @@ class Culture_Post_Types {
             add_action( 'quick_edit_custom_box',       array( __CLASS__, 'dir_quick_edit_box' ), 10, 2 );
             add_action( 'bulk_edit_custom_box',        array( __CLASS__, 'dir_bulk_edit_box' ),  10, 2 );
             add_action( 'save_post_culture_directory', array( __CLASS__, 'save_dir_quick_edit' ), 20 );
+            add_action( 'load-edit.php',               array( __CLASS__, 'process_dir_bulk_edit' ) );
             add_action( 'admin_enqueue_scripts',       array( __CLASS__, 'enqueue_dir_quick_edit_js' ) );
         }
 
@@ -2459,55 +2460,56 @@ class Culture_Post_Types {
     }
 
     /**
-     * Saves taxonomy add/remove for both quick edit (inline-save AJAX) and
-     * bulk edit (action=edit form). Fires via save_post_culture_directory which
-     * WP triggers for every wp_update_post() call, including during bulk edit.
+     * Saves taxonomy add/remove for quick edit (inline-save AJAX) only.
+     * Bulk edit is handled earlier in process_dir_bulk_edit() on load-edit.php
+     * because save_post fires in a context where $_POST is already empty.
      */
     public static function save_dir_quick_edit( int $post_id ): void {
-        $action   = $_POST['action'] ?? '';
-        $action2  = $_POST['action2'] ?? '';
-        $is_quick = ( $action === 'inline-save' );
-        $is_bulk  = ( $action === 'edit' || $action2 === 'edit' );
-
-        $log = sprintf(
-            "[CDIR %s] save_dir post_id=%d action=%s action2=%s is_quick=%d is_bulk=%d autosave=%d\n"
-            . "  type_edit=%s genre_edit=%s type_bulk=%s genre_bulk=%s\n",
-            date('H:i:s'), $post_id, $action, $action2, (int)$is_quick, (int)$is_bulk,
-            (int)( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ),
-            $_POST['culture_dir_type_edit']  ?? '(unset)',
-            $_POST['culture_dir_genre_edit'] ?? '(unset)',
-            $_POST['culture_dir_type_bulk']  ?? '(unset)',
-            $_POST['culture_dir_genre_bulk'] ?? '(unset)'
-        );
-        file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt', $log, FILE_APPEND );
-
-        if ( ! $is_quick && ! $is_bulk ) return;
+        if ( ( $_POST['action'] ?? '' ) !== 'inline-save' ) return;
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+        if ( ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'] ?? '', 'culture_dir_quick_edit' ) ) return;
 
-        if ( $is_quick && ! wp_verify_nonce( $_POST['culture_dir_quick_edit_nonce'] ?? '', 'culture_dir_quick_edit' ) ) return;
+        $type_raw  = sanitize_text_field( wp_unslash( $_POST['culture_dir_type_edit']  ?? '' ) );
+        $genre_raw = sanitize_text_field( wp_unslash( $_POST['culture_dir_genre_edit'] ?? '' ) );
 
-        // Quick edit uses _edit suffix; bulk edit uses _bulk suffix.
-        $type_key  = $is_bulk ? 'culture_dir_type_bulk'  : 'culture_dir_type_edit';
-        $genre_key = $is_bulk ? 'culture_dir_genre_bulk' : 'culture_dir_genre_edit';
+        if ( $type_raw === '' && $genre_raw === '' ) return;
 
-        if ( ( $_POST[ $type_key ] ?? '' ) === '' && ( $_POST[ $genre_key ] ?? '' ) === '' ) {
-            file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt', "  → SKIPPED (both fields empty)\n", FILE_APPEND );
-            return;
-        }
-
-        file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt', "  → calling apply type_key=$type_key genre_key=$genre_key\n", FILE_APPEND );
-        self::apply_dir_tax_edit( $post_id, $type_key, $genre_key );
+        self::apply_dir_tax_edit( $post_id, $type_raw, $genre_raw );
     }
 
     /**
-     * Applies add/remove taxonomy logic from $_POST to one post.
+     * Handles bulk edit taxonomy changes on load-edit.php, where $_POST is intact.
+     * save_post fires later but $_POST is empty by then — so we act here instead.
+     */
+    public static function process_dir_bulk_edit(): void {
+        $action = $_POST['action'] ?? '-1';
+        $action2 = $_POST['action2'] ?? '-1';
+        if ( $action !== 'edit' && $action2 !== 'edit' ) return;
+        if ( ( $_POST['post_type'] ?? '' ) !== 'culture_directory' ) return;
+
+        $type_raw  = sanitize_text_field( wp_unslash( $_POST['culture_dir_type_bulk']  ?? '' ) );
+        $genre_raw = sanitize_text_field( wp_unslash( $_POST['culture_dir_genre_bulk'] ?? '' ) );
+        if ( $type_raw === '' && $genre_raw === '' ) return;
+
+        if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'bulk-Community Directory' ) ) return;
+
+        $post_ids = array_map( 'intval', (array) ( $_POST['post'] ?? array() ) );
+        foreach ( $post_ids as $post_id ) {
+            if ( $post_id > 0 && current_user_can( 'edit_post', $post_id ) ) {
+                self::apply_dir_tax_edit( $post_id, $type_raw, $genre_raw );
+            }
+        }
+    }
+
+    /**
+     * Applies add/remove taxonomy logic to one post.
      * Blank = no change. "drama" = add. "-drama" = remove.
      */
-    private static function apply_dir_tax_edit( int $post_id, string $type_key, string $genre_key ): void {
+    private static function apply_dir_tax_edit( int $post_id, string $type_raw, string $genre_raw ): void {
         $map = array(
-            'culture_dir_type'  => sanitize_text_field( wp_unslash( $_POST[ $type_key ]  ?? '' ) ),
-            'culture_dir_genre' => sanitize_text_field( wp_unslash( $_POST[ $genre_key ] ?? '' ) ),
+            'culture_dir_type'  => $type_raw,
+            'culture_dir_genre' => $genre_raw,
         );
 
         foreach ( $map as $taxonomy => $raw ) {
@@ -2524,24 +2526,15 @@ class Culture_Post_Types {
                 }
             }
 
-            file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
-                "  apply tax=$taxonomy raw=$raw add=" . json_encode($to_add) . " remove=" . json_encode($to_remove) . "\n", FILE_APPEND );
-
             if ( $to_add ) {
-                $r = wp_set_object_terms( $post_id, $to_add, $taxonomy, true );
-                file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
-                    "  add result=" . ( is_wp_error($r) ? $r->get_error_message() : json_encode($r) ) . "\n", FILE_APPEND );
+                wp_set_object_terms( $post_id, $to_add, $taxonomy, true );
             }
 
             foreach ( $to_remove as $slug_or_name ) {
                 $term = get_term_by( 'slug', strtolower( $slug_or_name ), $taxonomy )
                      ?: get_term_by( 'name', $slug_or_name, $taxonomy );
-                file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
-                    "  remove slug_or_name=$slug_or_name term=" . ( $term ? "id={$term->term_id} slug={$term->slug}" : 'NOT FOUND' ) . "\n", FILE_APPEND );
                 if ( $term && ! is_wp_error( $term ) ) {
-                    $r = wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
-                    file_put_contents( WP_CONTENT_DIR . '/cdir-debug.txt',
-                        "  remove result=" . json_encode($r) . "\n", FILE_APPEND );
+                    wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
                 }
             }
         }
