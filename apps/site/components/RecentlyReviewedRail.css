@@ -131,15 +131,6 @@
   margin-top: 2px;
 }
 
-.rrr-review-stars {
-  font-size: 11px;
-  color: var(--gold);
-  letter-spacing: .03em;
-  display: block;
-  margin-bottom: 4px;
-  line-height: 1;
-}
-
 .rrr-review-excerpt {
   font-family: "DM Sans", system-ui, sans-serif;
   font-size: 11px;

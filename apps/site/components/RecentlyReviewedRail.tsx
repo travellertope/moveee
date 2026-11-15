@@ -34,17 +34,12 @@ function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey:
             <span className="rrr-card-username">@{rev.reviewerUsername}</span>
           </p>
         )}
-        {/* Review tease */}
-        <div className="rrr-review-tease">
-          {rev.rating != null && (
-            <span className="rrr-review-stars">
-              {"★".repeat(Math.round(rev.rating))}{"☆".repeat(Math.max(0, 5 - Math.round(rev.rating)))}
-            </span>
-          )}
-          {rev.excerpt && (
+        {/* Review tease — excerpt only, no stars on this rail */}
+        {rev.excerpt && (
+          <div className="rrr-review-tease">
             <p className="rrr-review-excerpt">&ldquo;{rev.excerpt}&rdquo;</p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </Link>
   );
