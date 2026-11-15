@@ -288,6 +288,13 @@ const Header = () => {
               />
             </Link>
 
+            <nav className="toolbar-nav" aria-label="Site navigation">
+              <Link href="/magazine" className="toolbar-nav-link" data-active={active("/magazine") || undefined}>Magazine</Link>
+              <Link href="/literary" className="toolbar-nav-link" data-active={active("/literary") || undefined}>Literary</Link>
+              <Link href="/commons" className="toolbar-nav-link" data-active={active("/commons") || undefined}>Commons</Link>
+              <Link href="/newsletter" className="toolbar-nav-link" data-active={active("/newsletter") || undefined}>Newsletter</Link>
+            </nav>
+
             <div className="toolbar-icons">
               <button className="toolbar-icon" aria-label="Search" onClick={() => setSearchOpen(true)}>
                 <SearchIcon />

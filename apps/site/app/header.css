@@ -1,77 +1,115 @@
 /* ============================================================
-   SITE-WIDE HEADER — floating pill + full-screen menu overlay.
-   Rebuilt from mockups/web/moveee_homepage_wepresent_concept.html.
-   Renders on every apps/site page (mounted once in app/layout.tsx).
-   Transparent-over-dark-hero only applies on pages that actually have
-   a `.hero-full` section (currently just the homepage) — see the
-   hero-detection effect in Header.tsx; everywhere else it's solid
-   from the first paint but still auto-hides/returns on scroll.
+   SITE-WIDE HEADER — full-width background-aware bar.
+   Transparent with white logo/links over any [data-header-zone="dark"]
+   section (homepage hero, article heroes, etc.); transitions to a solid
+   var(--paper) bar with shadow once scrolled into light content.
+   Auto-hides on scroll-down, snaps back on scroll-up.
    ============================================================ */
 
 .site-toolbar {
   position: fixed;
-  top: 18px;
+  top: 0;
   left: 0;
   right: 0;
   z-index: 500;
-  display: flex;
-  justify-content: center;
-  padding: 0 20px;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-/* Moves up by its own full height plus a flat margin — robust
-   regardless of the pill's rendered height, no magic percentage. */
-.site-toolbar.is-hidden { transform: translateY(calc(-100% - 40px)); }
+.site-toolbar.is-hidden { transform: translateY(-100%); }
 
-/* Reinstated — the "fully transparent everywhere" version above was
-   found to collide unreadably with body text on pages where the header
-   scrolls over real content (e.g. the homepage masthead paragraph
-   sitting directly under the fixed pill once you scroll past the
-   hero), exactly the risk flagged when that transparent version shipped.
-   The fix isn't "always show a background" though — `isSolid` (see
-   Header.tsx's dark-zone-detection effect) is already false for as long
-   as the header is floating over any `[data-header-zone="dark"]`
-   section, which on the homepage covers both the true page-load state
-   (over FullBleedHero) and scrolling back up to it — so the frosted
-   backdrop below only ever appears once you've scrolled into a real
-   content-body area, and disappears again the moment you're back over
-   a dark hero. No JS change needed, this only had to come back in CSS. */
+/* Full-width shell — no pill shape, no border-radius */
 .toolbar-shell {
-  width: min(100%, 620px);
-  border-radius: var(--radius-2xl);
+  width: 100%;
   background: transparent;
-  box-shadow: none;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  border-bottom: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+/* Very subtle top gradient gives logo/links contrast over lighter areas of
+   dark-hero photos without washing out the full header area */
+.site-toolbar.is-on-dark .toolbar-shell {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.28) 0%, transparent 100%);
 }
 .site-toolbar.is-solid .toolbar-shell {
-  background: color-mix(in srgb, var(--paper) 72%, transparent);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  box-shadow: var(--shadow-2);
+  background: var(--paper);
+  border-bottom-color: var(--rule);
+  box-shadow: 0 1px 16px rgba(20, 17, 13, 0.07);
 }
 
-/* Concept D pill — logo left, icons grouped right in one flex row (not
-   the old centred-logo grid). Icons are plain glyphs with no circle
-   backing; contrast over a dark hero comes from the icon's own colour
-   swapping (.is-on-dark), not a background chip behind it. Approved via
-   the article-page mockup before being wired in here. */
+/* Inner bar — logo | nav (centered) | icons */
 .toolbar-pill {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 8px 20px 8px 14px;
+  height: 60px;
+  padding: 0 clamp(16px, 4vw, 48px);
+  max-width: 1360px;
+  margin: 0 auto;
   width: 100%;
 }
+
+/* Logo — left, shrink-resistant */
+.toolbar-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.toolbar-logo-img { height: 36px; width: auto; display: block; }
+
+/* Nav links — hidden on mobile, centered between logo and icons on desktop */
+.toolbar-nav {
+  flex: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+@media (min-width: 860px) {
+  .toolbar-nav { display: flex; }
+}
+
+.toolbar-nav-link {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 6px 13px;
+  border-radius: var(--radius-full);
+  color: var(--ink);
+  transition: color 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+.toolbar-nav-link:hover {
+  color: var(--ochre);
+  background: rgba(122, 36, 28, 0.06);
+}
+.toolbar-nav-link[data-active] { color: var(--ochre); }
+
+/* White links when over a dark hero */
+.site-toolbar.is-on-dark .toolbar-nav-link {
+  color: rgba(255, 255, 255, 0.82);
+}
+.site-toolbar.is-on-dark .toolbar-nav-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+.site-toolbar.is-on-dark .toolbar-nav-link[data-active] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Icons — always right-aligned */
 .toolbar-icons {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 4px;
   margin-left: auto;
 }
+@media (min-width: 860px) {
+  .toolbar-icons { margin-left: 0; }
+}
+
 .toolbar-icon {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,39 +119,34 @@
   cursor: pointer;
   color: var(--ink);
   flex-shrink: 0;
-  transition: color 0.2s, opacity 0.3s;
-  opacity: 0.6;
+  transition: color 0.2s, opacity 0.2s;
+  opacity: 0.65;
+  border-radius: var(--radius-full);
 }
-.site-toolbar.is-solid .toolbar-icon { opacity: 1; }
-.site-toolbar.is-on-dark .toolbar-icon { color: var(--paper); opacity: 0.85; }
+.toolbar-icon:hover { opacity: 1; background: rgba(20, 17, 13, 0.06); }
+.site-toolbar.is-solid .toolbar-icon { opacity: 0.8; }
+.site-toolbar.is-solid .toolbar-icon:hover { opacity: 1; }
+.site-toolbar.is-on-dark .toolbar-icon { color: rgba(255, 255, 255, 0.85); opacity: 1; }
+.site-toolbar.is-on-dark .toolbar-icon:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
 .toolbar-cart-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 16px;
-  height: 16px;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 3px;
   border-radius: var(--radius-full);
   background: var(--ochre);
   color: #fff;
   font-family: "JetBrains Mono", monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
 }
-.toolbar-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-/* The image itself swaps (logo-black.png/logo-white.png) based on the
-   header's onDark state — see Header.tsx — rather than a CSS colour
-   override, since the wordmark is a real logo file now, not styled text. */
-.toolbar-logo-img { height: 40px; width: auto; display: block; }
 
 /* ============================================================
    MENU OVERLAY — full-viewport takeover, 3-column grid on desktop.
@@ -357,21 +390,9 @@
 .tpp-btn:hover { opacity: 0.85; }
 
 @media (max-width: 640px) {
-  .site-toolbar { padding: 0 8px; }
-  .toolbar-shell { width: calc(100% - 8px); }
-  /* The logo files are wide wordmarks (~6.5:1), not square marks — at the
-     desktop-sized 40px height they'd eat most of a narrow pill's width, and
-     since .toolbar-shell clips overflow, the trailing cart/menu icons would
-     get cropped off-screen (only search, closest to the logo, stays
-     visible). Grown from an earlier 22px (was reading as "too tiny") to
-     28px — still shorter than the icons' own fixed 32px box, so the pill's
-     overall height (set by vertical padding + the taller of logo/icons)
-     doesn't grow along with it. Gaps/padding are tightened to claw back the
-     horizontal room the bigger logo takes, so all three icons still fit
-     down to a 320px-wide viewport. */
-  .toolbar-logo-img { height: 28px; }
-  .toolbar-pill { gap: 6px; padding: 8px 10px 8px 8px; }
-  .toolbar-icons { gap: 6px; }
+  .toolbar-logo-img { height: 30px; }
+  .toolbar-pill { padding: 0 14px; height: 54px; }
+  .toolbar-icons { gap: 2px; }
 }
 
 /* ============================================================

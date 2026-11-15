@@ -46,7 +46,7 @@ export default function HomepageHero({ slides }: Props) {
   if (slides.length === 0) return null;
 
   return (
-    <section className="hphero" ref={containerRef}>
+    <section className="hphero" ref={containerRef} data-header-zone="dark">
       <div className="hphero-slides">
         {slides.map((slide, i) => (
           <div key={i} className={`hphero-slide${i === 0 ? " active" : ""}`}>
