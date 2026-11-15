@@ -8,7 +8,6 @@ import RecentlyReviewedRail from "@/components/RecentlyReviewedRail";
 import FullBleedHero from "@/components/FullBleedHero";
 import HeroCarousel from "@/components/HeroCarousel";
 import DirectoryDiscovery from "@/components/DirectoryDiscovery";
-import CultureNewsSection from "@/components/CultureNewsSection";
 import JoinSection from "@/components/JoinSection";
 import KafartSection from "@/components/KafartSection";
 
@@ -104,7 +103,6 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
   const {
     coverStory,
     carouselStories,
-    editorialStories,
     featureStory,
     kafartStories,
     trendingCategories,
@@ -144,9 +142,7 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
 
       <DirectoryDiscovery categories={trendingCategories} />
 
-      <CultureNewsSection stories={editorialStories} />
-
-      <KafartSection stories={kafartStories} />
+<KafartSection stories={kafartStories} />
 
       <JoinSection edition={edition} featureStory={featureStory} />
     </div>
