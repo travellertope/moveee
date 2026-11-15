@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces, Inter, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, Fraunces, Inter, JetBrains_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
 import "./connect-globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -28,6 +28,13 @@ const jetBrainsMono = JetBrains_Mono({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const pacifico = Pacifico({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-pacifico",
   display: "swap",
 });
 
@@ -145,7 +152,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable} ${inter.variable}`}
+        className={`${dmSans.variable} ${fraunces.variable} ${jetBrainsMono.variable} ${inter.variable} ${pacifico.variable}`}
       >
         <SessionProvider>
           <CurrencyProvider

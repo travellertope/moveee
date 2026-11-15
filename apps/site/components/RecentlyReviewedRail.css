@@ -1,8 +1,7 @@
 /* ── RECENTLY REVIEWED RAIL ──
    Reuses .arc-section / .wrap from homepage-v2.css for consistent
-   section spacing and max-width. Card styles are distinct from
-   DirectoryDiscovery's .dd-card to allow different proportions and
-   a cleaner "recently reviewed" presentation. */
+   section spacing and max-width. Cards link directly to the directory
+   entry and show the most recent user review as a tease. */
 
 .rrr-section { padding-top: 48px; padding-bottom: 0; }
 .rrr-section:first-of-type { padding-top: 56px; }
@@ -16,24 +15,22 @@
   margin-bottom: 20px;
 }
 
-.rrr-hdr-label {
+.rrr-hdr-title {
   font-family: "Playfair Display", "Fraunces", serif;
+  font-size: 13px;
   font-weight: 400;
   font-style: italic;
-  font-size: clamp(13px, 1.4vw, 15px);
   color: var(--mute);
   letter-spacing: .01em;
   margin: 0;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.rrr-hdr h2 {
-  font-family: "Fraunces", serif;
-  font-weight: 600;
-  font-size: clamp(22px, 3vw, 32px);
-  letter-spacing: -.02em;
+.rrr-hdr-title strong {
+  font-weight: 700;
+  font-style: normal;
   color: var(--ink);
-  margin: 0;
-  line-height: 1;
 }
 
 .rrr-viewall {
@@ -57,9 +54,9 @@
 }
 .rrr-rail::-webkit-scrollbar { display: none; }
 
-/* ── Card wrapper + link ── */
-.rrr-card-wrap { flex: 0 0 auto; display: flex; flex-direction: column; }
+/* ── Card ── */
 .rrr-card {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   color: inherit;
@@ -68,17 +65,14 @@
 .rrr-card:hover .rrr-card-img img { transform: scale(1.05); }
 
 /* ── Type-specific widths and aspect ratios ── */
-/* Film: poster 2:3 */
-.rrr-rail--film .rrr-card-wrap { width: clamp(130px, 11vw, 165px); }
-.rrr-rail--film .rrr-card-img  { aspect-ratio: 2 / 3; }
+.rrr-rail--film .rrr-card   { width: clamp(140px, 12vw, 175px); }
+.rrr-rail--film .rrr-card-img { aspect-ratio: 2 / 3; }
 
-/* Music: square album art 1:1 */
-.rrr-rail--music .rrr-card-wrap { width: clamp(150px, 13vw, 190px); }
-.rrr-rail--music .rrr-card-img  { aspect-ratio: 1 / 1; }
+.rrr-rail--music .rrr-card  { width: clamp(155px, 13vw, 195px); }
+.rrr-rail--music .rrr-card-img { aspect-ratio: 1 / 1; }
 
-/* Book: portrait 3:4 */
-.rrr-rail--book .rrr-card-wrap { width: clamp(130px, 11vw, 160px); }
-.rrr-rail--book .rrr-card-img  { aspect-ratio: 3 / 4; }
+.rrr-rail--book .rrr-card   { width: clamp(140px, 12vw, 170px); }
+.rrr-rail--book .rrr-card-img { aspect-ratio: 3 / 4; }
 
 /* ── Card image ── */
 .rrr-card-img {
@@ -99,6 +93,7 @@
 /* ── Card info ── */
 .rrr-card-info {
   padding: 8px 2px 0;
+  flex: 1;
 }
 .rrr-card-info h3 {
   font-family: "DM Sans", system-ui, sans-serif;
@@ -106,32 +101,50 @@
   font-weight: 700;
   line-height: 1.3;
   color: var(--ink);
-  margin: 0 0 4px;
-  /* Clamp to 2 lines */
+  margin: 0 0 3px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.rrr-card-rating {
-  display: flex;
-  align-items: center;
-  gap: 3px;
+/* "Reviewed by @username" attribution line */
+.rrr-card-reviewed-by {
   font-family: "DM Sans", system-ui, sans-serif;
-  font-size: 12px;
-  color: var(--mute);
-}
-.rrr-card-star {
-  color: var(--gold);
-  font-size: 11px;
-  line-height: 1;
-}
-.rrr-card-count {
   font-size: 11px;
   color: var(--mute);
+  margin: 0 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rrr-card-username {
+  font-weight: 600;
+  color: var(--ochre);
+}
+
+/* ── Review tease block ── */
+.rrr-review-tease {
+  border-top: 1px solid var(--rule);
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.rrr-review-excerpt {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--mute);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-style: italic;
 }
 
 /* ── Dark mode ── */
-[data-theme="dark"] .rrr-card-info h3 { color: var(--paper); }
-[data-theme="dark"] .rrr-card-img { background: rgba(255, 255, 255, .06); }
+[data-theme="dark"] .rrr-card-info h3   { color: var(--paper); }
+[data-theme="dark"] .rrr-card-img      { background: rgba(255, 255, 255, .06); }
+[data-theme="dark"] .rrr-review-tease  { border-top-color: rgba(255,255,255,.1); }

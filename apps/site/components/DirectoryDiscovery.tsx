@@ -135,15 +135,6 @@ export default function DirectoryDiscovery({ categories }: Props) {
           );
         })}
 
-        <div className="dd-cta-banner">
-          <div>
-            <h3>Been somewhere? Read something? Heard something new?</h3>
-            <p>Your take could be the next thing someone discovers.</p>
-          </div>
-          <button type="button" className="dd-cta-banner-btn" onClick={() => openReview({ subtype: "place" })}>
-            Write a Review
-          </button>
-        </div>
       </div>
 
       {reviewTarget && (

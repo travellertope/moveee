@@ -88,6 +88,27 @@
 .hero-full:hover .hero-full-scroll span { border-color: rgba(243,236,224,.8); }
 @keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 
+/* ── FEATURED MAGAZINE STORY (boxed, homepage only) ──
+   When FullBleedHero is wrapped in .fbh-section/.wrap on the homepage
+   it becomes a contained card rather than a true full-bleed. MagazineView
+   keeps the original full-viewport behaviour — these overrides are scoped
+   to .fbh-section so they don't affect that surface. */
+.fbh-section { padding-top: 48px; padding-bottom: 0; }
+.fbh-section .hero-full {
+  height: clamp(360px, 44vw, 520px);
+  min-height: unset;
+  max-height: unset;
+  border-radius: var(--radius-2xl);
+}
+.fbh-section .hero-full h1 {
+  font-size: clamp(24px, 3.2vw, 46px);
+}
+/* Scroll-down affordance only makes sense on a full-viewport hero */
+.fbh-section .hero-full-scroll { display: none; }
+@media (max-width: 640px) {
+  .fbh-section .hero-full { height: clamp(300px, 70vw, 400px); }
+}
+
 /* ── MASTHEAD ──
    Scoped to .hpv2 — this class name collides with the unrelated /lifestyle
    ShopHeader's own <div className="masthead"> (shop-chrome.css). Since this

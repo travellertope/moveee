@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import type { TrendingCategory, TrendingDirectoryEntry } from "@/lib/fetchTrendingDirectory";
+import type { RecentlyReviewedEntry } from "@/lib/fetchRecentlyReviewed";
 import "./RecentlyReviewedRail.css";
 
 function titleCase(str: string): string {
@@ -13,79 +15,74 @@ function titleCase(str: string): string {
     .join(" ");
 }
 
-function StarRating({ rating }: { rating: number }) {
-  const full = Math.round(rating);
+
+function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey: string }) {
+  const { recentReview: rev } = entry;
   return (
-    <span className="rrr-card-star" aria-label={`${rating.toFixed(1)} out of 5`}>
-      {"★".repeat(full)}{"☆".repeat(Math.max(0, 5 - full))}
-    </span>
+    <Link href={`/directory/${entry.slug}`} className={`rrr-card rrr-card--${railKey}`}>
+      <div className="rrr-card-img">
+        {entry.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={entry.thumbnail} alt={entry.title} loading="lazy" />
+        ) : null}
+      </div>
+      <div className="rrr-card-info">
+        <h3>{titleCase(entry.title)}</h3>
+        {rev.reviewerUsername && (
+          <p className="rrr-card-reviewed-by">
+            Reviewed by{" "}
+            <span className="rrr-card-username">@{rev.reviewerUsername}</span>
+          </p>
+        )}
+        {/* Review tease — excerpt only, no stars on this rail */}
+        {rev.excerpt && (
+          <div className="rrr-review-tease">
+            <p className="rrr-review-excerpt">&ldquo;{rev.excerpt}&rdquo;</p>
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
 
-function ReviewCard({ entry, railKey }: { entry: TrendingDirectoryEntry; railKey: string }) {
-  return (
-    <div className="rrr-card-wrap">
-      <Link href={`/directory/${entry.slug}`} className="rrr-card">
-        <div className="rrr-card-img">
-          {entry.thumbnail ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={entry.thumbnail} alt={entry.title} loading="lazy" />
-          ) : null}
-        </div>
-        <div className="rrr-card-info">
-          <h3>{titleCase(entry.title)}</h3>
-          {entry.averageRating != null && (
-            <div className="rrr-card-rating">
-              <StarRating rating={entry.averageRating} />
-              {entry.reviewCount > 0 && (
-                <span className="rrr-card-count">({entry.reviewCount})</span>
-              )}
-            </div>
-          )}
-        </div>
-      </Link>
-    </div>
-  );
-}
+const LABEL: Record<string, string> = {
+  film:  "Film",
+  music: "Music",
+  book:  "Books",
+};
+
+const VIEW_ALL_TYPE: Record<string, string> = {
+  film:  "film",
+  music: "album",
+  book:  "book",
+};
 
 interface Props {
-  category: TrendingCategory;
+  type: "film" | "music" | "book";
+  entries: RecentlyReviewedEntry[];
 }
 
-const SECTION_LABEL: Record<string, string> = {
-  film: "Recently Reviewed",
-  music: "Recently Reviewed",
-  book: "Recently Reviewed",
-};
+export default function RecentlyReviewedRail({ type, entries }: Props) {
+  if (entries.length === 0) return null;
 
-const VIEW_ALL_LABEL: Record<string, string> = {
-  film: "See all films",
-  music: "See all music",
-  book: "See all books",
-};
-
-export default function RecentlyReviewedRail({ category }: Props) {
-  if (category.entries.length === 0) return null;
-
-  const label = SECTION_LABEL[category.key] ?? "Recently Reviewed";
-  const viewAllLabel = VIEW_ALL_LABEL[category.key] ?? `See all ${category.label.toLowerCase()}`;
+  const label    = LABEL[type] ?? type;
+  const viewType = VIEW_ALL_TYPE[type] ?? type;
 
   return (
     <section className="arc-section rrr-section">
       <div className="wrap">
         <div className="rrr-hdr">
-          <div>
-            <p className="rrr-hdr-label">{label}</p>
-            <h2>{category.label}</h2>
-          </div>
-          <Link href={`/discover?type=${category.type}`} className="rrr-viewall">
-            {viewAllLabel} ›
+          <p className="rrr-hdr-title">
+            Recently Reviewed <strong>{label}</strong>
+          </p>
+          <Link href={`/discover?type=${viewType}`} className="rrr-viewall">
+            See all {label.toLowerCase()} ›
           </Link>
         </div>
 
-        <div className={`rrr-rail rrr-rail--${category.key}`}>
-          {category.entries.slice(0, 5).map((entry) => (
-            <ReviewCard key={entry.id} entry={entry} railKey={category.key} />
+        <div className={`rrr-rail rrr-rail--${type}`}>
+          {entries.slice(0, 6).map((entry) => (
+            <ReviewCard key={entry.id} entry={entry} railKey={type} />
           ))}
         </div>
       </div>

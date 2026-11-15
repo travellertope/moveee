@@ -19,16 +19,14 @@ export default function HomepageHero({ slides }: Props) {
     const container = containerRef.current;
     if (!container) return;
     const slideEls = Array.from(container.querySelectorAll<HTMLElement>(".hphero-slide"));
-    const dotEls = Array.from(container.querySelectorAll<HTMLElement>(".hphero-dot"));
     if (slideEls.length < 2) return;
 
     let currentIdx = 0;
 
     const goTo = (nextIdx: number) => {
       slideEls[currentIdx].classList.remove("active");
-      dotEls[currentIdx]?.classList.remove("active");
       currentIdx = nextIdx;
-      // Replace img node so the CSS animation restarts
+      // Replace img node so the CSS animation restarts cleanly
       const nextSlide = slideEls[currentIdx];
       const img = nextSlide.querySelector("img");
       if (img) {
@@ -36,20 +34,11 @@ export default function HomepageHero({ slides }: Props) {
         img.replaceWith(clone);
       }
       slideEls[currentIdx].classList.add("active");
-      dotEls[currentIdx]?.classList.add("active");
     };
 
     const timer = setInterval(() => {
       goTo((currentIdx + 1) % slideEls.length);
     }, 7000);
-
-    // Dot click handlers
-    dotEls.forEach((dot, i) => {
-      dot.addEventListener("click", () => {
-        clearInterval(timer);
-        goTo(i);
-      });
-    });
 
     return () => clearInterval(timer);
   }, []);
@@ -70,31 +59,21 @@ export default function HomepageHero({ slides }: Props) {
       <div className="hphero-overlay" />
 
       <div className="hphero-body">
-        <h1>Your social culture discovery and diary</h1>
+        <h1>
+          Discover, review &amp; earn{" "}
+          <em className="hphero-h1-reward">rewards</em>
+          {" "}for the culture you live
+        </h1>
         <p className="hphero-sub">
           The Moveee is your social culture discovery and diary. Earn redeemable rewards for
           engaging in the film, music, experiences, and books you enjoy.
         </p>
         <div className="hphero-ctas">
-          <a href="/connect/register" className="hphero-cta hphero-cta--primary">Join free</a>
-          <a href="/discover" className="hphero-cta hphero-cta--ghost">Explore culture</a>
+          <a href="/connect/register" className="hphero-cta hphero-cta--primary">Start your diary — it&apos;s free</a>
+          <a href="/#mainMasthead" className="hphero-cta hphero-cta--ghost">Explore the magazine</a>
         </div>
       </div>
 
-      {slides.length > 1 && (
-        <div className="hphero-dots" role="tablist" aria-label="Hero slides">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              role="tab"
-              className={`hphero-dot${i === 0 ? " active" : ""}`}
-              aria-label={`Slide ${i + 1}`}
-              aria-selected={i === 0}
-            />
-          ))}
-        </div>
-      )}
     </section>
   );
 }

@@ -7,10 +7,10 @@ import HeroScrollButton from "./HeroScrollButton";
 // whether to float transparent-over-dark. Pure server component — no
 // interactivity needed beyond the CSS hover cue; the scroll button's own
 // click handling lives in the small client subcomponent below it.
-export default function FullBleedHero({ story }: { story: any }) {
+export default function FullBleedHero({ story, kicker }: { story: any; kicker?: string }) {
   if (!story) return null;
 
-  const category = story.categories?.nodes?.[0]?.name || "Moveee Magazine";
+  const category = kicker ?? (story.categories?.nodes?.[0]?.name || "Moveee Magazine");
   const image = story.featuredImage?.node?.sourceUrl || null;
   const alt = story.featuredImage?.node?.altText || story.title || "";
   // `story.excerpt` isn't reliably a string — WPGraphQL can hand back a

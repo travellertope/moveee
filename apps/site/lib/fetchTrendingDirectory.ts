@@ -10,6 +10,10 @@ export interface TrendingDirectoryEntry {
   averageRating: number | null;
   reviewCount: number;
   previewUrl?: string | null;
+  /** Artist / author / director — from get_creator_for_type() in PHP */
+  creator?: string | null;
+  /** Short plain-text excerpt from the entry's post content */
+  excerpt?: string | null;
 }
 
 export interface TrendingCategory {
