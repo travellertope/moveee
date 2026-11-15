@@ -251,7 +251,7 @@ class Culture_Directory_Tools {
 			}
 			$titles = array_slice( $lines, 0, 100 );
 		} else {
-			$category = sanitize_text_field( $_POST['category'] ?? '' );
+			$category = sanitize_text_field( rawurldecode( wp_unslash( $_POST['category'] ?? '' ) ) );
 			if ( empty( $category ) ) {
 				wp_send_json_error( array( 'message' => 'No category provided.' ) );
 			}
