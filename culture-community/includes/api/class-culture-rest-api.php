@@ -7452,6 +7452,8 @@ class Culture_REST_API {
         $rows = $wpdb->get_results( $wpdb->prepare(
             "SELECT
                  cp.ID            AS post_id,
+                 cp.post_title    AS post_title,
+                 cp.post_name     AS post_name,
                  cp.post_content,
                  tm.meta_value    AS template_type,
                  dm.meta_value    AS linked_dir_id,
@@ -7460,9 +7462,8 @@ class Culture_REST_API {
              INNER JOIN {$wpdb->postmeta} tm
                  ON tm.post_id = cp.ID AND tm.meta_key = '_template_type'
                  AND tm.meta_value IN ('film-review','music-review','book-review')
-             INNER JOIN {$wpdb->postmeta} dm
+             LEFT JOIN {$wpdb->postmeta} dm
                  ON dm.post_id = cp.ID AND dm.meta_key = '_linked_directory_id'
-                 AND dm.meta_value != '' AND dm.meta_value != '0'
              LEFT JOIN {$wpdb->postmeta} am
                  ON am.post_id = cp.ID AND am.meta_key = 'community_author_id'
              WHERE cp.post_type = 'culture_post' AND cp.post_status = 'publish'
@@ -7489,9 +7490,12 @@ class Culture_REST_API {
         foreach ( $rows as $row ) {
             $type   = $type_map[ $row['template_type'] ] ?? null;
             $dir_id = (int) $row['linked_dir_id'];
-            if ( ! $type || $dir_id <= 0 ) continue;
+            if ( ! $type ) continue;
 
-            $key = $type . ':' . $dir_id;
+            // Linked reviews dedup by directory entry; unlinked by review post.
+            $key = $dir_id > 0
+                ? $type . ':dir:' . $dir_id
+                : $type . ':post:' . (int) $row['post_id'];
             if ( isset( $seen[ $key ] ) ) continue;
             $seen[ $key ] = true;
 
@@ -7499,7 +7503,7 @@ class Culture_REST_API {
             if ( count( $kept[ $type ] ) >= $per_type ) continue;
 
             $kept[ $type ][] = $row;
-            $dir_ids[]       = $dir_id;
+            if ( $dir_id > 0 ) $dir_ids[] = $dir_id;
             $post_ids[]      = (int) $row['post_id'];
         }
 
@@ -7519,6 +7523,34 @@ class Culture_REST_API {
         $post_meta_map = array();
         foreach ( $pmeta_rows as $m ) {
             $post_meta_map[ (int) $m['post_id'] ][ $m['meta_key'] ] = $m['meta_value'];
+        }
+
+        // 3b. Batch-fetch template title/cover/creator for unlinked reviews.
+        $unlinked_post_ids = array();
+        foreach ( $kept as $type_rows ) {
+            foreach ( $type_rows as $row ) {
+                if ( (int) $row['linked_dir_id'] <= 0 ) {
+                    $unlinked_post_ids[] = (int) $row['post_id'];
+                }
+            }
+        }
+        $unlinked_meta_map = array();
+        if ( ! empty( $unlinked_post_ids ) ) {
+            $unlinked_in = implode( ',', array_map( 'intval', array_unique( $unlinked_post_ids ) ) );
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $umeta_rows = $wpdb->get_results(
+                "SELECT post_id, meta_key, meta_value FROM {$wpdb->postmeta}
+                 WHERE post_id IN ({$unlinked_in})
+                 AND meta_key IN (
+                     '_film_title','_film_cover_url','_film_director',
+                     '_music_title','_music_cover_url','_music_artist',
+                     '_book_title','_book_cover_url','_book_author'
+                 )",
+                ARRAY_A
+            );
+            foreach ( $umeta_rows as $m ) {
+                $unlinked_meta_map[ (int) $m['post_id'] ][ $m['meta_key'] ] = $m['meta_value'];
+            }
         }
 
         // 4. Collect author IDs, batch-fetch user display names + avatars.
@@ -7546,36 +7578,38 @@ class Culture_REST_API {
         }
 
         // 5. Batch-fetch directory entry data (title, slug, thumbnail, avg rating, review count).
-        $dir_ids_unique = array_unique( array_map( 'intval', $dir_ids ) );
-        update_meta_cache( 'post', $dir_ids_unique );
-
-        $dir_ids_in = implode( ',', $dir_ids_unique );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $dir_posts = $wpdb->get_results(
-            "SELECT ID, post_title, post_name
-             FROM {$wpdb->posts}
-             WHERE ID IN ({$dir_ids_in}) AND post_status = 'publish'",
-            ARRAY_A
-        );
         $dir_post_map = array();
-        foreach ( $dir_posts as $dp ) {
-            $dir_post_map[ (int) $dp['ID'] ] = $dp;
-        }
-
-        // Type-slug for get_creator_for_type: batch via term_relationships.
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        $term_rows = $wpdb->get_results(
-            "SELECT tr.object_id, t.slug
-             FROM {$wpdb->term_relationships} tr
-             INNER JOIN {$wpdb->term_taxonomy} tt
-                 ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'culture_dir_type'
-             INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
-             WHERE tr.object_id IN ({$dir_ids_in})",
-            ARRAY_A
-        );
         $dir_type_map = array();
-        foreach ( $term_rows as $tr ) {
-            $dir_type_map[ (int) $tr['object_id'] ] = $tr['slug'];
+        if ( ! empty( $dir_ids ) ) {
+            $dir_ids_unique = array_unique( array_map( 'intval', $dir_ids ) );
+            update_meta_cache( 'post', $dir_ids_unique );
+
+            $dir_ids_in = implode( ',', $dir_ids_unique );
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $dir_posts = $wpdb->get_results(
+                "SELECT ID, post_title, post_name
+                 FROM {$wpdb->posts}
+                 WHERE ID IN ({$dir_ids_in}) AND post_status = 'publish'",
+                ARRAY_A
+            );
+            foreach ( $dir_posts as $dp ) {
+                $dir_post_map[ (int) $dp['ID'] ] = $dp;
+            }
+
+            // Type-slug for get_creator_for_type: batch via term_relationships.
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $term_rows = $wpdb->get_results(
+                "SELECT tr.object_id, t.slug
+                 FROM {$wpdb->term_relationships} tr
+                 INNER JOIN {$wpdb->term_taxonomy} tt
+                     ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'culture_dir_type'
+                 INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+                 WHERE tr.object_id IN ({$dir_ids_in})",
+                ARRAY_A
+            );
+            foreach ( $term_rows as $tr ) {
+                $dir_type_map[ (int) $tr['object_id'] ] = $tr['slug'];
+            }
         }
 
         // 6. Build response.
@@ -7584,24 +7618,15 @@ class Culture_REST_API {
             'music-review' => '_music_overall_rating',
             'book-review'  => '_book_overall_rating',
         );
+        $title_meta_key   = array( 'film' => '_film_title',      'music' => '_music_title',    'book' => '_book_title'    );
+        $cover_meta_key   = array( 'film' => '_film_cover_url',  'music' => '_music_cover_url', 'book' => '_book_cover_url' );
+        $creator_meta_key = array( 'film' => '_film_director',   'music' => '_music_artist',   'book' => '_book_author'   );
         $result = array( 'film' => array(), 'music' => array(), 'book' => array() );
 
         foreach ( $kept as $type => $type_rows ) {
             foreach ( $type_rows as $row ) {
                 $post_id = (int) $row['post_id'];
                 $dir_id  = (int) $row['linked_dir_id'];
-
-                if ( ! isset( $dir_post_map[ $dir_id ] ) ) continue;
-                $dp = $dir_post_map[ $dir_id ];
-
-                // Thumbnail fallback chain (same as handle_browse).
-                $thumbnail = get_post_meta( $dir_id, '_external_cover_url', true )
-                    ?: get_post_meta( $dir_id, '_culture_dir_image_url', true )
-                    ?: ( get_the_post_thumbnail_url( $dir_id, 'medium' ) ?: null );
-
-                $type_slug  = $dir_type_map[ $dir_id ] ?? '';
-                $avg_rating = (float) ( get_post_meta( $dir_id, '_average_rating', true ) ?: 0 );
-                $rev_count  = (int)   ( get_post_meta( $dir_id, '_community_review_count', true ) ?: 0 );
 
                 // Reviewer info.
                 $author_id = (int) $row['author_id_meta'];
@@ -7616,12 +7641,40 @@ class Culture_REST_API {
                 // Strip HTML and trim review text.
                 $review_excerpt = wp_trim_words( wp_strip_all_tags( $row['post_content'] ), 25 );
 
+                if ( $dir_id > 0 && isset( $dir_post_map[ $dir_id ] ) ) {
+                    // Linked to a directory entry — use directory data.
+                    $dp         = $dir_post_map[ $dir_id ];
+                    $thumbnail  = get_post_meta( $dir_id, '_external_cover_url', true )
+                        ?: get_post_meta( $dir_id, '_culture_dir_image_url', true )
+                        ?: ( get_the_post_thumbnail_url( $dir_id, 'medium' ) ?: null );
+                    $type_slug  = $dir_type_map[ $dir_id ] ?? '';
+                    $avg_rating = (float) ( get_post_meta( $dir_id, '_average_rating', true ) ?: 0 );
+                    $rev_count  = (int)   ( get_post_meta( $dir_id, '_community_review_count', true ) ?: 0 );
+                    $entry_id   = $dir_id;
+                    $title      = $dp['post_title'];
+                    $slug       = $dp['post_name'];
+                    $href       = '/directory/' . $dp['post_name'];
+                    $creator    = self::get_creator_for_type( $dir_id, $type_slug );
+                } else {
+                    // No directory link — build from the review's own template fields.
+                    $umeta      = $unlinked_meta_map[ $post_id ] ?? array();
+                    $title      = $umeta[ $title_meta_key[ $type ] ] ?? $row['post_title'];
+                    $slug       = $row['post_name'];
+                    $href       = '/community/' . $row['post_name'];
+                    $thumbnail  = ( ! empty( $umeta[ $cover_meta_key[ $type ] ] ) ) ? $umeta[ $cover_meta_key[ $type ] ] : null;
+                    $creator    = ( ! empty( $umeta[ $creator_meta_key[ $type ] ] ) ) ? $umeta[ $creator_meta_key[ $type ] ] : null;
+                    $avg_rating = $review_rating ?? 0;
+                    $rev_count  = 1;
+                    $entry_id   = $post_id;
+                }
+
                 $result[ $type ][] = array(
-                    'id'            => $dir_id,
-                    'title'         => $dp['post_title'],
-                    'slug'          => $dp['post_name'],
+                    'id'            => $entry_id,
+                    'title'         => $title,
+                    'slug'          => $slug,
+                    'href'          => $href,
                     'thumbnail'     => $thumbnail,
-                    'creator'       => self::get_creator_for_type( $dir_id, $type_slug ),
+                    'creator'       => $creator,
                     'averageRating' => $avg_rating > 0 ? $avg_rating : null,
                     'reviewCount'   => $rev_count,
                     'recentReview'  => array(

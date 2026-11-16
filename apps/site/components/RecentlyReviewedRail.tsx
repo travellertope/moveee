@@ -19,7 +19,7 @@ function titleCase(str: string): string {
 function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey: string }) {
   const { recentReview: rev } = entry;
   return (
-    <Link href={`/directory/${entry.slug}`} className={`rrr-card rrr-card--${railKey}`}>
+    <Link href={entry.href ?? `/directory/${entry.slug}`} className={`rrr-card rrr-card--${railKey}`}>
       <div className="rrr-card-img">
         {entry.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element

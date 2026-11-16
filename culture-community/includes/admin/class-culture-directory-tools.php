@@ -521,11 +521,50 @@ class Culture_Directory_Tools {
 		if ( empty( $excerpt ) ) $excerpt = $display_title;
 		if ( empty( $content ) ) $content = '<p>' . esc_html( $display_title ) . '</p>';
 
-		// Skip if a directory entry with this exact (Wikipedia or display) title already exists.
-		$existing = get_page_by_title( $title, OBJECT, 'culture_directory' )
-		         ?? get_page_by_title( $display_title, OBJECT, 'culture_directory' );
-		if ( $existing ) {
-			return 0;
+		// Extract year from Wikipedia's parenthetical, e.g. "(2026 film)" → "2026"
+		$year_match = array();
+		preg_match( '/\(.*?(\d{4}).*?\)/', $title, $year_match );
+		$year = $year_match[1] ?? '';
+
+		// Type-aware duplicate check: same display_title + same type only blocks.
+		// A film named "Hope" and an album named "Hope" are distinct entries.
+		global $wpdb;
+		$existing_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT p.ID FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
+			 INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+			 INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+			 WHERE p.post_type = 'culture_directory'
+			   AND p.post_title = %s
+			   AND tt.taxonomy = 'culture_dir_type'
+			   AND t.slug = %s
+			 LIMIT 1",
+			$display_title, $entry_type
+		) );
+
+		if ( $existing_id ) {
+			if ( $year ) {
+				// Disambiguate with year (e.g. "Hope (2026)")
+				$display_title = $display_title . ' (' . $year . ')';
+				// Check whether the year-qualified title also already exists for this type
+				$existing_id = $wpdb->get_var( $wpdb->prepare(
+					"SELECT p.ID FROM {$wpdb->posts} p
+					 INNER JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
+					 INNER JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+					 INNER JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
+					 WHERE p.post_type = 'culture_directory'
+					   AND p.post_title = %s
+					   AND tt.taxonomy = 'culture_dir_type'
+					   AND t.slug = %s
+					 LIMIT 1",
+					$display_title, $entry_type
+				) );
+				if ( $existing_id ) {
+					return 0;
+				}
+			} else {
+				return 0;
+			}
 		}
 
 		$post_id = wp_insert_post( array(

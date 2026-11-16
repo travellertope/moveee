@@ -56,6 +56,8 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [items, setItems] = useState<FeedItem[]>(initialItems);
+  const [newPostBanner, setNewPostBanner] = useState(false);
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setItems(initialItems);
@@ -384,9 +386,38 @@ export default function PulseFeed({ initialItems }: PulseFeedProps) {
           <ComposerModal
             open={composerOpen}
             onClose={() => setComposerOpen(false)}
-            onSuccess={() => { setComposerOpen(false); router.refresh(); }}
+            onSuccess={() => {
+              setComposerOpen(false);
+              setNewPostBanner(true);
+              router.refresh();
+              if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+              bannerTimerRef.current = setTimeout(() => setNewPostBanner(false), 5000);
+            }}
             initialTab={composerTab}
           />
+          {newPostBanner && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                position: "sticky", top: 8, zIndex: 100, margin: "8px 0",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 8, padding: "10px 14px",
+                background: "var(--ink)", color: "#fff",
+                borderRadius: "var(--radius-lg)",
+                fontSize: "0.82rem", fontWeight: 600, letterSpacing: "0.01em",
+                boxShadow: "0 2px 12px rgba(0,0,0,.18)",
+              }}
+            >
+              <span>Your post is live! Refreshing feed…</span>
+              <button
+                type="button"
+                onClick={() => setNewPostBanner(false)}
+                aria-label="Dismiss"
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", cursor: "pointer", fontSize: "1rem", lineHeight: 1, padding: 0 }}
+              >✕</button>
+            </div>
+          )}
 
           {/* Feed tabs — post type picker button + Sort by */}
           <div className="feed-tabs">
