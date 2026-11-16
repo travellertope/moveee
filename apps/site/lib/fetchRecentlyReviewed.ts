@@ -13,6 +13,7 @@ export interface RecentlyReviewedEntry {
   id: number;
   title: string;
   slug: string;
+  href?: string | null;
   thumbnail: string | null;
   creator: string | null;
   averageRating: number | null;
