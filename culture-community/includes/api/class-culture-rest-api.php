@@ -1287,6 +1287,14 @@ class Culture_REST_API {
             ),
         ) );
 
+        // One-time migration: backfill _template_type on old reviews that have
+        // rating meta but predate the WP REST meta registration.
+        register_rest_route( 'culture/v1', '/admin/backfill-review-template-types', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_backfill_review_template_types' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // One-time migration: re-type "community" category posts → culture_post CPT.
         register_rest_route( 'culture/v1', '/admin/migrate-community-posts', array(
             'methods'             => 'POST',
@@ -6168,6 +6176,53 @@ class Culture_REST_API {
             'success' => true,
             'post_id' => $post_id,
             'slug'    => $post->post_name ?: sanitize_title( $title ),
+        ) );
+    }
+
+    /**
+     * POST /culture/v1/admin/backfill-review-template-types
+     * One-time migration: writes _template_type on culture_post entries that
+     * have film/music/book rating meta but no _template_type stored. Safe to
+     * run multiple times (idempotent — skips posts that already have the key).
+     */
+    public static function handle_backfill_review_template_types() {
+        global $wpdb;
+
+        $types = array(
+            'film-review'  => '_film_overall_rating',
+            'music-review' => '_music_overall_rating',
+            'book-review'  => '_book_overall_rating',
+        );
+
+        $total = 0;
+        $counts = array();
+
+        foreach ( $types as $template_type => $rating_key ) {
+            // Find culture_post IDs that have the rating key but no _template_type.
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT p.ID FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm
+                     ON pm.post_id = p.ID AND pm.meta_key = %s
+                 LEFT JOIN {$wpdb->postmeta} tm
+                     ON tm.post_id = p.ID AND tm.meta_key = '_template_type'
+                 WHERE p.post_type = 'culture_post'
+                   AND tm.meta_id IS NULL",
+                $rating_key
+            ) );
+
+            foreach ( $ids as $id ) {
+                update_post_meta( (int) $id, '_template_type', $template_type );
+                $total++;
+            }
+
+            $counts[ $template_type ] = count( $ids );
+        }
+
+        return rest_ensure_response( array(
+            'backfilled' => $total,
+            'counts'     => $counts,
+            'message'    => "Backfilled _template_type on {$total} community review posts.",
         ) );
     }
 
