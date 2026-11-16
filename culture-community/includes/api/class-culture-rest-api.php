@@ -7709,7 +7709,7 @@ class Culture_REST_API {
                     $title      = $dp['post_title'];
                     $slug       = $dp['post_name'];
                     $href       = '/directory/' . $dp['post_name'];
-                    $creator    = self::get_creator_for_type( $dir_id, $type_slug );
+                    $creator    = Culture_Directory::get_creator_for_type( $dir_id, $type_slug );
                 } else {
                     // No directory link — build from the review's own template fields.
                     $umeta      = $unlinked_meta_map[ $post_id ] ?? array();

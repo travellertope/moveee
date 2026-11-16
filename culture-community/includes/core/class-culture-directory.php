@@ -924,7 +924,7 @@ class Culture_Directory {
      * book author, film director, tv-series creator, artwork artist). Returns '' when
      * the type has no meaningful single-credit field or the meta is empty.
      */
-    private static function get_creator_for_type( int $post_id, string $type_slug ): string {
+    public static function get_creator_for_type( int $post_id, string $type_slug ): string {
         $meta_key = '';
         switch ( $type_slug ) {
             case 'album':   $meta_key = 'dir_infobox_artist';   break;
