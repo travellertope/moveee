@@ -307,15 +307,12 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
   // Book review additions
   const [bookStatus, setBookStatus] = useState("");
   const [bookRatings, setBookRatings] = useState<Record<string, number>>({ writing: 0, story: 0, characters: 0, pacing: 0 });
-  const [bookFavQuote, setBookFavQuote] = useState("");
 
   // Music review additions
   const [musicRatings, setMusicRatings] = useState<Record<string, number>>({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
-  const [musicFavLyric, setMusicFavLyric] = useState("");
 
   // Film review additions
   const [filmRatings, setFilmRatings] = useState<Record<string, number>>({ story: 0, acting: 0, visuals: 0, pacing: 0 });
-  const [filmFavLine, setFilmFavLine] = useState("");
 
   // Food review additions
   const [foodRatings, setFoodRatings] = useState<Record<string, number>>({ taste: 0, value: 0, vibe: 0 });
@@ -386,7 +383,15 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         };
         const sub = (subtypeMap[editItem.templateType ?? ""] ?? "place") as ReviewSubtype;
         setRevSubtype(sub);
-        setRevTitle(editItem.title ?? "");
+        const subjectTitle = sub === "film" ? (editItem.filmTitle ?? "")
+          : sub === "music" ? (editItem.musicTitle ?? "")
+          : sub === "book" ? (editItem.bookTitle ?? "")
+          : (editItem.locationName ?? "");
+        setRevTitle(subjectTitle);
+        // Extract the review body by stripping the subject title prefix
+        const fullText = editItem.title ?? "";
+        const prefix = subjectTitle ? subjectTitle + "\n\n" : "";
+        setRevContent(prefix && fullText.startsWith(prefix) ? fullText.slice(prefix.length) : fullText);
         if (editItem.communityTag) setCategories([editItem.communityTag]);
       } else if (tab === "poll") {
         setPollQ(editItem.title ?? "");
@@ -459,9 +464,9 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
     setPollDuration("3"); setPollDescription("");
     setICity(""); setIDurationPick(""); setIBudget(""); setIBestTime("");
     setShowcaseMedium("");
-    setBookStatus(""); setBookRatings({ writing: 0, story: 0, characters: 0, pacing: 0 }); setBookFavQuote("");
-    setMusicRatings({ production: 0, lyrics: 0, replay: 0, vibe: 0 }); setMusicFavLyric("");
-    setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 }); setFilmFavLine("");
+    setBookStatus(""); setBookRatings({ writing: 0, story: 0, characters: 0, pacing: 0 });
+    setMusicRatings({ production: 0, lyrics: 0, replay: 0, vibe: 0 });
+    setFilmRatings({ story: 0, acting: 0, visuals: 0, pacing: 0 });
     setFoodRatings({ taste: 0, value: 0, vibe: 0 }); setFoodPriceRange("");
     setPlacePriceRange(""); setOpeningHours("");
     setGallery([]); setError("");
@@ -655,21 +660,18 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (bookRatings.story)      payload.book_rating_story      = bookRatings.story;
             if (bookRatings.characters) payload.book_rating_characters = bookRatings.characters;
             if (bookRatings.pacing)     payload.book_rating_pacing     = bookRatings.pacing;
-            if (bookFavQuote.trim()) payload.book_fav_quote = bookFavQuote.trim();
           } else if (revSubtype === "music") {
             payload.music_overall_rating = revRating;
             if (musicRatings.production) payload.music_rating_production = musicRatings.production;
             if (musicRatings.lyrics)     payload.music_rating_lyrics    = musicRatings.lyrics;
             if (musicRatings.replay)     payload.music_rating_replay    = musicRatings.replay;
             if (musicRatings.vibe)       payload.music_rating_vibe      = musicRatings.vibe;
-            if (musicFavLyric.trim()) payload.music_fav_lyric = musicFavLyric.trim();
           } else if (revSubtype === "film") {
             payload.film_overall_rating = revRating;
             if (filmRatings.story)   payload.film_rating_story   = filmRatings.story;
             if (filmRatings.acting)  payload.film_rating_acting  = filmRatings.acting;
             if (filmRatings.visuals) payload.film_rating_visuals = filmRatings.visuals;
             if (filmRatings.pacing)  payload.film_rating_pacing  = filmRatings.pacing;
-            if (filmFavLine.trim()) payload.film_fav_line = filmFavLine.trim();
           } else if (revSubtype === "food") {
             if (foodRatings.taste) payload.food_rating_taste = foodRatings.taste;
             if (foodRatings.value) payload.food_rating_value = foodRatings.value;
@@ -837,27 +839,35 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
           {/* ── REVIEW ── */}
           {activeTab === "review" && (
             <>
-              <div className="cm-rev-type-row" role="group" aria-label="Review type">
-                {([
-                  { key: "film",  icon: "🎬", label: "Film"  },
-                  { key: "book",  icon: "📖", label: "Book"  },
-                  { key: "music", icon: "🎵", label: "Music" },
-                  { key: "place", icon: "📍", label: "Place" },
-                ] as { key: ReviewSubtype; icon: string; label: string }[]).map(({ key, icon, label }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`cm-rev-type-btn${revSubtype === key ? " cm-rev-type-btn--active" : ""}`}
-                    onClick={() => { setRevSubtype(key); setRevEntry(null); setRevTitle(""); setGallery([]); }}
-                    aria-pressed={revSubtype === key}
-                  >
-                    <span className="cm-rev-type-icon" aria-hidden="true">{icon}</span>
-                    <span className="cm-rev-type-label">{label}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="cm-field">
-                <>
+              {!editItem && (
+                <div className="cm-rev-type-row" role="group" aria-label="Review type">
+                  {([
+                    { key: "film",  icon: "🎬", label: "Film"  },
+                    { key: "book",  icon: "📖", label: "Book"  },
+                    { key: "music", icon: "🎵", label: "Music" },
+                    { key: "place", icon: "📍", label: "Place" },
+                  ] as { key: ReviewSubtype; icon: string; label: string }[]).map(({ key, icon, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`cm-rev-type-btn${revSubtype === key ? " cm-rev-type-btn--active" : ""}`}
+                      onClick={() => { setRevSubtype(key); setRevEntry(null); setRevTitle(""); setGallery([]); }}
+                      aria-pressed={revSubtype === key}
+                    >
+                      <span className="cm-rev-type-icon" aria-hidden="true">{icon}</span>
+                      <span className="cm-rev-type-label">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {editItem ? (
+                <div className="cm-field">
+                  <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--mute)", lineHeight: 1.5 }}>
+                    Editing review of <strong style={{ color: "var(--ink)" }}>{revTitle || "this entry"}</strong>
+                  </p>
+                </div>
+              ) : (
+                <div className="cm-field">
                   <DirectorySearch
                     value={revEntry}
                     onChange={(entry) => { setRevEntry(entry); if (entry) setRevTitle(entry.title); }}
@@ -866,134 +876,138 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                     externalSource={({ place: "google_places", food: "google_places", book: "google_books", music: "spotify", film: "tmdb" } as const)[revSubtype]}
                     placeholder={({ place: "Place, restaurant or venue name…", food: "Place, restaurant or venue name…", book: "Book title…", music: "Album title…", film: "Film title…" } as Record<ReviewSubtype, string>)[revSubtype] ?? "Search…"}
                   />
-                </>
-              </div>
-              {/* Book status */}
-              {revSubtype === "book" && (
-                <div className="cm-field">
-                  <label className="cm-label">Reading status</label>
-                  <div className="cm-review-pills">
-                    {BOOK_STATUSES.map(s => (
-                      <button
-                        key={s}
-                        type="button"
-                        className={`cm-pill${bookStatus === s ? " cm-pill--active" : ""}`}
-                        onClick={() => setBookStatus(bookStatus === s ? "" : s)}
-                      >{s}</button>
-                    ))}
-                  </div>
                 </div>
               )}
-
-              {/* Breakdown ratings */}
-              {revSubtype === "book" && (
-                <div className="cm-field">
-                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
-                  <MultiRating
-                    ratings={[
-                      { label: "Writing", key: "writing", value: bookRatings.writing },
-                      { label: "Story", key: "story", value: bookRatings.story },
-                      { label: "Characters", key: "characters", value: bookRatings.characters },
-                      { label: "Pacing", key: "pacing", value: bookRatings.pacing },
-                    ]}
-                    onChange={(key, v) => setBookRatings(r => ({ ...r, [key]: v }))}
-                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
-                  />
-                </div>
-              )}
-              {revSubtype === "music" && (
-                <div className="cm-field">
-                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
-                  <MultiRating
-                    ratings={[
-                      { label: "Production", key: "production", value: musicRatings.production },
-                      { label: "Lyrics", key: "lyrics", value: musicRatings.lyrics },
-                      { label: "Replay", key: "replay", value: musicRatings.replay },
-                      { label: "Vibe", key: "vibe", value: musicRatings.vibe },
-                    ]}
-                    onChange={(key, v) => setMusicRatings(r => ({ ...r, [key]: v }))}
-                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
-                  />
-                </div>
-              )}
-              {revSubtype === "film" && (
-                <div className="cm-field">
-                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
-                  <MultiRating
-                    ratings={[
-                      { label: "Story", key: "story", value: filmRatings.story },
-                      { label: "Acting", key: "acting", value: filmRatings.acting },
-                      { label: "Visuals", key: "visuals", value: filmRatings.visuals },
-                      { label: "Pacing", key: "pacing", value: filmRatings.pacing },
-                    ]}
-                    onChange={(key, v) => setFilmRatings(r => ({ ...r, [key]: v }))}
-                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
-                  />
-                </div>
-              )}
-              {revSubtype === "food" && (
-                <div className="cm-field">
-                  <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
-                  <MultiRating
-                    ratings={[
-                      { label: "Taste", key: "taste", value: foodRatings.taste },
-                      { label: "Value", key: "value", value: foodRatings.value },
-                      { label: "Vibe", key: "vibe", value: foodRatings.vibe },
-                    ]}
-                    onChange={(key, v) => setFoodRatings(r => ({ ...r, [key]: v }))}
-                    overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
-                  />
-                </div>
-              )}
-
-              {/* Food extras */}
-              {revSubtype === "food" && (
-                <div className="cm-field">
-                  <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
-                  <div className="cm-review-pills">
-                    {PRICE_RANGES.map(p => (
-                      <button
-                        key={p}
-                        type="button"
-                        className={`cm-pill cm-pill--flush${foodPriceRange === p ? " cm-pill--active" : ""}`}
-                        onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
-                      >{p}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {revSubtype === "place" && (
+              {!editItem && (
                 <>
-                  <div className="cm-field">
-                    <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
-                    <div className="cm-review-pills">
-                      {PRICE_RANGES.map(p => (
-                        <button
-                          key={p}
-                          type="button"
-                          className={`cm-pill cm-pill--flush${placePriceRange === p ? " cm-pill--active" : ""}`}
-                          onClick={() => setPlacePriceRange(placePriceRange === p ? "" : p)}
-                        >{p}</button>
-                      ))}
+                  {/* Book status */}
+                  {revSubtype === "book" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Reading status</label>
+                      <div className="cm-review-pills">
+                        {BOOK_STATUSES.map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            className={`cm-pill${bookStatus === s ? " cm-pill--active" : ""}`}
+                            onClick={() => setBookStatus(bookStatus === s ? "" : s)}
+                          >{s}</button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="cm-field">
-                    <input
-                      className="cm-input"
-                      placeholder="e.g. Mon–Fri 9am–6pm…"
-                      value={openingHours}
-                      onChange={e => setOpeningHours(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
+                  )}
 
-              {/* Overall star rating — place only; food/music/book/film use breakdown auto-calc */}
-              {revSubtype === "place" && (
-                <div className="cm-field">
-                  <label className="cm-label">Overall rating</label>
-                  <StarRating value={revRating} onChange={setRevRating} />
-                </div>
+                  {/* Breakdown ratings */}
+                  {revSubtype === "book" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                      <MultiRating
+                        ratings={[
+                          { label: "Writing", key: "writing", value: bookRatings.writing },
+                          { label: "Story", key: "story", value: bookRatings.story },
+                          { label: "Characters", key: "characters", value: bookRatings.characters },
+                          { label: "Pacing", key: "pacing", value: bookRatings.pacing },
+                        ]}
+                        onChange={(key, v) => setBookRatings(r => ({ ...r, [key]: v }))}
+                        overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                      />
+                    </div>
+                  )}
+                  {revSubtype === "music" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                      <MultiRating
+                        ratings={[
+                          { label: "Production", key: "production", value: musicRatings.production },
+                          { label: "Lyrics", key: "lyrics", value: musicRatings.lyrics },
+                          { label: "Replay", key: "replay", value: musicRatings.replay },
+                          { label: "Vibe", key: "vibe", value: musicRatings.vibe },
+                        ]}
+                        onChange={(key, v) => setMusicRatings(r => ({ ...r, [key]: v }))}
+                        overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                      />
+                    </div>
+                  )}
+                  {revSubtype === "film" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                      <MultiRating
+                        ratings={[
+                          { label: "Story", key: "story", value: filmRatings.story },
+                          { label: "Acting", key: "acting", value: filmRatings.acting },
+                          { label: "Visuals", key: "visuals", value: filmRatings.visuals },
+                          { label: "Pacing", key: "pacing", value: filmRatings.pacing },
+                        ]}
+                        onChange={(key, v) => setFilmRatings(r => ({ ...r, [key]: v }))}
+                        overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                      />
+                    </div>
+                  )}
+                  {revSubtype === "food" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Breakdown <span className="cm-label-opt">(sets overall)</span></label>
+                      <MultiRating
+                        ratings={[
+                          { label: "Taste", key: "taste", value: foodRatings.taste },
+                          { label: "Value", key: "value", value: foodRatings.value },
+                          { label: "Vibe", key: "vibe", value: foodRatings.vibe },
+                        ]}
+                        onChange={(key, v) => setFoodRatings(r => ({ ...r, [key]: v }))}
+                        overall={{ label: "Overall", value: revRating, onChange: setRevRating }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Food extras */}
+                  {revSubtype === "food" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
+                      <div className="cm-review-pills">
+                        {PRICE_RANGES.map(p => (
+                          <button
+                            key={p}
+                            type="button"
+                            className={`cm-pill cm-pill--flush${foodPriceRange === p ? " cm-pill--active" : ""}`}
+                            onClick={() => setFoodPriceRange(foodPriceRange === p ? "" : p)}
+                          >{p}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {revSubtype === "place" && (
+                    <>
+                      <div className="cm-field">
+                        <label className="cm-label">Price range <span className="cm-label-opt">(optional)</span></label>
+                        <div className="cm-review-pills">
+                          {PRICE_RANGES.map(p => (
+                            <button
+                              key={p}
+                              type="button"
+                              className={`cm-pill cm-pill--flush${placePriceRange === p ? " cm-pill--active" : ""}`}
+                              onClick={() => setPlacePriceRange(placePriceRange === p ? "" : p)}
+                            >{p}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="cm-field">
+                        <input
+                          className="cm-input"
+                          placeholder="e.g. Mon–Fri 9am–6pm…"
+                          value={openingHours}
+                          onChange={e => setOpeningHours(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Overall star rating — place only; food/music/book/film use breakdown auto-calc */}
+                  {revSubtype === "place" && (
+                    <div className="cm-field">
+                      <label className="cm-label">Overall rating</label>
+                      <StarRating value={revRating} onChange={setRevRating} />
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="cm-field">
@@ -1007,41 +1021,6 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
                   rows={5}
                 />
               </div>
-
-              {/* Favourite quote / lyric / line */}
-              {revSubtype === "book" && (
-                <div className="cm-field">
-                  <textarea
-                    className="cm-textarea cm-textarea--serif"
-                    placeholder="A line that stayed with you… (optional)"
-                    value={bookFavQuote}
-                    onChange={e => setBookFavQuote(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-              )}
-              {revSubtype === "music" && (
-                <div className="cm-field">
-                  <textarea
-                    className="cm-textarea cm-textarea--serif"
-                    placeholder="A lyric that hit different… (optional)"
-                    value={musicFavLyric}
-                    onChange={e => setMusicFavLyric(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-              )}
-              {revSubtype === "film" && (
-                <div className="cm-field">
-                  <textarea
-                    className="cm-textarea cm-textarea--serif"
-                    placeholder="A line from the film… (optional)"
-                    value={filmFavLine}
-                    onChange={e => setFilmFavLine(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-              )}
 
               {!editItem && (
                 <div className="cm-field">
