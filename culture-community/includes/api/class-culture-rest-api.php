@@ -7693,8 +7693,8 @@ class Culture_REST_API {
                     ? (float) $post_meta_map[ $post_id ][ $rk ]
                     : null;
 
-                // Strip HTML, decode entities, and trim review text.
-                $review_excerpt = wp_trim_words( html_entity_decode( wp_strip_all_tags( $row['post_content'] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ), 25 );
+                // Strip HTML and decode entities; we'll trim after removing any title prefix.
+                $raw_text = ltrim( html_entity_decode( wp_strip_all_tags( $row['post_content'] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 
                 if ( $dir_id > 0 && isset( $dir_post_map[ $dir_id ] ) ) {
                     // Linked to a directory entry — use directory data.
@@ -7722,6 +7722,15 @@ class Culture_REST_API {
                     $rev_count  = 1;
                     $entry_id   = $post_id;
                 }
+
+                // Strip the entry title from the opening of the review text —
+                // the composer prepends the subject title to post_content.
+                $clean_title = trim( html_entity_decode( wp_strip_all_tags( $title ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+                $excerpt_body = $raw_text;
+                if ( $clean_title !== '' && stripos( $excerpt_body, $clean_title ) === 0 ) {
+                    $excerpt_body = ltrim( substr( $excerpt_body, strlen( $clean_title ) ) );
+                }
+                $review_excerpt = wp_trim_words( $excerpt_body, 25 );
 
                 $result[ $type ][] = array(
                     'id'            => $entry_id,
