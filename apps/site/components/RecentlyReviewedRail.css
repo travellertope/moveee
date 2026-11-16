@@ -102,6 +102,10 @@
   line-height: 1.3;
   color: var(--ink);
   margin: 0 0 3px;
+  /* Reset inherited font-variation-settings from the global h3 rule —
+     DM Sans doesn't support the "opsz"/"SOFT" axes set there, and
+     Mobile Safari can silently refuse to paint text with unknown axes. */
+  font-variation-settings: normal;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
