@@ -565,8 +565,7 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
         } else if (activeTab === "review") {
           if (!revContent.trim()) throw new Error("Review content is required");
           editPayload.template_type = REVIEW_TEMPLATE[revSubtype];
-          const entryTitle = revEntry?.title || revTitle.trim();
-          editPayload.text = entryTitle ? `${entryTitle}\n\n${revContent.trim()}` : revContent.trim();
+          editPayload.text = revContent.trim();
         } else if (activeTab === "poll") {
           if (!pollQ.trim()) throw new Error("Poll question is required");
           editPayload.template_type = "poll";
@@ -630,9 +629,10 @@ export default function ComposerModal({ open, onClose, onSuccess, initialTab = "
             if (revEntry?.id) payload.linked_directory_id = revEntry.id;
             if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
           } else {
-            // book / music / film — use linked directory entry when available
-            const entryTitle = revEntry?.title || revTitle.trim();
-            payload.text = entryTitle ? `${entryTitle}\n\n${revContent.trim()}` : revContent.trim();
+            // book / music / film — send only the review body; the title
+            // is already carried in film_title / music_title / book_title below
+            // and should NOT be prepended to post_content.
+            payload.text = revContent.trim();
             if (revEntry?.id) {
               payload.linked_directory_id = revEntry.id;
               if (revEntry?.slug) payload.linked_directory_slug = revEntry.slug;
