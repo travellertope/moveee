@@ -39,6 +39,9 @@
      sliver of the section below is visible without scrolling, instead of
      the hero alone filling the entire first viewport. */
   .hero-full { max-height: 640px; }
+  /* Clamp the excerpt to 3 lines on mobile so it never gets clipped
+     mid-sentence by the shorter max-height + overflow:hidden. */
+  .hero-full-byline { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 }
 .hero-full-photo { position: absolute; inset: 0; background: var(--ink); }
 .hero-full-photo img { width: 100%; height: 100%; object-fit: cover; }
@@ -66,7 +69,7 @@
   text-wrap: balance;
   text-shadow: 0 1px 3px rgba(0,0,0,.55), 0 8px 28px rgba(0,0,0,.4);
 }
-.hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(255,255,255,.82); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hero-full-byline { margin-top: 26px; max-width: 60ch; font-family: "DM Sans", sans-serif; font-size: 15px; color: rgba(255,255,255,.82); }
 .hero-full-scroll {
   position: relative;
   z-index: 1;
