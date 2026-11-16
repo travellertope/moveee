@@ -7693,8 +7693,8 @@ class Culture_REST_API {
                     ? (float) $post_meta_map[ $post_id ][ $rk ]
                     : null;
 
-                // Strip HTML and trim review text.
-                $review_excerpt = wp_trim_words( wp_strip_all_tags( $row['post_content'] ), 25 );
+                // Strip HTML, decode entities, and trim review text.
+                $review_excerpt = wp_trim_words( html_entity_decode( wp_strip_all_tags( $row['post_content'] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ), 25 );
 
                 if ( $dir_id > 0 && isset( $dir_post_map[ $dir_id ] ) ) {
                     // Linked to a directory entry — use directory data.
