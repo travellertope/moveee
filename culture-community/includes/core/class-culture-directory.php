@@ -1086,16 +1086,27 @@ class Culture_Directory {
         $excerpt = sanitize_textarea_field( $request->get_param( 'excerpt' ) );
         // Set by the real-data bulk importer only — see is_new above.
         $skip_gamification = (bool) $request->get_param( 'skip_gamification' );
+        // Optional genre slugs to apply (additive — never removes existing terms).
+        // Accepts an array of culture_dir_genre slugs. Used by Wikipedia-category
+        // importers that want to tag already-imported entries with a new genre
+        // (e.g. a Netflix original that also appears in 2026_American_films).
+        $raw_genres  = (array) ( $request->get_param( 'genre_slugs' ) ?? array() );
+        $genre_slugs = array_values( array_filter( array_map( 'sanitize_key', $raw_genres ) ) );
 
         if ( empty( $title ) ) {
             return new WP_Error( 'missing_title', __( 'Title is required.', 'culture-community' ), array( 'status' => 400 ) );
         }
 
         // Find-or-create: an entry already linked to this external ID
-        // short-circuits creation entirely.
+        // short-circuits creation entirely — but still applies any new genre
+        // tags so a second import pass (e.g. 2026_American_films) can tag
+        // entries that were already imported from a different category.
         if ( $external_source && $external_id ) {
             $existing = self::find_by_external_id( $external_source, $external_id );
             if ( $existing ) {
+                if ( $genre_slugs && taxonomy_exists( 'culture_dir_genre' ) ) {
+                    wp_add_object_terms( $existing->ID, $genre_slugs, 'culture_dir_genre' );
+                }
                 return rest_ensure_response( array(
                     'id'         => $existing->ID,
                     'slug'       => $existing->post_name,
@@ -1131,6 +1142,9 @@ class Culture_Directory {
 
         if ( $entry_type && taxonomy_exists( 'culture_dir_type' ) ) {
             wp_set_object_terms( $post_id, $entry_type, 'culture_dir_type' );
+        }
+        if ( $genre_slugs && taxonomy_exists( 'culture_dir_genre' ) ) {
+            wp_add_object_terms( $post_id, $genre_slugs, 'culture_dir_genre' );
         }
         if ( $location_name ) {
             update_post_meta( $post_id, 'dir_infobox_location_name', $location_name );
