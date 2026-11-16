@@ -24,6 +24,8 @@ class Culture_Directory_Tools {
 		add_action( 'wp_ajax_culture_dir_wiki_audit',          array( __CLASS__, 'ajax_wiki_audit' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_infobox_fill',   array( __CLASS__, 'ajax_wiki_infobox_fill' ) );
 		add_action( 'wp_ajax_culture_dir_wiki_title_cleanup',  array( __CLASS__, 'ajax_wiki_title_cleanup' ) );
+		// Community review template-type backfill
+		add_action( 'wp_ajax_culture_backfill_review_types', array( __CLASS__, 'ajax_backfill_review_types' ) );
 		// Per-entry refetch metabox
 		add_action( 'wp_ajax_culture_dir_wiki_refetch_single', array( __CLASS__, 'ajax_wiki_refetch_single' ) );
 		add_action( 'add_meta_boxes',        array( __CLASS__, 'register_wiki_metabox' ) );
@@ -1508,6 +1510,45 @@ class Culture_Directory_Tools {
 
 	// ── Page renderer ─────────────────────────────────────────────────────────
 
+	// ── Community review template-type backfill ─────────────────────────────
+
+	public static function ajax_backfill_review_types() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Insufficient permissions.' ) );
+		}
+
+		global $wpdb;
+		$types = array(
+			'film-review'  => '_film_overall_rating',
+			'music-review' => '_music_overall_rating',
+			'book-review'  => '_book_overall_rating',
+		);
+
+		$total  = 0;
+		$counts = array();
+		foreach ( $types as $template_type => $rating_key ) {
+			$ids = $wpdb->get_col( $wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
+				 LEFT  JOIN {$wpdb->postmeta} tm ON tm.post_id = p.ID AND tm.meta_key = '_template_type'
+				 WHERE p.post_type = 'culture_post' AND tm.meta_id IS NULL",
+				$rating_key
+			) );
+			foreach ( $ids as $id ) {
+				update_post_meta( (int) $id, '_template_type', $template_type );
+				$total++;
+			}
+			$counts[ $template_type ] = count( $ids );
+		}
+
+		wp_send_json_success( array(
+			'backfilled' => $total,
+			'counts'     => $counts,
+			'message'    => "Backfilled _template_type on {$total} community review posts.",
+		) );
+	}
+
 	public static function render_page() {
 		global $wpdb;
 
@@ -1635,6 +1676,42 @@ class Culture_Directory_Tools {
 				</button>
 				<span class="spinner" id="cdt-title-cleanup-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
 				<div id="cdt-title-cleanup-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+			</div>
+
+			<?php
+			/* ── COMMUNITY REVIEW BACKFILL PANEL ── */
+			global $wpdb;
+			$review_types = array(
+				'film-review'  => '_film_overall_rating',
+				'music-review' => '_music_overall_rating',
+				'book-review'  => '_book_overall_rating',
+			);
+			$review_pending = 0;
+			foreach ( $review_types as $rating_key ) {
+				$review_pending += (int) $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
+					 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
+					 LEFT  JOIN {$wpdb->postmeta} tm ON tm.post_id = p.ID AND tm.meta_key = '_template_type'
+					 WHERE p.post_type = 'culture_post' AND tm.meta_id IS NULL",
+					$rating_key
+				) );
+			}
+			?>
+			<div class="cdt-panel">
+				<h2><?php esc_html_e( 'Backfill Review Template Types', 'culture-community' ); ?></h2>
+				<p class="description">
+					<?php esc_html_e( 'Fixes old film, music, and book reviews that are missing the _template_type meta key — caused by those reviews being posted before the WP REST meta registration existed. Without this fix, those reviews are invisible to the Recently Reviewed homepage rails. Only posts that already have a rating field stored (film/music/book overall rating) but no template type are touched.', 'culture-community' ); ?>
+				</p>
+				<?php if ( $review_pending > 0 ) : ?>
+					<p><strong style="color:#d63638;"><?php echo esc_html( $review_pending ); ?><?php esc_html_e( ' review(s) need backfilling.', 'culture-community' ); ?></strong></p>
+				<?php else : ?>
+					<p><strong style="color:#00a32a;">&#10003; <?php esc_html_e( 'All reviews already have template types set.', 'culture-community' ); ?></strong></p>
+				<?php endif; ?>
+				<button id="cdrbt-run-btn" class="button button-primary" <?php echo $review_pending < 1 ? 'disabled' : ''; ?>>
+					<?php esc_html_e( 'Run backfill →', 'culture-community' ); ?>
+				</button>
+				<span class="spinner" id="cdrbt-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+				<div id="cdrbt-result" style="display:none;margin-top:12px;"></div>
 			</div>
 
 			<?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
@@ -2234,6 +2311,37 @@ class Culture_Directory_Tools {
 				}
 
 				seedBatch();
+			});
+
+			// ── Community review template-type backfill ──
+			$('#cdrbt-run-btn').on('click', function() {
+				var $btn = $(this).prop('disabled', true);
+				var $sp  = $('#cdrbt-spinner').show();
+				var $res = $('#cdrbt-result').hide().html('');
+
+				$.post(ajaxUrl, { action: 'culture_backfill_review_types', nonce: nonce })
+				.done(function(r) {
+					if (!r.success) {
+						$res.html('<div class="notice notice-error inline"><p>' + $('<span>').text(r.data && r.data.message ? r.data.message : 'Unknown error.').html() + '</p></div>').show();
+						$btn.prop('disabled', false);
+						return;
+					}
+					var d = r.data;
+					var html = '<div class="notice notice-success inline"><p><strong>' + d.backfilled + ' review(s) updated.</strong></p>';
+					if (d.counts) {
+						html += '<ul style="margin:4px 0 0 16px;list-style:disc;font-size:13px;">';
+						$.each(d.counts, function(type, count) { html += '<li>' + count + ' × ' + type + '</li>'; });
+						html += '</ul>';
+					}
+					html += '</div>';
+					$res.html(html).show();
+					setTimeout(function() { location.reload(); }, 2500);
+				})
+				.fail(function() {
+					$res.html('<div class="notice notice-error inline"><p>Request failed.</p></div>').show();
+					$btn.prop('disabled', false);
+				})
+				.always(function() { $sp.hide(); });
 			});
 
 		}(jQuery));
