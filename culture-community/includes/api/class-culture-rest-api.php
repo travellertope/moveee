@@ -1287,6 +1287,14 @@ class Culture_REST_API {
             ),
         ) );
 
+        // One-time migration: backfill _template_type on old reviews that have
+        // rating meta but predate the WP REST meta registration.
+        register_rest_route( 'culture/v1', '/admin/backfill-review-template-types', array(
+            'methods'             => 'POST',
+            'callback'            => array( __CLASS__, 'handle_backfill_review_template_types' ),
+            'permission_callback' => array( __CLASS__, 'api_key_permission' ),
+        ) );
+
         // One-time migration: re-type "community" category posts → culture_post CPT.
         register_rest_route( 'culture/v1', '/admin/migrate-community-posts', array(
             'methods'             => 'POST',
@@ -6172,6 +6180,53 @@ class Culture_REST_API {
     }
 
     /**
+     * POST /culture/v1/admin/backfill-review-template-types
+     * One-time migration: writes _template_type on culture_post entries that
+     * have film/music/book rating meta but no _template_type stored. Safe to
+     * run multiple times (idempotent — skips posts that already have the key).
+     */
+    public static function handle_backfill_review_template_types() {
+        global $wpdb;
+
+        $types = array(
+            'film-review'  => '_film_overall_rating',
+            'music-review' => '_music_overall_rating',
+            'book-review'  => '_book_overall_rating',
+        );
+
+        $total = 0;
+        $counts = array();
+
+        foreach ( $types as $template_type => $rating_key ) {
+            // Find culture_post IDs that have the rating key but no _template_type.
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            $ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT p.ID FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->postmeta} pm
+                     ON pm.post_id = p.ID AND pm.meta_key = %s
+                 LEFT JOIN {$wpdb->postmeta} tm
+                     ON tm.post_id = p.ID AND tm.meta_key = '_template_type'
+                 WHERE p.post_type = 'culture_post'
+                   AND tm.meta_id IS NULL",
+                $rating_key
+            ) );
+
+            foreach ( $ids as $id ) {
+                update_post_meta( (int) $id, '_template_type', $template_type );
+                $total++;
+            }
+
+            $counts[ $template_type ] = count( $ids );
+        }
+
+        return rest_ensure_response( array(
+            'backfilled' => $total,
+            'counts'     => $counts,
+            'message'    => "Backfilled _template_type on {$total} community review posts.",
+        ) );
+    }
+
+    /**
      * POST /culture/v1/admin/migrate-community-posts
      * One-time migration: converts all posts in the "community" category
      * to the culture_post CPT. Safe to run multiple times (idempotent).
@@ -7638,8 +7693,8 @@ class Culture_REST_API {
                     ? (float) $post_meta_map[ $post_id ][ $rk ]
                     : null;
 
-                // Strip HTML and trim review text.
-                $review_excerpt = wp_trim_words( wp_strip_all_tags( $row['post_content'] ), 25 );
+                // Strip HTML and decode entities; we'll trim after removing any title prefix.
+                $raw_text = ltrim( html_entity_decode( wp_strip_all_tags( $row['post_content'] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 
                 if ( $dir_id > 0 && isset( $dir_post_map[ $dir_id ] ) ) {
                     // Linked to a directory entry — use directory data.
@@ -7654,7 +7709,7 @@ class Culture_REST_API {
                     $title      = $dp['post_title'];
                     $slug       = $dp['post_name'];
                     $href       = '/directory/' . $dp['post_name'];
-                    $creator    = self::get_creator_for_type( $dir_id, $type_slug );
+                    $creator    = Culture_Directory::get_creator_for_type( $dir_id, $type_slug );
                 } else {
                     // No directory link — build from the review's own template fields.
                     $umeta      = $unlinked_meta_map[ $post_id ] ?? array();
@@ -7667,6 +7722,15 @@ class Culture_REST_API {
                     $rev_count  = 1;
                     $entry_id   = $post_id;
                 }
+
+                // Strip the entry title from the opening of the review text —
+                // the composer prepends the subject title to post_content.
+                $clean_title = trim( html_entity_decode( wp_strip_all_tags( $title ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+                $excerpt_body = $raw_text;
+                if ( $clean_title !== '' && stripos( $excerpt_body, $clean_title ) === 0 ) {
+                    $excerpt_body = ltrim( substr( $excerpt_body, strlen( $clean_title ) ) );
+                }
+                $review_excerpt = wp_trim_words( $excerpt_body, 25 );
 
                 $result[ $type ][] = array(
                     'id'            => $entry_id,

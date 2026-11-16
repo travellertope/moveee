@@ -121,6 +121,9 @@
 
 /* ── Mobile ── */
 @media (max-width: 480px) {
-  .hphero { height: clamp(480px, 85vh, 680px); }
+  /* Let the hero shrink to its content — no forced full-height on a phone.
+     Padding creates the breathing room; the absolutely-positioned slides
+     and overlay fill whatever height the body drives. */
+  .hphero { height: auto; padding: 88px 0 64px; }
   .hphero-body { padding: 0 20px; }
 }
