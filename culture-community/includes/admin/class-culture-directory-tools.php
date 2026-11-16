@@ -26,6 +26,8 @@ class Culture_Directory_Tools {
 		add_action( 'wp_ajax_culture_dir_wiki_title_cleanup',  array( __CLASS__, 'ajax_wiki_title_cleanup' ) );
 		// Community review template-type backfill
 		add_action( 'wp_ajax_culture_backfill_review_types', array( __CLASS__, 'ajax_backfill_review_types' ) );
+		// TMDB import (Wikipedia category → TMDB → quick-create with genre tagging)
+		add_action( 'wp_ajax_culture_dir_tmdb_import', array( __CLASS__, 'ajax_tmdb_import' ) );
 		// Per-entry refetch metabox
 		add_action( 'wp_ajax_culture_dir_wiki_refetch_single', array( __CLASS__, 'ajax_wiki_refetch_single' ) );
 		add_action( 'add_meta_boxes',        array( __CLASS__, 'register_wiki_metabox' ) );
@@ -1549,6 +1551,73 @@ class Culture_Directory_Tools {
 		) );
 	}
 
+	/**
+	 * AJAX proxy: calls the Next.js /api/directory/wikipedia-import endpoint.
+	 * Runs server-side so the CRON_SECRET is never exposed to the browser.
+	 *
+	 * POST params: nonce, category, genre_slugs (CSV), entry_type, batch_size, cmcontinue, cron_secret
+	 */
+	public static function ajax_tmdb_import() {
+		check_ajax_referer( 'culture_dir_tools', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Forbidden.' ) );
+		}
+
+		$category    = sanitize_text_field( $_POST['category']   ?? '' );
+		$genre_csv   = sanitize_text_field( $_POST['genre_slugs'] ?? '' );
+		$genre_slugs = array_values( array_filter( array_map( 'sanitize_key', array_map( 'trim', explode( ',', $genre_csv ) ) ) ) );
+		$entry_type  = in_array( sanitize_text_field( $_POST['entry_type'] ?? '' ), array( 'film', 'tv-series' ), true )
+			? sanitize_text_field( $_POST['entry_type'] )
+			: 'film';
+		$batch_size  = max( 1, min( 50, (int) ( $_POST['batch_size'] ?? 20 ) ) );
+		$cmcontinue  = wp_unslash( $_POST['cmcontinue'] ?? '' );
+		$cron_secret = sanitize_text_field( $_POST['cron_secret'] ?? '' );
+
+		if ( empty( $category ) ) {
+			wp_send_json_error( array( 'message' => 'Category name is required.' ) );
+		}
+		if ( empty( $cron_secret ) ) {
+			wp_send_json_error( array( 'message' => 'CRON Secret is required. Find it in your Vercel environment variables.' ) );
+		}
+
+		$body = array(
+			'category'    => $category,
+			'genre_slugs' => $genre_slugs,
+			'entry_type'  => $entry_type,
+			'batch_size'  => $batch_size,
+		);
+		if ( $cmcontinue !== '' ) {
+			$body['cmcontinue'] = $cmcontinue;
+		}
+
+		$response = wp_remote_post( 'https://themoveee.com/api/directory/wikipedia-import', array(
+			'timeout' => 90,
+			'headers' => array(
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Bearer ' . $cron_secret,
+			),
+			'body' => wp_json_encode( $body ),
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( array( 'message' => $response->get_error_message() ) );
+		}
+
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $status !== 200 ) {
+			$msg = ( is_array( $data ) && isset( $data['error'] ) ) ? $data['error'] : "HTTP {$status} from import endpoint.";
+			wp_send_json_error( array( 'message' => $msg ) );
+		}
+
+		if ( ! is_array( $data ) ) {
+			wp_send_json_error( array( 'message' => 'Unexpected response from import endpoint.' ) );
+		}
+
+		wp_send_json_success( $data );
+	}
+
 	public static function render_page() {
 		global $wpdb;
 
@@ -1712,6 +1781,69 @@ class Culture_Directory_Tools {
 				</button>
 				<span class="spinner" id="cdrbt-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
 				<div id="cdrbt-result" style="display:none;margin-top:12px;"></div>
+			</div>
+
+			<?php /* ── TMDB IMPORT PANEL ── */ ?>
+			<div class="cdt-panel" id="cdt-tmdb-panel">
+				<h2><?php esc_html_e( 'TMDB Import (Wikipedia Category + Genre Tagging)', 'culture-community' ); ?></h2>
+				<p class="description">
+					<?php esc_html_e( 'Import directory entries from a Wikipedia category using TMDB for rich metadata (cover, year, overview). Films already in the directory get the genre tag applied without re-importing. Run multiple times with different categories to build up genre tags on the same entries.', 'culture-community' ); ?>
+				</p>
+
+				<table class="form-table cdt-form-table">
+					<tr>
+						<th><label for="cdti-category"><?php esc_html_e( 'Wikipedia category', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="text" id="cdti-category" class="regular-text" placeholder="e.g. Netflix_original_films  or  2026_American_films">
+							<p class="description"><?php esc_html_e( 'The "Category:" prefix is optional — it will be added automatically.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cdti-genre-slugs"><?php esc_html_e( 'Genre slug(s)', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="text" id="cdti-genre-slugs" class="regular-text" placeholder="e.g. netflix-original  or  american-film, drama">
+							<p class="description"><?php esc_html_e( 'Comma-separated culture_dir_genre slugs. Applied to every entry created or matched in this run.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cdti-entry-type"><?php esc_html_e( 'Entry type', 'culture-community' ); ?></label></th>
+						<td>
+							<select id="cdti-entry-type">
+								<option value="film"><?php esc_html_e( 'Film', 'culture-community' ); ?></option>
+								<option value="tv-series"><?php esc_html_e( 'TV Series', 'culture-community' ); ?></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cdti-batch-size"><?php esc_html_e( 'Batch size', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="number" id="cdti-batch-size" value="20" min="1" max="50" style="width:70px;">
+							<p class="description"><?php esc_html_e( 'Wikipedia titles processed per round (1–50). Lower = more progress updates; higher = faster.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cdti-cron-secret"><?php esc_html_e( 'CRON_SECRET', 'culture-community' ); ?></label></th>
+						<td>
+							<input type="password" id="cdti-cron-secret" class="regular-text" placeholder="From Vercel → Settings → Environment Variables" autocomplete="off">
+							<p class="description"><?php esc_html_e( 'Your Vercel CRON_SECRET value. Sent over HTTPS; stored only in your browser for this session.', 'culture-community' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
+				<div id="cdti-stats" style="display:none;margin:12px 0;padding:10px 14px;background:#f0f0f1;border:1px solid #c3c4c7;border-radius:3px;font-size:13px;">
+					<strong>Created:</strong> <span id="cdti-stat-created">0</span>
+					&nbsp;·&nbsp;
+					<strong>Tagged (existing):</strong> <span id="cdti-stat-tagged">0</span>
+					&nbsp;·&nbsp;
+					<strong>Skipped (no TMDB match):</strong> <span id="cdti-stat-skipped">0</span>
+					&nbsp;·&nbsp;
+					<strong>Batches:</strong> <span id="cdti-stat-batches">0</span>
+				</div>
+
+				<button id="cdti-start-btn" class="button button-primary"><?php esc_html_e( 'Start import →', 'culture-community' ); ?></button>
+				<button id="cdti-stop-btn" class="button" style="display:none;margin-left:8px;"><?php esc_html_e( 'Stop', 'culture-community' ); ?></button>
+				<span class="spinner" id="cdti-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+				<div id="cdti-log" style="display:none;margin-top:12px;max-height:280px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
 			</div>
 
 			<?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
@@ -2312,6 +2444,124 @@ class Culture_Directory_Tools {
 
 				seedBatch();
 			});
+
+			/* ── TMDB Import ── */
+			(function() {
+				var running = false;
+				var cmcontinue = '';
+				var totalCreated = 0;
+				var totalTagged  = 0;
+				var totalSkipped = 0;
+				var batches      = 0;
+
+				// Restore saved secret from sessionStorage (never localStorage — survives only this tab)
+				try {
+					var saved = sessionStorage.getItem('cdti_cron_secret');
+					if (saved) $('#cdti-cron-secret').val(saved);
+				} catch(e) {}
+
+				function log(text, isError) {
+					var $log = $('#cdti-log').show();
+					var color = isError ? '#d63638' : '#3c434a';
+					$log.append('<div style="color:' + color + ';">' + $('<span>').text(text).html() + '</div>');
+					$log.scrollTop($log[0].scrollHeight);
+				}
+
+				function updateStats() {
+					$('#cdti-stats').show();
+					$('#cdti-stat-created').text(totalCreated);
+					$('#cdti-stat-tagged').text(totalTagged);
+					$('#cdti-stat-skipped').text(totalSkipped);
+					$('#cdti-stat-batches').text(batches);
+				}
+
+				function stop(isDone) {
+					running = false;
+					$('#cdti-start-btn').prop('disabled', false);
+					$('#cdti-stop-btn').hide();
+					$('#cdti-spinner').hide();
+					if (isDone) {
+						log('✓ Import complete — ' + totalCreated + ' created, ' + totalTagged + ' tagged, ' + totalSkipped + ' skipped across ' + batches + ' batches.');
+					}
+				}
+
+				function tick() {
+					if (!running) return;
+
+					var secret = $('#cdti-cron-secret').val().trim();
+					try { sessionStorage.setItem('cdti_cron_secret', secret); } catch(e) {}
+
+					$.post(ajaxUrl, {
+						action:      'culture_dir_tmdb_import',
+						nonce:       nonce,
+						category:    $('#cdti-category').val().trim(),
+						genre_slugs: $('#cdti-genre-slugs').val().trim(),
+						entry_type:  $('#cdti-entry-type').val(),
+						batch_size:  $('#cdti-batch-size').val(),
+						cmcontinue:  cmcontinue,
+						cron_secret: secret,
+					})
+					.done(function(res) {
+						if (!running) return;
+
+						if (!res.success) {
+							log('Error: ' + (res.data && res.data.message ? res.data.message : 'unknown'), true);
+							stop(false);
+							return;
+						}
+
+						var d = res.data;
+						batches++;
+						totalCreated += (d.created || 0);
+						totalTagged  += (d.tagged  || 0);
+						totalSkipped += (d.skipped || 0);
+						cmcontinue    = d.cmcontinue || '';
+
+						updateStats();
+						log('Batch ' + batches + ': +' + d.created + ' created, +' + d.tagged + ' tagged, ' + d.skipped + ' skipped (total ' + d.total + ' titles this batch)' + (d.done ? ' — DONE' : ''));
+
+						if (d.done) {
+							stop(true);
+							return;
+						}
+
+						// 500ms between batches — be polite to Wikipedia + TMDB
+						setTimeout(tick, 500);
+					})
+					.fail(function() {
+						log('Request failed — stopping.', true);
+						stop(false);
+					});
+				}
+
+				$('#cdti-start-btn').on('click', function() {
+					var category = $('#cdti-category').val().trim();
+					var secret   = $('#cdti-cron-secret').val().trim();
+
+					if (!category) { alert('Enter a Wikipedia category slug.'); return; }
+					if (!secret)   { alert('Enter your CRON_SECRET.'); return; }
+
+					running      = true;
+					cmcontinue   = '';
+					totalCreated = 0;
+					totalTagged  = 0;
+					totalSkipped = 0;
+					batches      = 0;
+
+					$('#cdti-start-btn').prop('disabled', true);
+					$('#cdti-stop-btn').show();
+					$('#cdti-spinner').show();
+					$('#cdti-log').empty().show();
+					$('#cdti-stats').show();
+					updateStats();
+					tick();
+				});
+
+				$('#cdti-stop-btn').on('click', function() {
+					log('Stopped by user after ' + batches + ' batches.');
+					stop(false);
+				});
+			}());
 
 			// ── Community review template-type backfill ──
 			$('#cdrbt-run-btn').on('click', function() {
