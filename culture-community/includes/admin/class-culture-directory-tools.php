@@ -635,9 +635,42 @@ class Culture_Directory_Tools {
 		$batch_size   = 5;
 		$overwrite    = ! empty( $_POST['overwrite'] );
 		$retry_failed = ! empty( $_POST['retry_failed'] );
+		$reenrich     = ! empty( $_POST['reenrich'] );
 		$offset       = $batch_num * $batch_size;
 
-		if ( $retry_failed ) {
+		if ( $reenrich ) {
+			// Re-enrich mode: entries that already have a Wikipedia match — re-fetch and
+			// overwrite content with the full extract (fixes the truncated-first-paragraph bug).
+			// Uses the stored _wiki_title so no opensearch round-trip is needed.
+			$total = (int) $wpdb->get_var(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND pm.meta_value != '_not_found'"
+			);
+
+			$rows = $wpdb->get_results( $wpdb->prepare(
+				"SELECT DISTINCT p.ID, pm.meta_value AS wiki_title
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND pm.meta_value != '_not_found'
+				 ORDER BY p.ID ASC
+				 LIMIT %d OFFSET %d",
+				$batch_size,
+				$offset
+			), ARRAY_A );
+
+			$ids_with_wiki = array();
+			foreach ( $rows as $row ) {
+				$ids_with_wiki[ (int) $row['ID'] ] = $row['wiki_title'];
+			}
+			$ids = array_keys( $ids_with_wiki );
+
+		} elseif ( $retry_failed ) {
 			// Retry mode: entries that were previously searched but not found.
 			$total = (int) $wpdb->get_var(
 				"SELECT COUNT(DISTINCT p.ID)
@@ -716,13 +749,21 @@ class Culture_Directory_Tools {
 			$terms      = wp_get_object_terms( (int) $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
 			$entry_type = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0] : '';
 
-			// Search Wikipedia
-			$wiki_title = self::wiki_opensearch( $post->post_title, $entry_type );
-
-			if ( ! $wiki_title ) {
-				update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
-				$results[] = array( 'title' => $post->post_title, 'found' => false );
-				continue;
+			if ( $reenrich ) {
+				// Re-enrich: skip opensearch — use the already-stored _wiki_title directly.
+				$wiki_title = $ids_with_wiki[ $post_id ] ?? '';
+				if ( ! $wiki_title ) {
+					$results[] = array( 'title' => $post->post_title, 'found' => false );
+					continue;
+				}
+			} else {
+				// Normal / retry: search Wikipedia for the best match.
+				$wiki_title = self::wiki_opensearch( $post->post_title, $entry_type );
+				if ( ! $wiki_title ) {
+					update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+					$results[] = array( 'title' => $post->post_title, 'found' => false );
+					continue;
+				}
 			}
 
 			// Fetch page data (extract + thumbnail + Wikidata QID)
@@ -736,13 +777,16 @@ class Culture_Directory_Tools {
 			}
 
 			if ( ! $page ) {
-				update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+				if ( ! $reenrich ) {
+					update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+				}
 				$results[] = array( 'title' => $post->post_title, 'found' => false );
 				continue;
 			}
 
 			$real_title = $page['title'] ?? $wiki_title;
-			$changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $overwrite, $entry_type );
+			// Re-enrich always overwrites content (that's the point of the operation).
+			$changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $reenrich || $overwrite, $entry_type );
 
 			update_post_meta( (int) $post_id, '_wiki_title', $real_title );
 			update_post_meta( (int) $post_id, '_wiki_url',
@@ -1694,9 +1738,15 @@ class Culture_Directory_Tools {
 				<button id="cdwb-retry-btn" class="button button-secondary" style="margin-left:8px;" <?php echo $backfill_not_found < 1 ? 'disabled' : ''; ?>>
 					<?php printf( esc_html__( 'Retry %d not-found →', 'culture-community' ), $backfill_not_found ); ?>
 				</button>
+				<button id="cdwb-reenrich-btn" class="button button-secondary" style="margin-left:8px;" title="Re-fetch Wikipedia content for all already-matched entries and overwrite their post_content with the full article text.">
+					<?php esc_html_e( 'Re-enrich matched entries →', 'culture-community' ); ?>
+				</button>
 				<button id="cdwb-stop-btn" class="button" style="display:none;margin-left:8px;">
 					<?php esc_html_e( 'Stop', 'culture-community' ); ?>
 				</button>
+				<p class="description" style="margin-top:8px;">
+					<?php esc_html_e( '"Re-enrich matched entries" re-fetches Wikipedia for every entry that already has a match and rewrites their content with the full article text. Use this to fix entries seeded before the first-paragraph bug was fixed.', 'culture-community' ); ?>
+				</p>
 				<span class="spinner" id="cdwb-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
 				<div id="cdwb-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
 			</div>
@@ -1941,6 +1991,7 @@ class Culture_Directory_Tools {
 				var totalProcessed = 0;
 				var totalUpdated = 0;
 				var retryMode = false;
+				var reenrichMode = false;
 
 				function log(text, isError) {
 					var $log = $('#cdwb-log').show();
@@ -1958,6 +2009,7 @@ class Culture_Directory_Tools {
 						batch:         currentBatch,
 						overwrite:     $('#cdwb-overwrite').is(':checked') ? '1' : '',
 						retry_failed:  retryMode ? '1' : '',
+						reenrich:      reenrichMode ? '1' : '',
 					})
 					.done(function(res) {
 						if (!running) return;
@@ -1999,27 +2051,30 @@ class Culture_Directory_Tools {
 
 				function stop() {
 					running = false;
-					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', false);
+					$('#cdwb-start-btn, #cdwb-retry-btn, #cdwb-reenrich-btn').prop('disabled', false);
 					$('#cdwb-stop-btn').hide();
 					$('#cdwb-spinner').hide();
 				}
 
-				function start(isRetry) {
+				function start(isRetry, isReenrich) {
 					running = true;
-					retryMode = !!isRetry;
+					retryMode   = !!isRetry;
+					reenrichMode = !!isReenrich;
 					currentBatch = 0;
 					totalProcessed = 0;
 					totalUpdated = 0;
-					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', true);
+					$('#cdwb-start-btn, #cdwb-retry-btn, #cdwb-reenrich-btn').prop('disabled', true);
 					$('#cdwb-stop-btn').show();
 					$('#cdwb-spinner').show();
 					$('#cdwb-log').empty().show();
-					if (isRetry) log('Retrying not-found entries with improved subtitle search…');
+					if (isRetry)    log('Retrying not-found entries with improved subtitle search…');
+					if (isReenrich) log('Re-enriching all matched entries — rewriting content with full Wikipedia text…');
 					tick();
 				}
 
-				$('#cdwb-start-btn').on('click', function() { start(false); });
-				$('#cdwb-retry-btn').on('click', function() { start(true); });
+				$('#cdwb-start-btn').on('click', function() { start(false, false); });
+				$('#cdwb-retry-btn').on('click', function() { start(true, false); });
+				$('#cdwb-reenrich-btn').on('click', function() { start(false, true); });
 
 				$('#cdwb-stop-btn').on('click', function() {
 					log('Stopped by user.');
