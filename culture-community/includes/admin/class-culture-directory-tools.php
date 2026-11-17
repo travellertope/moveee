@@ -511,12 +511,11 @@ class Culture_Directory_Tools {
 				? substr( $extract, 0, $dot + 1 )
 				: substr( $extract, 0, 220 );
 
-			// Content starts AFTER the first sentence so the app does not show the excerpt twice.
-			$content_text = ( $dot !== false && $dot + 2 < strlen( $extract ) )
-				? ltrim( substr( $extract, $dot + 2 ) )
-				: $extract;
-
-			$paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $content_text ) ) );
+			// Use the full extract as content (including the first sentence).
+			// The excerpt field is a separate WP field — it is not prepended
+			// to post_content on the entry page, so omitting the first sentence
+			// from content would leave a gap at the top of the article.
+			$paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $extract ) ) );
 			$content = implode( "\n\n", array_map( function ( $p ) {
 				return '<p>' . wp_kses_post( $p ) . '</p>';
 			}, $paras ) );
