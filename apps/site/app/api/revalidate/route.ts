@@ -7,7 +7,7 @@
  * Auth: Authorization: Bearer {CRON_SECRET}
  *
  * Body (optional):
- *   { "paths": ["/directory", "/visuals"] }
+ *   { "paths": ["/directory"] }
  *   — defaults to all content pages if omitted.
  */
 
@@ -18,7 +18,7 @@ export const runtime = "nodejs";
 
 const CONTENT_PATHS = [
   "/directory",
-  "/visuals",
+
   "/quotes",
   "/magazine",
   "/newsletters",

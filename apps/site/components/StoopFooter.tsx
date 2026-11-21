@@ -33,7 +33,7 @@ export default function StoopFooter() {
               <li><Link href="/commons">The Moveee Commons</Link></li>
               <li><Link href="/newsletter">Newsletter</Link></li>
               <li><Link href="/journeys">Origins</Link></li>
-              <li><Link href="/visuals">Visuals</Link></li>
+
             </ul>
           </div>
           <div className="stp-footer-col">
