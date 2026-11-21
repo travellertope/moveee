@@ -71,7 +71,7 @@ const APP_ROUTES = new Set([
   'journeys',
   'newsletter',
   'lifestyle',
-  'visuals',
+
   'makers',
   'author',
   'services',
