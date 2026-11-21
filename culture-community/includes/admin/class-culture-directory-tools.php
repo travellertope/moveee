@@ -511,12 +511,11 @@ class Culture_Directory_Tools {
 				? substr( $extract, 0, $dot + 1 )
 				: substr( $extract, 0, 220 );
 
-			// Content starts AFTER the first sentence so the app does not show the excerpt twice.
-			$content_text = ( $dot !== false && $dot + 2 < strlen( $extract ) )
-				? ltrim( substr( $extract, $dot + 2 ) )
-				: $extract;
-
-			$paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $content_text ) ) );
+			// Use the full extract as content (including the first sentence).
+			// The excerpt field is a separate WP field — it is not prepended
+			// to post_content on the entry page, so omitting the first sentence
+			// from content would leave a gap at the top of the article.
+			$paras   = array_filter( array_map( 'trim', preg_split( '/\n{2,}/', $extract ) ) );
 			$content = implode( "\n\n", array_map( function ( $p ) {
 				return '<p>' . wp_kses_post( $p ) . '</p>';
 			}, $paras ) );
@@ -636,9 +635,42 @@ class Culture_Directory_Tools {
 		$batch_size   = 5;
 		$overwrite    = ! empty( $_POST['overwrite'] );
 		$retry_failed = ! empty( $_POST['retry_failed'] );
+		$reenrich     = ! empty( $_POST['reenrich'] );
 		$offset       = $batch_num * $batch_size;
 
-		if ( $retry_failed ) {
+		if ( $reenrich ) {
+			// Re-enrich mode: entries that already have a Wikipedia match — re-fetch and
+			// overwrite content with the full extract (fixes the truncated-first-paragraph bug).
+			// Uses the stored _wiki_title so no opensearch round-trip is needed.
+			$total = (int) $wpdb->get_var(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND pm.meta_value != '_not_found'"
+			);
+
+			$rows = $wpdb->get_results( $wpdb->prepare(
+				"SELECT DISTINCT p.ID, pm.meta_value AS wiki_title
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm
+				     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+				 WHERE p.post_type = 'culture_directory'
+				   AND pm.meta_value != '_not_found'
+				 ORDER BY p.ID ASC
+				 LIMIT %d OFFSET %d",
+				$batch_size,
+				$offset
+			), ARRAY_A );
+
+			$ids_with_wiki = array();
+			foreach ( $rows as $row ) {
+				$ids_with_wiki[ (int) $row['ID'] ] = $row['wiki_title'];
+			}
+			$ids = array_keys( $ids_with_wiki );
+
+		} elseif ( $retry_failed ) {
 			// Retry mode: entries that were previously searched but not found.
 			$total = (int) $wpdb->get_var(
 				"SELECT COUNT(DISTINCT p.ID)
@@ -717,13 +749,21 @@ class Culture_Directory_Tools {
 			$terms      = wp_get_object_terms( (int) $post_id, 'culture_dir_type', array( 'fields' => 'slugs' ) );
 			$entry_type = ( ! is_wp_error( $terms ) && ! empty( $terms ) ) ? $terms[0] : '';
 
-			// Search Wikipedia
-			$wiki_title = self::wiki_opensearch( $post->post_title, $entry_type );
-
-			if ( ! $wiki_title ) {
-				update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
-				$results[] = array( 'title' => $post->post_title, 'found' => false );
-				continue;
+			if ( $reenrich ) {
+				// Re-enrich: skip opensearch — use the already-stored _wiki_title directly.
+				$wiki_title = $ids_with_wiki[ $post_id ] ?? '';
+				if ( ! $wiki_title ) {
+					$results[] = array( 'title' => $post->post_title, 'found' => false );
+					continue;
+				}
+			} else {
+				// Normal / retry: search Wikipedia for the best match.
+				$wiki_title = self::wiki_opensearch( $post->post_title, $entry_type );
+				if ( ! $wiki_title ) {
+					update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+					$results[] = array( 'title' => $post->post_title, 'found' => false );
+					continue;
+				}
 			}
 
 			// Fetch page data (extract + thumbnail + Wikidata QID)
@@ -737,13 +777,16 @@ class Culture_Directory_Tools {
 			}
 
 			if ( ! $page ) {
-				update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+				if ( ! $reenrich ) {
+					update_post_meta( (int) $post_id, '_wiki_title', '_not_found' );
+				}
 				$results[] = array( 'title' => $post->post_title, 'found' => false );
 				continue;
 			}
 
 			$real_title = $page['title'] ?? $wiki_title;
-			$changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $overwrite, $entry_type );
+			// Re-enrich always overwrites content (that's the point of the operation).
+			$changes    = self::apply_wiki_data_to_post( (int) $post_id, $post, $page, $reenrich || $overwrite, $entry_type );
 
 			update_post_meta( (int) $post_id, '_wiki_title', $real_title );
 			update_post_meta( (int) $post_id, '_wiki_url',
@@ -1640,300 +1683,353 @@ class Culture_Directory_Tools {
 		);
 		$backfill_total_pub = $backfill_pending + $backfill_done;
 
+		$backfill_not_found = (int) $wpdb->get_var(
+			"SELECT COUNT(DISTINCT p.ID)
+			 FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm
+			     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
+			 WHERE p.post_type = 'culture_directory'
+			   AND p.post_status = 'publish'
+			   AND pm.meta_value = '_not_found'"
+		);
+
+		$review_types = array(
+			'film-review'  => '_film_overall_rating',
+			'music-review' => '_music_overall_rating',
+			'book-review'  => '_book_overall_rating',
+		);
+		$review_pending = 0;
+		foreach ( $review_types as $rating_key ) {
+			$review_pending += (int) $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
+				 LEFT  JOIN {$wpdb->postmeta} tm ON tm.post_id = p.ID AND tm.meta_key = '_template_type'
+				 WHERE p.post_type = 'culture_post' AND tm.meta_id IS NULL",
+				$rating_key
+			) );
+		}
+
 		$nonce = wp_create_nonce( 'culture_dir_tools' );
 		?>
 		<div class="wrap cdt-wrap">
 			<h1><?php esc_html_e( 'Directory Tools', 'culture-community' ); ?></h1>
 
-			<?php /* ── WIKIPEDIA BACKFILL PANEL ── */ ?>
-			<div class="cdt-panel">
-				<h2><?php esc_html_e( 'Wikipedia Backfill', 'culture-community' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Enrich all published directory entries that have not yet been matched to a Wikipedia article. For each entry the tool finds the best Wikipedia match, fills in the full description if the existing content is thin (< 120 characters), sets the cover image if none exists, and populates all infobox fields (director, year, cast, genre, etc.) from Wikidata. Genre is also saved to the directory genre taxonomy for filtering. Entries already processed are skipped automatically.', 'culture-community' ); ?>
-				</p>
+			<nav class="nav-tab-wrapper" id="cdt-tab-nav">
+				<a href="#tab-backfill" class="nav-tab"><?php esc_html_e( 'Wikipedia Backfill', 'culture-community' ); ?></a>
+				<a href="#tab-infobox"  class="nav-tab"><?php esc_html_e( 'Infobox Backfill', 'culture-community' ); ?></a>
+				<a href="#tab-titles"   class="nav-tab"><?php esc_html_e( 'Title Cleanup', 'culture-community' ); ?></a>
+				<a href="#tab-reviews"  class="nav-tab"><?php esc_html_e( 'Review Types', 'culture-community' ); ?></a>
+				<a href="#tab-tmdb"     class="nav-tab"><?php esc_html_e( 'TMDB Import', 'culture-community' ); ?></a>
+				<a href="#tab-seeder"   class="nav-tab"><?php esc_html_e( 'Wikipedia Seeder', 'culture-community' ); ?></a>
+			</nav>
 
-				<div class="cdt-progress-block">
-					<div class="cdt-progress-label">
-						<strong id="cdwb-done-count"><?php echo esc_html( $backfill_done ); ?></strong>
-						<?php esc_html_e( ' of ', 'culture-community' ); ?>
-						<strong><?php echo esc_html( $backfill_total_pub ); ?></strong>
-						<?php esc_html_e( ' published entries enriched', 'culture-community' ); ?>
-						<span class="cdt-pct" id="cdwb-pct"><?php echo $backfill_total_pub > 0 ? round( $backfill_done / $backfill_total_pub * 100 ) : 0; ?>%</span>
-					</div>
-					<div class="cdt-progress-bar">
-						<div class="cdt-progress-fill" id="cdwb-fill" style="width:<?php echo $backfill_total_pub > 0 ? round( $backfill_done / $backfill_total_pub * 100 ) : 0; ?>%"></div>
-					</div>
-					<p class="description" style="margin-top:6px;" id="cdwb-remaining">
-						<?php if ( $backfill_pending > 0 ) : ?>
-							<?php echo esc_html( $backfill_pending ); ?><?php esc_html_e( ' entries still need enrichment', 'culture-community' ); ?>
-						<?php else : ?>
-							<span style="color:#00a32a;">&#10003; <?php esc_html_e( 'All published entries have been processed.', 'culture-community' ); ?></span>
-						<?php endif; ?>
+			<?php /* ── TAB: WIKIPEDIA BACKFILL ── */ ?>
+			<div id="tab-backfill" class="cdt-tab-pane">
+				<div class="cdt-panel">
+					<h2><?php esc_html_e( 'Wikipedia Backfill', 'culture-community' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Enrich all published directory entries that have not yet been matched to a Wikipedia article. For each entry the tool finds the best Wikipedia match, fills in the full description if the existing content is thin (< 120 characters), sets the cover image if none exists, and populates all infobox fields (director, year, cast, genre, etc.) from Wikidata. Genre is also saved to the directory genre taxonomy for filtering. Entries already processed are skipped automatically.', 'culture-community' ); ?>
 					</p>
-				</div>
 
-				<?php
-				$backfill_not_found = (int) $wpdb->get_var(
-					"SELECT COUNT(DISTINCT p.ID)
-					 FROM {$wpdb->posts} p
-					 INNER JOIN {$wpdb->postmeta} pm
-					     ON pm.post_id = p.ID AND pm.meta_key = '_wiki_title'
-					 WHERE p.post_type = 'culture_directory'
-					   AND p.post_status = 'publish'
-					   AND pm.meta_value = '_not_found'"
-				);
-				?>
-
-				<label style="display:block;margin-bottom:12px;">
-					<input type="checkbox" id="cdwb-overwrite">
-					<?php esc_html_e( 'Overwrite existing content and cover on all entries (AI-generated covers are always replaced even without this)', 'culture-community' ); ?>
-				</label>
-
-				<button id="cdwb-start-btn" class="button button-primary" <?php echo $backfill_pending < 1 ? 'disabled' : ''; ?>>
-					<?php esc_html_e( 'Start backfill →', 'culture-community' ); ?>
-				</button>
-				<button id="cdwb-retry-btn" class="button button-secondary" style="margin-left:8px;" <?php echo $backfill_not_found < 1 ? 'disabled' : ''; ?>>
-					<?php printf( esc_html__( 'Retry %d not-found →', 'culture-community' ), $backfill_not_found ); ?>
-				</button>
-				<button id="cdwb-stop-btn" class="button" style="display:none;margin-left:8px;">
-					<?php esc_html_e( 'Stop', 'culture-community' ); ?>
-				</button>
-				<span class="spinner" id="cdwb-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
-				<div id="cdwb-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
-			</div>
-
-			<div class="cdt-panel" style="margin-top:16px;">
-				<h3 style="margin-top:0;"><?php esc_html_e( 'Audit: clear bad Wikipedia matches', 'culture-community' ); ?></h3>
-				<p class="description">
-					<?php esc_html_e( 'Scans all enriched entries and removes data for any entry whose stored Wikipedia article title does not share a significant word with the entry\'s own title (e.g. "Water Margin" stored for "Women on the Margins"). Cleared entries will be re-processed on the next backfill run.', 'culture-community' ); ?>
-				</p>
-				<button id="cdwb-audit-btn" class="button button-secondary">
-					<?php esc_html_e( 'Audit & clear bad matches →', 'culture-community' ); ?>
-				</button>
-				<span class="spinner" id="cdwb-audit-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
-				<div id="cdwb-audit-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
-			</div>
-
-			<?php /* ── INFOBOX BACKFILL PANEL ── */ ?>
-			<div class="cdt-panel">
-				<h2><?php esc_html_e( 'Infobox Backfill (Seeded Entries)', 'culture-community' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Populates missing Wikidata structured fields (director, year, cast, genre, etc.) for entries that were seeded from Wikipedia but are lacking infobox data. Only entries that already have a matched Wikipedia title but no dir_infobox_* meta are processed — others are skipped automatically.', 'culture-community' ); ?>
-				</p>
-
-				<p>
-					<label>
-						<input type="checkbox" id="cdif-overwrite">
-						<?php esc_html_e( 'Overwrite existing infobox fields (if any)', 'culture-community' ); ?>
-					</label>
-				</p>
-
-				<button id="cdif-start-btn" class="button button-secondary"><?php esc_html_e( 'Start infobox backfill →', 'culture-community' ); ?></button>
-				<button id="cdif-stop-btn" class="button" style="display:none;"><?php esc_html_e( 'Stop', 'culture-community' ); ?></button>
-				<span class="spinner" id="cdif-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
-				<div id="cdif-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
-			</div>
-
-			<?php /* ── TITLE CLEANUP PANEL ── */ ?>
-			<div class="cdt-panel">
-				<h3 style="margin-top:0;"><?php esc_html_e( 'Clean up seeded entry titles', 'culture-community' ); ?></h3>
-				<p class="description">
-					<?php esc_html_e( 'Strips Wikipedia disambiguation suffixes like "(2026 film)" or "(novel)" from the display title of all Wikipedia-seeded entries. The original Wikipedia title stored in _wiki_title is left untouched.', 'culture-community' ); ?>
-				</p>
-				<button id="cdt-title-cleanup-btn" class="button button-secondary">
-					<?php esc_html_e( 'Clean up titles →', 'culture-community' ); ?>
-				</button>
-				<span class="spinner" id="cdt-title-cleanup-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
-				<div id="cdt-title-cleanup-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
-			</div>
-
-			<?php
-			/* ── COMMUNITY REVIEW BACKFILL PANEL ── */
-			global $wpdb;
-			$review_types = array(
-				'film-review'  => '_film_overall_rating',
-				'music-review' => '_music_overall_rating',
-				'book-review'  => '_book_overall_rating',
-			);
-			$review_pending = 0;
-			foreach ( $review_types as $rating_key ) {
-				$review_pending += (int) $wpdb->get_var( $wpdb->prepare(
-					"SELECT COUNT(DISTINCT p.ID) FROM {$wpdb->posts} p
-					 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
-					 LEFT  JOIN {$wpdb->postmeta} tm ON tm.post_id = p.ID AND tm.meta_key = '_template_type'
-					 WHERE p.post_type = 'culture_post' AND tm.meta_id IS NULL",
-					$rating_key
-				) );
-			}
-			?>
-			<div class="cdt-panel">
-				<h2><?php esc_html_e( 'Backfill Review Template Types', 'culture-community' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Fixes old film, music, and book reviews that are missing the _template_type meta key — caused by those reviews being posted before the WP REST meta registration existed. Without this fix, those reviews are invisible to the Recently Reviewed homepage rails. Only posts that already have a rating field stored (film/music/book overall rating) but no template type are touched.', 'culture-community' ); ?>
-				</p>
-				<?php if ( $review_pending > 0 ) : ?>
-					<p><strong style="color:#d63638;"><?php echo esc_html( $review_pending ); ?><?php esc_html_e( ' review(s) need backfilling.', 'culture-community' ); ?></strong></p>
-				<?php else : ?>
-					<p><strong style="color:#00a32a;">&#10003; <?php esc_html_e( 'All reviews already have template types set.', 'culture-community' ); ?></strong></p>
-				<?php endif; ?>
-				<button id="cdrbt-run-btn" class="button button-primary" <?php echo $review_pending < 1 ? 'disabled' : ''; ?>>
-					<?php esc_html_e( 'Run backfill →', 'culture-community' ); ?>
-				</button>
-				<span class="spinner" id="cdrbt-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
-				<div id="cdrbt-result" style="display:none;margin-top:12px;"></div>
-			</div>
-
-			<?php /* ── TMDB IMPORT PANEL ── */ ?>
-			<div class="cdt-panel" id="cdt-tmdb-panel">
-				<h2><?php esc_html_e( 'TMDB Import (Wikipedia Category + Genre Tagging)', 'culture-community' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Import directory entries from a Wikipedia category using TMDB for rich metadata (cover, year, overview). Films already in the directory get the genre tag applied without re-importing. Run multiple times with different categories to build up genre tags on the same entries.', 'culture-community' ); ?>
-				</p>
-
-				<table class="form-table cdt-form-table">
-					<tr>
-						<th><label for="cdti-category"><?php esc_html_e( 'Wikipedia category', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="text" id="cdti-category" class="regular-text" placeholder="e.g. Netflix_original_films  or  2026_American_films">
-							<p class="description"><?php esc_html_e( 'The "Category:" prefix is optional — it will be added automatically.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="cdti-genre-slugs"><?php esc_html_e( 'Genre slug(s)', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="text" id="cdti-genre-slugs" class="regular-text" placeholder="e.g. netflix-original  or  american-film, drama">
-							<p class="description"><?php esc_html_e( 'Comma-separated culture_dir_genre slugs. Applied to every entry created or matched in this run.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="cdti-entry-type"><?php esc_html_e( 'Entry type', 'culture-community' ); ?></label></th>
-						<td>
-							<select id="cdti-entry-type">
-								<option value="film"><?php esc_html_e( 'Film', 'culture-community' ); ?></option>
-								<option value="tv-series"><?php esc_html_e( 'TV Series', 'culture-community' ); ?></option>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="cdti-batch-size"><?php esc_html_e( 'Batch size', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="number" id="cdti-batch-size" value="20" min="1" max="50" style="width:70px;">
-							<p class="description"><?php esc_html_e( 'Wikipedia titles processed per round (1–50). Lower = more progress updates; higher = faster.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="cdti-cron-secret"><?php esc_html_e( 'CRON_SECRET', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="password" id="cdti-cron-secret" class="regular-text" placeholder="From Vercel → Settings → Environment Variables" autocomplete="off">
-							<p class="description"><?php esc_html_e( 'Your Vercel CRON_SECRET value. Sent over HTTPS; stored only in your browser for this session.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-				</table>
-
-				<div id="cdti-stats" style="display:none;margin:12px 0;padding:10px 14px;background:#f0f0f1;border:1px solid #c3c4c7;border-radius:3px;font-size:13px;">
-					<strong>Created:</strong> <span id="cdti-stat-created">0</span>
-					&nbsp;·&nbsp;
-					<strong>Tagged (existing):</strong> <span id="cdti-stat-tagged">0</span>
-					&nbsp;·&nbsp;
-					<strong>Skipped (no TMDB match):</strong> <span id="cdti-stat-skipped">0</span>
-					&nbsp;·&nbsp;
-					<strong>Batches:</strong> <span id="cdti-stat-batches">0</span>
-				</div>
-
-				<button id="cdti-start-btn" class="button button-primary"><?php esc_html_e( 'Start import →', 'culture-community' ); ?></button>
-				<button id="cdti-stop-btn" class="button" style="display:none;margin-left:8px;"><?php esc_html_e( 'Stop', 'culture-community' ); ?></button>
-				<span class="spinner" id="cdti-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
-				<div id="cdti-log" style="display:none;margin-top:12px;max-height:280px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
-			</div>
-
-			<?php /* ── WIKIPEDIA SEEDER PANEL ── */ ?>
-			<div class="cdt-panel">
-				<h2><?php esc_html_e( 'Wikipedia Seeder', 'culture-community' ); ?></h2>
-				<p class="description">
-					<?php esc_html_e( 'Seed directory entries from Wikipedia categories or a manual title list. Each entry is created as a draft (pending review) with the Wikipedia intro as its content, the Wikipedia thumbnail as its cover, and all infobox fields (director, year, genre, etc.) populated from Wikidata. Genre is automatically saved to the directory genre taxonomy.', 'culture-community' ); ?>
-				</p>
-
-				<table class="form-table cdt-form-table">
-					<tr>
-						<th><label for="cdw-entry-type"><?php esc_html_e( 'Entry type', 'culture-community' ); ?></label></th>
-						<td>
-							<select id="cdw-entry-type">
-								<?php
-								$dir_types = get_terms( array( 'taxonomy' => 'culture_dir_type', 'hide_empty' => false ) );
-								if ( is_array( $dir_types ) ) {
-									foreach ( $dir_types as $t ) {
-										echo '<option value="' . esc_attr( $t->slug ) . '">' . esc_html( $t->name ) . '</option>';
-									}
-								}
-								?>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="cdw-tax-culture_dir_genre"><?php esc_html_e( 'Genre', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="text" id="cdw-tax-culture_dir_genre" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. indie pop, dream pop', 'culture-community' ); ?>">
-							<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th><label for="cdw-tax-culture_interest"><?php esc_html_e( 'Interests', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="text" id="cdw-tax-culture_interest" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. music, culture', 'culture-community' ); ?>">
-							<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr>
-						<th><label><?php esc_html_e( 'Source', 'culture-community' ); ?></label></th>
-						<td>
-							<label><input type="radio" name="cdw-source" value="category" checked> Wikipedia Category</label>
-							&nbsp;&nbsp;
-							<label><input type="radio" name="cdw-source" value="manual"> Manual title list</label>
-						</td>
-					</tr>
-					<tr id="cdw-row-category">
-						<th><label for="cdw-category"><?php esc_html_e( 'Category slug', 'culture-community' ); ?></label></th>
-						<td>
-							<input type="text" id="cdw-category" class="regular-text" placeholder="e.g. Nigerian_films  or  Category:Afrobeats_musicians">
-							<p class="description"><?php esc_html_e( 'The "Category:…" prefix is optional — it will be added automatically.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr id="cdw-row-recursive">
-						<th></th>
-						<td>
-							<label><input type="checkbox" id="cdw-recursive"> <?php esc_html_e( 'Crawl subcategories (recursive)', 'culture-community' ); ?></label>
-							<p class="description"><?php esc_html_e( 'Use for umbrella categories like "Indie pop albums by American artists" that contain subcategories rather than direct article members. Crawls up to 3 levels deep.', 'culture-community' ); ?></p>
-						</td>
-					</tr>
-					<tr id="cdw-row-manual" style="display:none;">
-						<th><label for="cdw-manual-titles"><?php esc_html_e( 'Titles', 'culture-community' ); ?></label></th>
-						<td>
-							<textarea id="cdw-manual-titles" class="large-text" rows="6" placeholder="One Wikipedia article title per line"></textarea>
-						</td>
-					</tr>
-				</table>
-
-				<button id="cdw-fetch-btn" class="button button-secondary"><?php esc_html_e( 'Fetch article list →', 'culture-community' ); ?></button>
-				<span class="spinner" id="cdw-fetch-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
-				<div id="cdw-fetch-result" class="cdt-result" style="display:none;"></div>
-				<div id="cdw-recursive-progress" style="display:none;margin-top:8px;padding:8px 10px;background:#f0f0f1;border:1px solid #c3c4c7;border-radius:3px;font-size:13px;"></div>
-
-				<div id="cdw-seed-panel" style="display:none;margin-top:20px;">
-					<div id="cdw-checklist" style="max-height:280px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;margin-bottom:12px;background:#fafafa;font-size:13px;"></div>
-					<div style="margin-bottom:10px;">
-						<label><input type="checkbox" id="cdw-check-all"> <?php esc_html_e( 'Select / deselect all', 'culture-community' ); ?></label>
+					<div class="cdt-progress-block">
+						<div class="cdt-progress-label">
+							<strong id="cdwb-done-count"><?php echo esc_html( $backfill_done ); ?></strong>
+							<?php esc_html_e( ' of ', 'culture-community' ); ?>
+							<strong><?php echo esc_html( $backfill_total_pub ); ?></strong>
+							<?php esc_html_e( ' published entries enriched', 'culture-community' ); ?>
+							<span class="cdt-pct" id="cdwb-pct"><?php echo $backfill_total_pub > 0 ? round( $backfill_done / $backfill_total_pub * 100 ) : 0; ?>%</span>
+						</div>
+						<div class="cdt-progress-bar">
+							<div class="cdt-progress-fill" id="cdwb-fill" style="width:<?php echo $backfill_total_pub > 0 ? round( $backfill_done / $backfill_total_pub * 100 ) : 0; ?>%"></div>
+						</div>
+						<p class="description" style="margin-top:6px;" id="cdwb-remaining">
+							<?php if ( $backfill_pending > 0 ) : ?>
+								<?php echo esc_html( $backfill_pending ); ?><?php esc_html_e( ' entries still need enrichment', 'culture-community' ); ?>
+							<?php else : ?>
+								<span style="color:#00a32a;">&#10003; <?php esc_html_e( 'All published entries have been processed.', 'culture-community' ); ?></span>
+							<?php endif; ?>
+						</p>
 					</div>
-					<button id="cdw-seed-btn" class="button button-primary"><?php esc_html_e( 'Seed selected →', 'culture-community' ); ?></button>
-					<span class="spinner" id="cdw-seed-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
-					<div id="cdw-seed-result" class="cdt-result" style="display:none;"></div>
+
+					<label style="display:block;margin-bottom:12px;">
+						<input type="checkbox" id="cdwb-overwrite">
+						<?php esc_html_e( 'Overwrite existing content and cover on all entries (AI-generated covers are always replaced even without this)', 'culture-community' ); ?>
+					</label>
+
+					<button id="cdwb-start-btn" class="button button-primary" <?php echo $backfill_pending < 1 ? 'disabled' : ''; ?>>
+						<?php esc_html_e( 'Start backfill →', 'culture-community' ); ?>
+					</button>
+					<button id="cdwb-retry-btn" class="button button-secondary" style="margin-left:8px;" <?php echo $backfill_not_found < 1 ? 'disabled' : ''; ?>>
+						<?php printf( esc_html__( 'Retry %d not-found →', 'culture-community' ), $backfill_not_found ); ?>
+					</button>
+					<button id="cdwb-reenrich-btn" class="button button-secondary" style="margin-left:8px;" title="Re-fetch Wikipedia content for all already-matched entries and overwrite their post_content with the full article text.">
+						<?php esc_html_e( 'Re-enrich matched entries →', 'culture-community' ); ?>
+					</button>
+					<button id="cdwb-stop-btn" class="button" style="display:none;margin-left:8px;">
+						<?php esc_html_e( 'Stop', 'culture-community' ); ?>
+					</button>
+					<p class="description" style="margin-top:8px;">
+						<?php esc_html_e( '"Re-enrich matched entries" re-fetches Wikipedia for every entry that already has a match and rewrites their content with the full article text. Use this to fix entries seeded before the first-paragraph bug was fixed.', 'culture-community' ); ?>
+					</p>
+					<span class="spinner" id="cdwb-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+					<div id="cdwb-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
 				</div>
-			</div>
+
+				<div class="cdt-panel">
+					<h3 style="margin-top:0;"><?php esc_html_e( 'Audit: clear bad Wikipedia matches', 'culture-community' ); ?></h3>
+					<p class="description">
+						<?php esc_html_e( 'Scans all enriched entries and removes data for any entry whose stored Wikipedia article title does not share a significant word with the entry\'s own title (e.g. "Water Margin" stored for "Women on the Margins"). Cleared entries will be re-processed on the next backfill run.', 'culture-community' ); ?>
+					</p>
+					<button id="cdwb-audit-btn" class="button button-secondary">
+						<?php esc_html_e( 'Audit & clear bad matches →', 'culture-community' ); ?>
+					</button>
+					<span class="spinner" id="cdwb-audit-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+					<div id="cdwb-audit-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+				</div>
+			</div><!-- #tab-backfill -->
+
+			<?php /* ── TAB: INFOBOX BACKFILL ── */ ?>
+			<div id="tab-infobox" class="cdt-tab-pane">
+				<div class="cdt-panel">
+					<h2><?php esc_html_e( 'Infobox Backfill (Seeded Entries)', 'culture-community' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Populates missing Wikidata structured fields (director, year, cast, genre, etc.) for entries that were seeded from Wikipedia but are lacking infobox data. Only entries that already have a matched Wikipedia title but no dir_infobox_* meta are processed — others are skipped automatically.', 'culture-community' ); ?>
+					</p>
+
+					<p>
+						<label>
+							<input type="checkbox" id="cdif-overwrite">
+							<?php esc_html_e( 'Overwrite existing infobox fields (if any)', 'culture-community' ); ?>
+						</label>
+					</p>
+
+					<button id="cdif-start-btn" class="button button-secondary"><?php esc_html_e( 'Start infobox backfill →', 'culture-community' ); ?></button>
+					<button id="cdif-stop-btn" class="button" style="display:none;"><?php esc_html_e( 'Stop', 'culture-community' ); ?></button>
+					<span class="spinner" id="cdif-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+					<div id="cdif-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+				</div>
+			</div><!-- #tab-infobox -->
+
+			<?php /* ── TAB: TITLE CLEANUP ── */ ?>
+			<div id="tab-titles" class="cdt-tab-pane">
+				<div class="cdt-panel">
+					<h2 style="margin-top:0;"><?php esc_html_e( 'Clean up seeded entry titles', 'culture-community' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Strips Wikipedia disambiguation suffixes like "(2026 film)" or "(novel)" from the display title of all Wikipedia-seeded entries. The original Wikipedia title stored in _wiki_title is left untouched.', 'culture-community' ); ?>
+					</p>
+					<button id="cdt-title-cleanup-btn" class="button button-secondary">
+						<?php esc_html_e( 'Clean up titles →', 'culture-community' ); ?>
+					</button>
+					<span class="spinner" id="cdt-title-cleanup-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+					<div id="cdt-title-cleanup-log" style="display:none;margin-top:12px;max-height:240px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+				</div>
+			</div><!-- #tab-titles -->
+
+			<?php /* ── TAB: REVIEW TYPES ── */ ?>
+			<div id="tab-reviews" class="cdt-tab-pane">
+				<div class="cdt-panel">
+					<h2><?php esc_html_e( 'Backfill Review Template Types', 'culture-community' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Fixes old film, music, and book reviews that are missing the _template_type meta key — caused by those reviews being posted before the WP REST meta registration existed. Without this fix, those reviews are invisible to the Recently Reviewed homepage rails. Only posts that already have a rating field stored (film/music/book overall rating) but no template type are touched.', 'culture-community' ); ?>
+					</p>
+					<?php if ( $review_pending > 0 ) : ?>
+						<p><strong style="color:#d63638;"><?php echo esc_html( $review_pending ); ?><?php esc_html_e( ' review(s) need backfilling.', 'culture-community' ); ?></strong></p>
+					<?php else : ?>
+						<p><strong style="color:#00a32a;">&#10003; <?php esc_html_e( 'All reviews already have template types set.', 'culture-community' ); ?></strong></p>
+					<?php endif; ?>
+					<button id="cdrbt-run-btn" class="button button-primary" <?php echo $review_pending < 1 ? 'disabled' : ''; ?>>
+						<?php esc_html_e( 'Run backfill →', 'culture-community' ); ?>
+					</button>
+					<span class="spinner" id="cdrbt-spinner" style="float:none;vertical-align:middle;margin-left:4px;display:none;"></span>
+					<div id="cdrbt-result" style="display:none;margin-top:12px;"></div>
+				</div>
+			</div><!-- #tab-reviews -->
+
+			<?php /* ── TAB: TMDB IMPORT ── */ ?>
+			<div id="tab-tmdb" class="cdt-tab-pane">
+				<div class="cdt-panel">
+					<h2><?php esc_html_e( 'TMDB Import (Wikipedia Category + Genre Tagging)', 'culture-community' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Import directory entries from a Wikipedia category using TMDB for rich metadata (cover, year, overview). Films already in the directory get the genre tag applied without re-importing. Run multiple times with different categories to build up genre tags on the same entries.', 'culture-community' ); ?>
+					</p>
+
+					<table class="form-table cdt-form-table">
+						<tr>
+							<th><label for="cdti-category"><?php esc_html_e( 'Wikipedia category', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="text" id="cdti-category" class="regular-text" placeholder="e.g. Netflix_original_films  or  2026_American_films">
+								<p class="description"><?php esc_html_e( 'The "Category:" prefix is optional — it will be added automatically.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="cdti-genre-slugs"><?php esc_html_e( 'Genre slug(s)', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="text" id="cdti-genre-slugs" class="regular-text" placeholder="e.g. netflix-original  or  american-film, drama">
+								<p class="description"><?php esc_html_e( 'Comma-separated culture_dir_genre slugs. Applied to every entry created or matched in this run.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="cdti-entry-type"><?php esc_html_e( 'Entry type', 'culture-community' ); ?></label></th>
+							<td>
+								<select id="cdti-entry-type">
+									<option value="film"><?php esc_html_e( 'Film', 'culture-community' ); ?></option>
+									<option value="tv-series"><?php esc_html_e( 'TV Series', 'culture-community' ); ?></option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="cdti-batch-size"><?php esc_html_e( 'Batch size', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="number" id="cdti-batch-size" value="20" min="1" max="50" style="width:70px;">
+								<p class="description"><?php esc_html_e( 'Wikipedia titles processed per round (1–50). Lower = more progress updates; higher = faster.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="cdti-cron-secret"><?php esc_html_e( 'CRON_SECRET', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="password" id="cdti-cron-secret" class="regular-text" placeholder="From Vercel → Settings → Environment Variables" autocomplete="off">
+								<p class="description"><?php esc_html_e( 'Your Vercel CRON_SECRET value. Sent over HTTPS; stored only in your browser for this session.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+					</table>
+
+					<div id="cdti-stats" style="display:none;margin:12px 0;padding:10px 14px;background:#f0f0f1;border:1px solid #c3c4c7;border-radius:3px;font-size:13px;">
+						<strong>Created:</strong> <span id="cdti-stat-created">0</span>
+						&nbsp;·&nbsp;
+						<strong>Tagged (existing):</strong> <span id="cdti-stat-tagged">0</span>
+						&nbsp;·&nbsp;
+						<strong>Skipped (no TMDB match):</strong> <span id="cdti-stat-skipped">0</span>
+						&nbsp;·&nbsp;
+						<strong>Batches:</strong> <span id="cdti-stat-batches">0</span>
+					</div>
+
+					<button id="cdti-start-btn" class="button button-primary"><?php esc_html_e( 'Start import →', 'culture-community' ); ?></button>
+					<button id="cdti-stop-btn" class="button" style="display:none;margin-left:8px;"><?php esc_html_e( 'Stop', 'culture-community' ); ?></button>
+					<span class="spinner" id="cdti-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+					<div id="cdti-log" style="display:none;margin-top:12px;max-height:280px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;background:#fafafa;font-size:12px;font-family:monospace;"></div>
+				</div>
+			</div><!-- #tab-tmdb -->
+
+			<?php /* ── TAB: WIKIPEDIA SEEDER ── */ ?>
+			<div id="tab-seeder" class="cdt-tab-pane">
+				<div class="cdt-panel">
+					<h2><?php esc_html_e( 'Wikipedia Seeder', 'culture-community' ); ?></h2>
+					<p class="description">
+						<?php esc_html_e( 'Seed directory entries from Wikipedia categories or a manual title list. Each entry is created as a draft (pending review) with the Wikipedia intro as its content, the Wikipedia thumbnail as its cover, and all infobox fields (director, year, genre, etc.) populated from Wikidata. Genre is automatically saved to the directory genre taxonomy.', 'culture-community' ); ?>
+					</p>
+
+					<table class="form-table cdt-form-table">
+						<tr>
+							<th><label for="cdw-entry-type"><?php esc_html_e( 'Entry type', 'culture-community' ); ?></label></th>
+							<td>
+								<select id="cdw-entry-type">
+									<?php
+									$dir_types = get_terms( array( 'taxonomy' => 'culture_dir_type', 'hide_empty' => false ) );
+									if ( is_array( $dir_types ) ) {
+										foreach ( $dir_types as $t ) {
+											echo '<option value="' . esc_attr( $t->slug ) . '">' . esc_html( $t->name ) . '</option>';
+										}
+									}
+									?>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="cdw-tax-culture_dir_genre"><?php esc_html_e( 'Genre', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="text" id="cdw-tax-culture_dir_genre" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. indie pop, dream pop', 'culture-community' ); ?>">
+								<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="cdw-tax-culture_interest"><?php esc_html_e( 'Interests', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="text" id="cdw-tax-culture_interest" class="cdw-extra-tax regular-text" placeholder="<?php esc_attr_e( 'e.g. music, culture', 'culture-community' ); ?>">
+								<p class="description"><?php esc_html_e( 'Comma-separated. Applied to all entries in this batch.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th><label><?php esc_html_e( 'Source', 'culture-community' ); ?></label></th>
+							<td>
+								<label><input type="radio" name="cdw-source" value="category" checked> Wikipedia Category</label>
+								&nbsp;&nbsp;
+								<label><input type="radio" name="cdw-source" value="manual"> Manual title list</label>
+							</td>
+						</tr>
+						<tr id="cdw-row-category">
+							<th><label for="cdw-category"><?php esc_html_e( 'Category slug', 'culture-community' ); ?></label></th>
+							<td>
+								<input type="text" id="cdw-category" class="regular-text" placeholder="e.g. Nigerian_films  or  Category:Afrobeats_musicians">
+								<p class="description"><?php esc_html_e( 'The "Category:…" prefix is optional — it will be added automatically.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr id="cdw-row-recursive">
+							<th></th>
+							<td>
+								<label><input type="checkbox" id="cdw-recursive"> <?php esc_html_e( 'Crawl subcategories (recursive)', 'culture-community' ); ?></label>
+								<p class="description"><?php esc_html_e( 'Use for umbrella categories like "Indie pop albums by American artists" that contain subcategories rather than direct article members. Crawls up to 3 levels deep.', 'culture-community' ); ?></p>
+							</td>
+						</tr>
+						<tr id="cdw-row-manual" style="display:none;">
+							<th><label for="cdw-manual-titles"><?php esc_html_e( 'Titles', 'culture-community' ); ?></label></th>
+							<td>
+								<textarea id="cdw-manual-titles" class="large-text" rows="6" placeholder="One Wikipedia article title per line"></textarea>
+							</td>
+						</tr>
+					</table>
+
+					<button id="cdw-fetch-btn" class="button button-secondary"><?php esc_html_e( 'Fetch article list →', 'culture-community' ); ?></button>
+					<span class="spinner" id="cdw-fetch-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+					<div id="cdw-fetch-result" class="cdt-result" style="display:none;"></div>
+					<div id="cdw-recursive-progress" style="display:none;margin-top:8px;padding:8px 10px;background:#f0f0f1;border:1px solid #c3c4c7;border-radius:3px;font-size:13px;"></div>
+
+					<div id="cdw-seed-panel" style="display:none;margin-top:20px;">
+						<div id="cdw-checklist" style="max-height:280px;overflow-y:auto;border:1px solid #c3c4c7;border-radius:3px;padding:8px 12px;margin-bottom:12px;background:#fafafa;font-size:13px;"></div>
+						<div style="margin-bottom:10px;">
+							<label><input type="checkbox" id="cdw-check-all"> <?php esc_html_e( 'Select / deselect all', 'culture-community' ); ?></label>
+						</div>
+						<button id="cdw-seed-btn" class="button button-primary"><?php esc_html_e( 'Seed selected →', 'culture-community' ); ?></button>
+						<span class="spinner" id="cdw-seed-spinner" style="float:none;vertical-align:middle;margin-left:4px;"></span>
+						<div id="cdw-seed-result" class="cdt-result" style="display:none;"></div>
+					</div>
+				</div>
+			</div><!-- #tab-seeder -->
+
 		</div>
 
 		<script>
 		(function($) {
 			var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
 			var nonce   = '<?php echo esc_js( $nonce ); ?>';
+
+			/* ── Tab navigation ── */
+			(function() {
+				var $nav   = $('#cdt-tab-nav');
+				var $panes = $('.cdt-tab-pane');
+
+				function activate(hash) {
+					if (!hash || !$(hash).hasClass('cdt-tab-pane')) hash = '#tab-backfill';
+					$nav.find('.nav-tab').removeClass('nav-tab-active');
+					$nav.find('[href="' + hash + '"]').addClass('nav-tab-active');
+					$panes.hide();
+					$(hash).show();
+					try { sessionStorage.setItem('cdt_active_tab', hash); } catch(e) {}
+				}
+
+				var init;
+				try { init = sessionStorage.getItem('cdt_active_tab'); } catch(e) {}
+				if (window.location.hash && $(window.location.hash).hasClass('cdt-tab-pane')) {
+					init = window.location.hash;
+				}
+				activate(init || '#tab-backfill');
+
+				$nav.on('click', '.nav-tab', function(e) {
+					e.preventDefault();
+					var hash = $(this).attr('href');
+					activate(hash);
+					if (history.replaceState) history.replaceState(null, '', hash);
+				});
+			}());
 
 			/* ── Wikipedia Backfill ── */
 			(function() {
@@ -1942,6 +2038,7 @@ class Culture_Directory_Tools {
 				var totalProcessed = 0;
 				var totalUpdated = 0;
 				var retryMode = false;
+				var reenrichMode = false;
 
 				function log(text, isError) {
 					var $log = $('#cdwb-log').show();
@@ -1959,6 +2056,7 @@ class Culture_Directory_Tools {
 						batch:         currentBatch,
 						overwrite:     $('#cdwb-overwrite').is(':checked') ? '1' : '',
 						retry_failed:  retryMode ? '1' : '',
+						reenrich:      reenrichMode ? '1' : '',
 					})
 					.done(function(res) {
 						if (!running) return;
@@ -2000,27 +2098,30 @@ class Culture_Directory_Tools {
 
 				function stop() {
 					running = false;
-					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', false);
+					$('#cdwb-start-btn, #cdwb-retry-btn, #cdwb-reenrich-btn').prop('disabled', false);
 					$('#cdwb-stop-btn').hide();
 					$('#cdwb-spinner').hide();
 				}
 
-				function start(isRetry) {
+				function start(isRetry, isReenrich) {
 					running = true;
-					retryMode = !!isRetry;
+					retryMode   = !!isRetry;
+					reenrichMode = !!isReenrich;
 					currentBatch = 0;
 					totalProcessed = 0;
 					totalUpdated = 0;
-					$('#cdwb-start-btn, #cdwb-retry-btn').prop('disabled', true);
+					$('#cdwb-start-btn, #cdwb-retry-btn, #cdwb-reenrich-btn').prop('disabled', true);
 					$('#cdwb-stop-btn').show();
 					$('#cdwb-spinner').show();
 					$('#cdwb-log').empty().show();
-					if (isRetry) log('Retrying not-found entries with improved subtitle search…');
+					if (isRetry)    log('Retrying not-found entries with improved subtitle search…');
+					if (isReenrich) log('Re-enriching all matched entries — rewriting content with full Wikipedia text…');
 					tick();
 				}
 
-				$('#cdwb-start-btn').on('click', function() { start(false); });
-				$('#cdwb-retry-btn').on('click', function() { start(true); });
+				$('#cdwb-start-btn').on('click', function() { start(false, false); });
+				$('#cdwb-retry-btn').on('click', function() { start(true, false); });
+				$('#cdwb-reenrich-btn').on('click', function() { start(false, true); });
 
 				$('#cdwb-stop-btn').on('click', function() {
 					log('Stopped by user.');
@@ -2603,7 +2704,9 @@ class Culture_Directory_Tools {
 
 	private static function inline_css() {
 		return '
-		.cdt-wrap h1 { margin-bottom: 20px; }
+		.cdt-wrap h1 { margin-bottom: 8px; }
+		/* Tab panes: hidden by default; JS shows the active one */
+		.cdt-tab-pane { display: none; padding-top: 20px; }
 		.cdt-panel {
 			background: #fff;
 			border: 1px solid #c3c4c7;
