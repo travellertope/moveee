@@ -3,7 +3,7 @@ import "@/app/visuals.css";
 import VisualsGrid from "@/components/VisualsGrid";
 import type { Visual } from "@/components/VisualsGrid";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: { absolute: "Visuals | Moveee Magazine" },
