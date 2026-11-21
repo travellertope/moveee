@@ -17,7 +17,7 @@ import DirectoryFollowButton from "./DirectoryFollowButton";
 import StoopProximityBanner from "./StoopProximityBanner";
 import { decodeHtml } from "@/lib/decode-html";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
 const TYPE_LABELS: Record<string, string> = {

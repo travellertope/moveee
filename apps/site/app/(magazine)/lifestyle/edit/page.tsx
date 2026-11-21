@@ -4,7 +4,7 @@ import Image from "next/image";
 import "../shop.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
-export const revalidate = 1800;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "The Edit | The Moveee Lifestyle",

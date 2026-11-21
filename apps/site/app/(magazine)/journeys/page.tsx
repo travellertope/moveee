@@ -5,7 +5,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import OriginHero from "./components/OriginHero";
 import "@/app/origins.css";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: { absolute: "Origins · Curated Journeys | Moveee" },

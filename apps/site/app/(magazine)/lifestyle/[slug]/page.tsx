@@ -14,7 +14,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { getCurrencyCode } from "../components/shopHelpers";
 import { getShopCountryParam } from "../components/shopCountry";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params,

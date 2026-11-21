@@ -2,7 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import MagazineView from "@/components/MagazineView";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: { absolute: "Moveee Magazine — Best in Culture" },

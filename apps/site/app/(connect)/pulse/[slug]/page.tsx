@@ -13,7 +13,7 @@ import SourcePreviewCard from "@/components/pulse/SourcePreviewCard";
 import "@/app/pulse-layout.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://themoveee.com";
