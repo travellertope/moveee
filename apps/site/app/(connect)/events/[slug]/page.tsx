@@ -13,7 +13,7 @@ import CategoryArchive from "./category-archive";
 import "@/app/events.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
 // ── Archive slug lookup tables ────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import "@/app/magazine.css";
 import ArchiveCardGrid from "@/components/ArchiveCardGrid";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
 async function fetchAuthorData(slug: string, first: number) {

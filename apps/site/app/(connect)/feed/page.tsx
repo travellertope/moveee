@@ -9,7 +9,7 @@ import "./feed.css";
 // client-side (PulseFeed uses useSession for For You scoring). This allows
 // the full page to be ISR-cached once for all users rather than once per
 // user cookie.
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Feed",

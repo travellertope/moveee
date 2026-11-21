@@ -8,7 +8,7 @@ import EventTimeline from "./components/EventTimeline";
 import EventsSearchBar from "./components/EventsSearchBar";
 import "@/app/events.css";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 
 export const metadata = {

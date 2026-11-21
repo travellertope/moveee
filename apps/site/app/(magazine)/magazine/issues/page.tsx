@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Browse every print and digital issue of Moveee Magazine — an independent culture magazine. Each issue digs into a distinct cultural theme through essays, interviews, and photography.",
 };
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export default async function IssuesArchivePage() {
   const issues = await getAllIssues();

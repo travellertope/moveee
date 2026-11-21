@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import "../makers.css";
 import { sanitizeHtml } from "@/lib/sanitize";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const CMS = process.env.NEXT_PUBLIC_WP_URL ?? "https://cms.themoveee.com";
 

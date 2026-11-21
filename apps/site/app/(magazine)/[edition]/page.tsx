@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import "@/app/homepage.css";
 import "@/app/moveee-zone.css";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 // No generateStaticParams — edition pages use lazy ISR (generated on first
 // real request, then cached). Pre-rendering at build time is not viable because

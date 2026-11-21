@@ -2,7 +2,7 @@ import React from "react";
 import ShopArchiveWrapper from "./ShopArchiveWrapper";
 import { Metadata } from "next";
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 const LIFESTYLE_TITLE = "The Moveee Lifestyle";
 const LIFESTYLE_DESC =

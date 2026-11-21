@@ -6,7 +6,7 @@ import Image from "next/image";
 import { sanitizeHtml } from "@/lib/sanitize";
 import "@/app/origins.css";
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export async function generateStaticParams() {
   try {
