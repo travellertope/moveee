@@ -45,8 +45,8 @@ const CATEGORY_DEFS: Omit<TrendingCategory, "entries">[] = [
 ];
 
 const PER_CATEGORY = 6;
-// Fetch more than needed so we have enough after filtering to thumbnail-only.
-const FETCH_PER_CATEGORY = 18;
+// Fetch a large pool so the thumbnail filter has plenty to pick from.
+const FETCH_PER_CATEGORY = 50;
 
 async function fetchRecentWithThumbnails(type: string, genre?: string): Promise<TrendingDirectoryEntry[]> {
   try {
@@ -62,9 +62,8 @@ async function fetchRecentWithThumbnails(type: string, genre?: string): Promise<
     if (!res.ok) return [];
     const data = await res.json();
     const entries: TrendingDirectoryEntry[] = data?.entries ?? [];
-    // Prefer entries with thumbnails; fall back to all entries if not enough.
-    const withThumbs = entries.filter((e) => e.thumbnail);
-    return (withThumbs.length >= PER_CATEGORY ? withThumbs : entries).slice(0, PER_CATEGORY);
+    // Keep only entries that have a cover/thumbnail image, then cap at PER_CATEGORY.
+    return entries.filter((e) => e.thumbnail).slice(0, PER_CATEGORY);
   } catch {
     return [];
   }
