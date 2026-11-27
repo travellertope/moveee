@@ -112,6 +112,17 @@
   overflow: hidden;
 }
 
+/* Creator credit (artist / author / director) */
+.rrr-card-creator {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--mute);
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* "Reviewed by @username" attribution line */
 .rrr-card-reviewed-by {
   font-family: "DM Sans", system-ui, sans-serif;

@@ -15,11 +15,10 @@ function titleCase(str: string): string {
     .join(" ");
 }
 
-
 function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey: string }) {
-  const { recentReview: rev } = entry;
+  const href = entry.href ?? `/directory/${entry.slug}`;
   return (
-    <Link href={entry.href ?? `/directory/${entry.slug}`} className={`rrr-card rrr-card--${railKey}`}>
+    <Link href={href} className={`rrr-card rrr-card--${railKey}`}>
       <div className="rrr-card-img">
         {entry.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -28,16 +27,18 @@ function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey:
       </div>
       <div className="rrr-card-info">
         <h3>{titleCase(entry.title)}</h3>
-        {rev.reviewerUsername && (
+        {entry.creator && (
+          <p className="rrr-card-creator">{entry.creator}</p>
+        )}
+        {entry.recentReview.reviewerUsername && (
           <p className="rrr-card-reviewed-by">
             Reviewed by{" "}
-            <span className="rrr-card-username">@{rev.reviewerUsername}</span>
+            <span className="rrr-card-username">@{entry.recentReview.reviewerUsername}</span>
           </p>
         )}
-        {/* Review tease — excerpt only, no stars on this rail */}
-        {rev.excerpt && (
+        {entry.recentReview.excerpt && (
           <div className="rrr-review-tease">
-            <p className="rrr-review-excerpt">&ldquo;{rev.excerpt}&rdquo;</p>
+            <p className="rrr-review-excerpt">&ldquo;{entry.recentReview.excerpt}&rdquo;</p>
           </div>
         )}
       </div>

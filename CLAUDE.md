@@ -628,3 +628,57 @@ See `docs/claude-md-reference.md` for full detail.
 ## Expo SDK 52 → 57 upgrade (September 2026) — authoritative over all SDK-52-era notes above
 
 See `docs/claude-md-reference.md` for full detail.
+
+---
+
+## WordPress server infrastructure — Lightsail t3.small + Bitnami stack (November 2026)
+
+**Instance:** AWS Lightsail `t3.small` (2 vCPU, 2 GB RAM) at `cms.themoveee.com`.
+**Stack:** Bitnami WordPress — Varnish → Apache → PHP-FPM → MariaDB.
+
+### Caching layers (innermost → outermost)
+
+| Layer | What it caches | TTL | Location |
+|---|---|---|---|
+| WordPress object cache | WP internal DB calls (transients, posts, options) | 1 hour | `/opt/bitnami/wordpress/wp-content/object-cache.php` → files in `wp-content/cache/wpobjcache/` |
+| Vercel KV (`redis-crimson-village`) | WPGraphQL responses from `getWPData()` | 1 hour | Upstash Redis via Vercel Storage |
+| Varnish | Public REST API GET calls + XML sitemaps | 2 min / 1 hour | `/opt/bitnami/varnish/etc/varnish/default.vcl` |
+
+### Varnish config (current — `/opt/bitnami/varnish/etc/varnish/default.vcl`)
+
+Caches all public `GET /wp-json/*` calls for 2 minutes and XML sitemaps for 1 hour.
+Never caches wp-admin, wp-login, or logged-in users.
+POST /graphql is NOT cached by Varnish (handled by Vercel KV instead).
+
+To update: edit the VCL file over SSH then `sudo /opt/bitnami/ctlscript.sh restart varnish`.
+
+### PHP-FPM limits
+
+`pm.max_children=8` in `/opt/bitnami/php/etc/php-fpm.d/www.conf`.
+On a t3.small, 8 workers × ~170 MB = 1.36 GB — stays within the 2 GB RAM limit.
+`request_terminate_timeout = 30` is already set — kills requests that hang > 30 s.
+
+### Emergency recovery (server saturated — load > 10, site returning 524/503)
+
+Root cause is usually: MySQL overwhelmed by concurrent WPGraphQL queries hitting all PHP-FPM workers simultaneously.
+
+**Step 1 — kill stuck workers + restart DB:**
+```bash
+sudo pkill -9 -u daemon php-fpm; sudo /opt/bitnami/ctlscript.sh restart mariadb; sleep 3; sudo /opt/bitnami/ctlscript.sh start php-fpm && uptime
+```
+
+**Step 2 — verify load is dropping:**
+```bash
+uptime
+```
+If load drops to < 2 within a minute, done. If it stays high, repeat Step 1.
+
+**What causes saturation:**
+- Vercel KV disconnected/uninstalled → every Next.js page load hits WordPress directly
+- Next.js build running against a cold server (297 pages × multiple GraphQL queries)
+- Varnish config not caching REST API calls → crawler traffic floods MySQL
+
+**Prevention:**
+- Keep Vercel KV connected (`redis-crimson-village` on the `moveee-mag` project)
+- Keep Varnish caching REST API GET calls (see config above)
+- If KV ever goes missing again, convert all `revalidate` pages to `force-dynamic` in `apps/site` before triggering a build

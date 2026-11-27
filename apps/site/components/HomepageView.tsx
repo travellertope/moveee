@@ -4,6 +4,7 @@ import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
 import { fetchTrendingDirectory, type TrendingCategory } from "@/lib/fetchTrendingDirectory";
 import { fetchRecentlyReviewed } from "@/lib/fetchRecentlyReviewed";
+import type { RecentlyReviewedByType } from "@/lib/fetchRecentlyReviewed";
 import HomepageHero, { type HeroSlide } from "@/components/HomepageHero";
 import RecentlyReviewedRail from "@/components/RecentlyReviewedRail";
 import FullBleedHero from "@/components/FullBleedHero";
@@ -24,7 +25,7 @@ interface HomeSections {
   featureStory: any | null;
   kafartStories: any[];
   trendingCategories: TrendingCategory[];
-  recentlyReviewed: Awaited<ReturnType<typeof fetchRecentlyReviewed>>;
+  recentlyReviewed: RecentlyReviewedByType;
 }
 
 const EMPTY: HomeSections = {
@@ -126,10 +127,7 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     <div className="hpv2">
       <HomepageHero slides={heroSlides} />
 
-      {/* Rails show actual recent user reviews — hidden automatically when empty */}
-      <RecentlyReviewedRail type="film"  entries={recentlyReviewed.film} />
-      <RecentlyReviewedRail type="music" entries={recentlyReviewed.music} />
-      <RecentlyReviewedRail type="book"  entries={recentlyReviewed.book} />
+      <DirectoryDiscovery categories={trendingCategories} />
 
       <section className="arc-section fbh-section">
         <div className="wrap">
@@ -143,7 +141,10 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
         </div>
       </section>
 
-      <DirectoryDiscovery categories={trendingCategories} />
+      {/* Recently reviewed rails — hidden automatically when empty */}
+      <RecentlyReviewedRail type="film"  entries={recentlyReviewed.film} />
+      <RecentlyReviewedRail type="music" entries={recentlyReviewed.music} />
+      <RecentlyReviewedRail type="book"  entries={recentlyReviewed.book} />
 
 <KafartSection stories={kafartStories} />
 
