@@ -76,7 +76,7 @@ export default function DirectoryDiscovery({ categories }: Props) {
           return (
             <div key={cat.key} className="dd-rail-group">
               <div className="dd-rail-hdr">
-                <h3>Featured {cat.label}</h3>
+                <h3>Recently Added {cat.label}</h3>
                 <Link href={`/discover?type=${cat.type}`} className="arc-viewall">See all {cat.label} ›</Link>
               </div>
 

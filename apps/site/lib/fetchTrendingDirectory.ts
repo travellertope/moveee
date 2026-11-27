@@ -62,8 +62,9 @@ async function fetchRecentWithThumbnails(type: string, genre?: string): Promise<
     if (!res.ok) return [];
     const data = await res.json();
     const entries: TrendingDirectoryEntry[] = data?.entries ?? [];
-    // Keep only entries that have a cover/thumbnail image, then cap at PER_CATEGORY.
-    return entries.filter((e) => e.thumbnail).slice(0, PER_CATEGORY);
+    // Prefer entries with thumbnails; fall back to all entries if not enough.
+    const withThumbs = entries.filter((e) => e.thumbnail);
+    return (withThumbs.length >= PER_CATEGORY ? withThumbs : entries).slice(0, PER_CATEGORY);
   } catch {
     return [];
   }
