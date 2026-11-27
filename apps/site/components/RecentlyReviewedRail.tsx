@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { RecentlyReviewedEntry } from "@/lib/fetchRecentlyReviewed";
-import type { RecentlyAddedEntry } from "@/lib/fetchRecentlyAdded";
 import "./RecentlyReviewedRail.css";
 
 function titleCase(str: string): string {
@@ -16,11 +15,8 @@ function titleCase(str: string): string {
     .join(" ");
 }
 
-type AnyEntry = RecentlyReviewedEntry | RecentlyAddedEntry;
-
-function EntryCard({ entry, railKey }: { entry: AnyEntry; railKey: string }) {
-  const reviewedEntry = "recentReview" in entry ? entry : null;
-  const href = "href" in entry && entry.href ? entry.href : `/directory/${entry.slug}`;
+function ReviewCard({ entry, railKey }: { entry: RecentlyReviewedEntry; railKey: string }) {
+  const href = entry.href ?? `/directory/${entry.slug}`;
   return (
     <Link href={href} className={`rrr-card rrr-card--${railKey}`}>
       <div className="rrr-card-img">
@@ -30,21 +26,19 @@ function EntryCard({ entry, railKey }: { entry: AnyEntry; railKey: string }) {
         ) : null}
       </div>
       <div className="rrr-card-info">
-        {entry.isNew && <span className="rrr-new-badge">New</span>}
         <h3>{titleCase(entry.title)}</h3>
         {entry.creator && (
           <p className="rrr-card-creator">{entry.creator}</p>
         )}
-        {/* Review tease only when showing recently-reviewed mode */}
-        {reviewedEntry && reviewedEntry.recentReview.reviewerUsername && (
+        {entry.recentReview.reviewerUsername && (
           <p className="rrr-card-reviewed-by">
             Reviewed by{" "}
-            <span className="rrr-card-username">@{reviewedEntry.recentReview.reviewerUsername}</span>
+            <span className="rrr-card-username">@{entry.recentReview.reviewerUsername}</span>
           </p>
         )}
-        {reviewedEntry?.recentReview.excerpt && (
+        {entry.recentReview.excerpt && (
           <div className="rrr-review-tease">
-            <p className="rrr-review-excerpt">&ldquo;{reviewedEntry.recentReview.excerpt}&rdquo;</p>
+            <p className="rrr-review-excerpt">&ldquo;{entry.recentReview.excerpt}&rdquo;</p>
           </div>
         )}
       </div>
@@ -66,23 +60,21 @@ const VIEW_ALL_TYPE: Record<string, string> = {
 
 interface Props {
   type: "film" | "music" | "book";
-  entries: AnyEntry[];
-  mode?: "reviewed" | "added";
+  entries: RecentlyReviewedEntry[];
 }
 
-export default function RecentlyReviewedRail({ type, entries, mode = "added" }: Props) {
+export default function RecentlyReviewedRail({ type, entries }: Props) {
   if (entries.length === 0) return null;
 
   const label    = LABEL[type] ?? type;
   const viewType = VIEW_ALL_TYPE[type] ?? type;
-  const heading  = mode === "reviewed" ? "Recently Reviewed" : "Recently Added";
 
   return (
     <section className="arc-section rrr-section">
       <div className="wrap">
         <div className="rrr-hdr">
           <p className="rrr-hdr-title">
-            {heading} <strong>{label}</strong>
+            Recently Reviewed <strong>{label}</strong>
           </p>
           <Link href={`/discover?type=${viewType}`} className="rrr-viewall">
             See all {label.toLowerCase()} ›
@@ -91,7 +83,7 @@ export default function RecentlyReviewedRail({ type, entries, mode = "added" }: 
 
         <div className={`rrr-rail rrr-rail--${type}`}>
           {entries.slice(0, 6).map((entry) => (
-            <EntryCard key={entry.id} entry={entry} railKey={type} />
+            <ReviewCard key={entry.id} entry={entry} railKey={type} />
           ))}
         </div>
       </div>
