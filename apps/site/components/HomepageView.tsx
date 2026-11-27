@@ -126,11 +126,6 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     <div className="hpv2">
       <HomepageHero slides={heroSlides} />
 
-      {/* Rails show actual recent user reviews — hidden automatically when empty */}
-      <RecentlyReviewedRail type="film"  entries={recentlyReviewed.film} />
-      <RecentlyReviewedRail type="music" entries={recentlyReviewed.music} />
-      <RecentlyReviewedRail type="book"  entries={recentlyReviewed.book} />
-
       <section className="arc-section fbh-section">
         <div className="wrap">
           <FullBleedHero story={coverStory} kicker="From the Magazine" />
@@ -142,6 +137,11 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
           <HeroCarousel stories={carouselStories} />
         </div>
       </section>
+
+      {/* Rails show actual recent user reviews — hidden automatically when empty */}
+      <RecentlyReviewedRail type="film"  entries={recentlyReviewed.film} />
+      <RecentlyReviewedRail type="music" entries={recentlyReviewed.music} />
+      <RecentlyReviewedRail type="book"  entries={recentlyReviewed.book} />
 
       <DirectoryDiscovery categories={trendingCategories} />
 
