@@ -30,6 +30,7 @@ class Culture_Content_Admin {
 
     public static function init(): void {
         add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
+        add_action( 'admin_head',  array( __CLASS__, 'fix_submenu_parent' ) );
     }
 
     public static function register_menu(): void {
@@ -54,6 +55,42 @@ class Culture_Content_Admin {
             self::ANCHOR_SLUG,
             array( __CLASS__, 'render_landing' )
         );
+
+        // Taxonomy managers for culture_directory — WordPress won't auto-add
+        // these when show_in_menu on the CPT is a custom slug rather than true.
+        add_submenu_page(
+            self::ANCHOR_SLUG,
+            __( 'Entry Types', 'culture-community' ),
+            __( 'Entry Types', 'culture-community' ),
+            'manage_options',
+            'edit-tags.php?taxonomy=culture_dir_type&post_type=culture_directory'
+        );
+
+        add_submenu_page(
+            self::ANCHOR_SLUG,
+            __( 'Genres', 'culture-community' ),
+            __( 'Genres', 'culture-community' ),
+            'manage_options',
+            'edit-tags.php?taxonomy=culture_dir_genre&post_type=culture_directory'
+        );
+    }
+
+    /**
+     * Fix the active parent + submenu file so the taxonomy manager submenu
+     * items are highlighted when the edit-tags.php screen is open.
+     */
+    public static function fix_submenu_parent(): void {
+        global $parent_file, $submenu_file, $pagenow;
+        if ( 'edit-tags.php' !== $pagenow ) {
+            return;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification
+        $taxonomy = isset( $_GET['taxonomy'] ) ? sanitize_key( $_GET['taxonomy'] ) : '';
+        if ( ! in_array( $taxonomy, array( 'culture_dir_type', 'culture_dir_genre' ), true ) ) {
+            return;
+        }
+        $parent_file  = self::ANCHOR_SLUG;
+        $submenu_file = 'edit-tags.php?taxonomy=' . $taxonomy . '&post_type=culture_directory';
     }
 
     public static function render_landing(): void {
@@ -66,6 +103,8 @@ class Culture_Content_Admin {
             <p><?php esc_html_e( 'Directory entries, Feed Posts, Journeys, and Directory Tools all live under this menu.', 'culture-community' ); ?></p>
             <ul style="list-style:disc;margin-left:20px;">
                 <li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=culture_directory' ) ); ?>"><?php esc_html_e( 'Directory', 'culture-community' ); ?></a></li>
+                <li><a href="<?php echo esc_url( admin_url( 'edit-tags.php?taxonomy=culture_dir_type&post_type=culture_directory' ) ); ?>"><?php esc_html_e( 'Entry Types', 'culture-community' ); ?></a></li>
+                <li><a href="<?php echo esc_url( admin_url( 'edit-tags.php?taxonomy=culture_dir_genre&post_type=culture_directory' ) ); ?>"><?php esc_html_e( 'Genres', 'culture-community' ); ?></a></li>
                 <li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=culture_post' ) ); ?>"><?php esc_html_e( 'Feed Posts', 'culture-community' ); ?></a></li>
                 <li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=culture_journey' ) ); ?>"><?php esc_html_e( 'Journeys', 'culture-community' ); ?></a></li>
                 <li><a href="<?php echo esc_url( admin_url( 'admin.php?page=culture-directory-tools' ) ); ?>"><?php esc_html_e( 'Directory Tools', 'culture-community' ); ?></a></li>
