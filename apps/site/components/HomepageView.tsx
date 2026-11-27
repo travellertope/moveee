@@ -3,7 +3,8 @@ import { type EditionSlug } from "@/lib/editions";
 import { fetchHomepageData } from "@/lib/fetchHomepageData";
 import { getMagazineSections, getNewslettersWithFallback } from "@/lib/wp";
 import { fetchTrendingDirectory, type TrendingCategory } from "@/lib/fetchTrendingDirectory";
-import { fetchRecentlyReviewed } from "@/lib/fetchRecentlyReviewed";
+import { fetchRecentlyAdded } from "@/lib/fetchRecentlyAdded";
+import type { RecentlyAddedByType } from "@/lib/fetchRecentlyAdded";
 import HomepageHero, { type HeroSlide } from "@/components/HomepageHero";
 import RecentlyReviewedRail from "@/components/RecentlyReviewedRail";
 import FullBleedHero from "@/components/FullBleedHero";
@@ -24,7 +25,7 @@ interface HomeSections {
   featureStory: any | null;
   kafartStories: any[];
   trendingCategories: TrendingCategory[];
-  recentlyReviewed: Awaited<ReturnType<typeof fetchRecentlyReviewed>>;
+  recentlyAdded: RecentlyAddedByType;
 }
 
 const EMPTY: HomeSections = {
@@ -39,17 +40,17 @@ const EMPTY: HomeSections = {
   featureStory: null,
   kafartStories: [],
   trendingCategories: [],
-  recentlyReviewed: { film: [], music: [], book: [] },
+  recentlyAdded: { film: [], music: [], book: [] },
 };
 
 async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
   try {
-    const [homepageData, sections, newsletters, trendingCategories, recentlyReviewed] = await Promise.all([
+    const [homepageData, sections, newsletters, trendingCategories, recentlyAdded] = await Promise.all([
       fetchHomepageData(),
       getMagazineSections("global"),
       getNewslettersWithFallback(10).catch(() => []),
       fetchTrendingDirectory().catch(() => []),
-      fetchRecentlyReviewed().catch(() => ({ film: [], music: [], book: [] })),
+      fetchRecentlyAdded().catch(() => ({ film: [], music: [], book: [] })),
     ]);
 
     const { coverStory, featuredPool: heroPlusFeatured, products, kafartStories: rawKafart } = homepageData;
@@ -96,7 +97,7 @@ async function loadHomeSections(edition: EditionSlug): Promise<HomeSections> {
       featureStory,
       kafartStories: rawKafart || [],
       trendingCategories,
-      recentlyReviewed,
+      recentlyAdded,
     };
   } catch (err: any) {
     console.error("[HomepageView] loadHomeSections failed:", err?.message || err);
@@ -111,7 +112,7 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     featureStory,
     kafartStories,
     trendingCategories,
-    recentlyReviewed,
+    recentlyAdded,
   } = await loadHomeSections(edition);
 
   // Static hero background slides — the user-provided cinematic photos
@@ -126,6 +127,8 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
     <div className="hpv2">
       <HomepageHero slides={heroSlides} />
 
+      <DirectoryDiscovery categories={trendingCategories} />
+
       <section className="arc-section fbh-section">
         <div className="wrap">
           <FullBleedHero story={coverStory} kicker="From the Magazine" />
@@ -138,12 +141,10 @@ export default async function HomepageView({ edition }: { edition: EditionSlug }
         </div>
       </section>
 
-      {/* Rails show actual recent user reviews — hidden automatically when empty */}
-      <RecentlyReviewedRail type="film"  entries={recentlyReviewed.film} />
-      <RecentlyReviewedRail type="music" entries={recentlyReviewed.music} />
-      <RecentlyReviewedRail type="book"  entries={recentlyReviewed.book} />
-
-      <DirectoryDiscovery categories={trendingCategories} />
+      {/* Recently added rails — hidden automatically when empty */}
+      <RecentlyReviewedRail type="film"  entries={recentlyAdded.film}  mode="added" />
+      <RecentlyReviewedRail type="music" entries={recentlyAdded.music} mode="added" />
+      <RecentlyReviewedRail type="book"  entries={recentlyAdded.book}  mode="added" />
 
 <KafartSection stories={kafartStories} />
 
